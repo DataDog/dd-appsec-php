@@ -28,7 +28,7 @@ void thread_handler(dds::worker::monitor &wm, bool &running, std::mutex &m,
 
 namespace dds {
 
-TEST(WorkerPoolTest, PoolLaunchZeroWorkers)
+TEST(WorkerPoolTest, LaunchZeroWorkers)
 {
     worker::pool wp;
     EXPECT_EQ(wp.worker_count(), 0);
@@ -37,7 +37,7 @@ TEST(WorkerPoolTest, PoolLaunchZeroWorkers)
     EXPECT_EQ(wp.worker_count(), 0);
 }
 
-TEST(WorkerPoolTest, PoolLaunchOneWorker)
+TEST(WorkerPoolTest, LaunchOneWorker)
 {
     worker::pool wp;
     EXPECT_EQ(wp.worker_count(), 0);
@@ -56,7 +56,7 @@ TEST(WorkerPoolTest, PoolLaunchOneWorker)
     EXPECT_EQ(wp.worker_count(), 0);
 }
 
-TEST(WorkerPoolTest, PoolLaunchNWorkers)
+TEST(WorkerPoolTest, LaunchNWorkers)
 {
     worker::pool wp;
     EXPECT_EQ(wp.worker_count(), 0);

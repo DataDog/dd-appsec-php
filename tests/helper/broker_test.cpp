@@ -62,7 +62,7 @@ ACTION_P(CopyString, param)
     memcpy(arg0, str.c_str(), str.size());
 }
 
-TEST(BrokerTest, BrokerSendClientInit)
+TEST(BrokerTest, SendClientInit)
 {
     mock::socket *socket = new mock::socket();
     network::broker broker{std::unique_ptr<mock::socket>(socket)};
@@ -92,7 +92,7 @@ TEST(BrokerTest, BrokerSendClientInit)
     EXPECT_STREQ(expected_data.c_str(), buffer.c_str());
 }
 
-TEST(BrokerTest, BrokerSendRequestInit)
+TEST(BrokerTest, SendRequestInit)
 {
     mock::socket *socket = new mock::socket();
     network::broker broker{std::unique_ptr<mock::socket>(socket)};
@@ -122,7 +122,7 @@ TEST(BrokerTest, BrokerSendRequestInit)
     EXPECT_STREQ(expected_data.c_str(), buffer.c_str());
 }
 
-TEST(BrokerTest, BrokerSendRequestShutdown)
+TEST(BrokerTest, SendRequestShutdown)
 {
     mock::socket *socket = new mock::socket();
     network::broker broker{std::unique_ptr<mock::socket>(socket)};
@@ -152,7 +152,7 @@ TEST(BrokerTest, BrokerSendRequestShutdown)
     EXPECT_STREQ(expected_data.c_str(), buffer.c_str());
 }
 
-TEST(BrokerTest, BrokerRecvClientInit)
+TEST(BrokerTest, RecvClientInit)
 {
     mock::socket *socket = new mock::socket();
     network::broker broker{std::unique_ptr<mock::socket>(socket)};
@@ -185,7 +185,7 @@ TEST(BrokerTest, BrokerRecvClientInit)
     EXPECT_STREQ(command.rules_file.c_str(), "three");
 }
 
-TEST(BrokerTest, BrokerRecvRequestInit)
+TEST(BrokerTest, RecvRequestInit)
 {
     mock::socket *socket = new mock::socket();
     network::broker broker{std::unique_ptr<mock::socket>(socket)};
@@ -222,7 +222,7 @@ TEST(BrokerTest, BrokerRecvRequestInit)
     command.data.free();
 }
 
-TEST(BrokerTest, BrokerRecvRequestShutdown)
+TEST(BrokerTest, RecvRequestShutdown)
 {
     mock::socket *socket = new mock::socket();
     network::broker broker{std::unique_ptr<mock::socket>(socket)};
@@ -324,7 +324,7 @@ TEST(BrokerTest, InvalidRequest)
         request = broker.recv(std::chrono::milliseconds(100)), msgpack::type_error);
 }
 
-TEST(BrokerTest, BrokerParsingStringLimit)
+TEST(BrokerTest, ParsingStringLimit)
 {
     mock::socket *socket = new mock::socket();
     network::broker broker{std::unique_ptr<mock::socket>(socket)};
@@ -351,7 +351,7 @@ TEST(BrokerTest, BrokerParsingStringLimit)
         request = broker.recv(std::chrono::milliseconds(100)), msgpack::type_error);
 }
 
-TEST(BrokerTest, BrokerParsingMapLimit)
+TEST(BrokerTest, ParsingMapLimit)
 {
     mock::socket *socket = new mock::socket();
     network::broker broker{std::unique_ptr<mock::socket>(socket)};
@@ -380,7 +380,7 @@ TEST(BrokerTest, BrokerParsingMapLimit)
         request = broker.recv(std::chrono::milliseconds(100)), msgpack::type_error);
 }
 
-TEST(BrokerTest, BrokerParsingArrayLimit)
+TEST(BrokerTest, ParsingArrayLimit)
 {
     mock::socket *socket = new mock::socket();
     network::broker broker{std::unique_ptr<mock::socket>(socket)};
@@ -410,7 +410,7 @@ TEST(BrokerTest, BrokerParsingArrayLimit)
         request = broker.recv(std::chrono::milliseconds(100)), msgpack::type_error);
 }
 
-TEST(BrokerTest, BrokerParsingDepthLimit)
+TEST(BrokerTest, ParsingDepthLimit)
 {
     mock::socket *socket = new mock::socket();
     network::broker broker{std::unique_ptr<mock::socket>(socket)};
@@ -440,7 +440,7 @@ TEST(BrokerTest, BrokerParsingDepthLimit)
         request = broker.recv(std::chrono::milliseconds(100)), msgpack::type_error);
 }
 
-TEST(BrokerTest, BrokerParsingBinLimit)
+TEST(BrokerTest, ParsingBinLimit)
 {
     mock::socket *socket = new mock::socket();
     network::broker broker{std::unique_ptr<mock::socket>(socket)};
@@ -468,7 +468,7 @@ TEST(BrokerTest, BrokerParsingBinLimit)
         request = broker.recv(std::chrono::milliseconds(100)), msgpack::type_error);
 }
 
-TEST(BrokerTest, BrokerParsingExtLimit)
+TEST(BrokerTest, ParsingExtLimit)
 {
     mock::socket *socket = new mock::socket();
     network::broker broker{std::unique_ptr<mock::socket>(socket)};
@@ -496,7 +496,7 @@ TEST(BrokerTest, BrokerParsingExtLimit)
         request = broker.recv(std::chrono::milliseconds(100)), msgpack::type_error);
 }
 
-TEST(BrokerTest, BrokerParsingBodyLimit)
+TEST(BrokerTest, ParsingBodyLimit)
 {
     mock::socket *socket = new mock::socket();
     network::broker broker{std::unique_ptr<mock::socket>(socket)};
