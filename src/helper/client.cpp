@@ -86,7 +86,7 @@ bool client::handle_command(const network::client_init::request &command)
                             ? engine_pool::default_rules_file()
                             : command.rules_file;
 
-    DD_STDLOG(DD_STDLOG_STARTUP_BEGAN, rules_file);
+    DD_STDLOG(DD_STDLOG_STARTUP);
 
     std::vector<std::string> errors;
     bool has_errors = false;
@@ -115,6 +115,10 @@ bool client::handle_command(const network::client_init::request &command)
     } catch (std::exception &e) {
         SPDLOG_ERROR(e.what());
         has_errors = true;
+    }
+
+    if (has_errors) {
+        DD_STDLOG(DD_LOG_STARTUP_ERROR);
     }
 
     return !has_errors;
@@ -229,7 +233,12 @@ void client::run(worker::queue_consumer &q)
         SPDLOG_DEBUG("Finished handling client (client_init succeded)");
     }
 
-    while (q.running() && run_request()) {}
+    while (q.running()) {
+        if (!run_request()) {
+            DD_STDLOG(DD_STDLOG_REQUEST_ANALYSIS_FAILED);
+            break;
+        }
+    }
 
     SPDLOG_DEBUG("Finished handling client");
 }
