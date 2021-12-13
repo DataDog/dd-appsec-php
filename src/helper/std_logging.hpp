@@ -17,9 +17,8 @@
 #define DD_LOG_STARTUP_ERROR                                                   \
     spdlog::level::err,                                                        \
         "DDAS-0001-01: AppSec could not start because of an unexpected "       \
-        "error. "                                                              \
-        "No security activities will be collected. Please contact support at " \
-        "https://docs.datadoghq.com/help/ for help."
+        "error. No security activities will be collected. Please contact "     \
+        "support at https://docs.datadoghq.com/help/ for help"
 
 /* Startup [ERROR] DDAS-0001-02
  * If the AppSec library could not start because of an unsupported environment.
@@ -38,7 +37,7 @@
     spdlog::level::err,                                                        \
         "DDAS-0003-01: AppSec could not read the rule file {}. Reason: rules " \
         "file not found. AppSec will not run any protections in this "         \
-        "application."
+        "application"
 
 /* Startup [ERROR] DDAS-0003-02
  * Rules file invalid */
@@ -47,7 +46,7 @@
     spdlog::level::err, "DDAS-0003-02: AppSec could not read the rule file "   \
                         "{}. Reason: invalid "                                 \
                         "file format. AppSec will not run any protections in " \
-                        "this application."
+                        "this application"
 
 /* Startup [ERROR] DDAS-0003-03
  * All rules are invalid
@@ -58,7 +57,8 @@
  * Failed to analyse request. */
 // NOLINTNEXTLINE
 #define DD_STDLOG_REQUEST_ANALYSIS_FAILED                                      \
-    spdlog::level::err, "DDAS-0004-00: AppSec failed to process request."
+    spdlog::level::err,                                                        \
+    "DDAS-0004-00: AppSec failed to process request. Error details: {}"
 
 /* Reload [WARNING] DDAS-0005-00
  * WAF initialization failed. */
@@ -82,7 +82,7 @@
 // NOLINTNEXTLINE
 #define DD_STDLOG_IG_DATA_PUSHED                                               \
     spdlog::level::debug,                                                      \
-        "DDAS-0008-00: Pushing address {} to the Instrumentation Gateway."
+        "DDAS-0008-00: Pushing address {} to the Instrumentation Gateway"
 
 /* Reload [DEBUG] DDAS-0009-00
  * Matching rules for an available set of addresses.
@@ -100,21 +100,21 @@
 // NOLINTNEXTLINE
 #define DD_STDLOG_AFTER_WAF                                                    \
     spdlog::level::debug,                                                      \
-        "DDAS-0011-00: AppSec In-App WAF returned: {}. Took {} ms."
+        "DDAS-0011-00: AppSec In-App WAF returned: {}. Took {} ms"
 
 /* Request [DEBUG] DDAS-0012-01
  * Attack detected.
- * Comment: Requires parsing...*/
+ * Comment: Requires parsing... so this is a version without data*/
 // NOLINTNEXTLINE
 #define DD_STDLOG_ATTACK_DETECTED                                              \
-    spdlog::level::debug, "DDAS-0012-01: Detecting an attack from rule {}: {}"
+    spdlog::level::debug, "DDAS-0012-01: Detecting an attack"
 
 /* Request [DEBUG] DDAS-0012-02
  * Attack detected and blocked.
- * Comment: Requires parsing...*/
+ * Comment: Requires parsing... so this is a version without data*/
 // NOLINTNEXTLINE
 #define DD_STDLOG_ATTACK_BLOCKED                                               \
-    spdlog::level::debug, "DDAS-0012-01: Blocked attack from {}"
+    spdlog::level::debug, "DDAS-0012-01: Blocked attack"
 
 /* Request [DEBUG] DDAS-0013-00
  * Exceeded WAF limit*/
@@ -122,7 +122,7 @@
 #define DD_STDLOG_EXCEEDED_WAF_LIMITS                                          \
     spdlog::level::debug, "DDAS-0013-00: Reached WAF limits. Request "         \
                           "partially analyzed because of "                     \
-                          "maxElements/maxDepth was exceeded."
+                          "maxElements/maxDepth was exceeded"
 
 /* Startup [INFO] DDAS-0014-00
  * AppSec started */

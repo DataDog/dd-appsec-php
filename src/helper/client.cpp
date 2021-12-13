@@ -152,7 +152,7 @@ bool client::handle_command(network::request_init::request &command)
         return false;
     } catch (const std::exception &e) {
         // Uncertain what the issue is... lets be cautious
-        SPDLOG_ERROR(e.what());
+        DD_STDLOG(DD_STDLOG_REQUEST_ANALYSIS_FAILED, e.what());
         return false;
     }
 
@@ -183,6 +183,11 @@ bool client::handle_command(network::request_shutdown::request &command)
         if (res.value == result::code::record) {
             response.verdict = "record";
             response.triggers = std::move(res.data);
+            DD_STDLOG(DD_STDLOG_ATTACK_DETECTED);
+        } else if (res.value == result::code::block) {
+            response.verdict = "block";
+            response.triggers = std::move(res.data);
+            DD_STDLOG(DD_STDLOG_ATTACK_BLOCKED);
         } else {
             response.verdict = "ok";
         }
@@ -193,7 +198,7 @@ bool client::handle_command(network::request_shutdown::request &command)
         return false;
     } catch (const std::exception &e) {
         // Uncertain what the issue is... lets be cautious
-        SPDLOG_ERROR(e.what());
+        DD_STDLOG(DD_STDLOG_REQUEST_ANALYSIS_FAILED, e.what());
         return false;
     }
 
@@ -233,12 +238,7 @@ void client::run(worker::queue_consumer &q)
         SPDLOG_DEBUG("Finished handling client (client_init succeded)");
     }
 
-    while (q.running()) {
-        if (!run_request()) {
-            DD_STDLOG(DD_STDLOG_REQUEST_ANALYSIS_FAILED);
-            break;
-        }
-    }
+    while (q.running() && run_request()) {}
 
     SPDLOG_DEBUG("Finished handling client");
 }

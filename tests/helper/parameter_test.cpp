@@ -124,19 +124,25 @@ TEST(ParameterTest, Map)
 {
     parameter p = parameter::map();
     EXPECT_EQ(p.type, DDWAF_OBJ_MAP);
-    EXPECT_EQ(p.nbEntries, 0);
+    EXPECT_TRUE(p.is_map());
+    EXPECT_TRUE(p.is_container());
+    EXPECT_EQ(p.size(), 0);
 
-    EXPECT_TRUE(p.add("key", parameter("value"sv)));
-    EXPECT_EQ(p.nbEntries, 1);
+    EXPECT_TRUE(p.add("key0", parameter("value"sv)));
+    EXPECT_STREQ(p[0].key().data(), "key0");
+    EXPECT_EQ(p.size(), 1);
 
-    EXPECT_TRUE(p.add("key", parameter("value"sv)));
-    EXPECT_EQ(p.nbEntries, 2);
+    EXPECT_TRUE(p.add("key1", parameter("value"sv)));
+    EXPECT_STREQ(p[1].key().data(), "key1");
+    EXPECT_EQ(p.size(), 2);
 
-    EXPECT_TRUE(p.add("key", parameter("value"sv)));
-    EXPECT_EQ(p.nbEntries, 3);
+    EXPECT_TRUE(p.add("key2", parameter("value"sv)));
+    EXPECT_STREQ(p[2].key().data(), "key2");
+    EXPECT_EQ(p.size(), 3);
 
-    EXPECT_TRUE(p.add("key", parameter("value"sv)));
-    EXPECT_EQ(p.nbEntries, 4);
+    EXPECT_TRUE(p.add("key3", parameter("value"sv)));
+    EXPECT_STREQ(p[3].key().data(), "key3");
+    EXPECT_EQ(p.size(), 4);
 
     EXPECT_FALSE(p.add(parameter("value"sv)));
 
@@ -147,19 +153,20 @@ TEST(ParameterTest, Array)
 {
     parameter p = parameter::array();
     EXPECT_EQ(p.type, DDWAF_OBJ_ARRAY);
-    EXPECT_EQ(p.nbEntries, 0);
+    EXPECT_TRUE(p.is_container());
+    EXPECT_EQ(p.size(), 0);
 
     EXPECT_TRUE(p.add(parameter("value"sv)));
-    EXPECT_EQ(p.nbEntries, 1);
+    EXPECT_EQ(p.size(), 1);
 
     EXPECT_TRUE(p.add(parameter("value"sv)));
-    EXPECT_EQ(p.nbEntries, 2);
+    EXPECT_EQ(p.size(), 2);
 
     EXPECT_TRUE(p.add(parameter("value"sv)));
-    EXPECT_EQ(p.nbEntries, 3);
+    EXPECT_EQ(p.size(), 3);
 
     EXPECT_TRUE(p.add(parameter("value"sv)));
-    EXPECT_EQ(p.nbEntries, 4);
+    EXPECT_EQ(p.size(), 4);
 
     EXPECT_FALSE(p.add("key", parameter("value"sv)));
 
