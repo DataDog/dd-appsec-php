@@ -297,7 +297,7 @@ TEST(ClientTest, RequestInit)
         EXPECT_CALL(*broker, send(_))
             .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
 
-        EXPECT_TRUE(c.run_once());
+        EXPECT_TRUE(c.run_request());
         EXPECT_STREQ(res.verdict.c_str(), "record");
         EXPECT_EQ(res.triggers.size(), 1);
     }
@@ -322,7 +322,7 @@ TEST(ClientTest, RequestInitNoClientInit)
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
         EXPECT_CALL(*broker, send(_)).Times(0);
 
-        EXPECT_FALSE(c.run_once());
+        EXPECT_FALSE(c.run_request());
     }
 }
 
@@ -363,7 +363,7 @@ TEST(ClientTest, RequestInitInvalidData)
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
         EXPECT_CALL(*broker, send(_)).Times(0);
 
-        EXPECT_FALSE(c.run_once());
+        EXPECT_FALSE(c.run_request());
     }
 }
 
@@ -407,7 +407,7 @@ TEST(ClientTest, RequestInitBrokerThrows)
         EXPECT_CALL(*broker, recv(_)).WillOnce(Throw(std::exception()));
         EXPECT_CALL(*broker, send(_)).Times(0);
 
-        EXPECT_FALSE(c.run_once());
+        EXPECT_FALSE(c.run_request());
     }
 
     {
@@ -422,7 +422,7 @@ TEST(ClientTest, RequestInitBrokerThrows)
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
         EXPECT_CALL(*broker, send(_)).WillOnce(Throw(std::exception()));
 
-        EXPECT_FALSE(c.run_once());
+        EXPECT_FALSE(c.run_request());
     }
 }
 
@@ -467,7 +467,7 @@ TEST(ClientTest, RequestShutdown)
         EXPECT_CALL(*broker, send(_))
             .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
 
-        EXPECT_TRUE(c.run_once());
+        EXPECT_TRUE(c.run_request());
         EXPECT_STREQ(res.verdict.c_str(), "ok");
         EXPECT_EQ(res.triggers.size(), 0);
     }
@@ -485,7 +485,7 @@ TEST(ClientTest, RequestShutdown)
         EXPECT_CALL(*broker, send(_))
             .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
 
-        EXPECT_TRUE(c.run_once());
+        EXPECT_TRUE(c.run_request());
         EXPECT_STREQ(res.verdict.c_str(), "record");
         EXPECT_EQ(res.triggers.size(), 1);
     }
@@ -569,7 +569,7 @@ TEST(ClientTest, RequestShutdownNoClientInit)
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
         EXPECT_CALL(*broker, send(_)).Times(0);
 
-        EXPECT_FALSE(c.run_once());
+        EXPECT_FALSE(c.run_request());
     }
 }
 
@@ -610,7 +610,7 @@ TEST(ClientTest, RequestShutdownNoRequestInit)
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
         EXPECT_CALL(*broker, send(_)).Times(0);
 
-        EXPECT_FALSE(c.run_once());
+        EXPECT_FALSE(c.run_request());
     }
 }
 
@@ -655,7 +655,7 @@ TEST(ClientTest, RequestShutdownBrokerThrows)
         EXPECT_CALL(*broker, send(_))
             .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
 
-        EXPECT_TRUE(c.run_once());
+        EXPECT_TRUE(c.run_request());
         EXPECT_STREQ(res.verdict.c_str(), "ok");
         EXPECT_EQ(res.triggers.size(), 0);
     }
@@ -672,7 +672,7 @@ TEST(ClientTest, RequestShutdownBrokerThrows)
         EXPECT_CALL(*broker, recv(_)).WillOnce(Throw(std::exception()));
         EXPECT_CALL(*broker, send(_)).Times(0);
 
-        EXPECT_FALSE(c.run_once());
+        EXPECT_FALSE(c.run_request());
     }
 
     {
@@ -686,7 +686,7 @@ TEST(ClientTest, RequestShutdownBrokerThrows)
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
         EXPECT_CALL(*broker, send(_)).WillOnce(Throw(std::exception()));
 
-        EXPECT_FALSE(c.run_once());
+        EXPECT_FALSE(c.run_request());
     }
 }
 
