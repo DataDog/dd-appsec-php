@@ -31,6 +31,12 @@ class Apache2ModTests implements CommonTests {
         ExecResult ps_res = CONTAINER.execInContainer('ps', 'aux')
         log.info "Result of ps: STDOUT: $ps_res.stdout , STDERR: $ps_res.stderr"
 
+        ExecResult kill_res = CONTAINER.execInContainer('kill', '-9', 'ddappsec-helper');
+        log.info "Result of ps: STDOUT: $kill_res.stdout , STDERR: $kill_res.stderr"
+
+        ps_res = CONTAINER.execInContainer('ps', 'aux')
+        log.info "Result of ps: STDOUT: $ps_res.stdout , STDERR: $ps_res.stderr"
+
         ExecResult res = CONTAINER.execInContainer('service', 'apache2', 'reload')
         if (res.exitCode != 0) {
             throw new AssertionError("Failed reloading apache2: $res.stderr")
