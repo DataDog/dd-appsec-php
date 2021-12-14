@@ -29,11 +29,7 @@ class Apache2ModTests implements CommonTests {
     @Test
     void 'trace without attack after soft restart'() {
         // Kill any rogue helper processes
-        ExecResult kill_res = CONTAINER.execInContainer('pkill', '-9', 'ddappsec-helper');
-        log.info "Result of kill: STDOUT: $kill_res.stdout , STDERR: $kill_res.stderr"
-
-        ExecResult ps_res = CONTAINER.execInContainer('ps', 'aux')
-        log.info "Result of ps: STDOUT: $ps_res.stdout , STDERR: $ps_res.stderr"
+        CONTAINER.execInContainer('pkill', '-9', 'ddappsec-helper');
 
         ExecResult res = CONTAINER.execInContainer('service', 'apache2', 'reload')
         if (res.exitCode != 0) {
