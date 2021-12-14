@@ -27,6 +27,9 @@ class Apache2ModTests implements CommonTests {
 
     @Test
     void 'trace without attack after soft restart'() {
+        // Clean up rogue helpers
+        CONTAINER.execInContainer('kill', '-9', 'ddappsec-helper')
+
         ExecResult res = CONTAINER.execInContainer('service', 'apache2', 'reload')
         if (res.exitCode != 0) {
             throw new AssertionError("Failed reloading apache2: $res.stderr")
