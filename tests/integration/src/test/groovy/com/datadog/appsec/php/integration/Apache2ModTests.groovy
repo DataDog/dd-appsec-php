@@ -25,20 +25,22 @@ class Apache2ModTests implements CommonTests {
                     tracerVersion: tracerVersion
             )
 
-/*    @Test*/
-    //void 'trace without attack after soft restart'() {
-        //// Clean up rogue helpers
-        //CONTAINER.execInContainer('kill', '-9', 'ddappsec-helper')
 
-        //ExecResult res = CONTAINER.execInContainer('service', 'apache2', 'reload')
-        //if (res.exitCode != 0) {
-            //throw new AssertionError("Failed reloading apache2: $res.stderr")
-        //}
-        //log.info "Result of restart: STDOUT: $res.stdout , STDERR: $res.stderr"
+    @Test
+    void 'trace without attack after soft restart'() {
+        ExecResult ps_res = CONTAINER.execInContainer('ps', 'aux')
+        log.info "Result of ps: STDOUT: $ps_res.stdout , STDERR: $ps_res.stderr"
 
-        //def trace = CONTAINER.traceFromRequest('/hello.php') {
-            //assert it.inputStream.text == 'Hello world!'
-        //}
-        //assert trace.metrics."_dd.appsec.enabled" == 1.0d
-    /*}*/
+        ExecResult res = CONTAINER.execInContainer('service', 'apache2', 'reload')
+        if (res.exitCode != 0) {
+            throw new AssertionError("Failed reloading apache2: $res.stderr")
+        }
+        log.info "Result of restart: STDOUT: $res.stdout , STDERR: $res.stderr"
+
+        def trace = CONTAINER.traceFromRequest('/hello.php') {
+            assert it.inputStream.text == 'Hello world!'
+        }
+        assert trace.metrics."_dd.appsec.enabled" == 1.0d
+    }
+
 }
