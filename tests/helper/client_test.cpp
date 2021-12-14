@@ -169,7 +169,7 @@ TEST(ClientTest, ClientInitAfterClientInit)
 
         network::client_init::response res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_FALSE(c.run_once());
+        EXPECT_FALSE(c.run_request());
     }
 }
 
@@ -532,7 +532,7 @@ TEST(ClientTest, RequestShutdownInvalidData)
         EXPECT_CALL(*broker, send(_))
             .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
 
-        EXPECT_TRUE(c.run_once());
+        EXPECT_TRUE(c.run_request());
         EXPECT_STREQ(res.verdict.c_str(), "ok");
         EXPECT_EQ(res.triggers.size(), 0);
     }
@@ -548,7 +548,7 @@ TEST(ClientTest, RequestShutdownInvalidData)
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
         EXPECT_CALL(*broker, send(_)).Times(0);
 
-        EXPECT_FALSE(c.run_once());
+        EXPECT_FALSE(c.run_request());
     }
 }
 
