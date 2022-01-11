@@ -58,7 +58,7 @@
 // NOLINTNEXTLINE
 #define DD_STDLOG_REQUEST_ANALYSIS_FAILED                                      \
     spdlog::level::err,                                                        \
-    "DDAS-0004-00: AppSec failed to process request. Error details: {}"
+        "DDAS-0004-00: AppSec failed to process request. Error details: {}"
 
 /* Reload [WARNING] DDAS-0005-00
  * WAF initialization failed. */
