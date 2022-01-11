@@ -107,7 +107,7 @@
  * Comment: Requires parsing... so this is a version without data*/
 // NOLINTNEXTLINE
 #define DD_STDLOG_ATTACK_DETECTED                                              \
-    spdlog::level::debug, "DDAS-0012-01: Detecting an attack"
+    spdlog::level::debug, "DDAS-0012-01: Detected an attack"
 
 /* Request [DEBUG] DDAS-0012-02
  * Attack detected and blocked.
