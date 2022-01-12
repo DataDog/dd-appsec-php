@@ -23,25 +23,29 @@ namespace filesystem = experimental::filesystem;
 #endif
 namespace dds {
 
+namespace {
+struct def_rules_file {
+    def_rules_file()
+    {
+        std::error_code ec;
+        auto self = std::filesystem::read_symlink({"/proc/self/exe"}, ec);
+        if (ec) {
+            // should not happen on Linux
+            file = "<error resolving /proc/self/exe: " + ec.message() + ">";
+        } else {
+            auto self_dir = self.parent_path();
+            file = self_dir / "../etc/dd-appsec/recommended.json";
+        }
+    }
+    std::string file;
+};
+
+def_rules_file drf;
+
+} // namespace
+
 const std::string &client_settings::default_rules_file()
 {
-    struct def_rules_file {
-        def_rules_file()
-        {
-            std::error_code ec;
-            auto self = std::filesystem::read_symlink({"/proc/self/exe"}, ec);
-            if (ec) {
-                // should not happen on Linux
-                file = "<error resolving /proc/self/exe: " + ec.message() + ">";
-            } else {
-                auto self_dir = self.parent_path();
-                file = self_dir / "../etc/dd-appsec/recommended.json";
-            }
-        }
-        std::string file;
-    };
-
-    static def_rules_file drf;
     return drf.file;
 }
 } // namespace dds
