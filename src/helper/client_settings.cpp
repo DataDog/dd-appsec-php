@@ -25,21 +25,29 @@ namespace dds {
 
 namespace {
 struct def_rules_file {
-    def_rules_file()
+    def_rules_file() noexcept
     {
-        std::error_code ec;
-        auto self = std::filesystem::read_symlink({"/proc/self/exe"}, ec);
-        if (ec) {
-            // should not happen on Linux
-            file = "<error resolving /proc/self/exe: " + ec.message() + ">";
-        } else {
-            auto self_dir = self.parent_path();
-            file = self_dir / "../etc/dd-appsec/recommended.json";
+        try {
+            std::error_code ec;
+            auto self = std::filesystem::read_symlink({"/proc/self/exe"}, ec);
+            if (ec) {
+                // should not happen on Linux
+                file = "<error resolving /proc/self/exe: " + ec.message() + ">";
+            } else {
+                auto self_dir = self.parent_path();
+                file = self_dir / "../etc/dd-appsec/recommended.json";
+            }
+        } catch (const std::exception &e) {
+            file = "<exception resolving /proc/self/exe: " +
+                std::string(e.what()) + ">";
+        } catch (...) {
+            file = "<unknown exception resolving /proc/self/exe>";
         }
     }
     std::string file;
 };
 
+// NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
 def_rules_file drf;
 
 } // namespace
