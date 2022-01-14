@@ -39,7 +39,7 @@ TEST(ClientTest, ClientInit)
     msg.pid = 1729;
     msg.runtime_version = "1.0";
     msg.client_version = "2.0";
-    msg.rules_file = fn;
+    msg.settings.rules_file = fn;
 
     network::request req(std::move(msg));
 
@@ -87,7 +87,7 @@ TEST(ClientTest, ClientInitMissingRuleFile)
     msg.pid = 1729;
     msg.runtime_version = "1.0";
     msg.client_version = "2.0";
-    msg.rules_file = fn;
+    msg.settings.rules_file = fn;
 
     network::request req(std::move(msg));
 
@@ -187,7 +187,7 @@ TEST(ClientTest, ClientInitBrokerThrows)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.rules_file = fn;
+        msg.settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -203,7 +203,7 @@ TEST(ClientTest, ClientInitBrokerThrows)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.rules_file = fn;
+        msg.settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -270,7 +270,7 @@ TEST(ClientTest, RequestInit)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.rules_file = fn;
+        msg.settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -340,7 +340,7 @@ TEST(ClientTest, RequestInitInvalidData)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.rules_file = fn;
+        msg.settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -381,7 +381,7 @@ TEST(ClientTest, RequestInitBrokerThrows)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.rules_file = fn;
+        msg.settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -440,7 +440,7 @@ TEST(ClientTest, RequestShutdown)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.rules_file = fn;
+        msg.settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -587,7 +587,7 @@ TEST(ClientTest, RequestShutdownNoRequestInit)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.rules_file = fn;
+        msg.settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -628,7 +628,7 @@ TEST(ClientTest, RequestShutdownBrokerThrows)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.rules_file = fn;
+        msg.settings.rules_file = fn;
 
         network::request req(std::move(msg));
 

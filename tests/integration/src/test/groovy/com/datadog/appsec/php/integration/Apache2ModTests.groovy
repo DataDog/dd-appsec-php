@@ -25,12 +25,8 @@ class Apache2ModTests implements CommonTests {
                     tracerVersion: tracerVersion
             )
 
-
     @Test
     void 'trace without attack after soft restart'() {
-        // Kill any rogue helper processes
-        CONTAINER.execInContainer('pkill', '-9', 'ddappsec-helper');
-
         ExecResult res = CONTAINER.execInContainer('service', 'apache2', 'reload')
         if (res.exitCode != 0) {
             throw new AssertionError("Failed reloading apache2: $res.stderr")
@@ -42,5 +38,4 @@ class Apache2ModTests implements CommonTests {
         }
         assert trace.metrics."_dd.appsec.enabled" == 1.0d
     }
-
 }
