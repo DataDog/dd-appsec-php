@@ -65,7 +65,7 @@ TEST(ClientTest, ClientInitResponseFail)
     msg.pid = 1729;
     msg.runtime_version = "1.0";
     msg.client_version = "2.0";
-    msg.rules_file = fn;
+    msg.settings.rules_file = fn;
 
     network::request req(std::move(msg));
     EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
@@ -118,7 +118,7 @@ TEST(ClientTest, ClientInitInvalidRuleFileFormat)
     msg.pid = 1729;
     msg.runtime_version = "1.0";
     msg.client_version = "2.0";
-    msg.rules_file = tmpl;
+    msg.settings.rules_file = tmpl;
 
     network::request req(std::move(msg));
 
@@ -145,7 +145,7 @@ TEST(ClientTest, ClientInitAfterClientInit)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.rules_file = fn;
+        msg.settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -163,7 +163,7 @@ TEST(ClientTest, ClientInitAfterClientInit)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.rules_file = fn;
+        msg.settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -219,7 +219,7 @@ TEST(ClientTest, ClientInitBrokerThrows)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.rules_file = fn;
+        msg.settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -505,7 +505,7 @@ TEST(ClientTest, RequestShutdownInvalidData)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.rules_file = fn;
+        msg.settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
