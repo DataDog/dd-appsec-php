@@ -34,6 +34,7 @@
 #include "php_helpers.h"
 #include "php_objects.h"
 #include "string_helpers.h"
+#include "version.h"
 
 typedef struct _dd_helper_mgr {
     pid_t pid;
@@ -43,6 +44,8 @@ typedef struct _dd_helper_mgr {
     uint16_t failed_count;
     bool connected_this_req;
     bool launched_this_req;
+    char *nonnull socket_path;
+    char *nonnull lock_path;
 } dd_helper_mgr;
 
 typedef enum {
@@ -54,8 +57,7 @@ typedef enum {
 static THREAD_LOCAL_ON_ZTS bool _launch_helper;
 static THREAD_LOCAL_ON_ZTS struct {
     const char *nonnull binary_path;
-    const char *nonnull socket_path;
-    const char *nonnull lock_path;
+    const char *nonnull runtime_path;
     const char *nonnull helper_log_file;
     const char *nonnull helper_extra_args;
 } _config;
@@ -78,14 +80,16 @@ static ZEND_INI_MH(_on_update_config_string);
 #define DD_BASE(path) "/opt/datadog-php/" path
 #define DD_RUN(path) "/var/run/"
 
+#define DD_SOCKET_PATH "ddappsec_" PHP_DDAPPSEC_VERSION ".sock"
+#define DD_LOCK_PATH   "ddappsec_" PHP_DDAPPSEC_VERSION ".lock"
+
 // clang-format off
 static const zend_ini_entry_def ini_entries[] = {
     PHP_INI_ENTRY("datadog.appsec.helper_launch", "1", PHP_INI_SYSTEM, _on_update_launch_flag)
     PHP_INI_ENTRY1_EX("datadog.appsec.helper_path", DD_BASE("bin/ddappsec-helper"), PHP_INI_SYSTEM, _on_update_config_string, (void*)0, NULL)
-    PHP_INI_ENTRY1_EX("datadog.appsec.helper_socket_path", "/tmp/ddappsec.sock", PHP_INI_SYSTEM, _on_update_config_string, (void*)1, NULL)
-    PHP_INI_ENTRY1_EX("datadog.appsec.helper_lock_path", "/tmp/ddappsec.lock", PHP_INI_SYSTEM, _on_update_config_string, (void*)2, NULL)
-    PHP_INI_ENTRY1_EX("datadog.appsec.helper_log_file", "/dev/null", PHP_INI_SYSTEM, _on_update_config_string, (void*)3, NULL)
-    PHP_INI_ENTRY1_EX("datadog.appsec.helper_extra_args", "", PHP_INI_SYSTEM, _on_update_config_string, (void*)4, NULL)
+    PHP_INI_ENTRY1_EX("datadog.appsec.helper_runtime_path", "/tmp/", PHP_INI_SYSTEM, _on_update_config_string, (void*)1, NULL)
+    PHP_INI_ENTRY1_EX("datadog.appsec.helper_log_file", "/dev/null", PHP_INI_SYSTEM, _on_update_config_string, (void*)2, NULL)
+    PHP_INI_ENTRY1_EX("datadog.appsec.helper_extra_args", "", PHP_INI_SYSTEM, _on_update_config_string, (void*)3, NULL)
     {0}
 };
 // clang-format on
@@ -115,6 +119,9 @@ void dd_helper_shutdown(void)
         atomic_store(&_launch_failure_fd_lock, -1);
         close(failure_lock_fd);
     }
+
+    pefree(_mgr.socket_path, 1);
+    pefree(_mgr.lock_path, 1);
 }
 
 void dd_helper_rshutdown()
@@ -126,6 +133,7 @@ void dd_helper_rshutdown()
     }
 }
 
+static void _set_runtime_paths(void);
 static bool _wait_for_next_retry(void);
 static void _inc_failed_counter(void);
 static void _prevent_launch_attempts(int lock_fd);
@@ -142,10 +150,12 @@ dd_conn *nullable dd_helper_mgr_acquire_conn(client_init_func nonnull init_func)
         return NULL;
     }
 
+    _set_runtime_paths();
+
     bool retry = false;
     for (int attempt = 0;; attempt++) {
         int res = dd_conn_init(
-            conn, _config.socket_path, strlen(_config.socket_path));
+            conn, _mgr.socket_path, strlen(_mgr.socket_path));
 
         if (res) {
             // connection failure
@@ -208,6 +218,43 @@ dd_conn *nullable dd_helper_mgr_cur_conn(void)
         return conn;
     }
     return NULL;
+}
+
+// Since file comes from a literal, assume it has a safe length
+static char * _concat_paths(const char *nonnull base, size_t base_len,
+    const char *nonnull file, size_t file_len)
+{
+    unsigned add_slash = base[base_len - 1] != '/';
+
+    char *ptr, *ret = safe_pemalloc(base_len, 1, add_slash + file_len + 1, 1);
+
+    ptr = ret;
+
+    memcpy(ptr, base, base_len);
+    ptr += base_len;
+    if (add_slash) {
+        *ptr = '/';
+        ptr++;
+    }
+
+    memcpy(ptr, file, file_len);
+    ptr += file_len;
+    *ptr = '\0';
+
+    return ret;
+}
+
+static void _set_runtime_paths()
+{
+    size_t runtime_path_len = strlen(_config.runtime_path);
+
+    pefree(_mgr.socket_path, 1);
+    _mgr.socket_path = _concat_paths(_config.runtime_path, runtime_path_len,
+        DD_SOCKET_PATH, LSTRLEN(DD_SOCKET_PATH));
+
+    pefree(_mgr.lock_path, 1);
+    _mgr.lock_path = _concat_paths(_config.runtime_path, runtime_path_len,
+        DD_LOCK_PATH, LSTRLEN(DD_LOCK_PATH));
 }
 
 // returns true if an attempt to connectt should not be made yet
@@ -326,7 +373,7 @@ static void _prevent_launch_attempts(int lock_fd /* -1 to acquire it */)
 static int /* fd */ _acquire_lock()
 {
     // open file descriptor
-    const char *lock_file = _config.lock_path;
+    const char *lock_file = _mgr.lock_path;
     int fd = open(lock_file, O_CREAT | O_NOFOLLOW | O_RDONLY, 0600); // NOLINT
     if (fd == -1) {
         mlog_err(dd_log_warning, "Could not open lock file %s", lock_file);
@@ -446,19 +493,19 @@ static int /* fd */ _open_socket_for_helper()
 {
     struct sockaddr_un sockaddr = {0};
     sockaddr.sun_family = AF_UNIX;
-    if (strlen(_config.socket_path) >= sizeof(sockaddr.sun_path) - 1) {
+    if (strlen(_mgr.socket_path) >= sizeof(sockaddr.sun_path) - 1) {
         mlog(dd_log_error,
             "The value of datadog.appsec.socket_path (%s) is "
             "longer than the max size (%zu)",
-            _config.socket_path, sizeof(sockaddr.sun_path) - 1);
+            _mgr.socket_path, sizeof(sockaddr.sun_path) - 1);
         return -1;
     }
     // NOLINTNEXTLINE(clang-analyzer-security.insecureAPI.strcpy)
-    strcpy(sockaddr.sun_path, _config.socket_path);
+    strcpy(sockaddr.sun_path, _mgr.socket_path);
 
-    int res = unlink(_config.socket_path);
+    int res = unlink(_mgr.socket_path);
     if (res == -1 && errno != ENOENT) {
-        mlog_err(dd_log_warning, "Failed to unlink %s", _config.socket_path);
+        mlog_err(dd_log_warning, "Failed to unlink %s", _mgr.socket_path);
         return -1;
     }
 
