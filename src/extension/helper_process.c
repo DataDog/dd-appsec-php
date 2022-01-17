@@ -81,7 +81,7 @@ static ZEND_INI_MH(_on_update_config_string);
 #define DD_RUN(path) "/var/run/"
 
 #define DD_SOCKET_PATH "ddappsec_" PHP_DDAPPSEC_VERSION ".sock"
-#define DD_LOCK_PATH   "ddappsec_" PHP_DDAPPSEC_VERSION ".lock"
+#define DD_LOCK_PATH "ddappsec_" PHP_DDAPPSEC_VERSION ".lock"
 
 // clang-format off
 static const zend_ini_entry_def ini_entries[] = {
@@ -154,8 +154,8 @@ dd_conn *nullable dd_helper_mgr_acquire_conn(client_init_func nonnull init_func)
 
     bool retry = false;
     for (int attempt = 0;; attempt++) {
-        int res = dd_conn_init(
-            conn, _mgr.socket_path, strlen(_mgr.socket_path));
+        int res =
+            dd_conn_init(conn, _mgr.socket_path, strlen(_mgr.socket_path));
 
         if (res) {
             // connection failure
@@ -221,7 +221,7 @@ dd_conn *nullable dd_helper_mgr_cur_conn(void)
 }
 
 // Since file comes from a literal, assume it has a safe length
-static char * _concat_paths(const char *nonnull base, size_t base_len,
+static char *_concat_paths(const char *nonnull base, size_t base_len,
     const char *nonnull file, size_t file_len)
 {
     unsigned add_slash = base[base_len - 1] != '/';
