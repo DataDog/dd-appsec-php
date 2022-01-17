@@ -226,20 +226,17 @@ static char * _concat_paths(const char *nonnull base, size_t base_len,
 {
     unsigned add_slash = base[base_len - 1] != '/';
 
-    char *ptr, *ret = safe_pemalloc(base_len, 1, add_slash + file_len + 1, 1);
-
-    ptr = ret;
+    char *ret = safe_pemalloc(base_len, 1, add_slash + file_len + 1, 1);
+    char *ptr = ret;
 
     memcpy(ptr, base, base_len);
     ptr += base_len;
     if (add_slash) {
-        *ptr = '/';
-        ptr++;
+        *ptr++ = '/';
     }
 
     memcpy(ptr, file, file_len);
-    ptr += file_len;
-    *ptr = '\0';
+    ptr[file_len] = '\0';
 
     return ret;
 }

@@ -36,26 +36,24 @@ class Apache2FpmTests implements CommonTests {
                 'bash', '-c',
                 'php-fpm -d extension=ddtrace.so -d extension=ddappsec.so ' +
                         '-d datadog.appsec.enabled=1 ' +
-                        '-d datadog.appsec.helper_socket_path=/tmp/foo.sock ' +
-                        '-d datadog.appsec.helper_lock_path=/tmp/foo.lock ' +
+                        '-d datadog.appsec.helper_runtime_path=/tmp/ ' +
                         '-i')
         if (res.exitCode != 0) {
             throw new AssertionError("Failed executing php-fpm -i: $res.stderr")
         }
-        res = CONTAINER.execInContainer('test', '-S', '/tmp/foo.sock')
+        res = CONTAINER.execInContainer('test', '-S', '/tmp/ddappsec_0.1.0.sock')
         assert res.exitCode != 0
 
         res = CONTAINER.execInContainer(
                 'bash', '-c',
                 'php-fpm -d extension=ddtrace.so -d extension=ddappsec.so ' +
                         '-d datadog.appsec.enabled_on_cli=1 ' +
-                        '-d datadog.appsec.helper_socket_path=/tmp/foo.sock ' +
-                        '-d datadog.appsec.helper_lock_path=/tmp/foo.lock ' +
+                        '-d datadog.appsec.helper_runtime_path=/tmp/ ' +
                         '-i')
         if (res.exitCode != 0) {
             throw new AssertionError("Failed executing php-fpm -i: $res.stderr")
         }
-        res = CONTAINER.execInContainer('test', '-S', '/tmp/foo.sock')
+        res = CONTAINER.execInContainer('test', '-S', '/tmp/ddappsec_0.1.0.sock')
         assert res.exitCode == 0
     }
 }
