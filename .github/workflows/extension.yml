@@ -74,6 +74,7 @@ jobs:
       - name: Install required packages
         if: matrix.cfg.os == 'ubuntu-latest'
         run: |
+          sudo apt-get update
           sudo apt-get install -y \
           libcurl4-openssl-dev $(if [[ "${{ matrix.cfg.valgrind }}" = true ]]; then \
             echo valgrind php${{ matrix.cfg.version }}-cli php${{ matrix.cfg.version }}-cli-dbgsym \
