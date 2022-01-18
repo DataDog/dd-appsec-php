@@ -910,8 +910,8 @@ static ZEND_INI_MH(_on_update_config_string)
         (const char **)&_config + (uintptr_t)mh_arg1;
     *target = ZSTR_VAL(new_value);
 
-    if (zend_string_equals_literal(entry->name,
-            "datadog.appsec.helper_runtime_path")) {
+    if (zend_string_equals_literal(
+            entry->name, "datadog.appsec.helper_runtime_path")) {
         _set_runtime_paths();
     }
 
