@@ -44,7 +44,7 @@ class Apache2FpmTests implements CommonTests {
             throw new AssertionError("Failed executing php-fpm -i: $res.stderr")
         }
         res = CONTAINER.execInContainer('/bin/bash', '-c', 
-            'test $(find . -maxdepth 1 -type s -name \'ddappsec_*.sock\' | wc -l) -eq 1')
+            'test $(find /tmp/cli/ -maxdepth 1 -type s -name 'ddappsec_*.sock' | wc -l) -eq 1')
         assert res.exitCode != 0
 
         res = CONTAINER.execInContainer(
@@ -57,7 +57,7 @@ class Apache2FpmTests implements CommonTests {
             throw new AssertionError("Failed executing php-fpm -i: $res.stderr")
         }
         res = CONTAINER.execInContainer('/bin/bash', '-c', 
-            'test $(find . -maxdepth 1 -type s -name \'ddappsec_*.sock\' | wc -l) -eq 1')
+            'test $(find /tmp/cli/ -maxdepth 1 -type s -name 'ddappsec_*.sock' | wc -l) -eq 1')
         assert res.exitCode == 0
     }
 }
