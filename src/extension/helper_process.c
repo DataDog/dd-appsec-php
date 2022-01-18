@@ -37,13 +37,13 @@
 #include "version.h"
 
 typedef struct _dd_helper_mgr {
-    pid_t pid;
     dd_conn conn;
 
     struct timespec next_retry;
     uint16_t failed_count;
     bool connected_this_req;
     bool launched_this_req;
+    pid_t pid;
     char *nonnull socket_path;
     char *nonnull lock_path;
 } dd_helper_mgr;
@@ -220,10 +220,11 @@ dd_conn *nullable dd_helper_mgr_cur_conn(void)
 static char *_concat_paths(const char *nonnull base, size_t base_len,
     const char *nonnull file, size_t file_len)
 {
-    unsigned add_slash = base[base_len - 1] != '/';
+    bool add_slash = base[base_len - 1] != '/';
 
-    // Since file comes from a literal, assume it has a safe length
-    char *ret = safe_pemalloc(base_len, 1, add_slash + file_len + 1, 1);
+    // Since file comes from a literal, assume it has a safe length. To that
+    // add the slash, the base length and the null character.
+    char *ret = safe_pemalloc(base_len, 1, (add_slash ? 2 : 1) + file_len, 1);
     char *ptr = ret;
 
     memcpy(ptr, base, base_len);
@@ -249,11 +250,11 @@ static void _set_runtime_paths()
 
     pefree(_mgr.socket_path, 1);
     _mgr.socket_path = _concat_paths(_config.runtime_path, runtime_path_len,
-        DD_SOCKET_PATH, LSTRLEN(DD_SOCKET_PATH));
+        ZEND_STRL(DD_SOCKET_PATH));
 
     pefree(_mgr.lock_path, 1);
     _mgr.lock_path = _concat_paths(_config.runtime_path, runtime_path_len,
-        DD_LOCK_PATH, LSTRLEN(DD_LOCK_PATH));
+        ZEND_STRL(DD_LOCK_PATH));
 }
 
 // returns true if an attempt to connectt should not be made yet
