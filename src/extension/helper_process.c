@@ -133,7 +133,6 @@ void dd_helper_rshutdown()
     }
 }
 
-static void _set_runtime_paths(void);
 static bool _wait_for_next_retry(void);
 static void _inc_failed_counter(void);
 static void _prevent_launch_attempts(int lock_fd);
@@ -149,8 +148,6 @@ dd_conn *nullable dd_helper_mgr_acquire_conn(client_init_func nonnull init_func)
     if (_wait_for_next_retry()) {
         return NULL;
     }
-
-    _set_runtime_paths();
 
     bool retry = false;
     for (int attempt = 0;; attempt++) {
@@ -220,12 +217,12 @@ dd_conn *nullable dd_helper_mgr_cur_conn(void)
     return NULL;
 }
 
-// Since file comes from a literal, assume it has a safe length
 static char *_concat_paths(const char *nonnull base, size_t base_len,
     const char *nonnull file, size_t file_len)
 {
     unsigned add_slash = base[base_len - 1] != '/';
 
+    // Since file comes from a literal, assume it has a safe length
     char *ret = safe_pemalloc(base_len, 1, add_slash + file_len + 1, 1);
     char *ptr = ret;
 
@@ -243,6 +240,11 @@ static char *_concat_paths(const char *nonnull base, size_t base_len,
 
 static void _set_runtime_paths()
 {
+    if (_config.runtime_path == NULL) {
+        mlog(dd_log_warning, "Empty runtime path");
+        return;
+    }
+
     size_t runtime_path_len = strlen(_config.runtime_path);
 
     pefree(_mgr.socket_path, 1);
@@ -907,6 +909,12 @@ static ZEND_INI_MH(_on_update_config_string)
     const char *nonnull *nonnull target =
         (const char **)&_config + (uintptr_t)mh_arg1;
     *target = ZSTR_VAL(new_value);
+
+    if (zend_string_equals_literal(entry->name,
+            "datadog.appsec.helper_runtime_path")) {
+        _set_runtime_paths();
+    }
+
     return SUCCESS;
 }
 
