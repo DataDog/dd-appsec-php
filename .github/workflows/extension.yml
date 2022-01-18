@@ -69,7 +69,7 @@ jobs:
       - name: Add repository for PHP debug symbols
         if: matrix.cfg.os == 'ubuntu-latest'
         run: |
-          sudo add-apt-repository ppa:ondrej/php
+          echo deb http://ppa.launchpad.net/ondrej/php/ubuntu $(lsb_release -cs) main main/debug | sudo tee -a /etc/apt/sources.list
           sudo apt-get update
       - name: Install required packages
         if: matrix.cfg.os == 'ubuntu-latest'
