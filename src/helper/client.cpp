@@ -70,7 +70,7 @@ bool handle_message(client &client, const network::base_broker &broker,
     } catch (const client_disconnect &) {
         SPDLOG_INFO("Client has disconnected");
     } catch (const std::exception &e) {
-        SPDLOG_WARN("Failed to send response: {}", e.what());
+        SPDLOG_WARN("Failed to handle message: {}", e.what());
     }
 
     return false;
