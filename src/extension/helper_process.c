@@ -249,12 +249,12 @@ static void _set_runtime_paths()
     size_t runtime_path_len = strlen(_config.runtime_path);
 
     pefree(_mgr.socket_path, 1);
-    _mgr.socket_path = _concat_paths(_config.runtime_path, runtime_path_len,
-        ZEND_STRL(DD_SOCKET_PATH));
+    _mgr.socket_path = _concat_paths(
+        _config.runtime_path, runtime_path_len, ZEND_STRL(DD_SOCKET_PATH));
 
     pefree(_mgr.lock_path, 1);
-    _mgr.lock_path = _concat_paths(_config.runtime_path, runtime_path_len,
-        ZEND_STRL(DD_LOCK_PATH));
+    _mgr.lock_path = _concat_paths(
+        _config.runtime_path, runtime_path_len, ZEND_STRL(DD_LOCK_PATH));
 }
 
 // returns true if an attempt to connectt should not be made yet
