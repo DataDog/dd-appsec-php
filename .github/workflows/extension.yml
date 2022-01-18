@@ -69,12 +69,12 @@ jobs:
       - name: Add repository for PHP debug symbols
         if: matrix.cfg.os == 'ubuntu-latest'
         run: |
-          sudo apt-get install software-properties-common
           sudo add-apt-repository ppa:ondrej/php
           sudo apt-get update
       - name: Install required packages
         if: matrix.cfg.os == 'ubuntu-latest'
         run: |
+          sudo apt --fix-broken install
           sudo apt-get install -y libpcre3 libpcre3-dev \
           libcurl4-openssl-dev $(if [[ "${{ matrix.cfg.valgrind }}" = true ]]; then \
             echo valgrind php${{ matrix.cfg.version }}-cli php${{ matrix.cfg.version }}-cli-dbgsym \
