@@ -46,8 +46,9 @@ static dd_result _request_pack(
 {
     UNUSED(ctx);
 
+    bool send_raw_body = DDAPPSEC_G(testing) && DDAPPSEC_G(testing_raw_body);
 #define REQUEST_INIT_MAP_NUM_ENTRIES 9
-    if (DDAPPSEC_G(testing) && DDAPPSEC_G(testing_raw_body)) {
+    if (send_raw_body) {
         mpack_start_map(w, REQUEST_INIT_MAP_NUM_ENTRIES + 1);
     } else {
         mpack_start_map(w, REQUEST_INIT_MAP_NUM_ENTRIES);
@@ -103,7 +104,7 @@ static dd_result _request_pack(
     _pack_path_params(w, request_uri);
 
     // 10.
-    if (DDAPPSEC_G(testing) && DDAPPSEC_G(testing_raw_body)) {
+    if (send_raw_body) {
         dd_mpack_write_lstr(w, "server.request.body.raw");
         zend_string *nonnull req_body =
             dd_request_body_buffered(DD_MAX_REQ_BODY_TO_BUFFER);
