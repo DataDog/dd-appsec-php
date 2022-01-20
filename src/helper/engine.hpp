@@ -7,6 +7,7 @@
 #define ENGINE_HPP
 #include "config.hpp"
 #include "parameter.hpp"
+#include "rate_limit.hpp"
 #include "result.hpp"
 #include "subscriber/base.hpp"
 #include <iostream>
@@ -30,7 +31,7 @@ namespace dds {
  *    - subscription: the mapping between an address and a subscriber.
  **/
 class engine : std::enable_shared_from_this<engine> {
-    engine() = default;
+    engine(uint32_t trace_rate_limit) : limiter_(trace_rate_limit) {}
 
 public:
     using subscription_map =
@@ -41,8 +42,8 @@ public:
     // store a shared_ptr to the engine
     class context {
     public:
-        explicit context(const engine &engine)
-            : subscriptions_(engine.subscriptions_)
+        explicit context(engine &engine)
+            : subscriptions_(engine.subscriptions_), limiter_(engine.limiter_)
         {}
         context(const context &) = delete;
         context &operator=(const context &) = delete;
@@ -56,15 +57,19 @@ public:
         std::vector<parameter> prev_published_params_;
         std::map<subscriber::ptr, subscriber::listener::ptr> listeners_;
         const subscription_map &subscriptions_;
+        rate_limiter &limiter_;
     };
 
-    static auto create() { return std::shared_ptr<engine>(new engine()); }
+    static auto create(uint32_t trace_rate_limit = 100) {
+        return std::shared_ptr<engine>(new engine(trace_rate_limit));
+    }
 
     context get_context() { return context{*this}; }
     void subscribe(const subscriber::ptr &sub);
 
 protected:
     subscription_map subscriptions_;
+    rate_limiter limiter_;
 };
 
 } // namespace dds
