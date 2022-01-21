@@ -316,11 +316,12 @@ static ZEND_INI_MH(_on_update_unsigned)
     ZEND_INI_MH_UNUSED();
 
     char *endptr = NULL;
-    long ini_value = strtol(ZSTR_VAL(new_value), &endptr, 10);
+#define BASE 10
+    long ini_value = strtol(ZSTR_VAL(new_value), &endptr, BASE);
 
     // If there is any error parsing, don't set the value.
     if (endptr == ZSTR_VAL(new_value) || *endptr != '\0') {
-        return SUCCESS;
+        return FAILURE;
     }
 
     if (ini_value < 0) {
