@@ -31,8 +31,6 @@ namespace dds {
  *    - subscription: the mapping between an address and a subscriber.
  **/
 class engine : std::enable_shared_from_this<engine> {
-    engine(uint32_t trace_rate_limit) : limiter_(trace_rate_limit) {}
-
 public:
     using subscription_map =
         std::map<std::string_view, std::vector<subscriber::ptr>>;
@@ -60,7 +58,7 @@ public:
         rate_limiter &limiter_;
     };
 
-    static auto create(uint32_t trace_rate_limit = 100) {
+    static auto create(uint32_t trace_rate_limit = default_trace_rate_limit) {
         return std::shared_ptr<engine>(new engine(trace_rate_limit));
     }
 
@@ -68,6 +66,10 @@ public:
     void subscribe(const subscriber::ptr &sub);
 
 protected:
+    explicit engine(uint32_t trace_rate_limit) : limiter_(trace_rate_limit) {}
+
+    static constexpr uint32_t default_trace_rate_limit = 100;
+
     subscription_map subscriptions_;
     rate_limiter limiter_;
 };

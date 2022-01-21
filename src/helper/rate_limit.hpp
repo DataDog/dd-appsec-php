@@ -13,7 +13,7 @@ namespace dds {
 
 class rate_limiter {
 public:
-    rate_limiter(uint32_t max_per_second = 100);
+    explicit rate_limiter(uint32_t max_per_second);
     bool allow();
 protected:
     std::mutex mtx_;

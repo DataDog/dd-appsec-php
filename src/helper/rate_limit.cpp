@@ -25,7 +25,7 @@ auto get_time() {
     return std::make_tuple(duration_cast<milliseconds>(now).count(),
                            duration_cast<seconds>(now).count());
 }
-}
+} // namespace
 
 rate_limiter::rate_limiter(unsigned max_per_second) :
     max_per_second_(max_per_second) {}
@@ -48,7 +48,8 @@ bool rate_limiter::allow()
         index_ = now_s;
     }
 
-    uint32_t count = (precounter_ * (1000 - (now_ms % 1000)))/1000 + counter_;
+    constexpr uint32_t mil = 1000;
+    uint32_t count = (precounter_ * (mil - (now_ms % mil)))/mil + counter_;
 
     if (count >= max_per_second_) { return false; }
 
@@ -57,4 +58,4 @@ bool rate_limiter::allow()
     return true;
 }
 
-}
+} // namespace dds
