@@ -11,28 +11,32 @@
 #include <limits>
 #include <tuple>
 
-using std::chrono::seconds;
-using std::chrono::milliseconds;
-using std::chrono::microseconds;
 using std::chrono::duration_cast;
+using std::chrono::microseconds;
+using std::chrono::milliseconds;
+using std::chrono::seconds;
 using std::chrono::system_clock;
 
 namespace dds {
 
 namespace {
-auto get_time() {
+auto get_time()
+{
     auto now = system_clock::now().time_since_epoch();
     return std::make_tuple(duration_cast<milliseconds>(now).count(),
-                           duration_cast<seconds>(now).count());
+        duration_cast<seconds>(now).count());
 }
 } // namespace
 
-rate_limiter::rate_limiter(unsigned max_per_second) :
-    max_per_second_(max_per_second) {}
+rate_limiter::rate_limiter(unsigned max_per_second)
+    : max_per_second_(max_per_second)
+{}
 
 bool rate_limiter::allow()
 {
-    if (max_per_second_ == 0) { return true; }
+    if (max_per_second_ == 0) {
+        return true;
+    }
 
     auto [now_ms, now_s] = get_time();
 
@@ -48,10 +52,12 @@ bool rate_limiter::allow()
         index_ = now_s;
     }
 
-    constexpr uint32_t mil = 1000;
-    uint32_t count = (precounter_ * (mil - (now_ms % mil)))/mil + counter_;
+    constexpr uint64_t mil = 1000;
+    uint32_t count = (precounter_ * (mil - (now_ms % mil))) / mil + counter_;
 
-    if (count >= max_per_second_) { return false; }
+    if (count >= max_per_second_) {
+        return false;
+    }
 
     counter_++;
 

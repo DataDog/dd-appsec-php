@@ -57,7 +57,8 @@ struct client_settings {
         {
             auto h1 = std::hash<decltype(rules_file)>{}(s.rules_file);
             auto h2 = std::hash<decltype(waf_timeout_ms)>{}(s.waf_timeout_ms);
-            auto h3 = std::hash<decltype(trace_rate_limit)>{}(s.trace_rate_limit);
+            auto h3 =
+                std::hash<decltype(trace_rate_limit)>{}(s.trace_rate_limit);
             return h1 ^ h2 ^ h3;
         }
     };

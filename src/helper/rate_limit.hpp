@@ -15,6 +15,7 @@ class rate_limiter {
 public:
     explicit rate_limiter(uint32_t max_per_second);
     bool allow();
+
 protected:
     std::mutex mtx_;
     uint32_t index_{0};
