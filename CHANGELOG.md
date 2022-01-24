@@ -17,7 +17,7 @@
 - ([#53](https://github.com/DataDog/dd-appsec-php/pull/53)) Add client IP inferral from headers, configurable with `DD_APPSEC_IPHEADER`
 - ([#61](https://github.com/DataDog/dd-appsec-php/pull/61)) Basic AppSec trace rate limiting in the daemon, using `DD_APPSEC_TRACE_RATE_LIMIT`
 
-#### Internal Changes
+#### Miscellaneous Changes
 - ([#1](https://github.com/DataDog/dd-appsec-php/pull/1)) Code scanning on daemon code.
 - ([#14](https://github.com/DataDog/dd-appsec-php/pull/14)) The list of response headers transmitted in the trace now contains only:
 	- Content-type
