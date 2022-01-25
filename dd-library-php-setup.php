@@ -355,6 +355,12 @@ function install_appsec($options, $selectedBinaries)
                 echo "Created INI file '$iniFilePath'\n";
             } else {
                 echo "Updating existing INI file '$iniFilePath'\n";
+
+                execute_or_exit(
+                    "Failed to update ini datadog.appse.* settings",
+                    'sed -ri "s@^(;?)ddappsec\.@\1datadog.appsec.@g" ' . escapeshellarg($iniFilePath)
+                );
+
                 repl_or_add_ini_sett($iniFilePath, 'helper_path', $helperPath);
                 repl_or_add_ini_sett($iniFilePath, 'rules_path', $rulesPath);
             }
@@ -1213,7 +1219,7 @@ $enabledLine
 ; Allows dd-appsec to block attacks by committing an error page response (if no
 ; response has already been committed), and issuing an error that cannot be
 ; handled, thereby aborting the request.
-;datadog.appsec.block = On
+;datadog.appsec.block = Off
 
 ; Sets the verbosity of the logs of the dd-appsec extension.
 ; The valid values are 'off', 'error', 'fatal', 'warn' (or 'warning'), 'info',
