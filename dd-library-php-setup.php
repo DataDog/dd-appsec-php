@@ -248,8 +248,6 @@ function install_appsec($options, $selectedBinaries)
         $options[OPT_APPSEC_VERSION] = latest_release("dd-appsec-php");
     }
 
-    echo "Installing appsec\n";
-
     // Preparing clean tmp folder to extract files
     $tmpDir = sys_get_temp_dir() . '/dd-appsec';
     $tarball = "$tmpDir/dd-appsec-php.tar.gz";
@@ -277,7 +275,16 @@ function install_appsec($options, $selectedBinaries)
         download($url, $tarball);
     }
 
-    $installDir = "{$options[OPT_INSTALL_DIR]}/appsec-" . extract_version_appsec($options, $tarball);
+    $tarball_version = extract_version_appsec($options, $tarball);
+    if (version_compare($tarball_version, "0.2.0", "<")) {
+        print_error_and_exit(
+            "The version of the AppSec package provided/downloaded is " .
+            $tarball_version .
+            " but the minimum version supported by this installer is 0.2.0\n");
+    }
+    $installDir = "{$options[OPT_INSTALL_DIR]}/appsec-" . $tarball_version;
+
+    echo "Installing appsec\n";
 
     // copying sources to the final destination
     execute_or_exit(
@@ -355,6 +362,12 @@ function install_appsec($options, $selectedBinaries)
                 echo "Created INI file '$iniFilePath'\n";
             } else {
                 echo "Updating existing INI file '$iniFilePath'\n";
+
+                execute_or_exit(
+                    "Failed to update ini datadog.appse.* settings",
+                    'sed -ri "s@^(;?)ddappsec\.@\1datadog.appsec.@g" ' . escapeshellarg($iniFilePath)
+                );
+
                 repl_or_add_ini_sett($iniFilePath, 'helper_path', $helperPath);
                 repl_or_add_ini_sett($iniFilePath, 'rules_path', $rulesPath);
             }
@@ -366,20 +379,20 @@ function install_appsec($options, $selectedBinaries)
 function repl_or_add_ini_sett($iniFilePath, $key, $value)
 {
     $escPath = escapeshellarg($iniFilePath);
-    exec("grep -qF ddappsec.$key $escPath", $out, $exitCode);
+    exec("grep -qF datadog.appsec.$key $escPath", $out, $exitCode);
     if ($exitCode != 0) {
         // not found
         $f = fopen($iniFilePath, "a");
         if ($f === false) {
             print_error_and_exit("Could not open $iniFilePath for writing");
     }
-        fwrite($f, "\n\nddappsec.$key = \"$value\"");
+        fwrite($f, "\n\ndatadog.appsec.$key = \"$value\"");
         return;
     }
 
-    $expr = "s@^\(ddappsec\.$key\s*\).*@\\1= \"$value\"@";
+    $expr = "s@^\(datadog.appsec\.$key\s*\).*@\\1= \"$value\"@";
     execute_or_exit(
-        "Impossible to replace setting ddappsec.$key with the new value.",
+        "Impossible to replace setting datadog.appsec.$key with the new value.",
         'sed -i ' . escapeshellarg($expr) . ' ' . escapeshellarg($iniFilePath)
     );
 }
@@ -897,7 +910,7 @@ function ini_values($binary)
     $lines = [];
     // Timezone is irrelevant to this script. Quick-and-dirty workaround to the PHP 5 warning with missing timezone
     exec(escapeshellarg($binary) .
-        ' -d ddappsec.enabled=0 -d ddappsec.enabled_on_cli=0 -d date.timezone=UTC -i', $lines);
+        ' -d datadog.appsec.enabled=0 -d datadog.appsec.enabled_on_cli=0 -d date.timezone=UTC -i', $lines);
     $found = [];
     foreach ($lines as $line) {
         $parts = explode('=>', $line);
@@ -1190,9 +1203,9 @@ EOD;
 function get_ini_content_appsec($helperPath, $rulesPath, $implicitAppsec)
 {
     if ($implicitAppsec) {
-        $enabledLine = ';ddappsec.enabled = Off';
+        $enabledLine = ';datadog.appsec.enabled = Off';
     } else {
-        $enabledLine = 'ddappsec.enabled = On';
+        $enabledLine = 'datadog.appsec.enabled = On';
     }
 
     // phpcs:disable Generic.Files.LineLength.TooLong
@@ -1202,28 +1215,28 @@ extension = ddappsec.so
 
 ; Enables or disables the loaded dd-appsec extension.
 ; If disabled, the extension will do no work during the requests.
-; This value is ignored on the CLI SAPI, see ddappsec.enabled_on_cli.
+; This value is ignored on the CLI SAPI, see datadog.appsec.enabled_on_cli.
 $enabledLine
 
 ; Enables or disables the loaded dd-appsec extension for the CLI SAPI.
-; This value is only used for the CLI SAPI, see ddappsec.enabled for the
+; This value is only used for the CLI SAPI, see datadog.appsec.enabled for the
 ; corresponding setting on other SAPIs.
-;ddappsec.enabled_on_cli = Off
+;datadog.appsec.enabled_on_cli = Off
 
 ; Allows dd-appsec to block attacks by committing an error page response (if no
 ; response has already been committed), and issuing an error that cannot be
 ; handled, thereby aborting the request.
-;ddappsec.block = On
+;datadog.appsec.block = Off
 
 ; Sets the verbosity of the logs of the dd-appsec extension.
 ; The valid values are 'off', 'error', 'fatal', 'warn' (or 'warning'), 'info',
 ; 'debug' and 'trace', in increasing order of verbosity.
-;ddappsec.log_level = 'warn'
+;datadog.appsec.log_level = 'warn'
 
 ; The destination of the log messages. Valid values are 'php_error_reporting'
 ; (issues PHP notices or warnings), 'syslog', 'stdout', 'stderr', or an
 ; arbitrary file name to which the messages will be appended.
-;ddappsec.log_file = php_error_reporting
+;datadog.appsec.log_file = php_error_reporting
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Messages related to the helper ;
@@ -1235,41 +1248,38 @@ $enabledLine
 ; If this is disabled, the helper should be launched through some other method.
 ; The extension expects the helper to run under the same user as the process
 ; where PHP is running, and will verify it.
-;ddappsec.helper_launch = On
+;datadog.appsec.helper_launch = On
 
-; If ddappsec.helper_launch is enabled, this setting determines which binary
+; If datadog.appsec.helper_launch is enabled, this setting determines which binary
 ; the extension should try to execute.
-; Only relevant if ddappsec.helper_launch is enabled.
+; Only relevant if datadog.appsec.helper_launch is enabled.
 ; This ini setting is configured by the installer.
-ddappsec.helper_path = '$helperPath'
+datadog.appsec.helper_path = '$helperPath'
 
 ; Additional arguments that should be used when attempting to launch the helper
 ; process. The extension always passes '--lock_path - --socket_path fd:<int>'
 ; The arguments should be space separated. Both single and double quotes can
 ; be used should an argument contain spaces. The backslash (\) can be used to
 ; escape spaces, quotes, and the blackslash itself.
-; Only relevant if ddappsec.helper_launch is enabled.
-;ddappsec.helper_extra_args = ""
+; Only relevant if datadog.appsec.helper_launch is enabled.
+;datadog.appsec.helper_extra_args = ""
 
 ; The path to the rules json file. The helper process must be able to read the
 ; file. This ini setting is configured by the installer.
-ddappsec.rules_path = "$rulesPath"
+datadog.appsec.rules_path = "$rulesPath"
 
 ; The location to the UNIX socket that extension uses to communicate with the
-; helper.
-;ddappsec.helper_socket_path = /tmp/ddappsec.sock
-
-; The location of the lock file that the extension processes will use to
+; helper and the lock file that the extension processes will use to
 ; synchronize the launching of the helper.
-; Only relevant if ddappsec.helper_launch is enabled.
-;ddappsec.helper_lock_path = /tmp/ddappsec.lock
+; Only relevant if datadog.appsec.helper_launch is enabled.
+;datadog.appsec.helper_runtime_path = /tmp/
 
 ; The location of the log file of the helper. This default to /dev/null (the log
 ; messages will be discarded. This file is opened by the extension just before
 ; launching the daemon and the file descriptor is passed to the helper as its
 ; stderr, to which it will write its messages; this setting is therefore only
-; relevant if ddappsec.helper_launch is enabled.
-;ddappsec.helper_log_file = /dev/null
+; relevant if datadog.appsec.helper_launch is enabled.
+;datadog.appsec.helper_log_file = /dev/null
 EOD;
     // phpcs:enable Generic.Files.LineLength.TooLong
 }
