@@ -2,7 +2,7 @@
 
 ### v0.2.1
 #### Miscellaneous Changes
-- ([#65](https://github.com/DataDog/dd-appsec-php/pull/65) Update ruleset to v1.2.5
+- ([#65](https://github.com/DataDog/dd-appsec-php/pull/65)) Update ruleset to v1.2.5
 
 ### v0.2.0
 
