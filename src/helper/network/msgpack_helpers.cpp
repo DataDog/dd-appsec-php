@@ -36,8 +36,8 @@ dds::parameter msgpack_to_param(const msgpack::object &o, unsigned depth = 0)
         for (uint32_t i = 0; i < map.size; i++) {
             const msgpack::object_kv &kv = map.ptr[i];
             // Assume keys are strings
-            p.add(kv.key.as<std::string_view>(),
-                msgpack_to_param(kv.val, depth));
+            p.add(
+                kv.key.as<std::string_view>(), msgpack_to_param(kv.val, depth));
         }
         return p;
     }

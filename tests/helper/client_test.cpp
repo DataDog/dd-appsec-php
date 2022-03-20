@@ -457,8 +457,8 @@ TEST(ClientTest, RequestShutdown)
     {
         network::request_init::request msg;
         msg.data = parameter::map();
-        msg.data.add(
-            "server.request.headers.no_cookies", parameter::string("Arachni"sv));
+        msg.data.add("server.request.headers.no_cookies",
+            parameter::string("Arachni"sv));
 
         network::request req(std::move(msg));
 
@@ -522,8 +522,8 @@ TEST(ClientTest, RequestShutdownInvalidData)
     {
         network::request_init::request msg;
         msg.data = parameter::map();
-        msg.data.add(
-            "server.request.headers.no_cookies", parameter::string("Arachni"sv));
+        msg.data.add("server.request.headers.no_cookies",
+            parameter::string("Arachni"sv));
 
         network::request req(std::move(msg));
 
@@ -645,8 +645,8 @@ TEST(ClientTest, RequestShutdownBrokerThrows)
     {
         network::request_init::request msg;
         msg.data = parameter::map();
-        msg.data.add(
-            "server.request.headers.no_cookies", parameter::string("Arachni"sv));
+        msg.data.add("server.request.headers.no_cookies",
+            parameter::string("Arachni"sv));
 
         network::request req(std::move(msg));
 

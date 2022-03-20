@@ -4,8 +4,8 @@
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #include "common.hpp"
-#include <parameter.hpp>
 #include <exception.hpp>
+#include <parameter.hpp>
 
 const std::string waf_rule =
     R"({"version":"1.0","events":[{"id":1,"tags":{"type":"flow1"},"conditions":[{"operation":"match_regex","parameters":{"inputs":["arg1"],"regex":"^string.*"}},{"operation":"match_regex","parameters":{"inputs":["arg2"],"regex":".*"}}],"action":"record"}]})";
@@ -22,7 +22,7 @@ TEST(ParameterTest, EmptyConstructor)
 TEST(ParameterTest, UintMaxConstructor)
 {
     uint64_t value = std::numeric_limits<uint64_t>::max();
-    parameter p= parameter::uint64(value);
+    parameter p = parameter::uint64(value);
     EXPECT_EQ(p.type(), parameter_type::string);
     EXPECT_NE(p.stringValue, nullptr);
     EXPECT_THROW(p[0], std::out_of_range);

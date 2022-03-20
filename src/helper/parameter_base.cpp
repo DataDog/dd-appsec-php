@@ -1,3 +1,9 @@
+// Unless explicitly stated otherwise all files in this repository are
+// dual-licensed under the Apache-2.0 License or BSD-3-Clause License.
+//
+// This product includes software developed at Datadog
+// (https://www.datadoghq.com/). Copyright 2022 Datadog, Inc.
+
 #include <limits>
 #include <string>
 #include <string_view>
@@ -32,7 +38,8 @@ void debug_str_helper(std::string &res, const parameter_base &p)
     case parameter_type::array:
         res += '[';
         for (decltype(p.nbEntries) i = 0; i < p.nbEntries; i++) {
-            debug_str_helper(res, static_cast<const parameter_base&>(p.array[i]));
+            debug_str_helper(
+                res, static_cast<const parameter_base &>(p.array[i]));
             if (i != p.size() - 1) {
                 res += ", ";
             }
@@ -42,7 +49,8 @@ void debug_str_helper(std::string &res, const parameter_base &p)
     case parameter_type::map:
         res += '{';
         for (decltype(p.nbEntries) i = 0; i < p.nbEntries; i++) {
-            debug_str_helper(res, static_cast<const parameter_base&>(p.array[i]));
+            debug_str_helper(
+                res, static_cast<const parameter_base &>(p.array[i]));
             if (i != p.size() - 1) {
                 res += ", ";
             }
@@ -60,4 +68,4 @@ std::string parameter_base::debug_str() const noexcept
     return res;
 }
 
-}
+} // namespace dds

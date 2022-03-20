@@ -6,10 +6,10 @@
 #include "common.hpp"
 #include "version.hpp"
 #include <exception.hpp>
-#include <parameter_view.hpp>
 #include <msgpack.hpp>
 #include <network/broker.hpp>
 #include <network/socket.hpp>
+#include <parameter_view.hpp>
 
 namespace dds {
 

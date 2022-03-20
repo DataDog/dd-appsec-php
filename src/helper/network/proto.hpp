@@ -117,7 +117,7 @@ struct request_init {
         request &operator=(const request &) = delete;
         request(request &&) = default;
         request &operator=(request &&) = default;
-        ~request() override = default;//{ data.free(); }
+        ~request() override = default; //{ data.free(); }
 
         MSGPACK_DEFINE(data)
     };

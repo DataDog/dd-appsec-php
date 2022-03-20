@@ -3,29 +3,27 @@
 //
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
-#include "exception.hpp"
 #include "parameter.hpp"
+#include "exception.hpp"
 
 #include <iostream>
 
-namespace
-{
+namespace {
 
 const std::string strtype(int type)
 {
-    switch (type)
-    {
-        case DDWAF_OBJ_MAP:
-            return "map";
-        case DDWAF_OBJ_ARRAY:
-            return "array";
-        case DDWAF_OBJ_STRING:
-            return "string";
+    switch (type) {
+    case DDWAF_OBJ_MAP:
+        return "map";
+    case DDWAF_OBJ_ARRAY:
+        return "array";
+    case DDWAF_OBJ_STRING:
+        return "string";
     }
     return "unknown";
 }
 
-}
+} // namespace
 
 namespace dds {
 
@@ -113,14 +111,15 @@ bool parameter::add(std::string_view name, parameter &&entry) noexcept
     return true;
 }
 
-parameter& parameter::operator[](size_t index) const
+parameter &parameter::operator[](size_t index) const
 {
     if (!is_container() || index >= size()) {
         throw std::out_of_range("index(" + std::to_string(index) +
-                ") out of range(" + std::to_string(size()) + ")");
+                                ") out of range(" + std::to_string(size()) +
+                                ")");
     }
 
-    return static_cast<parameter&>(ddwaf_object::array[index]);
+    return static_cast<parameter &>(ddwaf_object::array[index]);
 }
 
 } // namespace dds
