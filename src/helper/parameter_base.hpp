@@ -8,6 +8,7 @@
 
 #include "exception.hpp"
 #include <ddwaf.h>
+#include <limits>
 
 namespace dds {
 
@@ -22,12 +23,18 @@ enum parameter_type : unsigned {
 
 class parameter_base : public ddwaf_object {
 public:
-    parameter_base() { ddwaf_object_invalid(this); }
+    parameter_base() : ddwaf_object() { ddwaf_object_invalid(this); }
+
+    parameter_base(const parameter_base &) = default;
+    parameter_base &operator=(const parameter_base &) = default;
+
+    parameter_base(parameter_base &&) = default;
+    parameter_base &operator=(parameter_base &&) = default;
 
     virtual ~parameter_base() = default;
 
     // Container size
-    parameter_type type() const noexcept
+    [[nodiscard]] parameter_type type() const noexcept
     {
         return static_cast<parameter_type>(ddwaf_object::type);
     }
@@ -77,31 +84,31 @@ public:
     {
         return ddwaf_object::type != DDWAF_OBJ_INVALID;
     }
-
+    // NOLINTNEXTLINE
     operator ddwaf_object *() noexcept { return this; }
 
-    operator std::string_view() const
+    explicit operator std::string_view() const
     {
         if (!is_string()) {
             throw bad_cast("parameter not a string");
         }
-        return std::string_view(stringValue, nbEntries);
+        return {stringValue, nbEntries};
     }
-    operator std::string() const
+    explicit operator std::string() const
     {
         if (!is_string()) {
             throw bad_cast("parameter not a string");
         }
-        return std::string(stringValue, nbEntries);
+        return {stringValue, nbEntries};
     }
-    operator uint64_t() const
+    explicit operator uint64_t() const
     {
         if (!is_unsigned()) {
             throw bad_cast("parameter not an uint64");
         }
         return uintValue;
     }
-    operator int64_t() const
+    explicit operator int64_t() const
     {
         if (!is_signed()) {
             throw bad_cast("parameter not an int64");

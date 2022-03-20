@@ -10,7 +10,7 @@
 
 namespace {
 
-const std::string strtype(int type)
+std::string strtype(int type)
 {
     switch (type) {
     case DDWAF_OBJ_MAP:
@@ -19,6 +19,8 @@ const std::string strtype(int type)
         return "array";
     case DDWAF_OBJ_STRING:
         return "string";
+    default:
+        break;
     }
     return "unknown";
 }
@@ -27,14 +29,9 @@ const std::string strtype(int type)
 
 namespace dds {
 
-parameter::parameter() : parameter_base() {}
+parameter::parameter(const ddwaf_object &arg) { *((ddwaf_object *)this) = arg; }
 
-parameter::parameter(const ddwaf_object &arg) : parameter_base()
-{
-    *((ddwaf_object *)this) = arg;
-}
-
-parameter::parameter(parameter &&other) noexcept : parameter_base()
+parameter::parameter(parameter &&other) noexcept
 {
     *((ddwaf_object *)this) = *other;
     ddwaf_object_invalid(other);
@@ -119,6 +116,7 @@ parameter &parameter::operator[](size_t index) const
                                 ")");
     }
 
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
     return static_cast<parameter &>(ddwaf_object::array[index]);
 }
 

@@ -40,7 +40,7 @@ result engine::context::publish(parameter &&param)
     }
 
     std::set<subscriber::ptr> sub_set;
-    for (auto &entry : data) {
+    for (const auto &entry : data) {
         auto key = entry.key();
         DD_STDLOG(DD_STDLOG_IG_DATA_PUSHED, key);
         auto it = subscriptions_.find(key);

@@ -24,7 +24,7 @@ class parameter_view : public parameter_base {
 public:
     class iterator {
     public:
-        iterator(const parameter_view &pv, size_t index = 0)
+        explicit iterator(const parameter_view &pv, size_t index = 0)
             : current_(pv.array + index), end_(pv.array + pv.nbEntries)
         {}
 
@@ -35,6 +35,8 @@ public:
 
         const parameter_view &operator*() const
         {
+
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
             return static_cast<const parameter_view &>(*current_);
         }
 
@@ -51,7 +53,7 @@ public:
         const ddwaf_object *end_{nullptr};
     };
 
-    parameter_view() : parameter_base() {}
+    parameter_view() = default;
     explicit parameter_view(const ddwaf_object &arg)
     {
         *((ddwaf_object *)this) = arg;
@@ -70,14 +72,14 @@ public:
 
     ~parameter_view() override = default;
 
-    iterator begin() const
+    [[nodiscard]] iterator begin() const
     {
         if (!is_container()) {
             throw;
         }
         return iterator(*this);
     }
-    iterator end() const
+    [[nodiscard]] iterator end() const
     {
         if (!is_container()) {
             throw;
@@ -92,6 +94,7 @@ public:
                                     ") out of range(" + std::to_string(size()) +
                                     ")");
         }
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
         return static_cast<parameter_view>(ddwaf_object::array[index]);
     }
 };

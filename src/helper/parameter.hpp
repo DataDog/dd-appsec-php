@@ -20,7 +20,7 @@ namespace dds {
 
 class parameter : public parameter_base {
 public:
-    parameter();
+    parameter() = default;
     explicit parameter(const ddwaf_object &arg);
 
     parameter(const parameter &) = delete;            // fault;

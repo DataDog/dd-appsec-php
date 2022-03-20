@@ -14,44 +14,42 @@ namespace dds {
 
 namespace {
 // NOLINTNEXTLINE(misc-no-recursion,google-runtime-references)
-void debug_str_helper(std::string &res, const parameter_base &p)
+void debug_str_helper(std::string &res, const ddwaf_object &p)
 {
     if (p.parameterNameLength != 0U) {
-        res += p.key();
+        res += p.parameterName;
         res += ": ";
     }
-    switch (p.type()) {
-    case parameter_type::invalid:
+    switch (p.type) {
+    case DDWAF_OBJ_INVALID:
         res += "<invalid>";
         break;
-    case parameter_type::int64:
+    case DDWAF_OBJ_SIGNED:
         res += std::to_string(p.intValue);
         break;
-    case parameter_type::uint64:
+    case DDWAF_OBJ_UNSIGNED:
         res += std::to_string(p.uintValue);
         break;
-    case parameter_type::string:
+    case DDWAF_OBJ_STRING:
         res += '"';
         res += std::string_view{p.stringValue, p.nbEntries};
         res += '"';
         break;
-    case parameter_type::array:
+    case DDWAF_OBJ_ARRAY:
         res += '[';
         for (decltype(p.nbEntries) i = 0; i < p.nbEntries; i++) {
-            debug_str_helper(
-                res, static_cast<const parameter_base &>(p.array[i]));
-            if (i != p.size() - 1) {
+            debug_str_helper(res, p.array[i]);
+            if (i != p.nbEntries - 1) {
                 res += ", ";
             }
         }
         res += ']';
         break;
-    case parameter_type::map:
+    case DDWAF_OBJ_MAP:
         res += '{';
         for (decltype(p.nbEntries) i = 0; i < p.nbEntries; i++) {
-            debug_str_helper(
-                res, static_cast<const parameter_base &>(p.array[i]));
-            if (i != p.size() - 1) {
+            debug_str_helper(res, p.array[i]);
+            if (i != p.nbEntries - 1) {
                 res += ", ";
             }
         }
