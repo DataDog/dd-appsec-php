@@ -48,7 +48,7 @@ public:
         context &operator=(const context &) = delete;
         context(context &&) = delete;
         context &operator=(context &&) = delete;
-        ~context();
+        ~context() = default;
 
         result publish(parameter &&param);
 

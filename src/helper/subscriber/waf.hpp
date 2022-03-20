@@ -32,7 +32,7 @@ public:
         listener &operator=(listener &&) noexcept;
         ~listener() override;
 
-        dds::result call(dds::parameter &data) override;
+        dds::result call(dds::parameter_view &data) override;
 
     protected:
         ddwaf_context handle_{};
