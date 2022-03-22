@@ -68,6 +68,18 @@ protected:
     const std::string what_;
 };
 
+class invalid_type : public std::exception {
+public:
+    explicit invalid_type(std::string what) : what_(std::move(what)) {}
+    [[nodiscard]] const char *what() const noexcept override
+    {
+        return what_.c_str();
+    }
+
+protected:
+    const std::string what_;
+};
+
 class bad_cast : public std::exception {
 public:
     explicit bad_cast(std::string what) : what_(std::move(what)) {}

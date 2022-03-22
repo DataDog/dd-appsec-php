@@ -36,8 +36,7 @@ using log_counter_sink_st = log_counter_sink<spdlog::details::null_mutex>;
 
 TEST(WafTest, RunWithInvalidParam)
 {
-    subscriber::ptr wi{waf::instance::from_string(
-        waf_rule, client_settings::default_waf_timeout_us)};
+    subscriber::ptr wi{waf::instance::from_string(waf_rule)};
     auto ctx = wi->get_listener();
     parameter_view pv;
     EXPECT_THROW(ctx->call(pv), invalid_object);
@@ -58,8 +57,7 @@ TEST(WafTest, RunWithTimeout)
 
 TEST(WafTest, ValidRunGood)
 {
-    subscriber::ptr wi{waf::instance::from_string(
-        waf_rule, client_settings::default_waf_timeout_us)};
+    subscriber::ptr wi{waf::instance::from_string(waf_rule)};
     auto ctx = wi->get_listener();
 
     auto p = parameter::map();
@@ -72,8 +70,7 @@ TEST(WafTest, ValidRunGood)
 
 TEST(WafTest, ValidRunMonitor)
 {
-    subscriber::ptr wi{waf::instance::from_string(
-        waf_rule, client_settings::default_waf_timeout_us)};
+    subscriber::ptr wi{waf::instance::from_string(waf_rule)};
     auto ctx = wi->get_listener();
 
     auto p = parameter::map();

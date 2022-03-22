@@ -229,7 +229,7 @@ TEST(EngineTest, StatefulSubscriptor)
 TEST(EngineTest, WafSubscriptorBasic)
 {
     auto e{engine::create()};
-    e->subscribe(waf::instance::from_string(waf_rule, 100));
+    e->subscribe(waf::instance::from_string(waf_rule));
 
     auto ctx = e->get_context();
 
@@ -251,7 +251,7 @@ TEST(EngineTest, WafSubscriptorBasic)
 TEST(EngineTest, WafSubscriptorInvalidParam)
 {
     auto e{engine::create()};
-    e->subscribe(waf::instance::from_string(waf_rule, 100));
+    e->subscribe(waf::instance::from_string(waf_rule));
 
     auto ctx = e->get_context();
 

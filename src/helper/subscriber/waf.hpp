@@ -55,7 +55,7 @@ public:
 
     // testing only
     static instance::ptr from_string(
-        std::string_view rule, std::uint64_t waf_timeout_us);
+        std::string_view rule, std::uint64_t waf_timeout_us = 10000);
 
 protected:
     ddwaf_handle handle_{nullptr};

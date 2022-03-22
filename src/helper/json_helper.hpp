@@ -6,6 +6,7 @@
 #pragma once
 
 #include <string>
+#include "parameter_view.hpp"
 
 namespace dds {
 
@@ -41,4 +42,5 @@ protected:
     std::string buffer_;
 };
 
+std::string parameter_to_json(const dds::parameter_view &pv);
 } // namespace dds

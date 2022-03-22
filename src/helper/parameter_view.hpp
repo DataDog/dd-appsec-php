@@ -15,6 +15,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "exception.hpp"
 #include "parameter.hpp"
 #include "parameter_base.hpp"
 
@@ -25,7 +26,8 @@ public:
     class iterator {
     public:
         explicit iterator(const parameter_view &pv, size_t index = 0)
-            : current_(pv.array + index), end_(pv.array + pv.nbEntries)
+            : current_(pv.array + (index < pv.nbEntries ? index : pv.nbEntries)),
+              end_(pv.array + pv.nbEntries)
         {}
 
         bool operator!=(const iterator &rhs) const noexcept
@@ -33,9 +35,8 @@ public:
             return current_ != rhs.current_;
         }
 
-        const parameter_view &operator*() const
+        const parameter_view &operator*() const noexcept
         {
-
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
             return static_cast<const parameter_view &>(*current_);
         }
@@ -56,12 +57,13 @@ public:
     parameter_view() = default;
     explicit parameter_view(const ddwaf_object &arg)
     {
-        *((ddwaf_object *)this) = arg;
+        *(static_cast<ddwaf_object *>(this)) = arg;
     }
 
     explicit parameter_view(const parameter &arg)
     {
-        *((ddwaf_object *)this) = (const ddwaf_object &)arg;
+        *(static_cast<ddwaf_object *>(this)) =
+            static_cast<const ddwaf_object&>(arg);
     }
 
     parameter_view(const parameter_view &) = default;
@@ -75,27 +77,29 @@ public:
     [[nodiscard]] iterator begin() const
     {
         if (!is_container()) {
-            throw;
+            throw invalid_type("parameter not a container");
         }
         return iterator(*this);
     }
     [[nodiscard]] iterator end() const
     {
         if (!is_container()) {
-            throw;
+            throw invalid_type("parameter not a container");
         }
         return iterator(*this, size());
     }
 
-    parameter_view operator[](size_t index) const
+    parameter_view& operator[](size_t index) const
     {
-        if (!is_container() || index >= size()) {
+        if (!is_container()) {
+            throw invalid_type("parameter not a container");
+        } else if (index >= size()) {
             throw std::out_of_range("index(" + std::to_string(index) +
                                     ") out of range(" + std::to_string(size()) +
                                     ")");
         }
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-        return static_cast<parameter_view>(ddwaf_object::array[index]);
+        return static_cast<parameter_view&>(ddwaf_object::array[index]);
     }
 };
 
