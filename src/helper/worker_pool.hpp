@@ -20,7 +20,7 @@ namespace dds::worker {
 
 class queue_consumer;
 
-using runnable = std::function<void(queue_consumer &)>;
+using runnable = std::function<void(queue_consumer)>;
 
 class queue_producer {
 public:

@@ -15,7 +15,7 @@ namespace {
 void work_handler(queue_consumer &&q, std::optional<runnable> &&opt_r)
 {
     while (q.running() && opt_r) {
-        opt_r.value()(q);
+        opt_r.value()(std::move(q));
         opt_r = std::move(q.pop(60s));
     }
 }
@@ -24,7 +24,6 @@ void work_handler(queue_consumer &&q, std::optional<runnable> &&opt_r)
 
 bool queue_producer::push(runnable &data)
 {
-
     {
         std::unique_lock<std::mutex> lock(q_.mtx);
         if (q_.pending > 0) {
@@ -54,7 +53,7 @@ bool pool::launch(runnable &&f)
     }
 
     if (!q_.push(f)) {
-        std::thread(work_handler, queue_consumer(q_), std::move(f)).detach();
+        std::thread(work_handler, std::move(queue_consumer(q_)), std::move(f)).detach();
     }
     return true;
 }
