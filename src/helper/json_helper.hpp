@@ -5,8 +5,8 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #pragma once
 
-#include <string>
 #include "parameter_view.hpp"
+#include <string>
 
 namespace dds {
 

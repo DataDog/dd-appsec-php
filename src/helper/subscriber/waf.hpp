@@ -22,6 +22,8 @@ void initialise_logging(spdlog::level::level_enum level);
 
 class instance : public dds::subscriber {
 public:
+    static constexpr int default_waf_timeout_us = 10000;
+
     using ptr = std::shared_ptr<instance>;
     class listener : public dds::subscriber::listener {
     public:
@@ -54,8 +56,8 @@ public:
     static instance::ptr from_settings(const client_settings &settings);
 
     // testing only
-    static instance::ptr from_string(
-        std::string_view rule, std::uint64_t waf_timeout_us = 10000);
+    static instance::ptr from_string(std::string_view rule,
+        std::uint64_t waf_timeout_us = default_waf_timeout_us);
 
 protected:
     ddwaf_handle handle_{nullptr};

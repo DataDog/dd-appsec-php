@@ -26,7 +26,8 @@ public:
     class iterator {
     public:
         explicit iterator(const parameter_view &pv, size_t index = 0)
-            : current_(pv.array + (index < pv.nbEntries ? index : pv.nbEntries)),
+            : current_(
+                  pv.array + (index < pv.nbEntries ? index : pv.nbEntries)),
               end_(pv.array + pv.nbEntries)
         {}
 
@@ -63,7 +64,7 @@ public:
     explicit parameter_view(const parameter &arg)
     {
         *(static_cast<ddwaf_object *>(this)) =
-            static_cast<const ddwaf_object&>(arg);
+            static_cast<const ddwaf_object &>(arg);
     }
 
     parameter_view(const parameter_view &) = default;
@@ -89,17 +90,19 @@ public:
         return iterator(*this, size());
     }
 
-    parameter_view& operator[](size_t index) const
+    parameter_view &operator[](size_t index) const
     {
         if (!is_container()) {
             throw invalid_type("parameter not a container");
-        } else if (index >= size()) {
+        }
+
+        if (index >= size()) {
             throw std::out_of_range("index(" + std::to_string(index) +
                                     ") out of range(" + std::to_string(size()) +
                                     ")");
         }
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-        return static_cast<parameter_view&>(ddwaf_object::array[index]);
+        return static_cast<parameter_view &>(ddwaf_object::array[index]);
     }
 };
 

@@ -5,9 +5,9 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #include "common.hpp"
 #include <exception.hpp>
-#include <parameter_view.hpp>
 #include <iostream>
 #include <limits>
+#include <parameter_view.hpp>
 
 namespace dds {
 
@@ -22,12 +22,11 @@ TEST(ParameterViewTest, EmptyConstructor)
     EXPECT_THROW(auto u64 = uint64_t(p), bad_cast);
     EXPECT_THROW(auto i64 = int64_t(p), bad_cast);
 
-    EXPECT_THROW([&]{
-        for (auto value : p) {
-            EXPECT_FALSE(value.is_valid());
-        }} (),
-        invalid_type
-    );
+    EXPECT_THROW(
+        [&] {
+            for (auto value : p) { EXPECT_FALSE(value.is_valid()); }
+        }(),
+        invalid_type);
 }
 
 TEST(ParameterViewTest, FromStringParameter)
@@ -45,12 +44,11 @@ TEST(ParameterViewTest, FromStringParameter)
     EXPECT_THROW(auto u64 = uint64_t(pv), bad_cast);
     EXPECT_THROW(auto i64 = int64_t(pv), bad_cast);
 
-    EXPECT_THROW([&]{
-        for (auto value : pv) {
-            EXPECT_FALSE(value.is_valid());
-        }} (),
-        invalid_type
-    );
+    EXPECT_THROW(
+        [&] {
+            for (auto value : pv) { EXPECT_FALSE(value.is_valid()); }
+        }(),
+        invalid_type);
 
     EXPECT_THROW(auto &pv0 = pv[0], invalid_type);
 }
@@ -59,9 +57,7 @@ TEST(ParameterViewTest, FromArrayParameter)
 {
     int i;
     parameter p = parameter::array();
-    for (i = 0; i < 5; i++) {
-        p.add(parameter::string(std::to_string(i)));
-    }
+    for (i = 0; i < 5; i++) { p.add(parameter::string(std::to_string(i))); }
 
     parameter_view pv(p);
     EXPECT_EQ(pv.type(), p.type());
@@ -133,12 +129,11 @@ TEST(ParameterViewTest, FromStringObject)
     EXPECT_THROW(auto u64 = uint64_t(pv), bad_cast);
     EXPECT_THROW(auto i64 = int64_t(pv), bad_cast);
 
-    EXPECT_THROW([&]{
-        for (auto value : pv) {
-            EXPECT_FALSE(value.is_valid());
-        }} (),
-        invalid_type
-    );
+    EXPECT_THROW(
+        [&] {
+            for (auto value : pv) { EXPECT_FALSE(value.is_valid()); }
+        }(),
+        invalid_type);
 
     EXPECT_THROW(auto &pv0 = pv[0], invalid_type);
     ddwaf_object_free(&obj);
@@ -147,8 +142,7 @@ TEST(ParameterViewTest, FromStringObject)
 TEST(ParameterViewTest, FromUint64Object)
 {
     ddwaf_object obj;
-    ddwaf_object_unsigned_force(&obj,
-        std::numeric_limits<uint64_t>::max());
+    ddwaf_object_unsigned_force(&obj, std::numeric_limits<uint64_t>::max());
 
     parameter_view pv(obj);
     EXPECT_EQ(pv.type(), parameter_type::uint64);
@@ -160,12 +154,11 @@ TEST(ParameterViewTest, FromUint64Object)
     EXPECT_NO_THROW(auto u64 = uint64_t(pv));
     EXPECT_THROW(auto i64 = int64_t(pv), bad_cast);
 
-    EXPECT_THROW([&]{
-        for (auto value : pv) {
-            EXPECT_FALSE(value.is_valid());
-        }} (),
-        invalid_type
-    );
+    EXPECT_THROW(
+        [&] {
+            for (auto value : pv) { EXPECT_FALSE(value.is_valid()); }
+        }(),
+        invalid_type);
 
     EXPECT_THROW(auto &pv0 = pv[0], invalid_type);
 }
@@ -173,8 +166,7 @@ TEST(ParameterViewTest, FromUint64Object)
 TEST(ParameterViewTest, FromInt64Object)
 {
     ddwaf_object obj;
-    ddwaf_object_signed_force(&obj,
-        std::numeric_limits<int64_t>::min());
+    ddwaf_object_signed_force(&obj, std::numeric_limits<int64_t>::min());
 
     parameter_view pv(obj);
     EXPECT_EQ(pv.type(), parameter_type::int64);
@@ -186,12 +178,11 @@ TEST(ParameterViewTest, FromInt64Object)
     EXPECT_THROW(auto u64 = uint64_t(pv), bad_cast);
     EXPECT_NO_THROW(auto i64 = int64_t(pv));
 
-    EXPECT_THROW([&]{
-        for (auto value : pv) {
-            EXPECT_FALSE(value.is_valid());
-        }} (),
-        invalid_type
-    );
+    EXPECT_THROW(
+        [&] {
+            for (auto value : pv) { EXPECT_FALSE(value.is_valid()); }
+        }(),
+        invalid_type);
 
     EXPECT_THROW(auto &pv0 = pv[0], invalid_type);
 }
@@ -203,8 +194,8 @@ TEST(ParameterViewTest, FromArrayObject)
     ddwaf_object obj, tmp;
     ddwaf_object_array(&obj);
     for (i = 0; i < size; i++) {
-        ddwaf_object_array_add(&obj,
-            ddwaf_object_string(&tmp, std::to_string(i).c_str()));
+        ddwaf_object_array_add(
+            &obj, ddwaf_object_string(&tmp, std::to_string(i).c_str()));
     }
 
     parameter_view pv(obj);
@@ -279,7 +270,8 @@ TEST(ParameterViewTest, StaticCastFromMapObject)
             ddwaf_object_string(&tmp, "value"));
     }
 
-    parameter_view pv = static_cast<parameter_view>(obj);;
+    parameter_view pv = static_cast<parameter_view>(obj);
+    ;
     EXPECT_EQ(pv.type(), parameter_type::map);
     EXPECT_EQ(pv.length(), 0);
     EXPECT_EQ(pv.size(), size);
@@ -312,8 +304,8 @@ TEST(ParameterViewTest, StaticCastFromArrayObject)
     ddwaf_object obj, tmp;
     ddwaf_object_array(&obj);
     for (i = 0; i < size; i++) {
-        ddwaf_object_array_add(&obj,
-            ddwaf_object_string(&tmp, std::to_string(i).c_str()));
+        ddwaf_object_array_add(
+            &obj, ddwaf_object_string(&tmp, std::to_string(i).c_str()));
     }
 
     parameter_view pv = static_cast<parameter_view>(obj);
@@ -340,6 +332,4 @@ TEST(ParameterViewTest, StaticCastFromArrayObject)
     ddwaf_object_free(&obj);
 }
 
-
-
-}
+} // namespace dds

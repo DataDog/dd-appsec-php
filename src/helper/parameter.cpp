@@ -110,12 +110,15 @@ bool parameter::add(std::string_view name, parameter &&entry) noexcept
 
 parameter &parameter::operator[](size_t index) const
 {
-    if (!is_container() || index >= size()) {
+    if (!is_container()) {
+        throw invalid_type("parameter not a container");
+    }
+
+    if (index >= size()) {
         throw std::out_of_range("index(" + std::to_string(index) +
                                 ") out of range(" + std::to_string(size()) +
                                 ")");
     }
-
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
     return static_cast<parameter &>(ddwaf_object::array[index]);
 }

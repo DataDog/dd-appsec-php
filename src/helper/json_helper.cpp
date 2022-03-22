@@ -18,9 +18,11 @@ namespace dds {
 
 namespace {
 
+// TODO: Fix infinite recursion
 template <typename T>
-void parameter_to_json_helper(const parameter_view &pv,
-        T &output, rapidjson::Document::AllocatorType &alloc)
+// NOLINTNEXTLINE(misc-no-recursion)
+void parameter_to_json_helper(const parameter_view &pv, T &output,
+    rapidjson::Document::AllocatorType &alloc)
 {
     switch (pv.type()) {
     case parameter_type::int64:
@@ -29,16 +31,15 @@ void parameter_to_json_helper(const parameter_view &pv,
     case parameter_type::uint64:
         output.SetUint64(uint64_t(pv));
         break;
-    case parameter_type::string:
-        {
-            std::string_view sv = std::string_view(pv);
-            output.SetString(sv.data(), sv.size(), alloc);
-        }
-        break;
+    case parameter_type::string: {
+        auto sv = std::string_view(pv);
+        output.SetString(sv.data(), sv.size(), alloc);
+    } break;
     case parameter_type::map:
         output.SetObject();
-        for (auto &v : pv) {
-            rapidjson::Value key, value;
+        for (const auto &v : pv) {
+            rapidjson::Value key;
+            rapidjson::Value value;
             parameter_to_json_helper(v, value, alloc);
 
             std::string_view sv = v.key();
@@ -49,7 +50,7 @@ void parameter_to_json_helper(const parameter_view &pv,
         break;
     case parameter_type::array:
         output.SetArray();
-        for (auto &v : pv) {
+        for (const auto &v : pv) {
             rapidjson::Value value;
             parameter_to_json_helper(v, value, alloc);
             output.PushBack(value, alloc);
@@ -60,7 +61,7 @@ void parameter_to_json_helper(const parameter_view &pv,
     };
 }
 
-}
+} // namespace
 
 std::string parameter_to_json(const parameter_view &pv)
 {
@@ -80,7 +81,7 @@ std::string parameter_to_json(const parameter_view &pv)
         SPDLOG_WARN("Failed to convert WAF parameter to JSON: {}", e.what());
     }
 
-    return std::string();
+    return {};
 }
 
-}
+} // namespace dds

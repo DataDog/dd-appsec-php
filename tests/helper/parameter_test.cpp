@@ -27,7 +27,7 @@ TEST(ParameterTest, UintMaxConstructor)
     parameter p = parameter::uint64(value);
     EXPECT_EQ(p.type(), parameter_type::string);
     EXPECT_NE(p.stringValue, nullptr);
-    EXPECT_THROW(p[0], std::out_of_range);
+    EXPECT_THROW(p[0], invalid_type);
 
     EXPECT_NO_THROW(std::string(p));
     EXPECT_NO_THROW(std::string_view(p));
@@ -47,7 +47,7 @@ TEST(ParameterTest, UintMinConstructor)
     parameter p = parameter::uint64(value);
     EXPECT_EQ(p.type(), parameter_type::string);
     EXPECT_NE(p.stringValue, nullptr);
-    EXPECT_THROW(p[0], std::out_of_range);
+    EXPECT_THROW(p[0], invalid_type);
 
     EXPECT_NO_THROW(std::string(p));
     EXPECT_NO_THROW(std::string_view(p));
@@ -67,7 +67,7 @@ TEST(ParameterTest, IntMaxConstructor)
     parameter p = parameter::int64(value);
     EXPECT_EQ(p.type(), parameter_type::string);
     EXPECT_NE(p.stringValue, nullptr);
-    EXPECT_THROW(p[0], std::out_of_range);
+    EXPECT_THROW(p[0], invalid_type);
 
     EXPECT_NO_THROW(std::string(p));
     EXPECT_NO_THROW(std::string_view(p));
@@ -87,7 +87,7 @@ TEST(ParameterTest, IntMinConstructor)
     parameter p = parameter::int64(value);
     EXPECT_EQ(p.type(), parameter_type::string);
     EXPECT_NE(p.stringValue, nullptr);
-    EXPECT_THROW(p[0], std::out_of_range);
+    EXPECT_THROW(p[0], invalid_type);
 
     EXPECT_NO_THROW(std::string(p));
     EXPECT_NO_THROW(std::string_view(p));
@@ -107,10 +107,10 @@ TEST(ParameterTest, StringConstructor)
     parameter p = parameter::string(value);
     EXPECT_EQ(p.type(), parameter_type::string);
     EXPECT_EQ(p.length(), value.size());
-    EXPECT_EQ(p.size(), 0); 
+    EXPECT_EQ(p.size(), 0);
 
     EXPECT_NE(p.stringValue, nullptr);
-    EXPECT_THROW(p[0], std::out_of_range);
+    EXPECT_THROW(p[0], invalid_type);
 
     EXPECT_NO_THROW(std::string(p));
     EXPECT_NO_THROW(std::string_view(p));
@@ -130,7 +130,7 @@ TEST(ParameterTest, StringViewConstructor)
     EXPECT_EQ(p.size(), 0);
 
     EXPECT_NE(p.stringValue, nullptr);
-    EXPECT_THROW(p[0], std::out_of_range);
+    EXPECT_THROW(p[0], invalid_type);
 
     EXPECT_NO_THROW(std::string(p));
     EXPECT_NO_THROW(std::string_view(p));
@@ -260,7 +260,8 @@ TEST(ParameterTest, StaticCastFromMapObject)
             ddwaf_object_string(&tmp, "value"));
     }
 
-    parameter p = static_cast<parameter>(obj);;
+    parameter p = static_cast<parameter>(obj);
+    ;
     EXPECT_EQ(p.type(), parameter_type::map);
     EXPECT_EQ(p.length(), 0);
     EXPECT_EQ(p.size(), size);
@@ -281,8 +282,8 @@ TEST(ParameterTest, StaticCastFromArrayObject)
     ddwaf_object obj, tmp;
     ddwaf_object_array(&obj);
     for (int i = 0; i < size; i++) {
-        ddwaf_object_array_add(&obj,
-            ddwaf_object_string(&tmp, std::to_string(i).c_str()));
+        ddwaf_object_array_add(
+            &obj, ddwaf_object_string(&tmp, std::to_string(i).c_str()));
     }
 
     parameter p = static_cast<parameter>(obj);
@@ -298,6 +299,5 @@ TEST(ParameterTest, StaticCastFromArrayObject)
 
     EXPECT_THROW(p[size], std::out_of_range);
 }
-
 
 } // namespace dds
