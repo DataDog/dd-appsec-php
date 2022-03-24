@@ -25,7 +25,6 @@ dds::parameter msgpack_to_param(const msgpack::object &o, unsigned depth = 0)
         const msgpack::object_array &array = o.via.array;
         for (uint32_t i = 0; i < array.size; i++) {
             const msgpack::object &item = array.ptr[i];
-            // Assume keys are strings
             p.add(msgpack_to_param(item, depth));
         }
         return p;

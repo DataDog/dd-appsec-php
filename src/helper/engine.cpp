@@ -29,12 +29,11 @@ void engine::subscribe(const subscriber::ptr &sub)
 
 result engine::context::publish(parameter &&param)
 {
-    parameter_view data(param);
-
     // Once the parameter reaches this function, it is guaranteed to be
     // owned by the engine.
     prev_published_params_.push_back(std::move(param));
 
+    parameter_view data(prev_published_params_.back());
     if (!data.is_map()) {
         throw invalid_object(".", "not a map");
     }

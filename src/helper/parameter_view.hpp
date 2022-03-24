@@ -72,7 +72,7 @@ public:
     parameter_view(parameter_view &&) = delete;
     parameter_view operator=(parameter_view &&) = delete;
 
-    ~parameter_view() override = default;
+    ~parameter_view() = default;
 
     [[nodiscard]] iterator begin() const
     {

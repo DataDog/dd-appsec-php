@@ -22,13 +22,20 @@ public:
     parameter() = default;
     explicit parameter(const ddwaf_object &arg);
 
+    template <typename T,
+        typename = std::enable_if_t<std::conjunction_v<
+            std::is_base_of<ddwaf_object, std::remove_cv_t<std::decay_t<T>>>,
+            std::negation<std::is_same<ddwaf_object,
+                std::remove_cv_t<std::decay_t<T>>>>>>>
+    parameter(T &&t) = delete;
+
     parameter(const parameter &) = delete;
     parameter &operator=(const parameter &) = delete;
 
     parameter(parameter &&) noexcept;
     parameter &operator=(parameter &&) noexcept;
 
-    ~parameter() override { ddwaf_object_free(this); }
+    ~parameter() { ddwaf_object_free(this); }
 
     static parameter map() noexcept;
     static parameter array() noexcept;

@@ -31,7 +31,7 @@ public:
     parameter_base(parameter_base &&) = default;
     parameter_base &operator=(parameter_base &&) = default;
 
-    virtual ~parameter_base() = default;
+    ~parameter_base() = default;
 
     // Container size
     [[nodiscard]] parameter_type type() const noexcept

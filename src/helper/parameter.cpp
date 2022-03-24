@@ -8,7 +8,10 @@
 
 namespace dds {
 
-parameter::parameter(const ddwaf_object &arg) { *((ddwaf_object *)this) = arg; }
+parameter::parameter(const ddwaf_object &arg)
+{
+    *static_cast<ddwaf_object *>(this) = arg;
+}
 
 parameter::parameter(parameter &&other) noexcept
 {
