@@ -30,7 +30,8 @@ public:
 
         virtual ~listener() = default;
         // NOLINTNEXTLINE(google-runtime-references)
-        virtual result call(parameter_view &data) = 0;
+        virtual result call(parameter_view &data,
+            std::map<std::string, double> &metrics) = 0;
     };
 
     subscriber() = default;

@@ -15,7 +15,10 @@ namespace dds {
 
 class engine_pool {
 public:
-    std::shared_ptr<engine> create_engine(const client_settings &settings);
+    std::shared_ptr<engine> create_engine(
+        const client_settings &settings,
+        std::map<std::string, std::string> &meta,
+        std::map<std::string, double> &metrics);
 
 protected:
     using cache_t = std::unordered_map<client_settings, std::weak_ptr<engine>,

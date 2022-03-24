@@ -18,7 +18,8 @@ class listener : public dds::subscriber::listener {
 public:
     typedef std::shared_ptr<dds::mock::listener> ptr;
 
-    MOCK_METHOD1(call, dds::result(dds::parameter_view &));
+    MOCK_METHOD2(call, dds::result(dds::parameter_view &, 
+        std::map<std::string, double>&));
 };
 
 class subscriber : public dds::subscriber {
@@ -35,9 +36,11 @@ TEST(EngineTest, NoSubscriptors)
     auto e{engine::create()};
     auto ctx = e->get_context();
 
+    std::map<std::string, double> metrics;
+
     parameter p = parameter::map();
     p.add("a", parameter::string("value"sv));
-    auto res = ctx.publish(std::move(p));
+    auto res = ctx.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::ok);
 }
 
@@ -46,7 +49,7 @@ TEST(EngineTest, SingleSubscriptor)
     auto e{engine::create()};
 
     mock::listener::ptr listener = mock::listener::ptr(new mock::listener());
-    EXPECT_CALL(*listener, call(_))
+    EXPECT_CALL(*listener, call(_,_))
         .WillRepeatedly(Return(result(result::code::block)));
 
     mock::subscriber::ptr sub = mock::subscriber::ptr(new mock::subscriber());
@@ -58,19 +61,21 @@ TEST(EngineTest, SingleSubscriptor)
 
     auto ctx = e->get_context();
 
+    std::map<std::string, double> metrics;
+
     parameter p = parameter::map();
     p.add("a", parameter::string("value"sv));
-    auto res = ctx.publish(std::move(p));
+    auto res = ctx.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::block);
 
     p = parameter::map();
     p.add("b", parameter::string("value"sv));
-    res = ctx.publish(std::move(p));
+    res = ctx.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::block);
 
     p = parameter::map();
     p.add("c", parameter::string("value"sv));
-    res = ctx.publish(std::move(p));
+    res = ctx.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::ok);
 }
 
@@ -78,13 +83,13 @@ TEST(EngineTest, MultipleSubscriptors)
 {
     auto e{engine::create()};
     mock::listener::ptr blocker = mock::listener::ptr(new mock::listener());
-    EXPECT_CALL(*blocker, call(_))
+    EXPECT_CALL(*blocker, call(_,_))
         .WillRepeatedly(Return(result(result::code::block)));
     mock::listener::ptr recorder = mock::listener::ptr(new mock::listener());
-    EXPECT_CALL(*recorder, call(_))
+    EXPECT_CALL(*recorder, call(_,_))
         .WillRepeatedly(Return(result(result::code::record)));
     mock::listener::ptr ignorer = mock::listener::ptr(new mock::listener());
-    EXPECT_CALL(*ignorer, call(_))
+    EXPECT_CALL(*ignorer, call(_,_))
         .WillRepeatedly(Return(result(result::code::ok)));
 
     mock::subscriber::ptr sub1 = mock::subscriber::ptr(new mock::subscriber());
@@ -110,57 +115,58 @@ TEST(EngineTest, MultipleSubscriptors)
 
     auto ctx = e->get_context();
 
+    std::map<std::string, double> metrics;
     parameter p = parameter::map();
     p.add("a", parameter::string("value"sv));
-    auto res = ctx.publish(std::move(p));
+    auto res = ctx.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::block);
 
     p = parameter::map();
     p.add("b", parameter::string("value"sv));
-    res = ctx.publish(std::move(p));
+    res = ctx.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::block);
 
     p = parameter::map();
     p.add("c", parameter::string("value"sv));
-    res = ctx.publish(std::move(p));
+    res = ctx.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::record);
 
     p = parameter::map();
     p.add("d", parameter::string("value"sv));
-    res = ctx.publish(std::move(p));
+    res = ctx.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::record);
 
     p = parameter::map();
     p.add("e", parameter::string("value"sv));
-    res = ctx.publish(std::move(p));
+    res = ctx.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::block);
 
     p = parameter::map();
     p.add("f", parameter::string("value"sv));
-    res = ctx.publish(std::move(p));
+    res = ctx.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::block);
 
     p = parameter::map();
     p.add("g", parameter::string("value"sv));
-    res = ctx.publish(std::move(p));
+    res = ctx.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::record);
 
     p = parameter::map();
     p.add("h", parameter::string("value"sv));
-    res = ctx.publish(std::move(p));
+    res = ctx.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::ok);
 
     p = parameter::map();
     p.add("a", parameter::string("value"sv));
     p.add("c", parameter::string("value"sv));
     p.add("h", parameter::string("value"sv));
-    res = ctx.publish(std::move(p));
+    res = ctx.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::block);
 
     p = parameter::map();
     p.add("c", parameter::string("value"sv));
     p.add("h", parameter::string("value"sv));
-    res = ctx.publish(std::move(p));
+    res = ctx.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::record);
 }
 
@@ -169,7 +175,7 @@ TEST(EngineTest, StatefulSubscriptor)
     auto e{engine::create()};
 
     mock::listener::ptr listener = mock::listener::ptr(new mock::listener());
-    EXPECT_CALL(*listener, call(_))
+    EXPECT_CALL(*listener, call(_,_))
         .Times(6)
         .WillOnce(Return(result(result::code::ok)))
         .WillOnce(Return(result(result::code::ok)))
@@ -188,48 +194,53 @@ TEST(EngineTest, StatefulSubscriptor)
 
     auto ctx = e->get_context();
 
+    std::map<std::string, double> metrics;
+
     parameter p = parameter::map();
     p.add("sub1", parameter::string("value"sv));
-    auto res = ctx.publish(std::move(p));
+    auto res = ctx.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::ok);
 
     p = parameter::map();
     p.add("sub2", parameter::string("value"sv));
-    res = ctx.publish(std::move(p));
+    res = ctx.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::ok);
 
     p = parameter::map();
     p.add("irrelevant", parameter::string("value"sv));
-    res = ctx.publish(std::move(p));
+    res = ctx.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::ok);
 
     p = parameter::map();
     p.add("final", parameter::string("value"sv));
-    res = ctx.publish(std::move(p));
+    res = ctx.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::record);
 
     auto ctx2 = e->get_context();
 
     p = parameter::map();
     p.add("final", parameter::string("value"sv));
-    res = ctx2.publish(std::move(p));
+    res = ctx2.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::ok);
 
     p = parameter::map();
     p.add("sub1", parameter::string("value"sv));
-    res = ctx2.publish(std::move(p));
+    res = ctx2.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::ok);
 
     p = parameter::map();
     p.add("sub2", parameter::string("value"sv));
-    res = ctx2.publish(std::move(p));
+    res = ctx2.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, result::code::record);
 }
 
 TEST(EngineTest, WafSubscriptorBasic)
 {
+    std::map<std::string, std::string> meta;
+    std::map<std::string, double> metrics;
+
     auto e{engine::create()};
-    e->subscribe(waf::instance::from_string(waf_rule));
+    e->subscribe(waf::instance::from_string(waf_rule, meta, metrics));
 
     auto ctx = e->get_context();
 
@@ -237,7 +248,7 @@ TEST(EngineTest, WafSubscriptorBasic)
     p.add("arg1", parameter::string("string 1"sv));
     p.add("arg2", parameter::string("string 3"sv));
 
-    auto res = ctx.publish(std::move(p));
+    auto res = ctx.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, dds::result::code::record);
     EXPECT_EQ(res.data.size(), 1);
     for (auto &match : res.data) {
@@ -250,20 +261,26 @@ TEST(EngineTest, WafSubscriptorBasic)
 
 TEST(EngineTest, WafSubscriptorInvalidParam)
 {
+    std::map<std::string, std::string> meta;
+    std::map<std::string, double> metrics;
+
     auto e{engine::create()};
-    e->subscribe(waf::instance::from_string(waf_rule));
+    e->subscribe(waf::instance::from_string(waf_rule, meta, metrics));
 
     auto ctx = e->get_context();
 
     auto p = parameter::array();
 
-    EXPECT_THROW(ctx.publish(std::move(p)), invalid_object);
+    EXPECT_THROW(ctx.publish(std::move(p), metrics), invalid_object);
 }
 
 TEST(EngineTest, WafSubscriptorTimeout)
 {
+    std::map<std::string, std::string> meta;
+    std::map<std::string, double> metrics;
+
     auto e{engine::create()};
-    e->subscribe(waf::instance::from_string(waf_rule, 0));
+    e->subscribe(waf::instance::from_string(waf_rule, meta, metrics, 0));
 
     auto ctx = e->get_context();
 
@@ -271,7 +288,7 @@ TEST(EngineTest, WafSubscriptorTimeout)
     p.add("arg1", parameter::string("string 1"sv));
     p.add("arg2", parameter::string("string 3"sv));
 
-    auto res = ctx.publish(std::move(p));
+    auto res = ctx.publish(std::move(p), metrics);
     EXPECT_EQ(res.value, dds::result::code::ok);
 }
 

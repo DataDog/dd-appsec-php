@@ -7,6 +7,7 @@
 #include <client.hpp>
 #include <engine_pool.hpp>
 #include <network/broker.hpp>
+#include <tags.hpp>
 
 namespace dds {
 
@@ -50,6 +51,15 @@ TEST(ClientTest, ClientInit)
 
     EXPECT_TRUE(c.run_client_init());
     EXPECT_STREQ(res.status.c_str(), "ok");
+    EXPECT_EQ(res.meta.size(), 3);
+    EXPECT_STREQ(res.meta[tag::waf_version].c_str(), "1.2.1");
+    EXPECT_STREQ(res.meta[tag::event_rules_version].c_str(), "1.2.3");
+
+    EXPECT_EQ(res.metrics.size(), 2);
+    // For small enough integers this comparison should work, otherwise replace
+    // with EXPECT_NEAR.
+    EXPECT_EQ(res.metrics[tag::event_rules_loaded], 2.0);
+    EXPECT_EQ(res.metrics[tag::event_rules_failed], 0.0);
 }
 
 TEST(ClientTest, ClientInitResponseFail)

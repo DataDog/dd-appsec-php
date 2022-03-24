@@ -49,7 +49,7 @@ public:
         context &operator=(context &&) = delete;
         ~context() = default;
 
-        result publish(parameter &&param);
+        result publish(parameter &&param, std::map<std::string, double> &metrics);
 
     protected:
         std::vector<parameter> prev_published_params_;

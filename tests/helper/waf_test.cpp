@@ -36,15 +36,21 @@ using log_counter_sink_st = log_counter_sink<spdlog::details::null_mutex>;
 
 TEST(WafTest, RunWithInvalidParam)
 {
-    subscriber::ptr wi{waf::instance::from_string(waf_rule)};
+    std::map<std::string, std::string> meta;
+    std::map<std::string, double> metrics;
+
+    subscriber::ptr wi{waf::instance::from_string(waf_rule, meta, metrics)};
     auto ctx = wi->get_listener();
     parameter_view pv;
-    EXPECT_THROW(ctx->call(pv), invalid_object);
+    EXPECT_THROW(ctx->call(pv, metrics), invalid_object);
 }
 
 TEST(WafTest, RunWithTimeout)
 {
-    subscriber::ptr wi(waf::instance::from_string(waf_rule, 0));
+    std::map<std::string, std::string> meta;
+    std::map<std::string, double> metrics;
+
+    subscriber::ptr wi(waf::instance::from_string(waf_rule, meta, metrics, 0));
     auto ctx = wi->get_listener();
 
     auto p = parameter::map();
@@ -52,25 +58,31 @@ TEST(WafTest, RunWithTimeout)
     p.add("arg2", parameter::string("string 2"sv));
 
     parameter_view pv(p);
-    EXPECT_THROW(ctx->call(pv), timeout_error);
+    EXPECT_THROW(ctx->call(pv, metrics), timeout_error);
 }
 
 TEST(WafTest, ValidRunGood)
 {
-    subscriber::ptr wi{waf::instance::from_string(waf_rule)};
+    std::map<std::string, std::string> meta;
+    std::map<std::string, double> metrics;
+
+    subscriber::ptr wi{waf::instance::from_string(waf_rule, meta, metrics)};
     auto ctx = wi->get_listener();
 
     auto p = parameter::map();
     p.add("arg1", parameter::string("string 1"sv));
 
     parameter_view pv(p);
-    auto res = ctx->call(pv);
+    auto res = ctx->call(pv, metrics);
     EXPECT_EQ(res.value, dds::result::code::ok);
 }
 
 TEST(WafTest, ValidRunMonitor)
 {
-    subscriber::ptr wi{waf::instance::from_string(waf_rule)};
+    std::map<std::string, std::string> meta;
+    std::map<std::string, double> metrics;
+
+    subscriber::ptr wi{waf::instance::from_string(waf_rule, meta, metrics)};
     auto ctx = wi->get_listener();
 
     auto p = parameter::map();
@@ -78,7 +90,7 @@ TEST(WafTest, ValidRunMonitor)
     p.add("arg2", parameter::string("string 3"sv));
 
     parameter_view pv(p);
-    auto res = ctx->call(pv);
+    auto res = ctx->call(pv, metrics);
     EXPECT_EQ(res.value, dds::result::code::record);
 
     for (auto &match : res.data) {

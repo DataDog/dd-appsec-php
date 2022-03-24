@@ -12,6 +12,7 @@ std::string create_sample_rules_ok()
 {
     const static char data[] = R"({
   "version": "2.1",
+  "metadata": { "rules_version" : "1.2.3" },
   "rules": [
     {
       "id": "crs-913-110",

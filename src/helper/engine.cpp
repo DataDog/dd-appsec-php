@@ -27,7 +27,8 @@ void engine::subscribe(const subscriber::ptr &sub)
     }
 }
 
-result engine::context::publish(parameter &&param)
+result engine::context::publish(parameter &&param,
+    std::map<std::string, double> &metrics)
 {
     // Once the parameter reaches this function, it is guaranteed to be
     // owned by the engine.
@@ -63,7 +64,7 @@ result engine::context::publish(parameter &&param)
             it = listeners_.emplace(sub, sub->get_listener()).first;
         }
         try {
-            auto call_res = it->second->call(data);
+            auto call_res = it->second->call(data, metrics);
             if (call_res.value > res.value) {
                 res = std::move(call_res);
             }
