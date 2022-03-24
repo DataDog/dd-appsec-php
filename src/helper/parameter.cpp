@@ -6,25 +6,6 @@
 #include "parameter.hpp"
 #include "exception.hpp"
 
-namespace {
-
-std::string strtype(int type)
-{
-    switch (type) {
-    case DDWAF_OBJ_MAP:
-        return "map";
-    case DDWAF_OBJ_ARRAY:
-        return "array";
-    case DDWAF_OBJ_STRING:
-        return "string";
-    default:
-        break;
-    }
-    return "unknown";
-}
-
-} // namespace
-
 namespace dds {
 
 parameter::parameter(const ddwaf_object &arg) { *((ddwaf_object *)this) = arg; }

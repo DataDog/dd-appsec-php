@@ -222,7 +222,7 @@ dds::result instance::listener::call(dds::parameter_view &data)
     ddwaf_result res;
     DDWAF_RET_CODE code;
     auto run_waf = [&]() {
-        code = ddwaf_run(handle_, data, nullptr, &res, waf_timeout_.count());
+        code = ddwaf_run(handle_, data, &res, waf_timeout_.count());
     };
 
     if (spdlog::should_log(spdlog::level::debug)) {

@@ -22,14 +22,12 @@ public:
     parameter() = default;
     explicit parameter(const ddwaf_object &arg);
 
-    parameter(const parameter &) = delete;            // fault;
-    parameter &operator=(const parameter &) = delete; // fault;
+    parameter(const parameter &) = delete;
+    parameter &operator=(const parameter &) = delete;
 
     parameter(parameter &&) noexcept;
     parameter &operator=(parameter &&) noexcept;
 
-    // These will be freed by the WAF, if the parameters are not passed to the
-    // WAF, expect a memory leak if "free" is not called.
     ~parameter() override { ddwaf_object_free(this); }
 
     static parameter map() noexcept;
