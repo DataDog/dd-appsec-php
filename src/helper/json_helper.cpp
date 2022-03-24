@@ -18,7 +18,7 @@ namespace dds {
 
 namespace {
 
-// TODO: Fix infinite recursion
+// TODO: Limit recursion
 template <typename T>
 // NOLINTNEXTLINE(misc-no-recursion, google-runtime-references)
 void parameter_to_json_helper(const parameter_view &pv, T &output,
