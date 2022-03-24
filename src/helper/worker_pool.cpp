@@ -53,7 +53,8 @@ bool pool::launch(runnable &&f)
     }
 
     if (!q_.push(f)) {
-        std::thread(work_handler, std::move(queue_consumer(q_)), std::move(f)).detach();
+        std::thread(work_handler, std::move(queue_consumer(q_)), std::move(f))
+            .detach();
     }
     return true;
 }
