@@ -6,8 +6,6 @@
 #include "parameter.hpp"
 #include "exception.hpp"
 
-#include <iostream>
-
 namespace {
 
 std::string strtype(int type)

@@ -8,8 +8,6 @@
 
 #include "exception.hpp"
 #include <ddwaf.h>
-
-#include <iostream>
 #include <limits>
 
 namespace dds {

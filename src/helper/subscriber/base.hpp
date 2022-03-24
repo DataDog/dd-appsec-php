@@ -3,8 +3,7 @@
 //
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
-#ifndef SUBSCRIBER_BASE_HPP
-#define SUBSCRIBER_BASE_HPP
+#pragma once
 
 #include "../client_settings.hpp"
 #include "../parameter.hpp"
@@ -47,4 +46,3 @@ public:
 };
 
 } // namespace dds
-#endif

@@ -3,8 +3,7 @@
 //
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
-#ifndef WAF_HPP
-#define WAF_HPP
+#pragma once
 
 #include <chrono>
 #include <ddwaf.h>
@@ -68,5 +67,3 @@ parameter parse_file(std::string_view filename);
 parameter parse_string(std::string_view config);
 
 } // namespace dds::waf
-
-#endif // WAF_HPP

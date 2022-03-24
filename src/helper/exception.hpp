@@ -3,8 +3,7 @@
 //
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
-#ifndef WAF_EXCEPTION_HPP
-#define WAF_EXCEPTION_HPP
+#pragma once
 
 #include <stdexcept>
 #include <string>
@@ -101,4 +100,3 @@ public:
 };
 
 } // namespace dds
-#endif
