@@ -20,7 +20,7 @@ namespace {
 
 // TODO: Fix infinite recursion
 template <typename T>
-// NOLINTNEXTLINE(misc-no-recursion)
+// NOLINTNEXTLINE(misc-no-recursion, google-runtime-references)
 void parameter_to_json_helper(const parameter_view &pv, T &output,
     rapidjson::Document::AllocatorType &alloc)
 {

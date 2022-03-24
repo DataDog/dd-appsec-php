@@ -15,7 +15,7 @@ namespace {
 void work_handler(queue_consumer &&q, std::optional<runnable> &&opt_r)
 {
     while (q.running() && opt_r) {
-        opt_r.value()(std::move(q));
+        opt_r.value()(q);
         opt_r = std::move(q.pop(60s));
     }
 }
