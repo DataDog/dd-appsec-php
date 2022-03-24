@@ -29,8 +29,8 @@ TEST(ParameterTest, UintMaxConstructor)
     EXPECT_NE(p.stringValue, nullptr);
     EXPECT_THROW(p[0], invalid_type);
 
-    EXPECT_NO_THROW(std::string(p));
-    EXPECT_NO_THROW(std::string_view(p));
+    EXPECT_NO_THROW(auto s = std::string(p));
+    EXPECT_NO_THROW(auto sv = std::string_view(p));
     EXPECT_THROW(auto u64 = uint64_t(p), bad_cast);
     EXPECT_THROW(auto i64 = int64_t(p), bad_cast);
 
@@ -49,8 +49,8 @@ TEST(ParameterTest, UintMinConstructor)
     EXPECT_NE(p.stringValue, nullptr);
     EXPECT_THROW(p[0], invalid_type);
 
-    EXPECT_NO_THROW(std::string(p));
-    EXPECT_NO_THROW(std::string_view(p));
+    EXPECT_NO_THROW(auto s = std::string(p));
+    EXPECT_NO_THROW(auto sv = std::string_view(p));
     EXPECT_THROW(auto u64 = uint64_t(p), bad_cast);
     EXPECT_THROW(auto i64 = int64_t(p), bad_cast);
 
@@ -69,8 +69,8 @@ TEST(ParameterTest, IntMaxConstructor)
     EXPECT_NE(p.stringValue, nullptr);
     EXPECT_THROW(p[0], invalid_type);
 
-    EXPECT_NO_THROW(std::string(p));
-    EXPECT_NO_THROW(std::string_view(p));
+    EXPECT_NO_THROW(auto s = std::string(p));
+    EXPECT_NO_THROW(auto sv = std::string_view(p));
     EXPECT_THROW(auto u64 = uint64_t(p), bad_cast);
     EXPECT_THROW(auto i64 = int64_t(p), bad_cast);
 
@@ -89,8 +89,8 @@ TEST(ParameterTest, IntMinConstructor)
     EXPECT_NE(p.stringValue, nullptr);
     EXPECT_THROW(p[0], invalid_type);
 
-    EXPECT_NO_THROW(std::string(p));
-    EXPECT_NO_THROW(std::string_view(p));
+    EXPECT_NO_THROW(auto s = std::string(p));
+    EXPECT_NO_THROW(auto sv = std::string_view(p));
     EXPECT_THROW(auto u64 = uint64_t(p), bad_cast);
     EXPECT_THROW(auto i64 = int64_t(p), bad_cast);
 
@@ -112,8 +112,8 @@ TEST(ParameterTest, StringConstructor)
     EXPECT_NE(p.stringValue, nullptr);
     EXPECT_THROW(p[0], invalid_type);
 
-    EXPECT_NO_THROW(std::string(p));
-    EXPECT_NO_THROW(std::string_view(p));
+    EXPECT_NO_THROW(auto s = std::string(p));
+    EXPECT_NO_THROW(auto sv = std::string_view(p));
     EXPECT_THROW(auto u64 = uint64_t(p), bad_cast);
     EXPECT_THROW(auto i64 = int64_t(p), bad_cast);
 
@@ -132,8 +132,8 @@ TEST(ParameterTest, StringViewConstructor)
     EXPECT_NE(p.stringValue, nullptr);
     EXPECT_THROW(p[0], invalid_type);
 
-    EXPECT_NO_THROW(std::string(p));
-    EXPECT_NO_THROW(std::string_view(p));
+    EXPECT_NO_THROW(auto s = std::string(p));
+    EXPECT_NO_THROW(auto sv = std::string_view(p));
     EXPECT_THROW(auto u64 = uint64_t(p), bad_cast);
     EXPECT_THROW(auto i64 = int64_t(p), bad_cast);
 
