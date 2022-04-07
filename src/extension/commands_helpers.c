@@ -348,9 +348,12 @@ bool dd_command_process_metrics(mpack_node_t root)
         zval zv;
         ZVAL_DOUBLE(&zv, mpack_node_double(value));
         zval *res = zend_hash_add(Z_ARRVAL_P(metrics_zv), ztag, &zv);
+        zend_string_release(ztag);
+
         if (res == NULL) {
             mlog(dd_log_warning, "Failed to add metric %.*s", (int)key_len,
                 key_str);
+            zval_ptr_dtor(&zv);
             return false;
         }
     }
