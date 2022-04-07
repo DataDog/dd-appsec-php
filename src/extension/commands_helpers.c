@@ -328,13 +328,26 @@ bool dd_command_process_metrics(mpack_node_t root)
         mpack_node_t key = mpack_node_map_key_at(root, i);
         mpack_node_t value = mpack_node_map_value_at(root, i);
 
-        mpack_type_t vtype = mpack_node_type(value);
         if (mpack_node_type(key) != mpack_type_str) {
             mlog(dd_log_warning, "Failed to add metric: invalid type for key");
             return false;
         }
-        if (vtype != mpack_type_double && vtype != mpack_type_float &&
-            vtype != mpack_type_int && vtype != mpack_type_uint) {
+
+        zval zv;
+        switch(mpack_node_type(value)) {
+        case mpack_type_float:
+            ZVAL_DOUBLE(&zv, mpack_node_float(value));
+            break;
+        case mpack_type_double:
+            ZVAL_DOUBLE(&zv, mpack_node_double(value));
+            break;
+        case mpack_type_int:
+            ZVAL_LONG(&zv, mpack_node_int(value));
+            break;
+        case mpack_type_uint:
+            ZVAL_LONG(&zv, mpack_node_uint(value));
+            break;
+        default:
             mlog(
                 dd_log_warning, "Failed to add metric: invalid type for value");
             return false;
@@ -342,11 +355,11 @@ bool dd_command_process_metrics(mpack_node_t root)
 
         const char *key_str = mpack_node_str(key);
         size_t key_len = mpack_node_strlen(key);
-
         zend_string *ztag = zend_string_init(key_str, key_len, 0);
 
-        zval zv;
-        ZVAL_DOUBLE(&zv, mpack_node_double(value));
+        mlog(dd_log_debug, "Adding to root span the metric '%.*s'",
+            (int)key_len, key_str);
+
         zval *res = zend_hash_add(Z_ARRVAL_P(metrics_zv), ztag, &zv);
         zend_string_release(ztag);
 
