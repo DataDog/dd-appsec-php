@@ -334,7 +334,7 @@ bool dd_command_process_metrics(mpack_node_t root)
         }
 
         zval zv;
-        switch(mpack_node_type(value)) {
+        switch (mpack_node_type(value)) {
         case mpack_type_float:
             ZVAL_DOUBLE(&zv, mpack_node_float(value));
             break;
