@@ -42,6 +42,7 @@ trait CommonTests {
         }
 
         assert trace.metrics._sampling_priority_v1 == 2.0d
+        assert trace.metrics."_dd.appsec.waf.duration" > 0.0d
 
         assert trace.meta."_dd.runtime_family" == 'php'
         assert trace.meta."http.useragent" == 'Arachni/v1'
