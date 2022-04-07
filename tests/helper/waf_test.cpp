@@ -12,6 +12,7 @@
 #include <spdlog/details/null_mutex.h>
 #include <spdlog/sinks/base_sink.h>
 #include <subscriber/waf.hpp>
+#include <tags.hpp>
 
 const std::string waf_rule =
     R"({"version":"2.1","rules":[{"id":"1","name":"rule1","tags":{"type":"flow1","category":"category1"},"conditions":[{"operator":"match_regex","parameters":{"inputs":[{"address":"arg1","key_path":[]}],"regex":"^string.*"}},{"operator":"match_regex","parameters":{"inputs":[{"address":"arg2","key_path":[]}],"regex":".*"}}],"action":"record"}]})";
@@ -33,6 +34,35 @@ protected:
 };
 
 using log_counter_sink_st = log_counter_sink<spdlog::details::null_mutex>;
+
+TEST(WafTest, InitWithInvalidRules)
+{
+    client_settings cs;
+    cs.rules_file = create_sample_rules_invalid();
+
+    std::map<std::string, std::string> meta;
+    std::map<std::string, double> metrics;
+
+    subscriber::ptr wi{waf::instance::from_settings(cs, meta, metrics)};
+
+    EXPECT_EQ(meta.size(), 3);
+    EXPECT_STREQ(meta[tag::waf_version].c_str(), "1.2.1");
+    EXPECT_STREQ(meta[tag::event_rules_version].c_str(), "1.2.3");
+
+    rapidjson::Document doc;
+    doc.Parse(meta[tag::event_rules_errors]);
+    EXPECT_FALSE(doc.HasParseError());
+    EXPECT_TRUE(doc.IsObject());
+    EXPECT_TRUE(doc.HasMember("missing key 'type'"));
+    EXPECT_TRUE(doc.HasMember("unknown processor: squash"));
+    EXPECT_TRUE(doc.HasMember("missing key 'inputs'"));
+
+    EXPECT_EQ(metrics.size(), 2);
+    // For small enough integers this comparison should work, otherwise replace
+    // with EXPECT_NEAR.
+    EXPECT_EQ(metrics[tag::event_rules_loaded], 1.0);
+    EXPECT_EQ(metrics[tag::event_rules_failed], 4.0);
+}
 
 TEST(WafTest, RunWithInvalidParam)
 {
@@ -75,6 +105,8 @@ TEST(WafTest, ValidRunGood)
     parameter_view pv(p);
     auto res = ctx->call(pv, metrics);
     EXPECT_EQ(res.value, dds::result::code::ok);
+
+    EXPECT_GT(metrics[tag::waf_duration], 0.0);
 }
 
 TEST(WafTest, ValidRunMonitor)
@@ -99,6 +131,8 @@ TEST(WafTest, ValidRunMonitor)
         EXPECT_FALSE(doc.HasParseError());
         EXPECT_TRUE(doc.IsObject());
     }
+
+    EXPECT_GT(metrics[tag::waf_duration], 0.0);
 }
 
 TEST(WafTest, Logging)

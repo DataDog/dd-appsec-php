@@ -49,13 +49,14 @@ public:
         context &operator=(context &&) = delete;
         ~context() = default;
 
-        result publish(parameter &&param, std::map<std::string, double> &metrics);
-
+        result publish(parameter &&param);
+        std::map<std::string, double> get_metrics() { return std::move(metrics); }
     protected:
         std::vector<parameter> prev_published_params_;
         std::map<subscriber::ptr, subscriber::listener::ptr> listeners_;
         const subscription_map &subscriptions_;
         rate_limiter &limiter_;
+        std::map<std::string, double> metrics;
     };
 
     static auto create(

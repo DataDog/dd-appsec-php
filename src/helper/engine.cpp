@@ -27,8 +27,7 @@ void engine::subscribe(const subscriber::ptr &sub)
     }
 }
 
-result engine::context::publish(parameter &&param,
-    std::map<std::string, double> &metrics)
+result engine::context::publish(parameter &&param)
 {
     // Once the parameter reaches this function, it is guaranteed to be
     // owned by the engine.

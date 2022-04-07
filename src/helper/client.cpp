@@ -146,15 +146,17 @@ bool client::handle_command(network::request_init::request &command)
 
     network::request_init::response response;
     try {
-        std::map<std::string, double> metrics;
-        auto res = context_->publish(std::move(command.data), metrics);
+        auto res = context_->publish(std::move(command.data));
         if (res.value == result::code::record) {
             response.verdict = "record";
             response.triggers = std::move(res.data);
+        } else if (res.value == result::code::block) {
+            response.verdict = "block";
+            response.triggers = std::move(res.data);
+            DD_STDLOG(DD_STDLOG_ATTACK_BLOCKED);
         } else {
             response.verdict = "ok";
         }
-        response.metrics = std::move(metrics);
     } catch (const invalid_object &e) {
         // This error indicates some issue in either the communication with
         // the client, incompatible versions or malicious client.
@@ -189,8 +191,7 @@ bool client::handle_command(network::request_shutdown::request &command)
 
     network::request_shutdown::response response;
     try {
-        std::map<std::string, double> metrics;
-        auto res = context_->publish(std::move(command.data), metrics);
+        auto res = context_->publish(std::move(command.data));
         if (res.value == result::code::record) {
             response.verdict = "record";
             response.triggers = std::move(res.data);
@@ -202,7 +203,7 @@ bool client::handle_command(network::request_shutdown::request &command)
         } else {
             response.verdict = "ok";
         }
-        response.metrics = std::move(metrics);
+        response.metrics = context_->get_metrics();
     } catch (const invalid_object &e) {
         // This error indicates some issue in either the communication with
         // the client, incompatible versions or malicious client.

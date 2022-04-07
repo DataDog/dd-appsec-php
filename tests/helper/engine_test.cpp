@@ -36,11 +36,9 @@ TEST(EngineTest, NoSubscriptors)
     auto e{engine::create()};
     auto ctx = e->get_context();
 
-    std::map<std::string, double> metrics;
-
     parameter p = parameter::map();
     p.add("a", parameter::string("value"sv));
-    auto res = ctx.publish(std::move(p), metrics);
+    auto res = ctx.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::ok);
 }
 
@@ -61,21 +59,19 @@ TEST(EngineTest, SingleSubscriptor)
 
     auto ctx = e->get_context();
 
-    std::map<std::string, double> metrics;
-
     parameter p = parameter::map();
     p.add("a", parameter::string("value"sv));
-    auto res = ctx.publish(std::move(p), metrics);
+    auto res = ctx.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::block);
 
     p = parameter::map();
     p.add("b", parameter::string("value"sv));
-    res = ctx.publish(std::move(p), metrics);
+    res = ctx.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::block);
 
     p = parameter::map();
     p.add("c", parameter::string("value"sv));
-    res = ctx.publish(std::move(p), metrics);
+    res = ctx.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::ok);
 }
 
@@ -115,58 +111,57 @@ TEST(EngineTest, MultipleSubscriptors)
 
     auto ctx = e->get_context();
 
-    std::map<std::string, double> metrics;
     parameter p = parameter::map();
     p.add("a", parameter::string("value"sv));
-    auto res = ctx.publish(std::move(p), metrics);
+    auto res = ctx.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::block);
 
     p = parameter::map();
     p.add("b", parameter::string("value"sv));
-    res = ctx.publish(std::move(p), metrics);
+    res = ctx.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::block);
 
     p = parameter::map();
     p.add("c", parameter::string("value"sv));
-    res = ctx.publish(std::move(p), metrics);
+    res = ctx.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::record);
 
     p = parameter::map();
     p.add("d", parameter::string("value"sv));
-    res = ctx.publish(std::move(p), metrics);
+    res = ctx.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::record);
 
     p = parameter::map();
     p.add("e", parameter::string("value"sv));
-    res = ctx.publish(std::move(p), metrics);
+    res = ctx.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::block);
 
     p = parameter::map();
     p.add("f", parameter::string("value"sv));
-    res = ctx.publish(std::move(p), metrics);
+    res = ctx.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::block);
 
     p = parameter::map();
     p.add("g", parameter::string("value"sv));
-    res = ctx.publish(std::move(p), metrics);
+    res = ctx.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::record);
 
     p = parameter::map();
     p.add("h", parameter::string("value"sv));
-    res = ctx.publish(std::move(p), metrics);
+    res = ctx.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::ok);
 
     p = parameter::map();
     p.add("a", parameter::string("value"sv));
     p.add("c", parameter::string("value"sv));
     p.add("h", parameter::string("value"sv));
-    res = ctx.publish(std::move(p), metrics);
+    res = ctx.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::block);
 
     p = parameter::map();
     p.add("c", parameter::string("value"sv));
     p.add("h", parameter::string("value"sv));
-    res = ctx.publish(std::move(p), metrics);
+    res = ctx.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::record);
 }
 
@@ -194,43 +189,41 @@ TEST(EngineTest, StatefulSubscriptor)
 
     auto ctx = e->get_context();
 
-    std::map<std::string, double> metrics;
-
     parameter p = parameter::map();
     p.add("sub1", parameter::string("value"sv));
-    auto res = ctx.publish(std::move(p), metrics);
+    auto res = ctx.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::ok);
 
     p = parameter::map();
     p.add("sub2", parameter::string("value"sv));
-    res = ctx.publish(std::move(p), metrics);
+    res = ctx.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::ok);
 
     p = parameter::map();
     p.add("irrelevant", parameter::string("value"sv));
-    res = ctx.publish(std::move(p), metrics);
+    res = ctx.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::ok);
 
     p = parameter::map();
     p.add("final", parameter::string("value"sv));
-    res = ctx.publish(std::move(p), metrics);
+    res = ctx.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::record);
 
     auto ctx2 = e->get_context();
 
     p = parameter::map();
     p.add("final", parameter::string("value"sv));
-    res = ctx2.publish(std::move(p), metrics);
+    res = ctx2.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::ok);
 
     p = parameter::map();
     p.add("sub1", parameter::string("value"sv));
-    res = ctx2.publish(std::move(p), metrics);
+    res = ctx2.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::ok);
 
     p = parameter::map();
     p.add("sub2", parameter::string("value"sv));
-    res = ctx2.publish(std::move(p), metrics);
+    res = ctx2.publish(std::move(p));
     EXPECT_EQ(res.value, result::code::record);
 }
 
@@ -248,7 +241,7 @@ TEST(EngineTest, WafSubscriptorBasic)
     p.add("arg1", parameter::string("string 1"sv));
     p.add("arg2", parameter::string("string 3"sv));
 
-    auto res = ctx.publish(std::move(p), metrics);
+    auto res = ctx.publish(std::move(p));
     EXPECT_EQ(res.value, dds::result::code::record);
     EXPECT_EQ(res.data.size(), 1);
     for (auto &match : res.data) {
@@ -271,7 +264,7 @@ TEST(EngineTest, WafSubscriptorInvalidParam)
 
     auto p = parameter::array();
 
-    EXPECT_THROW(ctx.publish(std::move(p), metrics), invalid_object);
+    EXPECT_THROW(ctx.publish(std::move(p)), invalid_object);
 }
 
 TEST(EngineTest, WafSubscriptorTimeout)
@@ -288,7 +281,7 @@ TEST(EngineTest, WafSubscriptorTimeout)
     p.add("arg1", parameter::string("string 1"sv));
     p.add("arg2", parameter::string("string 3"sv));
 
-    auto res = ctx.publish(std::move(p), metrics);
+    auto res = ctx.publish(std::move(p));
     EXPECT_EQ(res.value, dds::result::code::ok);
 }
 

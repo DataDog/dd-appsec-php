@@ -246,6 +246,13 @@ dds::result instance::listener::call(dds::parameter_view &data,
     std::unique_ptr<ddwaf_result, decltype(&ddwaf_result_free)> scope(
         &res, ddwaf_result_free);
 
+    double duration = res.total_runtime / 1000.0;
+    auto duration_it = metrics.find(tag::waf_duration);
+    if (duration_it != metrics.end()) {
+        duration += duration_it->second;
+    }
+    metrics[tag::waf_duration] = duration;
+
     switch (code) {
     case DDWAF_BLOCK:
         return format_waf_result(dds::result::code::block, res.data);
@@ -266,8 +273,6 @@ dds::result instance::listener::call(dds::parameter_view &data,
         break;
     }
 
-    metrics[tag::waf_duration] = (res.total_runtime / 1000.0);
-
     return dds::result{dds::result::code::ok};
 }
 
@@ -280,6 +285,7 @@ instance::instance(parameter &rule,
     ddwaf_ruleset_info info;
     handle_ = ddwaf_init(rule, nullptr, &info);
 
+    SPDLOG_ERROR("Failed {}, Loaded {}", info.failed, info.loaded);
     metrics[tag::event_rules_loaded] = info.loaded;
     metrics[tag::event_rules_failed] = info.failed;
     meta[tag::event_rules_errors] =

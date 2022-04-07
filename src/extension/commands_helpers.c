@@ -6,6 +6,7 @@
 #include "commands_helpers.h"
 #include "msgpack_helpers.h"
 #include "tags.h"
+#include "ddtrace.h"
 
 typedef struct _dd_omsg {
     zend_llist iovecs;
@@ -252,6 +253,9 @@ dd_result dd_command_proc_resp_verd_span_data(
         _set_appsec_span_data(mpack_node_array_at(root, 1));
     }
 
+    mpack_node_t metrics = mpack_node_array_at(root, 2);
+    dd_command_process_metrics(metrics);
+
     return should_block ? dd_should_block : dd_success;
 }
 
@@ -280,4 +284,73 @@ static void _set_appsec_span_data(mpack_node_t node)
         mpack_node_t frag = mpack_node_array_at(node, i);
         _add_appsec_span_data_frag(frag);
     }
+}
+
+bool dd_command_process_meta(mpack_node_t root)
+{
+    size_t count = mpack_node_map_count(root);
+    for (size_t i = 0; i < count; i++) {
+        mpack_node_t key = mpack_node_map_key_at(root, i);
+        mpack_node_t value = mpack_node_map_value_at(root, i);
+
+        if (mpack_node_type(key) != mpack_type_str) {
+            mlog(dd_log_warning, "Failed to add tags: invalid type for key");
+            return false;
+        } else if (mpack_node_type(value) != mpack_type_str) {
+            mlog(dd_log_warning, "Failed to add tags: invalid type for value");
+            return false;
+        }
+
+        const char *key_str = mpack_node_str(key);
+        size_t key_len = mpack_node_strlen(key);
+        bool res = dd_trace_root_span_add_tag_str(key_str, key_len,
+            mpack_node_str(value), mpack_node_strlen(value));
+
+        if (!res) {
+            mlog(dd_log_warning, "Failed to add tag %.*s",
+                (int)key_len, key_str);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool dd_command_process_metrics(mpack_node_t root)
+{
+    zval *metrics_zv = dd_trace_root_span_get_metrics();
+    if (metrics_zv == NULL) {
+        return false;
+    }
+
+    for (size_t i = 0; i < mpack_node_map_count(root); i++) {
+        mpack_node_t key = mpack_node_map_key_at(root, i);
+        mpack_node_t value = mpack_node_map_value_at(root, i);
+
+        mpack_type_t vtype = mpack_node_type(value);
+        if (mpack_node_type(key) != mpack_type_str) {
+            mlog(dd_log_warning, "Failed to add metric: invalid type for key");
+            return false;
+        } else if (vtype != mpack_type_double && vtype != mpack_type_float &&
+                vtype != mpack_type_int && vtype != mpack_type_uint) {
+            mlog(dd_log_warning, "Failed to add metric: invalid type for value");
+            return false;
+        }
+
+        const char *key_str = mpack_node_str(key);
+        size_t key_len = mpack_node_strlen(key);
+
+        zend_string *ztag = zend_string_init(key_str, key_len, 0);
+
+        zval zv;
+        ZVAL_DOUBLE(&zv, mpack_node_double(value));
+        zval *res = zend_hash_add(Z_ARRVAL_P(metrics_zv), ztag, &zv);
+        if (res == NULL) {
+            mlog(dd_log_warning, "Failed to add metric %.*s",
+                (int)key_len, key_str);
+            return false;
+        }
+    }
+
+    return true;
 }
