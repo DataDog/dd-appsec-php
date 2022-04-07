@@ -4,9 +4,9 @@
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #include "commands_helpers.h"
+#include "ddtrace.h"
 #include "msgpack_helpers.h"
 #include "tags.h"
-#include "ddtrace.h"
 
 typedef struct _dd_omsg {
     zend_llist iovecs;
@@ -296,19 +296,20 @@ bool dd_command_process_meta(mpack_node_t root)
         if (mpack_node_type(key) != mpack_type_str) {
             mlog(dd_log_warning, "Failed to add tags: invalid type for key");
             return false;
-        } else if (mpack_node_type(value) != mpack_type_str) {
+        }
+        if (mpack_node_type(value) != mpack_type_str) {
             mlog(dd_log_warning, "Failed to add tags: invalid type for value");
             return false;
         }
 
         const char *key_str = mpack_node_str(key);
         size_t key_len = mpack_node_strlen(key);
-        bool res = dd_trace_root_span_add_tag_str(key_str, key_len,
-            mpack_node_str(value), mpack_node_strlen(value));
+        bool res = dd_trace_root_span_add_tag_str(
+            key_str, key_len, mpack_node_str(value), mpack_node_strlen(value));
 
         if (!res) {
-            mlog(dd_log_warning, "Failed to add tag %.*s",
-                (int)key_len, key_str);
+            mlog(dd_log_warning, "Failed to add tag %.*s", (int)key_len,
+                key_str);
             return false;
         }
     }
@@ -331,9 +332,11 @@ bool dd_command_process_metrics(mpack_node_t root)
         if (mpack_node_type(key) != mpack_type_str) {
             mlog(dd_log_warning, "Failed to add metric: invalid type for key");
             return false;
-        } else if (vtype != mpack_type_double && vtype != mpack_type_float &&
-                vtype != mpack_type_int && vtype != mpack_type_uint) {
-            mlog(dd_log_warning, "Failed to add metric: invalid type for value");
+        }
+        if (vtype != mpack_type_double && vtype != mpack_type_float &&
+            vtype != mpack_type_int && vtype != mpack_type_uint) {
+            mlog(
+                dd_log_warning, "Failed to add metric: invalid type for value");
             return false;
         }
 
@@ -346,8 +349,8 @@ bool dd_command_process_metrics(mpack_node_t root)
         ZVAL_DOUBLE(&zv, mpack_node_double(value));
         zval *res = zend_hash_add(Z_ARRVAL_P(metrics_zv), ztag, &zv);
         if (res == NULL) {
-            mlog(dd_log_warning, "Failed to add metric %.*s",
-                (int)key_len, key_str);
+            mlog(dd_log_warning, "Failed to add metric %.*s", (int)key_len,
+                key_str);
             return false;
         }
     }

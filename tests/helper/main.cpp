@@ -91,7 +91,8 @@ std::string create_sample_rules_ok()
 
 std::string create_sample_rules_invalid()
 {
-    const static char data[] = R"({"version":"2.1","metadata":{"rules_version":"1.2.3"},"rules":[{"id":1,"name":"rule1","tags":{"category":"category1"},"conditions":[{"operator":"match_regex","parameters":{"inputs":[{"address":"arg1"}],"regex":".*"}},{"operator":"match_regex","parameters":{"inputs":[{"address":"arg2","key_path":["x"]}],"regex":".*"}}]},{"id":2,"name":"rule2","tags":{"type":"flow1","category":"category1"},"conditions":[{"operator":"squash","parameters":{"inputs":[{"address":"arg1"}],"regex":".*"}},{"operator":"match_regex","parameters":{"inputs":[{"address":"arg2"}],"regex":".*"}}]},{"id":3,"name":"rule3","tags":{"category":"category1"},"conditions":[{"operator":"match_regex","parameters":{"inputs":[{"address":"arg1"}],"regex":".*"}},{"operator":"match_regex","parameters":{"inputs":[{"address":"arg2","key_path":["y"]}],"regex":".*"}}]},{"id":4,"name":"rule4","tags":{"type":"flow1","category":"category1"},"conditions":[{"operator":"match_regex","parameters":{"inputs":[{"address":"arg1"}],"regex":".*"}},{"operator":"match_regex","parameters":{"inputs":[{"address":"arg2","key_path":["x"]}],"regex":".*"}},{"operator":"match_regex","parameters":{"regex":".*"}}]},{"id":5,"name":"rule5","tags":{"type":"type1","category":"category1"},"conditions":[{"operator":"match_regex","parameters":{"inputs":[{"address":"arg1"}],"regex":".*"}},{"operator":"match_regex","parameters":{"inputs":[{"address":"arg2"}],"regex":".*"}}]}]})";
+    const static char data[] =
+        R"({"version":"2.1","metadata":{"rules_version":"1.2.3"},"rules":[{"id":1,"name":"rule1","tags":{"category":"category1"},"conditions":[{"operator":"match_regex","parameters":{"inputs":[{"address":"arg1"}],"regex":".*"}},{"operator":"match_regex","parameters":{"inputs":[{"address":"arg2","key_path":["x"]}],"regex":".*"}}]},{"id":2,"name":"rule2","tags":{"type":"flow1","category":"category1"},"conditions":[{"operator":"squash","parameters":{"inputs":[{"address":"arg1"}],"regex":".*"}},{"operator":"match_regex","parameters":{"inputs":[{"address":"arg2"}],"regex":".*"}}]},{"id":3,"name":"rule3","tags":{"category":"category1"},"conditions":[{"operator":"match_regex","parameters":{"inputs":[{"address":"arg1"}],"regex":".*"}},{"operator":"match_regex","parameters":{"inputs":[{"address":"arg2","key_path":["y"]}],"regex":".*"}}]},{"id":4,"name":"rule4","tags":{"type":"flow1","category":"category1"},"conditions":[{"operator":"match_regex","parameters":{"inputs":[{"address":"arg1"}],"regex":".*"}},{"operator":"match_regex","parameters":{"inputs":[{"address":"arg2","key_path":["x"]}],"regex":".*"}},{"operator":"match_regex","parameters":{"regex":".*"}}]},{"id":5,"name":"rule5","tags":{"type":"type1","category":"category1"},"conditions":[{"operator":"match_regex","parameters":{"inputs":[{"address":"arg1"}],"regex":".*"}},{"operator":"match_regex","parameters":{"inputs":[{"address":"arg2"}],"regex":".*"}}]}]})";
 
     char tmpl[] = "/tmp/test_ddappsec_XXXXXX";
     int fd = mkstemp(tmpl);
@@ -101,7 +102,6 @@ std::string create_sample_rules_invalid()
 
     return tmpl;
 }
-
 
 int main(int argc, char **argv)
 {

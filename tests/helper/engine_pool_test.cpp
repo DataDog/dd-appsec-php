@@ -69,7 +69,8 @@ TEST(EnginePoolTest, LoadRulesFileNotFound)
     engine_pool_exp pool;
     EXPECT_THROW(
         {
-            pool.create_engine({"/file/that/does/not/exist", 42}, meta, metrics);
+            pool.create_engine(
+                {"/file/that/does/not/exist", 42}, meta, metrics);
         },
         std::runtime_error);
 }

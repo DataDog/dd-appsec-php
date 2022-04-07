@@ -18,8 +18,8 @@ class listener : public dds::subscriber::listener {
 public:
     typedef std::shared_ptr<dds::mock::listener> ptr;
 
-    MOCK_METHOD2(call, dds::result(dds::parameter_view &, 
-        std::map<std::string, double>&));
+    MOCK_METHOD2(call,
+        dds::result(dds::parameter_view &, std::map<std::string, double> &));
 };
 
 class subscriber : public dds::subscriber {
@@ -47,7 +47,7 @@ TEST(EngineTest, SingleSubscriptor)
     auto e{engine::create()};
 
     mock::listener::ptr listener = mock::listener::ptr(new mock::listener());
-    EXPECT_CALL(*listener, call(_,_))
+    EXPECT_CALL(*listener, call(_, _))
         .WillRepeatedly(Return(result(result::code::block)));
 
     mock::subscriber::ptr sub = mock::subscriber::ptr(new mock::subscriber());
@@ -79,13 +79,13 @@ TEST(EngineTest, MultipleSubscriptors)
 {
     auto e{engine::create()};
     mock::listener::ptr blocker = mock::listener::ptr(new mock::listener());
-    EXPECT_CALL(*blocker, call(_,_))
+    EXPECT_CALL(*blocker, call(_, _))
         .WillRepeatedly(Return(result(result::code::block)));
     mock::listener::ptr recorder = mock::listener::ptr(new mock::listener());
-    EXPECT_CALL(*recorder, call(_,_))
+    EXPECT_CALL(*recorder, call(_, _))
         .WillRepeatedly(Return(result(result::code::record)));
     mock::listener::ptr ignorer = mock::listener::ptr(new mock::listener());
-    EXPECT_CALL(*ignorer, call(_,_))
+    EXPECT_CALL(*ignorer, call(_, _))
         .WillRepeatedly(Return(result(result::code::ok)));
 
     mock::subscriber::ptr sub1 = mock::subscriber::ptr(new mock::subscriber());
@@ -170,7 +170,7 @@ TEST(EngineTest, StatefulSubscriptor)
     auto e{engine::create()};
 
     mock::listener::ptr listener = mock::listener::ptr(new mock::listener());
-    EXPECT_CALL(*listener, call(_,_))
+    EXPECT_CALL(*listener, call(_, _))
         .Times(6)
         .WillOnce(Return(result(result::code::ok)))
         .WillOnce(Return(result(result::code::ok)))

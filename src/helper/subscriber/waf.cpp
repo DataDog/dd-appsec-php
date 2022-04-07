@@ -218,8 +218,8 @@ instance::listener::~listener()
     }
 }
 
-dds::result instance::listener::call(dds::parameter_view &data,
-    std::map<std::string, double> &metrics)
+dds::result instance::listener::call(
+    dds::parameter_view &data, std::map<std::string, double> &metrics)
 {
     ddwaf_result res;
     DDWAF_RET_CODE code;
@@ -246,6 +246,7 @@ dds::result instance::listener::call(dds::parameter_view &data,
     std::unique_ptr<ddwaf_result, decltype(&ddwaf_result_free)> scope(
         &res, ddwaf_result_free);
 
+    // NOLINTNEXTLINE
     double duration = res.total_runtime / 1000.0;
     auto duration_it = metrics.find(tag::waf_duration);
     if (duration_it != metrics.end()) {
@@ -276,10 +277,8 @@ dds::result instance::listener::call(dds::parameter_view &data,
     return dds::result{dds::result::code::ok};
 }
 
-instance::instance(parameter &rule,
-    std::map<std::string, std::string> &meta,
-    std::map<std::string, double> &metrics,
-    std::uint64_t waf_timeout_us)
+instance::instance(parameter &rule, std::map<std::string, std::string> &meta,
+    std::map<std::string, double> &metrics, std::uint64_t waf_timeout_us)
     : waf_timeout_{waf_timeout_us}
 {
     ddwaf_ruleset_info info;
@@ -346,21 +345,18 @@ std::vector<std::string_view> instance::get_subscriptions()
     return output;
 }
 
-instance::ptr instance::from_settings(
-    const client_settings &settings,
+instance::ptr instance::from_settings(const client_settings &settings,
     std::map<std::string, std::string> &meta,
     std::map<std::string, double> &metrics)
 {
     dds::parameter param = parse_file(settings.rules_file_or_default());
-    return std::make_shared<instance>(param,
-        meta, metrics, settings.waf_timeout_us);
+    return std::make_shared<instance>(
+        param, meta, metrics, settings.waf_timeout_us);
 }
 
-instance::ptr instance::from_string(
-    std::string_view rule,
+instance::ptr instance::from_string(std::string_view rule,
     std::map<std::string, std::string> &meta,
-    std::map<std::string, double> &metrics,
-    std::uint64_t waf_timeout_us)
+    std::map<std::string, double> &metrics, std::uint64_t waf_timeout_us)
 {
     dds::parameter param = parse_string(rule);
     return std::make_shared<instance>(param, meta, metrics, waf_timeout_us);

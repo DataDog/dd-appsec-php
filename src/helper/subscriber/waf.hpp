@@ -42,10 +42,8 @@ public:
     };
 
     // NOLINTNEXTLINE(google-runtime-references)
-    instance(dds::parameter &rule, 
-        std::map<std::string, std::string> &meta,
-        std::map<std::string, double> &metrics,
-        std::uint64_t waf_timeout_us);
+    instance(dds::parameter &rule, std::map<std::string, std::string> &meta,
+        std::map<std::string, double> &metrics, std::uint64_t waf_timeout_us);
     instance(const instance &) = delete;
     instance &operator=(const instance &) = delete;
     instance(instance &&) noexcept;
@@ -56,14 +54,12 @@ public:
 
     listener::ptr get_listener() override;
 
-    static ptr from_settings(
-        const client_settings &settings,
+    static ptr from_settings(const client_settings &settings,
         std::map<std::string, std::string> &meta,
         std::map<std::string, double> &metrics);
 
     // testing only
-    static instance::ptr from_string(
-        std::string_view rule, 
+    static instance::ptr from_string(std::string_view rule,
         std::map<std::string, std::string> &meta,
         std::map<std::string, double> &metrics,
         std::uint64_t waf_timeout_us = default_waf_timeout_us);
