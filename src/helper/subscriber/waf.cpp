@@ -284,7 +284,6 @@ instance::instance(parameter &rule, std::map<std::string, std::string> &meta,
     ddwaf_ruleset_info info;
     handle_ = ddwaf_init(rule, nullptr, &info);
 
-    SPDLOG_ERROR("Failed {}, Loaded {}", info.failed, info.loaded);
     metrics[tag::event_rules_loaded] = info.loaded;
     metrics[tag::event_rules_failed] = info.failed;
     meta[tag::event_rules_errors] =

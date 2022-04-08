@@ -551,7 +551,6 @@ auto parse_responses(const std::vector<std::string> responses_str)
     std::vector<rapidjson::Document> responses{responses_str.size()};
     auto out_iter = responses.begin();
     for (auto &str : responses_str) {
-        SPDLOG_INFO("Response {}", str);
         out_iter->Parse(str.c_str());
         if (out_iter->HasParseError()) {
             throw std::runtime_error{
