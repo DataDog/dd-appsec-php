@@ -203,7 +203,8 @@ bool client::handle_command(network::request_shutdown::request &command)
         } else {
             response.verdict = "ok";
         }
-        response.metrics = context_->get_metrics();
+
+        context_->get_meta_and_metrics(response.meta, response.metrics);
     } catch (const invalid_object &e) {
         // This error indicates some issue in either the communication with
         // the client, incompatible versions or malicious client.

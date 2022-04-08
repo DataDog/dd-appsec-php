@@ -26,19 +26,25 @@ public:
     using ptr = std::shared_ptr<instance>;
     class listener : public dds::subscriber::listener {
     public:
-        listener(ddwaf_context ctx, std::chrono::microseconds waf_timeout);
+        listener(ddwaf_context ctx, std::chrono::microseconds waf_timeout,
+            std::string_view ruleset_version = std::string_view());
         listener(const listener &) = delete;
         listener &operator=(const listener &) = delete;
         listener(listener &&) noexcept;
         listener &operator=(listener &&) noexcept;
         ~listener() override;
 
-        dds::result call(dds::parameter_view &data,
+        dds::result call(dds::parameter_view &data) override;
+
+        // NOLINTNEXTLINE(google-runtime-references)
+        void get_meta_and_metrics(std::map<std::string, std::string> &meta,
             std::map<std::string, double> &metrics) override;
 
     protected:
         ddwaf_context handle_{};
         std::chrono::microseconds waf_timeout_;
+        double total_runtime_{0.0};
+        std::string_view ruleset_version_;
     };
 
     // NOLINTNEXTLINE(google-runtime-references)
@@ -67,6 +73,7 @@ public:
 protected:
     ddwaf_handle handle_{nullptr};
     std::chrono::microseconds waf_timeout_;
+    std::string ruleset_version_;
 };
 
 parameter parse_file(std::string_view filename);

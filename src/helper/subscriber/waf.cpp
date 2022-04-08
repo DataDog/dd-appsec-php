@@ -192,9 +192,9 @@ void initialise_logging(spdlog::level::level_enum level)
     ddwaf_set_log_cb(log_cb, spdlog_level_to_ddwaf(level));
 }
 
-instance::listener::listener(
-    ddwaf_context ctx, std::chrono::microseconds waf_timeout)
-    : handle_{ctx}, waf_timeout_{waf_timeout}
+instance::listener::listener(ddwaf_context ctx,
+    std::chrono::microseconds waf_timeout, std::string_view ruleset_version)
+    : handle_{ctx}, waf_timeout_{waf_timeout}, ruleset_version_(ruleset_version)
 {}
 
 instance::listener::listener(instance::listener &&other) noexcept
@@ -218,8 +218,7 @@ instance::listener::~listener()
     }
 }
 
-dds::result instance::listener::call(
-    dds::parameter_view &data, std::map<std::string, double> &metrics)
+dds::result instance::listener::call(dds::parameter_view &data)
 {
     ddwaf_result res;
     DDWAF_RET_CODE code;
@@ -247,12 +246,7 @@ dds::result instance::listener::call(
         &res, ddwaf_result_free);
 
     // NOLINTNEXTLINE
-    double duration = res.total_runtime / 1000.0;
-    auto duration_it = metrics.find(tag::waf_duration);
-    if (duration_it != metrics.end()) {
-        duration += duration_it->second;
-    }
-    metrics[tag::waf_duration] = duration;
+    total_runtime_ += res.total_runtime / 1000.0;
 
     switch (code) {
     case DDWAF_BLOCK:
@@ -277,6 +271,14 @@ dds::result instance::listener::call(
     return dds::result{dds::result::code::ok};
 }
 
+void instance::listener::get_meta_and_metrics(
+    std::map<std::string, std::string> &meta,
+    std::map<std::string, double> &metrics)
+{
+    meta[tag::event_rules_version] = ruleset_version_;
+    metrics[tag::waf_duration] = total_runtime_;
+}
+
 instance::instance(parameter &rule, std::map<std::string, std::string> &meta,
     std::map<std::string, double> &metrics, std::uint64_t waf_timeout_us)
     : waf_timeout_{waf_timeout_us}
@@ -289,7 +291,7 @@ instance::instance(parameter &rule, std::map<std::string, std::string> &meta,
     meta[tag::event_rules_errors] =
         parameter_to_json(dds::parameter_view(info.errors));
     if (info.version != nullptr) {
-        meta[tag::event_rules_version] = info.version;
+        ruleset_version_ = info.version;
     }
 
     ddwaf_version version;
@@ -330,8 +332,8 @@ instance::~instance()
 
 instance::listener::ptr instance::get_listener()
 {
-    return listener::ptr(
-        new listener(ddwaf_context_init(handle_, nullptr), waf_timeout_));
+    return listener::ptr(new listener(
+        ddwaf_context_init(handle_, nullptr), waf_timeout_, ruleset_version_));
 }
 
 std::vector<std::string_view> instance::get_subscriptions()

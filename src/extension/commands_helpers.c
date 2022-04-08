@@ -253,8 +253,13 @@ dd_result dd_command_proc_resp_verd_span_data(
         _set_appsec_span_data(mpack_node_array_at(root, 1));
     }
 
-    mpack_node_t metrics = mpack_node_array_at(root, 2);
-    dd_command_process_metrics(metrics);
+    if (mpack_node_array_length(root) >= 4) {
+        mpack_node_t meta = mpack_node_array_at(root, 2);
+        dd_command_process_meta(meta);
+
+        mpack_node_t metrics = mpack_node_array_at(root, 3);
+        dd_command_process_metrics(metrics);
+    }
 
     return should_block ? dd_should_block : dd_success;
 }

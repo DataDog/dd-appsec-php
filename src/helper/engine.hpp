@@ -50,14 +50,9 @@ public:
         ~context() = default;
 
         result publish(parameter &&param);
-        std::map<std::string, double> get_metrics()
-        {
-            // Moving this object has to be done once the context is
-            // no longer going to be used, otherwise this could cause
-            // issues.
-            // NOLINTNEXTLINE(clang-analyzer-cplusplus.Move)
-            return std::move(metrics);
-        }
+        // NOLINTNEXTLINE(google-runtime-references)
+        void get_meta_and_metrics(std::map<std::string, std::string> &meta,
+            std::map<std::string, double> &metrics);
 
     protected:
         std::vector<parameter> prev_published_params_;

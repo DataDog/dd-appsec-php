@@ -108,12 +108,11 @@ TEST(BrokerTest, SendRequestInit)
 
     std::stringstream ss;
     msgpack::packer<std::stringstream> packer(ss);
-    packer.pack_array(3);
+    packer.pack_array(2);
     pack_str(packer, "record");
     packer.pack_array(2);
     pack_str(packer, "one");
     pack_str(packer, "two");
-    packer.pack_map(0);
     const auto &expected_data = ss.str();
 
     network::header_t h;
@@ -139,11 +138,12 @@ TEST(BrokerTest, SendRequestShutdown)
 
     std::stringstream ss;
     msgpack::packer<std::stringstream> packer(ss);
-    packer.pack_array(3);
+    packer.pack_array(4);
     pack_str(packer, "block");
     packer.pack_array(2);
     pack_str(packer, "one");
     pack_str(packer, "two");
+    packer.pack_map(0);
     packer.pack_map(0);
     const auto &expected_data = ss.str();
 

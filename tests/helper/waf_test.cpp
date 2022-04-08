@@ -15,7 +15,7 @@
 #include <tags.hpp>
 
 const std::string waf_rule =
-    R"({"version":"2.1","rules":[{"id":"1","name":"rule1","tags":{"type":"flow1","category":"category1"},"conditions":[{"operator":"match_regex","parameters":{"inputs":[{"address":"arg1","key_path":[]}],"regex":"^string.*"}},{"operator":"match_regex","parameters":{"inputs":[{"address":"arg2","key_path":[]}],"regex":".*"}}],"action":"record"}]})";
+    R"({"version":"2.1","metadata":{"rules_version":"1.2.3"},"rules":[{"id":"1","name":"rule1","tags":{"type":"flow1","category":"category1"},"conditions":[{"operator":"match_regex","parameters":{"inputs":[{"address":"arg1","key_path":[]}],"regex":"^string.*"}},{"operator":"match_regex","parameters":{"inputs":[{"address":"arg2","key_path":[]}],"regex":".*"}}],"action":"record"}]})";
 
 namespace dds {
 
@@ -45,9 +45,8 @@ TEST(WafTest, InitWithInvalidRules)
 
     subscriber::ptr wi{waf::instance::from_settings(cs, meta, metrics)};
 
-    EXPECT_EQ(meta.size(), 3);
+    EXPECT_EQ(meta.size(), 2);
     EXPECT_STREQ(meta[tag::waf_version].c_str(), "1.2.1");
-    EXPECT_STREQ(meta[tag::event_rules_version].c_str(), "1.2.3");
 
     rapidjson::Document doc;
     doc.Parse(meta[tag::event_rules_errors]);
@@ -72,7 +71,7 @@ TEST(WafTest, RunWithInvalidParam)
     subscriber::ptr wi{waf::instance::from_string(waf_rule, meta, metrics)};
     auto ctx = wi->get_listener();
     parameter_view pv;
-    EXPECT_THROW(ctx->call(pv, metrics), invalid_object);
+    EXPECT_THROW(ctx->call(pv), invalid_object);
 }
 
 TEST(WafTest, RunWithTimeout)
@@ -88,7 +87,7 @@ TEST(WafTest, RunWithTimeout)
     p.add("arg2", parameter::string("string 2"sv));
 
     parameter_view pv(p);
-    EXPECT_THROW(ctx->call(pv, metrics), timeout_error);
+    EXPECT_THROW(ctx->call(pv), timeout_error);
 }
 
 TEST(WafTest, ValidRunGood)
@@ -103,9 +102,11 @@ TEST(WafTest, ValidRunGood)
     p.add("arg1", parameter::string("string 1"sv));
 
     parameter_view pv(p);
-    auto res = ctx->call(pv, metrics);
+    auto res = ctx->call(pv);
     EXPECT_EQ(res.value, dds::result::code::ok);
 
+    ctx->get_meta_and_metrics(meta, metrics);
+    EXPECT_STREQ(meta[tag::event_rules_version].c_str(), "1.2.3");
     EXPECT_GT(metrics[tag::waf_duration], 0.0);
 }
 
@@ -122,7 +123,7 @@ TEST(WafTest, ValidRunMonitor)
     p.add("arg2", parameter::string("string 3"sv));
 
     parameter_view pv(p);
-    auto res = ctx->call(pv, metrics);
+    auto res = ctx->call(pv);
     EXPECT_EQ(res.value, dds::result::code::record);
 
     for (auto &match : res.data) {
@@ -132,6 +133,8 @@ TEST(WafTest, ValidRunMonitor)
         EXPECT_TRUE(doc.IsObject());
     }
 
+    ctx->get_meta_and_metrics(meta, metrics);
+    EXPECT_STREQ(meta[tag::event_rules_version].c_str(), "1.2.3");
     EXPECT_GT(metrics[tag::waf_duration], 0.0);
 }
 

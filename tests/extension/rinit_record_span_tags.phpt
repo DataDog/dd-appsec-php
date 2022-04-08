@@ -29,8 +29,8 @@ print_r(root_span_get_meta());
 include __DIR__ . '/inc/mock_helper.php';
 
 $helper = Helper::createInitedRun([
-    ['record', ['{"found":"attack"}','{"another":"attack"}'], ["rinit_metric" => 1.1]],
-    ['record', ['{"yet another":"attack"}'], ["rshutdown_metric" => 2.1]],
+    ['record', ['{"found":"attack"}','{"another":"attack"}']],
+    ['record', ['{"yet another":"attack"}'], ["rshutdown_tag" => "rshutdown_value"], ["rshutdown_metric" => 2.1]],
 ], ['continuous' => true]);
 
 echo "rinit\n";
@@ -73,6 +73,7 @@ tags:
 Array
 (
     [system.pid] => %d
+    [rshutdown_tag] => rshutdown_value
     [_dd.runtime_family] => php
     [_dd.appsec.json] => {"triggers":[{"found":"attack"},{"another":"attack"},{"yet another":"attack"}]}
     [appsec.event] => true
@@ -86,7 +87,6 @@ Array
 metrics:
 Array
 (
-    [rinit_metric] => 1.1
     [rshutdown_metric] => 2.1
     [_dd.appsec.enabled] => 1
     [_sampling_priority_v1] => 2

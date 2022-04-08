@@ -63,7 +63,7 @@ result engine::context::publish(parameter &&param)
             it = listeners_.emplace(sub, sub->get_listener()).first;
         }
         try {
-            auto call_res = it->second->call(data, metrics);
+            auto call_res = it->second->call(data);
             if (call_res.value > res.value) {
                 res = std::move(call_res);
             }
@@ -77,6 +77,15 @@ result engine::context::publish(parameter &&param)
     }
 
     return res;
+}
+
+void engine::context::get_meta_and_metrics(
+    std::map<std::string, std::string> &meta,
+    std::map<std::string, double> &metrics)
+{
+    for (const auto &[subscriber, listener] : listeners_) {
+        listener->get_meta_and_metrics(meta, metrics);
+    }
 }
 
 } // namespace dds
