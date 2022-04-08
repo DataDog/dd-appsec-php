@@ -492,7 +492,7 @@ static void _dd_actor_ip(zend_array *meta_ht, zval *_server)
         return;
     }
 
-    _add_new_zstr_to_meta(meta_ht, _dd_tag_actor_ip_zstr, actor_ip_zstr, true);
+    _add_new_zstr_to_meta(meta_ht, _dd_tag_actor_ip_zstr, actor_ip_zstr, false);
 }
 
 static void _dd_request_headers(zend_array *meta_ht, zval *_server)
