@@ -31,6 +31,12 @@ trait CommonTests {
         }
 
         assert trace.metrics."_dd.appsec.enabled" == 1.0d
+        assert trace.metrics."_dd.appsec.event_rules.loaded" > 0.0d
+        assert trace.metrics."_dd.appsec.event_rules.error_count" == 0.0d
+
+        assert trace.meta."_dd.appsec.event_rules.errors" == '{}'
+        assert trace.meta."_dd.appsec.event_rules.version" != ''
+        assert trace.meta."_dd.appsec.waf.version" != ''
     }
 
 
