@@ -87,8 +87,8 @@ bool client::handle_command(const network::client_init::request &command)
     auto &&settings = command.settings;
     DD_STDLOG(DD_STDLOG_STARTUP);
 
-    std::map<std::string, std::string> meta;
-    std::map<std::string, double> metrics;
+    std::map<std::string_view, std::string> meta;
+    std::map<std::string_view, double> metrics;
 
     std::vector<std::string> errors;
     bool has_errors = false;

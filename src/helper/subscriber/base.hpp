@@ -34,8 +34,8 @@ public:
 
         // NOLINTNEXTLINE(google-runtime-references)
         virtual void get_meta_and_metrics(
-            std::map<std::string, std::string> &meta,
-            std::map<std::string, double> &metrics) = 0;
+            std::map<std::string_view, std::string> &meta,
+            std::map<std::string_view, double> &metrics) = 0;
     };
 
     subscriber() = default;

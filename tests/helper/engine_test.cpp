@@ -20,8 +20,8 @@ public:
 
     MOCK_METHOD1(call, dds::result(dds::parameter_view &));
     MOCK_METHOD2(
-        get_meta_and_metrics, void(std::map<std::string, std::string> &,
-                                  std::map<std::string, double> &));
+        get_meta_and_metrics, void(std::map<std::string_view, std::string> &,
+                                  std::map<std::string_view, double> &));
 };
 
 class subscriber : public dds::subscriber {
@@ -231,8 +231,8 @@ TEST(EngineTest, StatefulSubscriptor)
 
 TEST(EngineTest, WafSubscriptorBasic)
 {
-    std::map<std::string, std::string> meta;
-    std::map<std::string, double> metrics;
+    std::map<std::string_view, std::string> meta;
+    std::map<std::string_view, double> metrics;
 
     auto e{engine::create()};
     e->subscribe(waf::instance::from_string(waf_rule, meta, metrics));
@@ -256,8 +256,8 @@ TEST(EngineTest, WafSubscriptorBasic)
 
 TEST(EngineTest, WafSubscriptorInvalidParam)
 {
-    std::map<std::string, std::string> meta;
-    std::map<std::string, double> metrics;
+    std::map<std::string_view, std::string> meta;
+    std::map<std::string_view, double> metrics;
 
     auto e{engine::create()};
     e->subscribe(waf::instance::from_string(waf_rule, meta, metrics));
@@ -271,8 +271,8 @@ TEST(EngineTest, WafSubscriptorInvalidParam)
 
 TEST(EngineTest, WafSubscriptorTimeout)
 {
-    std::map<std::string, std::string> meta;
-    std::map<std::string, double> metrics;
+    std::map<std::string_view, std::string> meta;
+    std::map<std::string_view, double> metrics;
 
     auto e{engine::create()};
     e->subscribe(waf::instance::from_string(waf_rule, meta, metrics, 0));

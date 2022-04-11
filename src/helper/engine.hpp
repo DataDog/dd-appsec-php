@@ -51,15 +51,14 @@ public:
 
         result publish(parameter &&param);
         // NOLINTNEXTLINE(google-runtime-references)
-        void get_meta_and_metrics(std::map<std::string, std::string> &meta,
-            std::map<std::string, double> &metrics);
+        void get_meta_and_metrics(std::map<std::string_view, std::string> &meta,
+            std::map<std::string_view, double> &metrics);
 
     protected:
         std::vector<parameter> prev_published_params_;
         std::map<subscriber::ptr, subscriber::listener::ptr> listeners_;
         const subscription_map &subscriptions_;
         rate_limiter &limiter_;
-        std::map<std::string, double> metrics;
     };
 
     static auto create(

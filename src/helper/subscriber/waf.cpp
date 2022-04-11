@@ -272,15 +272,16 @@ dds::result instance::listener::call(dds::parameter_view &data)
 }
 
 void instance::listener::get_meta_and_metrics(
-    std::map<std::string, std::string> &meta,
-    std::map<std::string, double> &metrics)
+    std::map<std::string_view, std::string> &meta,
+    std::map<std::string_view, double> &metrics)
 {
     meta[tag::event_rules_version] = ruleset_version_;
     metrics[tag::waf_duration] = total_runtime_;
 }
 
-instance::instance(parameter &rule, std::map<std::string, std::string> &meta,
-    std::map<std::string, double> &metrics, std::uint64_t waf_timeout_us)
+instance::instance(parameter &rule,
+    std::map<std::string_view, std::string> &meta,
+    std::map<std::string_view, double> &metrics, std::uint64_t waf_timeout_us)
     : waf_timeout_{waf_timeout_us}
 {
     ddwaf_ruleset_info info;
@@ -347,8 +348,8 @@ std::vector<std::string_view> instance::get_subscriptions()
 }
 
 instance::ptr instance::from_settings(const client_settings &settings,
-    std::map<std::string, std::string> &meta,
-    std::map<std::string, double> &metrics)
+    std::map<std::string_view, std::string> &meta,
+    std::map<std::string_view, double> &metrics)
 {
     dds::parameter param = parse_file(settings.rules_file_or_default());
     return std::make_shared<instance>(
@@ -356,8 +357,8 @@ instance::ptr instance::from_settings(const client_settings &settings,
 }
 
 instance::ptr instance::from_string(std::string_view rule,
-    std::map<std::string, std::string> &meta,
-    std::map<std::string, double> &metrics, std::uint64_t waf_timeout_us)
+    std::map<std::string_view, std::string> &meta,
+    std::map<std::string_view, double> &metrics, std::uint64_t waf_timeout_us)
 {
     dds::parameter param = parse_string(rule);
     return std::make_shared<instance>(param, meta, metrics, waf_timeout_us);

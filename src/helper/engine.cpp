@@ -80,8 +80,8 @@ result engine::context::publish(parameter &&param)
 }
 
 void engine::context::get_meta_and_metrics(
-    std::map<std::string, std::string> &meta,
-    std::map<std::string, double> &metrics)
+    std::map<std::string_view, std::string> &meta,
+    std::map<std::string_view, double> &metrics)
 {
     for (const auto &[subscriber, listener] : listeners_) {
         listener->get_meta_and_metrics(meta, metrics);

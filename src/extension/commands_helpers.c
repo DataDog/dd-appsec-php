@@ -309,6 +309,10 @@ bool dd_command_process_meta(mpack_node_t root)
 
         const char *key_str = mpack_node_str(key);
         size_t key_len = mpack_node_strlen(key);
+        if (key_len > INT_MAX) {
+            key_len = INT_MAX;
+        }
+
         bool res = dd_trace_root_span_add_tag_str(
             key_str, key_len, mpack_node_str(value), mpack_node_strlen(value));
 
@@ -360,6 +364,10 @@ bool dd_command_process_metrics(mpack_node_t root)
 
         const char *key_str = mpack_node_str(key);
         size_t key_len = mpack_node_strlen(key);
+        if (key_len > INT_MAX) {
+            key_len = INT_MAX;
+        }
+
         zend_string *ztag = zend_string_init(key_str, key_len, 0);
 
         mlog(dd_log_debug, "Adding to root span the metric '%.*s'",

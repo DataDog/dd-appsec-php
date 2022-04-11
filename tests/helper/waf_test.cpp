@@ -40,8 +40,8 @@ TEST(WafTest, InitWithInvalidRules)
     client_settings cs;
     cs.rules_file = create_sample_rules_invalid();
 
-    std::map<std::string, std::string> meta;
-    std::map<std::string, double> metrics;
+    std::map<std::string_view, std::string> meta;
+    std::map<std::string_view, double> metrics;
 
     subscriber::ptr wi{waf::instance::from_settings(cs, meta, metrics)};
 
@@ -65,8 +65,8 @@ TEST(WafTest, InitWithInvalidRules)
 
 TEST(WafTest, RunWithInvalidParam)
 {
-    std::map<std::string, std::string> meta;
-    std::map<std::string, double> metrics;
+    std::map<std::string_view, std::string> meta;
+    std::map<std::string_view, double> metrics;
 
     subscriber::ptr wi{waf::instance::from_string(waf_rule, meta, metrics)};
     auto ctx = wi->get_listener();
@@ -76,8 +76,8 @@ TEST(WafTest, RunWithInvalidParam)
 
 TEST(WafTest, RunWithTimeout)
 {
-    std::map<std::string, std::string> meta;
-    std::map<std::string, double> metrics;
+    std::map<std::string_view, std::string> meta;
+    std::map<std::string_view, double> metrics;
 
     subscriber::ptr wi(waf::instance::from_string(waf_rule, meta, metrics, 0));
     auto ctx = wi->get_listener();
@@ -92,8 +92,8 @@ TEST(WafTest, RunWithTimeout)
 
 TEST(WafTest, ValidRunGood)
 {
-    std::map<std::string, std::string> meta;
-    std::map<std::string, double> metrics;
+    std::map<std::string_view, std::string> meta;
+    std::map<std::string_view, double> metrics;
 
     subscriber::ptr wi{waf::instance::from_string(waf_rule, meta, metrics)};
     auto ctx = wi->get_listener();
@@ -112,8 +112,8 @@ TEST(WafTest, ValidRunGood)
 
 TEST(WafTest, ValidRunMonitor)
 {
-    std::map<std::string, std::string> meta;
-    std::map<std::string, double> metrics;
+    std::map<std::string_view, std::string> meta;
+    std::map<std::string_view, double> metrics;
 
     subscriber::ptr wi{waf::instance::from_string(waf_rule, meta, metrics)};
     auto ctx = wi->get_listener();

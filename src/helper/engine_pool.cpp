@@ -17,8 +17,9 @@ namespace dds {
  * @throws std::exception if creating the waf subscriber fails
  */
 std::shared_ptr<engine> engine_pool::create_engine(
-    const client_settings &settings, std::map<std::string, std::string> &meta,
-    std::map<std::string, double> &metrics)
+    const client_settings &settings,
+    std::map<std::string_view, std::string> &meta,
+    std::map<std::string_view, double> &metrics)
 {
     std::lock_guard guard{mutex_};
 

@@ -17,8 +17,8 @@ class engine_pool {
 public:
     // NOLINTNEXTLINE(google-runtime-references)
     std::shared_ptr<engine> create_engine(const client_settings &settings,
-        std::map<std::string, std::string> &meta,
-        std::map<std::string, double> &metrics);
+        std::map<std::string_view, std::string> &meta,
+        std::map<std::string_view, double> &metrics);
 
 protected:
     using cache_t = std::unordered_map<client_settings, std::weak_ptr<engine>,

@@ -25,8 +25,8 @@ struct engine_pool_exp : public engine_pool {
 
 TEST(EnginePoolTest, LoadRulesOK)
 {
-    std::map<std::string, std::string> meta;
-    std::map<std::string, double> metrics;
+    std::map<std::string_view, std::string> meta;
+    std::map<std::string_view, double> metrics;
 
     engine_pool_exp pool;
     auto fn = create_sample_rules_ok();
@@ -63,8 +63,8 @@ TEST(EnginePoolTest, LoadRulesOK)
 
 TEST(EnginePoolTest, LoadRulesFileNotFound)
 {
-    std::map<std::string, std::string> meta;
-    std::map<std::string, double> metrics;
+    std::map<std::string_view, std::string> meta;
+    std::map<std::string_view, double> metrics;
 
     engine_pool_exp pool;
     EXPECT_THROW(
@@ -76,8 +76,8 @@ TEST(EnginePoolTest, LoadRulesFileNotFound)
 }
 TEST(EnginePoolTest, BadRulesFile)
 {
-    std::map<std::string, std::string> meta;
-    std::map<std::string, double> metrics;
+    std::map<std::string_view, std::string> meta;
+    std::map<std::string_view, double> metrics;
 
     engine_pool_exp pool;
     EXPECT_THROW(
