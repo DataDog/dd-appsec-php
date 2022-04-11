@@ -72,7 +72,9 @@ public:
     static instance::ptr from_string(std::string_view rule,
         std::map<std::string_view, std::string> &meta,
         std::map<std::string_view, double> &metrics,
-        std::uint64_t waf_timeout_us = default_waf_timeout_us);
+        std::uint64_t waf_timeout_us = default_waf_timeout_us,
+        std::string_view key_regex = std::string_view(),
+        std::string_view value_regex = std::string_view());
 
 protected:
     ddwaf_handle handle_{nullptr};
