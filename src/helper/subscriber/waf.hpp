@@ -51,7 +51,9 @@ public:
     instance(dds::parameter &rule,
         std::map<std::string_view, std::string> &meta,
         std::map<std::string_view, double> &metrics,
-        std::uint64_t waf_timeout_us);
+        std::uint64_t waf_timeout_us,
+        std::string_view key_regex = std::string_view(),
+        std::string_view value_regex = std::string_view());
     instance(const instance &) = delete;
     instance &operator=(const instance &) = delete;
     instance(instance &&) noexcept;
