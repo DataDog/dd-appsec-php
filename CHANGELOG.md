@@ -16,7 +16,7 @@
 #### Miscellaneous Changes
 - ([#76](https://github.com/DataDog/dd-appsec-php/pull/76)) Update installer links in documentation and tests
 - ([#78](https://github.com/DataDog/dd-appsec-php/pull/78)) Add `parameter_view` for non-ownership of WAF parameters
-- ([#81](https://github.com/DataDog/dd-appsec-php/pull/81)) Accept IP list on `X-Cluster-Client-IP header`
+- ([#81](https://github.com/DataDog/dd-appsec-php/pull/81)) Accept IP list on `X-Cluster-Client-IP` header
 - ([#82](https://github.com/DataDog/dd-appsec-php/pull/82)) Update ruleset to v1.3.1
 - ([#82](https://github.com/DataDog/dd-appsec-php/pull/82)) libddwaf upgraded to v1.3.0
 
