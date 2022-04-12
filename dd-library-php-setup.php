@@ -369,7 +369,7 @@ function install_appsec($options, $selectedBinaries)
                 );
 
                 repl_or_add_ini_sett($iniFilePath, 'helper_path', $helperPath);
-                repl_or_add_ini_sett($iniFilePath, 'rules_path', $rulesPath);
+                repl_or_add_ini_sett($iniFilePath, 'rules', $rulesPath);
             }
             echo "Installation to '$binaryForLog' was successful\n";
         }
@@ -1266,7 +1266,7 @@ datadog.appsec.helper_path = '$helperPath'
 
 ; The path to the rules json file. The helper process must be able to read the
 ; file. This ini setting is configured by the installer.
-datadog.appsec.rules_path = "$rulesPath"
+datadog.appsec.rules = "$rulesPath"
 
 ; The location to the UNIX socket that extension uses to communicate with the
 ; helper and the lock file that the extension processes will use to
