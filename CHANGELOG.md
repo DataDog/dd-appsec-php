@@ -6,7 +6,7 @@
 - ([#74](https://github.com/DataDog/dd-appsec-php/pull/74)) Interpret `datadog.appsec.waf_timeout` as microseconds rather than milliseconds
 
 ### Fixes
-- ([83](https://github.com/DataDog/dd-appsec-php/pull/83)) Add obfuscator strings when initialising WAF from client settings
+- ([#83](https://github.com/DataDog/dd-appsec-php/pull/83)) Add obfuscator strings when initialising WAF from client settings
 
 #### Additions
 - ([#79](https://github.com/DataDog/dd-appsec-php/pull/79)) Add WAF metrics and errors to traces
