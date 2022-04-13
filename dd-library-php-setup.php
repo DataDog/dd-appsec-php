@@ -276,11 +276,11 @@ function install_appsec($options, $selectedBinaries)
     }
 
     $tarball_version = extract_version_appsec($options, $tarball);
-    if (version_compare($tarball_version, "0.2.0", "<")) {
+    if (version_compare($tarball_version, "0.3.0", "<")) {
         print_error_and_exit(
             "The version of the AppSec package provided/downloaded is " .
             $tarball_version .
-            " but the minimum version supported by this installer is 0.2.0\n");
+            " but the minimum version supported by this installer is 0.3.0\n");
     }
     $installDir = "{$options[OPT_INSTALL_DIR]}/appsec-" . $tarball_version;
 
