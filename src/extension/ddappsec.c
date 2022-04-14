@@ -261,8 +261,18 @@ static ZEND_INI_MH(_on_update_appsec_enabled_on_cli);
 static ZEND_INI_MH(_on_update_unsigned);
 
 #define DEFAULT_OBFUSCATOR_KEY_REGEX                                           \
-    "(p(ass)?w(or)?d|pass(_?phrase)?|secret|(api_?|private_?|public_?)key)|"   \
-    "token|consumer_?(id|key|secret)|sign(ed|ature)|bearer|authorization"
+    "(?i)(?:p(?:ass)?w(?:or)?d|pass(?:_?phrase)?|secret|(?:api_?|private_?|"   \
+    "public_?)key)|token|consumer_?(?:id|key|secret)|sign(?:ed|ature)|bearer|" \
+    "authorization"
+
+#define DEFAULT_OBFUSCATOR_VALUE_REGEX                                         \
+    "(?i)(?:p(?:ass)?w(?:or)?d|pass(?:_?phrase)?|secret|(?:api_?|private_?|"   \
+    "public_?|access_?|secret_?)key(?:_?id)?|token|consumer_?(?:id|key|"       \
+    "secret)|sign(?:ed|ature)?|auth(?:entication|orization)?)(?:\\s*=[^;]|"    \
+    "\"\\s*:\\s*\"[^\"]+\")|bearer\\s+[a-z0-9\\._\\-]+|token:[a-z0-9]{13}|gh[" \
+    "opsu]_[0-9a-zA-Z]{36}|ey[I-L][\\w=-]+\\.ey[I-L][\\w=-]+(?:\\.[\\w.+\\/"   \
+    "=-]+)?|[\\-]{5}BEGIN[a-z\\s]+PRIVATE\\sKEY[\\-]{5}[^\\-]+[\\-]{5}END[a-"  \
+    "z\\s]+PRIVATE\\sKEY|ssh-rsa\\s*[a-z0-9\\/\\.+]{100,}"
 
 static void _register_ini_entries()
 {
