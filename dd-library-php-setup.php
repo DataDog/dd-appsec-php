@@ -276,11 +276,16 @@ function install_appsec($options, $selectedBinaries)
     }
 
     $tarball_version = extract_version_appsec($options, $tarball);
-    if (version_compare($tarball_version, "0.3.0", "<")) {
+    if (version_compare($tarball_version, "0.2.0", "<")) {
         print_error_and_exit(
             "The version of the AppSec package provided/downloaded is " .
             $tarball_version .
             " but the minimum version supported by this installer is 0.3.0\n");
+    }
+
+    $rulesPathSetting="rules_path";
+    if (version_compare($tarball_version, "0.3.0", ">=")) {
+        $rulesPathSetting="rules";
     }
     $installDir = "{$options[OPT_INSTALL_DIR]}/appsec-" . $tarball_version;
 
@@ -355,7 +360,7 @@ function install_appsec($options, $selectedBinaries)
                     "mkdir -p " . escapeshellarg($iniDir)
                 );
 
-                $iniContent = get_ini_content_appsec($helperPath, $rulesPath, $implicitAppsec);
+                $iniContent = get_ini_content_appsec($helperPath, $rulesPath, $implicitAppsec, $rulesPathSetting);
                 if (false === file_put_contents($iniFilePath, $iniContent)) {
                     print_error_and_exit("Cannot create INI file $iniFilePath");
                 }
@@ -1200,7 +1205,7 @@ EOD;
     // phpcs:enable Generic.Files.LineLength.TooLong
 }
 
-function get_ini_content_appsec($helperPath, $rulesPath, $implicitAppsec)
+function get_ini_content_appsec($helperPath, $rulesPath, $implicitAppsec, $rulesPathSetting)
 {
     if ($implicitAppsec) {
         $enabledLine = ';datadog.appsec.enabled = Off';
@@ -1266,7 +1271,7 @@ datadog.appsec.helper_path = '$helperPath'
 
 ; The path to the rules json file. The helper process must be able to read the
 ; file. This ini setting is configured by the installer.
-datadog.appsec.rules = "$rulesPath"
+datadog.appsec.$rulesPathSetting = "$rulesPath"
 
 ; The location to the UNIX socket that extension uses to communicate with the
 ; helper and the lock file that the extension processes will use to
