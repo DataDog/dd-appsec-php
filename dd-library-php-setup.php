@@ -374,7 +374,7 @@ function install_appsec($options, $selectedBinaries)
                 );
 
                 repl_or_add_ini_sett($iniFilePath, 'helper_path', $helperPath);
-                repl_or_add_ini_sett($iniFilePath, 'rules', $rulesPath);
+                repl_or_add_ini_sett($iniFilePath, $rulesPathSetting, $rulesPath);
             }
             echo "Installation to '$binaryForLog' was successful\n";
         }
