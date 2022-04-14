@@ -12,6 +12,7 @@
 - ([#79](https://github.com/DataDog/dd-appsec-php/pull/79)) Add WAF metrics and errors to traces
 - ([#80](https://github.com/DataDog/dd-appsec-php/pull/80)) Actor IP resolution from request headers
 - ([#82](https://github.com/DataDog/dd-appsec-php/pull/82)) Add support for WAF event obfuscator
+- ([#84](https://github.com/DataDog/dd-appsec-php/pull/84)) Add obfuscator regex for values
 
 #### Miscellaneous Changes
 - ([#76](https://github.com/DataDog/dd-appsec-php/pull/76)) Update installer links in documentation and tests
@@ -19,6 +20,7 @@
 - ([#81](https://github.com/DataDog/dd-appsec-php/pull/81)) Accept IP list on `X-Cluster-Client-IP` header
 - ([#82](https://github.com/DataDog/dd-appsec-php/pull/82)) Update ruleset to v1.3.1
 - ([#82](https://github.com/DataDog/dd-appsec-php/pull/82)) libddwaf upgraded to v1.3.0
+- ([#84](https://github.com/DataDog/dd-appsec-php/pull/84)) Update installation instructions
 
 ### v0.2.2
 #### Miscellaneous Changes
