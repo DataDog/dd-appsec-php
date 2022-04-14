@@ -44,7 +44,7 @@ Once the installation has concluded, the best way to verify that the extensions 
 
 ### Configuration
 
-After the installation has been completed, the AppSec extension will be loaded but disabled by default. Enabling the extension can be done through the `ini` settings or through environment variables.
+After the installation has been completed, the AppSec extension will be loaded and enabled. If the `--enable-appsec` option was not passed to the installer, enabling the extension can be done through the `ini` settings or through environment variables.
 
 To enable the extension using `ini` settings, find the extension's `ini` file, which can usually be found in  `/etc/php/<version>/xxx/conf.d/98-ddtrace.ini` but may differ depending on your installation. Consult the top of the output of `phpinfo()` to identify the directory that is scanned for `.ini` files, if any. Once the settings file has been found, locate, uncomment and set the following variable:
 ```
