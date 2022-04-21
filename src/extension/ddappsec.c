@@ -172,6 +172,7 @@ static PHP_MINIT_FUNCTION(ddappsec)
 
     zend_register_extension(
         &ddappsec_extension_entry, ddappsec_module_entry.handle);
+    ddappsec_module_entry.handle = NULL;
 
     dd_phpobj_startup(module_number);
     _register_ini_entries(); // depends on dd_phpobj_startup
