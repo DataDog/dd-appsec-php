@@ -101,6 +101,7 @@ static zend_extension ddappsec_extension_entry = {
 
 ZEND_GET_MODULE(ddappsec)
 
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 static void ddappsec_sort_modules(void *base, size_t count, size_t siz,
     compare_func_t compare, swap_func_t swp)
 {
@@ -127,6 +128,8 @@ static void ddappsec_sort_modules(void *base, size_t count, size_t siz,
 
 static int ddappsec_startup(zend_extension *extension)
 {
+    UNUSED(extension);
+
     zend_hash_sort_ex(&module_registry, ddappsec_sort_modules, NULL, 0);
     return SUCCESS;
 }
