@@ -11,10 +11,12 @@ extension=ddtrace.so
 zend_extension=opcache.so
 --FILE--
 <?php
-print_r(get_loaded_extensions());
+foreach (get_loaded_extensions() as &$ext) {
+    if ($ext == 'ddappsec' || $ext == 'ddtrace') {
+        printf("%s\n", $ext);
+    }
+}
 ?>
---EXPECTREGEX--
-.*
-    \[\d+\] => ddtrace
-    \[\d+\] => ddappsec
-.*
+--EXPECTF--
+ddtrace
+ddappsec
