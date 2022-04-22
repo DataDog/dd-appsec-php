@@ -1,5 +1,9 @@
 # Datadog AppSec for PHP Release
 
+### v0.3.1
+### Fixes
+- ([#86](https://github.com/DataDog/dd-appsec-php/pull/86)) Fix relative module order with ddtrace on PHP 7.3 ([#88](https://github.com/DataDog/dd-appsec-php/issues/88))
+
 ### v0.3.0
 #### Breaking Changes
 - ([#74](https://github.com/DataDog/dd-appsec-php/pull/74)) Rename ini settings from `datadog.appsec.rules_path` to `datadog.appsec.rules`
