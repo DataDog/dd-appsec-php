@@ -170,9 +170,13 @@ static PHP_MINIT_FUNCTION(ddappsec)
     UNUSED(type);
     UNUSED(module_number);
 
-    zend_register_extension(
-        &ddappsec_extension_entry, ddappsec_module_entry.handle);
-    ddappsec_module_entry.handle = NULL;
+    zend_register_extension(&ddappsec_extension_entry, NULL);
+
+    zend_module_entry *mod_ptr = zend_hash_str_find_ptr(&module_registry,
+        PHP_DDAPPSEC_EXTNAME, sizeof(PHP_DDAPPSEC_EXTNAME) - 1);
+    if (mod_ptr != NULL) {
+        mod_ptr->handle = NULL;
+    }
 
     dd_phpobj_startup(module_number);
     _register_ini_entries(); // depends on dd_phpobj_startup
