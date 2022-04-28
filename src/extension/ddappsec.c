@@ -170,11 +170,10 @@ static PHP_MINIT_FUNCTION(ddappsec)
     UNUSED(type);
     UNUSED(module_number);
 
-    zend_register_extension(&ddappsec_extension_entry, NULL);
-
     zend_module_entry *mod_ptr = zend_hash_str_find_ptr(&module_registry,
         PHP_DDAPPSEC_EXTNAME, sizeof(PHP_DDAPPSEC_EXTNAME) - 1);
     if (mod_ptr != NULL) {
+        zend_register_extension(&ddappsec_extension_entry, mod_ptr->handle);
         mod_ptr->handle = NULL;
     }
 
