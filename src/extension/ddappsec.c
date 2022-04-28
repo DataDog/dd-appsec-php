@@ -9,6 +9,7 @@
 #include <php.h>
 
 // for open(2)
+#include <dlfcn.h>
 #include <fcntl.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -170,12 +171,18 @@ static PHP_MINIT_FUNCTION(ddappsec)
     UNUSED(type);
     UNUSED(module_number);
 
-    zend_module_entry *mod_ptr = zend_hash_str_find_ptr(&module_registry,
-        PHP_DDAPPSEC_EXTNAME, sizeof(PHP_DDAPPSEC_EXTNAME) - 1);
-    if (mod_ptr != NULL) {
-        zend_register_extension(&ddappsec_extension_entry, mod_ptr->handle);
-        mod_ptr->handle = NULL;
-    }
+    zend_register_extension(
+    &ddappsec_extension_entry, ddappsec_module_entry.handle);
+
+    Dl_info infos;
+    dladdr(get_module, &infos);
+    dlopen(infos.dli_fname, RTLD_LAZY);
+/*    zend_module_entry *mod_ptr = zend_hash_str_find_ptr(&module_registry,*/
+        /*PHP_DDAPPSEC_EXTNAME, sizeof(PHP_DDAPPSEC_EXTNAME) - 1);*/
+    /*if (mod_ptr != NULL) {*/
+        /*zend_register_extension(&ddappsec_extension_entry, mod_ptr->handle);*/
+        /*mod_ptr->handle = NULL;*/
+    /*}*/
 
     dd_phpobj_startup(module_number);
     _register_ini_entries(); // depends on dd_phpobj_startup
