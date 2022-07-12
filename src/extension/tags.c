@@ -73,8 +73,7 @@ void dd_tags_startup()
         zend_string_init_interned(LSTRARG(DD_TAG_DATA), 1 /* permanent */);
     _dd_tag_event_zstr =
         zend_string_init_interned(LSTRARG(DD_TAG_EVENT), 1 /* permanent */);
-    _true_zstr =
-        zend_string_init_interned(LSTRARG("true"), 1 /* permanent */);
+    _true_zstr = zend_string_init_interned(LSTRARG("true"), 1 /* permanent */);
 
     _dd_tag_http_method_zstr =
         zend_string_init_interned(LSTRARG(DD_TAG_HTTP_METHOD), 1);
