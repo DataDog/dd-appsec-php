@@ -11,6 +11,7 @@
 // for open(2)
 #include <dlfcn.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -183,18 +184,6 @@ static PHP_MINIT_FUNCTION(ddappsec)
     }
 
     dd_phpobj_startup(module_number);
-    _register_ini_entries(); // depends on dd_phpobj_startup
-    dd_log_startup();
-
-#ifdef TESTING
-    _register_testing_objects();
-#endif
-
-    dd_helper_startup();
-    dd_trace_startup();
-    dd_request_abort_startup();
-    dd_tags_startup();
-    dd_ip_extraction_startup();
 
     return SUCCESS;
 }
@@ -214,8 +203,29 @@ static PHP_MSHUTDOWN_FUNCTION(ddappsec)
     return SUCCESS;
 }
 
+static void dd_rinit_once(void)
+{
+    _register_ini_entries(); // depends on dd_phpobj_startup
+    dd_log_startup();
+
+#ifdef TESTING
+    _register_testing_objects();
+#endif
+
+    dd_helper_startup();
+    dd_trace_startup();
+    dd_request_abort_startup();
+    dd_tags_startup();
+    dd_ip_extraction_startup();
+}
+
+static pthread_once_t dd_rinit_once_control = PTHREAD_ONCE_INIT;
+
 static PHP_RINIT_FUNCTION(ddappsec)
 {
+    // Things that should only run on the first RINIT
+    pthread_once(&dd_rinit_once_control, dd_rinit_once);
+
     if (!DDAPPSEC_G(enabled)) {
         mlog_g(dd_log_debug, "Appsec disabled");
         return SUCCESS;
