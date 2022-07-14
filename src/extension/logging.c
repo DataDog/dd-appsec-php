@@ -522,7 +522,7 @@ static PHP_FUNCTION(datadog_appsec_testing_mlog)
         RETURN_FALSE;
     }
     if (str->len > INT_MAX) {
-        _dd_log_errf(NULL, E_WARNING, "String is too long");
+        _dd_log_errf("String is too long");
         RETURN_FALSE;
     }
 
