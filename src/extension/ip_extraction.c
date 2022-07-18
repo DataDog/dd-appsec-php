@@ -37,16 +37,7 @@ static THREAD_LOCAL_ON_ZTS zend_string *nullable _ipheader;
 
 typedef bool (*extract_func_t)(zend_string *nonnull value, ipaddr *nonnull out);
 
-static ZEND_INI_MH(_on_update_ipheader);
-
-// clang-format off
-static const dd_ini_setting ini_settings[] = {
-    DD_INI_ENV("ipheader", "", PHP_INI_SYSTEM, _on_update_ipheader),
-    {0}
-};
-// clang-format on
-
-static ZEND_INI_MH(_on_update_ipheader)
+ZEND_INI_MH(on_update_ipheader)
 {
     ZEND_INI_MH_UNUSED();
     if (_ipheader) {
@@ -85,7 +76,6 @@ static void _register_testing_objects(void);
 
 void dd_ip_extraction_startup()
 {
-    dd_phpobj_reg_ini_envs(ini_settings);
     _x_forwarded_for_key =
         zend_string_init_interned(ZEND_STRL("HTTP_X_FORWARDED_FOR"), 1);
     _x_real_ip_key = zend_string_init_interned(ZEND_STRL("HTTP_X_REAL_IP"), 1);

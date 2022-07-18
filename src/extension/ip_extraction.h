@@ -9,6 +9,8 @@
 #include "attributes.h"
 #include <php.h>
 
+ZEND_INI_MH(on_update_ipheader);
+
 void dd_ip_extraction_startup(void);
 
 // Since the headers looked at can in principle be forged, it's very much

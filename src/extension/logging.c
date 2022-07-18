@@ -63,20 +63,10 @@ static void ATTR_FORMAT(2, 3)
 static int _log_level_to_syslog_pri(dd_log_level_t log_level);
 static void _format_time(
     char *buf, size_t buf_size, struct timespec *time, int precision);
-static ZEND_INI_MH(_on_update_log_level);
-static ZEND_INI_MH(_on_update_log_file);
 
 #ifdef TESTING
 static void _register_testing_objects(void);
 #endif
-
-// clang-format off
-static const dd_ini_setting ini_settings[] = {
-    DD_INI_ENV("log_level", "warn", PHP_INI_ALL, _on_update_log_level),
-    DD_INI_ENV("log_file", "php_error_reporting", PHP_INI_SYSTEM, _on_update_log_file),
-    {0}
-};
-// clang-format on
 
 static void _dd_log_errf(const char *format, ...)
 {
@@ -98,8 +88,6 @@ void dd_log_startup()
 #endif
 
     _find_strerror_r();
-
-    dd_phpobj_reg_ini_envs(ini_settings);
 
 #ifdef TESTING
     _register_testing_objects();
@@ -477,7 +465,7 @@ const char *nonnull _strerror_r(int err, char *nonnull buf, size_t buflen)
     return buf;
 }
 
-static ZEND_INI_MH(_on_update_log_level)
+ZEND_INI_MH(on_update_log_level)
 {
     ZEND_INI_MH_UNUSED();
     if (!new_value || !ZSTR_VAL(new_value)[0]) {
@@ -493,7 +481,7 @@ static ZEND_INI_MH(_on_update_log_level)
     dd_log_level = level;
     return SUCCESS;
 }
-static ZEND_INI_MH(_on_update_log_file)
+ZEND_INI_MH(on_update_log_file)
 {
     ZEND_INI_MH_UNUSED();
     if (!new_value || !ZSTR_VAL(new_value)[0]) {

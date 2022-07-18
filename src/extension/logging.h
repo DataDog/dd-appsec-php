@@ -33,7 +33,8 @@ extern THREAD_LOCAL_ON_ZTS dd_log_level_t dd_log_level;
 void dd_log_startup(void);
 void dd_log_shutdown(void);
 const char *nonnull _strerror_r(int err, char *nonnull buf, size_t buflen);
-
+ZEND_INI_MH(on_update_log_level);
+ZEND_INI_MH(on_update_log_file);
 void _mlog_relay(dd_log_level_t level, const char *nonnull format,
     const char *nonnull file, const char *nonnull function, int line, ...)
     ATTR_FORMAT(2, 6);
