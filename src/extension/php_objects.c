@@ -75,12 +75,16 @@ void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
     memcpy(name + NAME_PREFIX_LEN, sett->name_suff, sett->name_suff_len);
     name[name_len] = '\0';
 
+    char *env_name = _get_env_name_from_ini_name(sett->name_suff, sett->name_suff_len);
+    zend_string *env_def = _fetch_from_env(env_name);
+    free(env_name);
+
     zend_string *entry_ex_fake_str = zend_string_init_interned(
         (char *)&(struct entry_ex){
             .orig_on_modify = sett->on_modify,
             .hardcoded_def = sett->default_value,
             .hardcoded_def_len = sett->default_value_len,
-            .has_env = false, //To review impact of hardcoding here
+            .has_env = env_def ? true : false,
         },
         sizeof(struct entry_ex), 1);
 
@@ -89,8 +93,9 @@ void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
             .name = name,
             .name_length = (uint16_t)name_len,
             .modifiable = sett->modifiable,
-            .value = sett->default_value,
-            .value_length = (uint32_t)sett->default_value_len,
+            .value = env_def ? ZSTR_VAL(env_def) : sett->default_value,
+            .value_length =
+                env_def ? ZSTR_LEN(env_def) : (uint32_t)sett->default_value_len,
             .on_modify = _on_modify_wrapper,
             .mh_arg1 = (void *)(uintptr_t)sett->field_offset,
             .mh_arg2 = sett->global_variable,
@@ -104,6 +109,10 @@ void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
         registered_entries_count++;
     } else {
         free(name);
+    }
+
+    if (env_def) {
+        zend_string_efree(env_def);
     }
 }
 
@@ -145,7 +154,7 @@ int save_env_value_on_ini(char *ini_name, zend_string *env_value) /* {{{ */
 
     modified = ini_entry->modified;
 
-    duplicate = zend_string_copy(env_value);
+    duplicate = zend_string_dup(env_value, 1);
 
     struct entry_ex *eex = ini_entry->mh_arg3;
     eex->has_env = true;
