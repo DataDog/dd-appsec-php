@@ -128,14 +128,47 @@ static char* _get_env_name_from_ini_name(const char *name, size_t name_len)
     return env_name;
 }
 
+int _alter_ini_entry_ex(zend_string *name, zend_string *new_value, int stage) /* {{{ */
+{
+    zend_ini_entry *ini_entry;
+    zend_string *duplicate;
+    zend_bool modified;
+
+    if ((ini_entry = zend_hash_find_ptr(EG(ini_directives), name)) == NULL) {
+        return FAILURE;
+    }
+
+    modified = ini_entry->modified;
+
+    duplicate = zend_string_copy(new_value);
+
+    if (!ini_entry->on_modify
+        || ini_entry->on_modify(ini_entry, duplicate, ini_entry->mh_arg1, ini_entry->mh_arg2, ini_entry->mh_arg3, stage) == SUCCESS) {
+        if (modified && ini_entry->orig_value != ini_entry->value) { /* we already changed the value, free the changed value */
+            zend_string_release(ini_entry->value);
+        }
+        ini_entry->value = zend_string_dup(new_value, 1);
+        ini_entry->orig_value = zend_string_dup(new_value, 1);
+    } else {
+        zend_string_release(duplicate);
+        return FAILURE;
+    }
+
+    return SUCCESS;
+}
+
 dd_result dd_phpobj_load_env_values()
 {
     struct _dd_registered_entries current;
+    zend_string *zs_current_name = NULL;
     while (registered_entries_count > 0) {
         current = registered_entries[--registered_entries_count];
         zend_string *env_def = _fetch_from_env(registered_entries[registered_entries_count].env_name);
         if (env_def && ZSTR_LEN(env_def) > 0) {
-            //do stuff
+            zs_current_name = zend_string_init(current.name, strlen(current.name), 0);
+            _alter_ini_entry_ex(zs_current_name, env_def, PHP_INI_STAGE_RUNTIME);
+            zend_string_efree(zs_current_name);
+            zs_current_name = NULL;
         }
         if (current.name) {
             free(current.name);
