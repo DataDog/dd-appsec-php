@@ -14,6 +14,15 @@ static zend_llist _function_entry_arrays;
 
 static void _unregister_functions(void *zfe_arr_vp);
 
+typedef struct _dd_registered_entries {
+    char *name;
+    char *env_name;
+} dd_registered_entries;
+
+#define DD_MAX_REGISTERED_ENTRIES 160
+uint8_t registered_entries_count = 0;
+dd_registered_entries registered_entries[DD_MAX_REGISTERED_ENTRIES];
+
 void dd_phpobj_startup(int module_number)
 {
     _module_number = module_number;
@@ -44,7 +53,8 @@ dd_result dd_phpobj_reg_ini(const zend_ini_entry_def *entries)
 #define ENV_NAME_PREFIX_LEN (sizeof(ENV_NAME_PREFIX) - 1)
 
 #define ZEND_INI_MH_PASSTHRU entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage
-static zend_string *nullable _fetch_from_env(const char *name, size_t name_len);
+static char* _get_env_name_from_ini_name(const char *name, size_t name_len);
+static zend_string *nullable _fetch_from_env(const char *env_name);
 static ZEND_INI_MH(_on_modify_wrapper);
 struct entry_ex {
     ZEND_INI_MH((*orig_on_modify));
@@ -60,20 +70,17 @@ _Static_assert(offsetof(zend_string, val) % _Alignof(struct entry_ex) == 0,
 void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
 {
     size_t name_len = NAME_PREFIX_LEN + sett->name_suff_len;
-    char *name = emalloc(name_len + 1);
+    char *name = malloc(name_len + 1);
     memcpy(name, NAME_PREFIX, NAME_PREFIX_LEN);
     memcpy(name + NAME_PREFIX_LEN, sett->name_suff, sett->name_suff_len);
     name[name_len] = '\0';
-
-    zend_string *env_def =
-        _fetch_from_env(sett->name_suff, sett->name_suff_len);
 
     zend_string *entry_ex_fake_str = zend_string_init_interned(
         (char *)&(struct entry_ex){
             .orig_on_modify = sett->on_modify,
             .hardcoded_def = sett->default_value,
             .hardcoded_def_len = sett->default_value_len,
-            .has_env = env_def ? true : false,
+            .has_env = false, //To review impact of hardcoding here
         },
         sizeof(struct entry_ex), 1);
 
@@ -82,10 +89,8 @@ void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
             .name = name,
             .name_length = (uint16_t)name_len,
             .modifiable = sett->modifiable,
-            .value = env_def ? ZSTR_VAL(env_def) : sett->default_value,
-            .value_length =
-                env_def ? ZSTR_LEN(env_def) : (uint32_t)sett->default_value_len,
-
+            .value = sett->default_value,
+            .value_length = (uint32_t)sett->default_value_len,
             .on_modify = _on_modify_wrapper,
             .mh_arg1 = (void *)(uintptr_t)sett->field_offset,
             .mh_arg2 = sett->global_variable,
@@ -93,18 +98,19 @@ void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
         },
         {0}};
 
-    dd_phpobj_reg_ini(defs);
-
-    if (env_def) {
-        zend_string_efree(env_def);
+    if (dd_phpobj_reg_ini(defs) == dd_success && registered_entries_count < DD_MAX_REGISTERED_ENTRIES) {
+        registered_entries[registered_entries_count].name = name;
+        registered_entries[registered_entries_count].env_name = _get_env_name_from_ini_name(sett->name_suff, sett->name_suff_len);
+        registered_entries_count++;
+    } else {
+        free(name);
     }
-    efree(name);
 }
 
-static zend_string *nullable _fetch_from_env(const char *name, size_t name_len)
+static char* _get_env_name_from_ini_name(const char *name, size_t name_len)
 {
     size_t env_name_len = ENV_NAME_PREFIX_LEN + name_len;
-    char *env_name = emalloc(env_name_len + 1);
+    char *env_name = malloc(env_name_len + 1);
     memcpy(env_name, ENV_NAME_PREFIX, ENV_NAME_PREFIX_LEN);
 
     const char *r = name;
@@ -119,10 +125,39 @@ static zend_string *nullable _fetch_from_env(const char *name, size_t name_len)
     }
     *w = '\0';
 
+    return env_name;
+}
+
+dd_result dd_phpobj_load_env_values()
+{
+    struct _dd_registered_entries current;
+    while (registered_entries_count > 0) {
+        current = registered_entries[--registered_entries_count];
+        zend_string *env_def = _fetch_from_env(registered_entries[registered_entries_count].env_name);
+        if (env_def && ZSTR_LEN(env_def) > 0) {
+            //do stuff
+        }
+        if (current.name) {
+            free(current.name);
+            current.name = NULL;
+        }
+        if (env_def) {
+            zend_string_efree(env_def);
+            env_def = NULL;
+        }
+        if (current.env_name) {
+            free(current.env_name);
+            current.env_name = NULL;
+        }
+    }
+    return dd_success;
+}
+
+static zend_string *nullable _fetch_from_env(const char *env_name)
+{
     tsrm_env_lock();
     const char *res = getenv(env_name); // NOLINT
     tsrm_env_unlock();
-    efree(env_name);
 
     if (!res || *res == '\0') {
         return NULL;
