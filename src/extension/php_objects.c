@@ -160,55 +160,32 @@ static char *_get_env_name_from_ini_name(const char *name, size_t name_len)
     return env_name;
 }
 
-int save_env_value_on_ini(char *ini_name, zend_string *env_value) /* {{{ */
+int _custom_php_zend_ini_alter_master(char *name, size_t name_length,
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+    char *new_value, size_t new_value_length, int mode, int stage) /* {{{ */
 {
     zend_ini_entry *ini_entry;
     zend_string *duplicate;
-    zend_string *zs_ini_name;
-    zend_bool modified;
 
-    if (!env_value || ZSTR_LEN(env_value) == 0) {
+    if ((ini_entry = zend_hash_str_find_ptr(
+             EG(ini_directives), name, name_length)) == NULL) {
         return FAILURE;
     }
 
-    zs_ini_name = zend_string_init(ini_name, strlen(ini_name), 0);
-    if ((ini_entry = zend_hash_find_ptr(EG(ini_directives), zs_ini_name)) ==
-        NULL) {
-        return FAILURE;
-    }
-
-    modified = ini_entry->modified;
-
-    duplicate = zend_string_dup(env_value, 1);
-
-    struct entry_ex *eex = ini_entry->mh_arg3;
-    // Since we are here, it is safe to assume there is an env variable
-    // for this INI
-    eex->has_env = true;
+    duplicate = zend_string_init(new_value, new_value_length, 1);
 
     if (!ini_entry->on_modify ||
         ini_entry->on_modify(ini_entry, duplicate, ini_entry->mh_arg1,
-            ini_entry->mh_arg2, eex, PHP_INI_STAGE_RUNTIME) == SUCCESS) {
-        if (modified && ini_entry->orig_value !=
-                            ini_entry->value) { /* we already changed the value,
-                                                   free the changed value */
-            zend_string_release(ini_entry->value);
+            ini_entry->mh_arg2, ini_entry->mh_arg3, stage) == SUCCESS) {
+        ini_entry->value = duplicate;
+        /* when mode == ZEND_INI_USER keep unchanged to allow ZEND_INI_PERDIR
+         * (.user.ini) */
+        if (mode == ZEND_INI_SYSTEM) {
+            ini_entry->modifiable = mode;
         }
-        ini_entry->value = zend_string_dup(env_value, 1);
-        ini_entry->orig_value = zend_string_dup(env_value, 1);
-
-        zend_string *entry_ex_fake_str =
-            zend_string_init_interned((char *)eex, sizeof(struct entry_ex), 1);
-        ini_entry->mh_arg3 = ZSTR_VAL(entry_ex_fake_str);
     } else {
-        eex->has_env = false;
-        zend_string_release(duplicate);
-        zend_string_efree(zs_ini_name);
-        return FAILURE;
+        zend_string_free(duplicate);
     }
-
-    zend_string_efree(zs_ini_name);
-    zs_ini_name = NULL;
 
     return SUCCESS;
 }
@@ -221,14 +198,16 @@ dd_result dd_phpobj_load_env_values()
         current = registered_entries[--registered_entries_count];
         env_def = _fetch_from_env(
             registered_entries[registered_entries_count].env_name);
-        save_env_value_on_ini(current.name, env_def);
+        if (env_def) {
+            _custom_php_zend_ini_alter_master(current.name,
+                strlen(current.name), ZSTR_VAL(env_def), ZSTR_LEN(env_def),
+                PHP_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
+            zend_string_efree(env_def); // NOLINT
+            env_def = NULL;
+        }
         if (current.name) {
             pefree(current.name, 1);
             current.name = NULL;
-        }
-        if (env_def) {
-            zend_string_efree(env_def); // NOLINT
-            env_def = NULL;
         }
         if (current.env_name) {
             pefree(current.env_name, 1);
