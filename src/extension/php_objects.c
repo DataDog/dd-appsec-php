@@ -53,7 +53,7 @@ dd_result dd_phpobj_reg_ini(const zend_ini_entry_def *entries)
 #define ENV_NAME_PREFIX_LEN (sizeof(ENV_NAME_PREFIX) - 1)
 
 #define ZEND_INI_MH_PASSTHRU entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage
-static char* _get_env_name_from_ini_name(const char *name, size_t name_len);
+static char *_get_env_name_from_ini_name(const char *name, size_t name_len);
 static zend_string *nullable _fetch_from_env(const char *env_name);
 static ZEND_INI_MH(_on_modify_wrapper);
 struct entry_ex {
@@ -78,7 +78,8 @@ void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
     memcpy(name + NAME_PREFIX_LEN, sett->name_suff, sett->name_suff_len);
     name[name_len] = '\0';
 
-    char *env_name = _get_env_name_from_ini_name(sett->name_suff, sett->name_suff_len);
+    char *env_name =
+        _get_env_name_from_ini_name(sett->name_suff, sett->name_suff_len);
     if (!env_name) {
         return;
     }
@@ -108,7 +109,8 @@ void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
         },
         {0}};
 
-    if (dd_phpobj_reg_ini(defs) == dd_success && registered_entries_count < DD_MAX_REGISTERED_ENTRIES) {
+    if (dd_phpobj_reg_ini(defs) == dd_success &&
+        registered_entries_count < DD_MAX_REGISTERED_ENTRIES) {
         registered_entries[registered_entries_count].name = name;
         registered_entries[registered_entries_count].env_name = env_name;
         registered_entries_count++;
@@ -134,7 +136,7 @@ void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
  * This function gets call at minit, watch out with using Zend Memory Manager
  * No emallocs should be used. Instead pemallocs and similars.
  */
-static char* _get_env_name_from_ini_name(const char *name, size_t name_len)
+static char *_get_env_name_from_ini_name(const char *name, size_t name_len)
 {
     size_t env_name_len = ENV_NAME_PREFIX_LEN + name_len;
     char *env_name = pemalloc(env_name_len + 1, 1);
@@ -161,7 +163,8 @@ static char* _get_env_name_from_ini_name(const char *name, size_t name_len)
 int save_env_value_on_ini(char *ini_name, zend_string *env_value) /* {{{ */
 {
     zend_ini_entry *ini_entry;
-    zend_string *duplicate, *zs_ini_name;
+    zend_string *duplicate;
+    zend_string *zs_ini_name;
     zend_bool modified;
 
     if (!env_value || ZSTR_LEN(env_value) == 0) {
@@ -169,7 +172,8 @@ int save_env_value_on_ini(char *ini_name, zend_string *env_value) /* {{{ */
     }
 
     zs_ini_name = zend_string_init(ini_name, strlen(ini_name), 0);
-    if ((ini_entry = zend_hash_find_ptr(EG(ini_directives), zs_ini_name)) == NULL) {
+    if ((ini_entry = zend_hash_find_ptr(EG(ini_directives), zs_ini_name)) ==
+        NULL) {
         return FAILURE;
     }
 
@@ -178,18 +182,23 @@ int save_env_value_on_ini(char *ini_name, zend_string *env_value) /* {{{ */
     duplicate = zend_string_dup(env_value, 1);
 
     struct entry_ex *eex = ini_entry->mh_arg3;
-    //Since we are here, it is safe to assume there is a env variable for this INI
+    // Since we are here, it is safe to assume there is an env variable
+    // for this INI
     eex->has_env = true;
 
-    if (!ini_entry->on_modify
-        || ini_entry->on_modify(ini_entry, duplicate, ini_entry->mh_arg1, ini_entry->mh_arg2, eex, PHP_INI_STAGE_RUNTIME) == SUCCESS) {
-        if (modified && ini_entry->orig_value != ini_entry->value) { /* we already changed the value, free the changed value */
+    if (!ini_entry->on_modify ||
+        ini_entry->on_modify(ini_entry, duplicate, ini_entry->mh_arg1,
+            ini_entry->mh_arg2, eex, PHP_INI_STAGE_RUNTIME) == SUCCESS) {
+        if (modified && ini_entry->orig_value !=
+                            ini_entry->value) { /* we already changed the value,
+                                                   free the changed value */
             zend_string_release(ini_entry->value);
         }
         ini_entry->value = zend_string_dup(env_value, 1);
         ini_entry->orig_value = zend_string_dup(env_value, 1);
 
-        zend_string *entry_ex_fake_str = zend_string_init_interned((char *)eex, sizeof(struct entry_ex), 1);
+        zend_string *entry_ex_fake_str =
+            zend_string_init_interned((char *)eex, sizeof(struct entry_ex), 1);
         ini_entry->mh_arg3 = ZSTR_VAL(entry_ex_fake_str);
     } else {
         eex->has_env = false;
@@ -206,16 +215,18 @@ int save_env_value_on_ini(char *ini_name, zend_string *env_value) /* {{{ */
 dd_result dd_phpobj_load_env_values()
 {
     struct _dd_registered_entries current;
+    zend_string *env_def;
     while (registered_entries_count > 0) {
         current = registered_entries[--registered_entries_count];
-        zend_string *env_def = _fetch_from_env(registered_entries[registered_entries_count].env_name);
+        env_def = _fetch_from_env(
+            registered_entries[registered_entries_count].env_name);
         save_env_value_on_ini(current.name, env_def);
         if (current.name) {
             pefree(current.name, 1);
             current.name = NULL;
         }
         if (env_def) {
-            zend_string_efree(env_def);
+            zend_string_efree(env_def); // NOLINT
             env_def = NULL;
         }
         if (current.env_name) {

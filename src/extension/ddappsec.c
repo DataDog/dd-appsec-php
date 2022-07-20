@@ -209,9 +209,7 @@ static PHP_MSHUTDOWN_FUNCTION(ddappsec)
     return SUCCESS;
 }
 
-static void dd_rinit_once(void) {
-    dd_phpobj_load_env_values();
-}
+static void dd_rinit_once(void) { dd_phpobj_load_env_values(); }
 
 static pthread_once_t dd_rinit_once_control = PTHREAD_ONCE_INIT;
 
