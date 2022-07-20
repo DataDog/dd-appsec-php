@@ -203,6 +203,7 @@ int save_env_value_on_ini(char *ini_name, zend_string *env_value) /* {{{ */
     } else {
         eex->has_env = false;
         zend_string_release(duplicate);
+        zend_string_efree(zs_ini_name);
         return FAILURE;
     }
 
