@@ -160,9 +160,14 @@ static char *_get_env_name_from_ini_name(const char *name, size_t name_len)
     return env_name;
 }
 
+/**
+ * This function is based on fpm_php_zend_ini_alter_master
+ * from php-src
+ */
 int _custom_php_zend_ini_alter_master(char *name, size_t name_length,
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    char *new_value, size_t new_value_length, int mode, int stage) /* {{{ */
+    char *new_value, size_t new_value_length, int mode, int stage,
+    bool has_env) /* {{{ */
 {
     zend_ini_entry *ini_entry;
     zend_string *duplicate;
@@ -173,6 +178,9 @@ int _custom_php_zend_ini_alter_master(char *name, size_t name_length,
     }
 
     duplicate = zend_string_init(new_value, new_value_length, 1);
+
+    struct entry_ex *eex = ini_entry->mh_arg3;
+    eex->has_env = has_env;
 
     if (!ini_entry->on_modify ||
         ini_entry->on_modify(ini_entry, duplicate, ini_entry->mh_arg1,
@@ -201,7 +209,7 @@ dd_result dd_phpobj_load_env_values()
         if (env_def) {
             _custom_php_zend_ini_alter_master(current.name,
                 strlen(current.name), ZSTR_VAL(env_def), ZSTR_LEN(env_def),
-                PHP_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
+                PHP_INI_SYSTEM, PHP_INI_STAGE_RUNTIME, true);
             zend_string_efree(env_def); // NOLINT
             env_def = NULL;
         }
