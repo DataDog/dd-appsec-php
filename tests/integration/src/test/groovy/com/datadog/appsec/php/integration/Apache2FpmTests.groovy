@@ -34,6 +34,9 @@ class Apache2FpmTests implements CommonTests {
     void 'php-fpm -i uses enabled_on_cli'() {
         ExecResult res = CONTAINER.execInContainer('mkdir', '/tmp/cli/')
 
+        res = CONTAINER.execInContainer('/bin/bash', '-c', 'echo env[DD_APPSEC_LOG_LEVEL] = "error" >> /etc/php/7.4/fpm/pool.d/www.conf')
+                        assert res.exitCode != 0
+
         res = CONTAINER.execInContainer(
                 'bash', '-c',
                 'php-fpm -d extension=ddtrace.so -d extension=ddappsec.so ' +
@@ -60,4 +63,13 @@ class Apache2FpmTests implements CommonTests {
             'test $(find /tmp/cli/ -maxdepth 1 -type s -name \'ddappsec_*.sock\' | wc -l) -eq 1')
         assert res.exitCode == 0
     }
+
+    @Test
+        void 'Pool environment'() {
+            def trace = container.traceFromRequest('/poolenv.php') { HttpURLConnection conn ->
+                assert conn.responseCode == 200
+                def content = conn.inputStream.text
+                assert content.contains('Value of pool env is error')
+            }
+        }
 }
