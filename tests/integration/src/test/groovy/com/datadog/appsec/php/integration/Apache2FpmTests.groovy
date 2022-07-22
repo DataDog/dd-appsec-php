@@ -66,11 +66,8 @@ class Apache2FpmTests implements CommonTests {
             def trace = container.traceFromRequest('/poolenv.php') { HttpURLConnection conn ->
                 assert conn.responseCode == 200
                 def content = conn.inputStream.text
-<<<<<<< HEAD
+
                 assert content.contains('Value of pool env is error')
-=======
-                assert content.contains('Value of pool env is debug')
->>>>>>> ba5d3c5 (WIP)
             }
         }
 }
