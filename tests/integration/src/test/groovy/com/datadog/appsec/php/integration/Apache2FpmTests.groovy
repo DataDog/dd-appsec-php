@@ -67,7 +67,7 @@ class Apache2FpmTests implements CommonTests {
                 assert conn.responseCode == 200
                 def content = conn.inputStream.text
 
-                assert content.contains('Value of pool env is error')
+                assert content.contains('Value of pool env is 10001')
             }
         }
 }
