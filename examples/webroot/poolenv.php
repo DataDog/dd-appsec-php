@@ -1,3 +1,3 @@
 <?php
 
-echo sprintf("Value of pool env is %s", ini_get("datadog.appsec.log_level"));
+echo sprintf("Value of pool env is %s", ini_get("datadog.appsec.waf_timeout"));
