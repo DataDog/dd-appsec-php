@@ -19,6 +19,7 @@ static void _unregister_functions(void *zfe_arr_vp);
 
 typedef struct _dd_registered_entries {
     char *nullable name;
+    size_t name_len;
     char *nullable env_name;
 } dd_registered_entries;
 
@@ -116,6 +117,8 @@ void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
     if (dd_phpobj_reg_ini(defs) == dd_success &&
         registered_entries_count < DD_MAX_REGISTERED_ENTRIES) {
         registered_entries[registered_entries_count].name = name;
+        registered_entries[registered_entries_count].name_len =
+            (size_t)name_len;
         registered_entries[registered_entries_count].env_name = env_name;
         registered_entries_count++;
     } else {
@@ -219,9 +222,8 @@ dd_result dd_phpobj_load_env_values()
         current = registered_entries[--registered_entries_count];
         env_def = _fetch_from_env(current.env_name);
         if (env_def) {
-            _custom_php_zend_ini_alter_master(current.name,
-                strlen(current.name), env_def, PHP_INI_SYSTEM,
-                PHP_INI_STAGE_RUNTIME, true);
+            _custom_php_zend_ini_alter_master(current.name, current.name_len,
+                env_def, PHP_INI_SYSTEM, PHP_INI_STAGE_RUNTIME, true);
             zend_string_efree(env_def); // NOLINT
             env_def = NULL;
         }
