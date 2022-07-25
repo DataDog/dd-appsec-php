@@ -115,6 +115,11 @@ void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
         pefree(env_name, 1);
         env_name = NULL;
     }
+
+    if (name) {
+        pefree(name, 1);
+        name = NULL;
+    }
 }
 
 /*
