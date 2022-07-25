@@ -11,7 +11,6 @@
 // for open(2)
 #include <dlfcn.h>
 #include <fcntl.h>
-#include <pthread.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -216,14 +215,16 @@ static void _dd_rinit_once(void)
         dd_phpobj_load_env_values();
     }
 }
-static pthread_once_t dd_rinit_once_control = PTHREAD_ONCE_INIT;
+static bool dd_rinit_once_done;
 #endif
 
 static PHP_RINIT_FUNCTION(ddappsec)
 {
 #ifndef ZTS
-    // Things that should only run on the first RINIT
-    pthread_once(&dd_rinit_once_control, _dd_rinit_once);
+    if (!dd_rinit_once_done) {
+        _dd_rinit_once();
+        dd_rinit_once_done = true;
+    }
 #endif
 
     if (!DDAPPSEC_G(enabled)) {
