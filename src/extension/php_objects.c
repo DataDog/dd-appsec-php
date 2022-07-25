@@ -322,6 +322,19 @@ void dd_phpobj_shutdown()
 {
     zend_llist_destroy(&_function_entry_arrays);
     zend_unregister_ini_entries(_module_number);
+
+    struct _dd_registered_entries current;
+    while (registered_entries_count > 0) {
+        current = registered_entries[--registered_entries_count];
+        if (current.name) {
+            pefree(current.name, 1);
+            current.name = NULL;
+        }
+        if (current.env_name) {
+            pefree(current.env_name, 1);
+            current.env_name = NULL;
+        }
+    }
 }
 
 static void _unregister_functions(void *zfe_arr_vp)
