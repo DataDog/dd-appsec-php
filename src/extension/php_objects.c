@@ -25,7 +25,7 @@ typedef struct _dd_registered_entries {
     char *nullable env_name;
 } dd_registered_entries;
 
-#define DD_MAX_REGISTERED_ENTRIES 160
+#define DD_MAX_REGISTERED_ENTRIES 50
 static uint8_t registered_entries_count = 0;
 static dd_registered_entries registered_entries[DD_MAX_REGISTERED_ENTRIES];
 #endif
