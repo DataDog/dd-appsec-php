@@ -209,14 +209,17 @@ static PHP_MSHUTDOWN_FUNCTION(ddappsec)
     return SUCCESS;
 }
 
+#ifndef ZTS
 static void _dd_rinit_once(void) { dd_phpobj_load_env_values(); }
-
 static pthread_once_t dd_rinit_once_control = PTHREAD_ONCE_INIT;
+#endif
 
 static PHP_RINIT_FUNCTION(ddappsec)
 {
+#ifndef ZTS
     // Things that should only run on the first RINIT
     pthread_once(&dd_rinit_once_control, _dd_rinit_once);
+#endif
 
     if (!DDAPPSEC_G(enabled)) {
         mlog_g(dd_log_debug, "Appsec disabled");

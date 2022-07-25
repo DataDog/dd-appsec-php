@@ -17,6 +17,7 @@ static zend_llist _function_entry_arrays;
 
 static void _unregister_functions(void *zfe_arr_vp);
 
+#ifndef ZTS
 typedef struct _dd_registered_entries {
     char *nullable name;
     size_t name_len;
@@ -26,6 +27,7 @@ typedef struct _dd_registered_entries {
 #define DD_MAX_REGISTERED_ENTRIES 160
 static uint8_t registered_entries_count = 0;
 static dd_registered_entries registered_entries[DD_MAX_REGISTERED_ENTRIES];
+#endif
 
 void dd_phpobj_startup(int module_number)
 {
@@ -116,11 +118,13 @@ void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
 
     if (dd_phpobj_reg_ini(defs) == dd_success &&
         registered_entries_count < DD_MAX_REGISTERED_ENTRIES) {
+#ifndef ZTS
         registered_entries[registered_entries_count].name = name;
         registered_entries[registered_entries_count].name_len =
             (size_t)name_len;
         registered_entries[registered_entries_count].env_name = env_name;
         registered_entries_count++;
+#endif
     } else {
         if (name) {
             pefree(name, 1);
@@ -152,9 +156,6 @@ static char *nullable _get_env_name_from_ini_name(
 
     size_t env_name_len = ENV_NAME_PREFIX_LEN + name_len;
     char *env_name = pemalloc(env_name_len + 1, 1);
-    if (!env_name) {
-        return NULL;
-    }
     memcpy(env_name, ENV_NAME_PREFIX, ENV_NAME_PREFIX_LEN);
 
     const char *r = name;
@@ -172,6 +173,7 @@ static char *nullable _get_env_name_from_ini_name(
     return env_name;
 }
 
+#ifndef ZTS
 /**
  * This function is based on fpm_php_zend_ini_alter_master
  * from php-src
@@ -238,6 +240,7 @@ dd_result dd_phpobj_load_env_values()
     }
     return dd_success;
 }
+#endif
 
 static zend_string *nullable _fetch_from_env(const char *nullable env_name)
 {
