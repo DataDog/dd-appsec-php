@@ -18,18 +18,6 @@ static zend_llist _function_entry_arrays;
 
 static void _unregister_functions(void *zfe_arr_vp);
 
-#ifndef ZTS
-typedef struct _dd_registered_entries {
-    char *nullable name;
-    size_t name_len;
-    char *nullable env_name;
-} dd_registered_entries;
-
-#define DD_MAX_REGISTERED_ENTRIES 50
-static uint8_t registered_entries_count = 0;
-static dd_registered_entries registered_entries[DD_MAX_REGISTERED_ENTRIES];
-#endif
-
 void dd_phpobj_startup(int module_number)
 {
     _module_number = module_number;
@@ -116,41 +104,16 @@ void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
             .mh_arg3 = ZSTR_VAL(entry_ex_fake_str),
         },
         {0}};
-    dd_result result = dd_phpobj_reg_ini(defs);
-#ifndef ZTS
-    if (strcmp(sapi_module.name, "fpm-fcgi") == 0 && result == dd_success &&
-        registered_entries_count < DD_MAX_REGISTERED_ENTRIES) {
-        registered_entries[registered_entries_count].name = name;
-        registered_entries[registered_entries_count].name_len =
-            (size_t)name_len;
-        registered_entries[registered_entries_count].env_name = env_name;
-        registered_entries_count++;
-    } else {
-        if (name) {
-            pefree(name, 1);
-            name = NULL;
-        }
+    dd_phpobj_reg_ini(defs);
 
-        if (env_name) {
-            pefree(env_name, 1);
-            env_name = NULL;
-        }
-    }
-#else
-    if (name) {
-        pefree(name, 1);
-        name = NULL;
+    if (env_def) {
+        zend_string_efree(env_def);
+        env_def = NULL;
     }
 
     if (env_name) {
         pefree(env_name, 1);
         env_name = NULL;
-    }
-#endif
-
-    if (env_def) {
-        zend_string_efree(env_def);
-        env_def = NULL;
     }
 }
 
@@ -189,20 +152,14 @@ static char *nullable _get_env_name_from_ini_name(
  * This function is based on fpm_php_zend_ini_alter_master
  * from php-src
  */
-static int _custom_php_zend_ini_alter_master(char *nullable name, size_t name_length,
+static int _custom_php_zend_ini_alter_master(zend_ini_entry *nullable ini_entry,
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     zend_string *nullable new_value, int mode, int stage,
     bool has_env) /* {{{ */
 {
-    zend_ini_entry *ini_entry;
     zend_string *duplicate;
 
-    if (!name || name_length == 0 || !new_value) {
-        return FAILURE;
-    }
-
-    if ((ini_entry = zend_hash_str_find_ptr(
-             EG(ini_directives), name, name_length)) == NULL) {
+    if (!ini_entry) {
         return FAILURE;
     }
 
@@ -229,26 +186,31 @@ static int _custom_php_zend_ini_alter_master(char *nullable name, size_t name_le
 
 dd_result dd_phpobj_load_env_values()
 {
-    struct _dd_registered_entries current;
+    char *env_name = NULL;
+    zend_ini_entry *p;
     zend_string *env_def;
-    while (registered_entries_count > 0) {
-        current = registered_entries[--registered_entries_count];
-        env_def = _fetch_from_env(current.env_name);
-        if (env_def) {
-            _custom_php_zend_ini_alter_master(current.name, current.name_len,
-                env_def, PHP_INI_SYSTEM, PHP_INI_STAGE_RUNTIME, true);
-            zend_string_efree(env_def); // NOLINT
-            env_def = NULL;
-        }
-        if (current.name) {
-            pefree(current.name, 1);
-            current.name = NULL;
-        }
-        if (current.env_name) {
-            pefree(current.env_name, 1);
-            current.env_name = NULL;
+    ZEND_HASH_FOREACH_PTR(EG(ini_directives), p)
+    {
+        if (p->on_modify == _on_modify_wrapper &&
+            ZSTR_LEN(p->name) > NAME_PREFIX_LEN) {
+            const char *ini_name = ZSTR_VAL(p->name);
+            env_name = _get_env_name_from_ini_name(&ini_name[NAME_PREFIX_LEN],
+                ZSTR_LEN(p->name) - NAME_PREFIX_LEN);
+            env_def = _fetch_from_env(env_name);
+            if (env_def) {
+                _custom_php_zend_ini_alter_master(
+                    p, env_def, PHP_INI_SYSTEM, PHP_INI_STAGE_RUNTIME, true);
+                zend_string_efree(env_def); // NOLINT
+                env_def = NULL;
+            }
+            if (env_name) {
+                pefree(env_name, 1);
+                env_name = NULL;
+            }
         }
     }
+    ZEND_HASH_FOREACH_END();
+
     return dd_success;
 }
 #endif
@@ -322,19 +284,6 @@ void dd_phpobj_shutdown()
 {
     zend_llist_destroy(&_function_entry_arrays);
     zend_unregister_ini_entries(_module_number);
-
-    struct _dd_registered_entries current;
-    while (registered_entries_count > 0) {
-        current = registered_entries[--registered_entries_count];
-        if (current.name) {
-            pefree(current.name, 1);
-            current.name = NULL;
-        }
-        if (current.env_name) {
-            pefree(current.env_name, 1);
-            current.env_name = NULL;
-        }
-    }
 }
 
 static void _unregister_functions(void *zfe_arr_vp)
