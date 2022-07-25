@@ -3,11 +3,14 @@
 //
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
-#include "php_objects.h"
+#include <zend_API.h>
+#include <zend_alloc.h>
+
 #include "attributes.h"
 #include "ddappsec.h"
 #include "dddefs.h"
 #include "php_compat.h"
+#include "php_objects.h"
 
 static int _module_number;
 static zend_llist _function_entry_arrays;
@@ -15,13 +18,13 @@ static zend_llist _function_entry_arrays;
 static void _unregister_functions(void *zfe_arr_vp);
 
 typedef struct _dd_registered_entries {
-    char *name;
-    char *env_name;
+    char *nullable name;
+    char *nullable env_name;
 } dd_registered_entries;
 
 #define DD_MAX_REGISTERED_ENTRIES 160
-uint8_t registered_entries_count = 0;
-dd_registered_entries registered_entries[DD_MAX_REGISTERED_ENTRIES];
+static uint8_t registered_entries_count = 0;
+static dd_registered_entries registered_entries[DD_MAX_REGISTERED_ENTRIES];
 
 void dd_phpobj_startup(int module_number)
 {
@@ -53,8 +56,9 @@ dd_result dd_phpobj_reg_ini(const zend_ini_entry_def *entries)
 #define ENV_NAME_PREFIX_LEN (sizeof(ENV_NAME_PREFIX) - 1)
 
 #define ZEND_INI_MH_PASSTHRU entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage
-static char *_get_env_name_from_ini_name(const char *name, size_t name_len);
-static zend_string *nullable _fetch_from_env(const char *env_name);
+static char *nullable _get_env_name_from_ini_name(
+    const char *nullable name, size_t name_len);
+static zend_string *nullable _fetch_from_env(const char *nullable env_name);
 static ZEND_INI_MH(_on_modify_wrapper);
 struct entry_ex {
     ZEND_INI_MH((*orig_on_modify));
@@ -73,7 +77,7 @@ _Static_assert(offsetof(zend_string, val) % _Alignof(struct entry_ex) == 0,
 void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
 {
     size_t name_len = NAME_PREFIX_LEN + sett->name_suff_len;
-    char *name = pemalloc(name_len + 1, 1);
+    char *name = safe_pemalloc(name_len, 1, ENV_NAME_PREFIX_LEN + 1, 1);
     memcpy(name, NAME_PREFIX, NAME_PREFIX_LEN);
     memcpy(name + NAME_PREFIX_LEN, sett->name_suff, sett->name_suff_len);
     name[name_len] = '\0';
@@ -136,8 +140,13 @@ void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
  * This function gets call at minit, watch out with using Zend Memory Manager
  * No emallocs should be used. Instead pemallocs and similars.
  */
-static char *_get_env_name_from_ini_name(const char *name, size_t name_len)
+static char *nullable _get_env_name_from_ini_name(
+    const char *nullable name, size_t name_len)
 {
+    if (!name || name_len == 0) {
+        return NULL;
+    }
+
     size_t env_name_len = ENV_NAME_PREFIX_LEN + name_len;
     char *env_name = pemalloc(env_name_len + 1, 1);
     if (!env_name) {
@@ -164,20 +173,24 @@ static char *_get_env_name_from_ini_name(const char *name, size_t name_len)
  * This function is based on fpm_php_zend_ini_alter_master
  * from php-src
  */
-int _custom_php_zend_ini_alter_master(char *name, size_t name_length,
+static int _custom_php_zend_ini_alter_master(char *nullable name, size_t name_length,
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    char *new_value, size_t new_value_length, int mode, int stage,
+    zend_string *nullable new_value, int mode, int stage,
     bool has_env) /* {{{ */
 {
     zend_ini_entry *ini_entry;
     zend_string *duplicate;
+
+    if (!name || name_length == 0 || !new_value) {
+        return FAILURE;
+    }
 
     if ((ini_entry = zend_hash_str_find_ptr(
              EG(ini_directives), name, name_length)) == NULL) {
         return FAILURE;
     }
 
-    duplicate = zend_string_init(new_value, new_value_length, 1);
+    duplicate = zend_string_dup(new_value, 1);
 
     struct entry_ex *eex = ini_entry->mh_arg3;
     eex->has_env = has_env;
@@ -204,12 +217,11 @@ dd_result dd_phpobj_load_env_values()
     zend_string *env_def;
     while (registered_entries_count > 0) {
         current = registered_entries[--registered_entries_count];
-        env_def = _fetch_from_env(
-            registered_entries[registered_entries_count].env_name);
+        env_def = _fetch_from_env(current.env_name);
         if (env_def) {
             _custom_php_zend_ini_alter_master(current.name,
-                strlen(current.name), ZSTR_VAL(env_def), ZSTR_LEN(env_def),
-                PHP_INI_SYSTEM, PHP_INI_STAGE_RUNTIME, true);
+                strlen(current.name), env_def, PHP_INI_SYSTEM,
+                PHP_INI_STAGE_RUNTIME, true);
             zend_string_efree(env_def); // NOLINT
             env_def = NULL;
         }
@@ -225,8 +237,12 @@ dd_result dd_phpobj_load_env_values()
     return dd_success;
 }
 
-static zend_string *nullable _fetch_from_env(const char *env_name)
+static zend_string *nullable _fetch_from_env(const char *nullable env_name)
 {
+    if (!env_name) {
+        return NULL;
+    }
+
     tsrm_env_lock();
     const char *res = getenv(env_name); // NOLINT
     tsrm_env_unlock();

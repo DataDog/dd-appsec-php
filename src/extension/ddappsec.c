@@ -216,7 +216,7 @@ static pthread_once_t dd_rinit_once_control = PTHREAD_ONCE_INIT;
 static PHP_RINIT_FUNCTION(ddappsec)
 {
     // Things that should only run on the first RINIT
-    pthread_once(&dd_rinit_once_control, dd_rinit_once);
+    pthread_once(&dd_rinit_once_control, _dd_rinit_once);
 
     if (!DDAPPSEC_G(enabled)) {
         mlog_g(dd_log_debug, "Appsec disabled");
