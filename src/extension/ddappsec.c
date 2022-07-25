@@ -210,7 +210,12 @@ static PHP_MSHUTDOWN_FUNCTION(ddappsec)
 }
 
 #ifndef ZTS
-static void _dd_rinit_once(void) { dd_phpobj_load_env_values(); }
+static void _dd_rinit_once(void)
+{
+    if (strcmp(sapi_module.name, "fpm-fcgi") == 0) {
+        dd_phpobj_load_env_values();
+    }
+}
 static pthread_once_t dd_rinit_once_control = PTHREAD_ONCE_INIT;
 #endif
 

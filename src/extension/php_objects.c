@@ -3,6 +3,7 @@
 //
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
+#include <SAPI.h>
 #include <zend_API.h>
 #include <zend_alloc.h>
 
@@ -115,16 +116,15 @@ void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
             .mh_arg3 = ZSTR_VAL(entry_ex_fake_str),
         },
         {0}};
-
-    if (dd_phpobj_reg_ini(defs) == dd_success &&
-        registered_entries_count < DD_MAX_REGISTERED_ENTRIES) {
+    dd_result result = dd_phpobj_reg_ini(defs);
 #ifndef ZTS
+    if (strcmp(sapi_module.name, "fpm-fcgi") == 0 && result == dd_success &&
+        registered_entries_count < DD_MAX_REGISTERED_ENTRIES) {
         registered_entries[registered_entries_count].name = name;
         registered_entries[registered_entries_count].name_len =
             (size_t)name_len;
         registered_entries[registered_entries_count].env_name = env_name;
         registered_entries_count++;
-#endif
     } else {
         if (name) {
             pefree(name, 1);
@@ -136,6 +136,17 @@ void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
             env_name = NULL;
         }
     }
+#else
+    if (name) {
+        pefree(name, 1);
+        name = NULL;
+    }
+
+    if (env_name) {
+        pefree(env_name, 1);
+        env_name = NULL;
+    }
+#endif
 
     if (env_def) {
         zend_string_efree(env_def);
