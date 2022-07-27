@@ -112,7 +112,7 @@ void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
     }
 
     if (env_name) {
-        pefree(env_name, 1);
+        efree(env_name);
         env_name = NULL;
     }
 
@@ -134,7 +134,7 @@ static char *nullable _get_env_name_from_ini_name(
     }
 
     size_t env_name_len = ENV_NAME_PREFIX_LEN + name_len;
-    char *env_name = pemalloc(env_name_len + 1, 1);
+    char *env_name = emalloc(env_name_len + 1);
     memcpy(env_name, ENV_NAME_PREFIX, ENV_NAME_PREFIX_LEN);
 
     const char *r = name;
@@ -191,26 +191,23 @@ static int _custom_php_zend_ini_alter_master(zend_ini_entry *nullable ini_entry,
 
 dd_result dd_phpobj_load_env_values()
 {
-    char *env_name = NULL;
     zend_ini_entry *p;
-    zend_string *env_def;
     ZEND_HASH_FOREACH_PTR(EG(ini_directives), p)
     {
         if (p->on_modify == _on_modify_wrapper &&
             ZSTR_LEN(p->name) > NAME_PREFIX_LEN) {
             const char *ini_name = ZSTR_VAL(p->name);
-            env_name = _get_env_name_from_ini_name(&ini_name[NAME_PREFIX_LEN],
-                ZSTR_LEN(p->name) - NAME_PREFIX_LEN);
-            env_def = _fetch_from_env(env_name);
+            char *env_name = env_name =
+                _get_env_name_from_ini_name(&ini_name[NAME_PREFIX_LEN],
+                    ZSTR_LEN(p->name) - NAME_PREFIX_LEN);
+            zend_string *env_def = _fetch_from_env(env_name);
             if (env_def) {
                 _custom_php_zend_ini_alter_master(
                     p, env_def, PHP_INI_SYSTEM, PHP_INI_STAGE_RUNTIME, true);
                 zend_string_efree(env_def); // NOLINT
-                env_def = NULL;
             }
             if (env_name) {
-                pefree(env_name, 1);
-                env_name = NULL;
+                efree(env_name);
             }
         }
     }
