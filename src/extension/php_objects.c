@@ -197,7 +197,7 @@ dd_result dd_phpobj_load_env_values()
         if (p->on_modify == _on_modify_wrapper &&
             ZSTR_LEN(p->name) > NAME_PREFIX_LEN) {
             const char *ini_name = ZSTR_VAL(p->name);
-            char *env_name = env_name =
+            char *env_name =
                 _get_env_name_from_ini_name(&ini_name[NAME_PREFIX_LEN],
                     ZSTR_LEN(p->name) - NAME_PREFIX_LEN);
             zend_string *env_def = _fetch_from_env(env_name);
