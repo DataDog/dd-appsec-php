@@ -22,11 +22,7 @@ TEST(JsonHelperTest, Int64ToJson)
     parameter_view pv(obj);
     std::string result = parameter_to_json(pv);
 
-    char expected[sizeof(STR(INT64_MAX))] = {0};
-    snprintf(expected, sizeof(expected), "%" PRId64,
-        std::numeric_limits<int64_t>::max());
-
-    EXPECT_EQ(expected, result);
+    EXPECT_EQ(std::to_string(std::numeric_limits<int64_t>::max()), result);
 }
 
 TEST(JsonHelperTest, Uint64ToJson)
@@ -37,11 +33,7 @@ TEST(JsonHelperTest, Uint64ToJson)
     parameter_view pv(obj);
     std::string result = parameter_to_json(pv);
 
-    char expected[sizeof(STR(UINT64_MAX))] = {0};
-    snprintf(expected, sizeof(expected), "%llu",
-        std::numeric_limits<uint64_t>::max());
-
-    EXPECT_EQ(expected, result);
+    EXPECT_EQ(std::to_string(std::numeric_limits<uint64_t>::max()), result);
 }
 
 TEST(JsonHelperTest, InvalidTypeToJson)
