@@ -80,10 +80,10 @@ jobs:
             cd build
             cmake .. -DCMAKE_BUILD_TYPE=Debug \
             -DDD_APPSEC_BUILD_EXTENSION=OFF \
-            -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=leak -DASAN_BUILD" \
-            -DCMAKE_C_FLAGS="-fsanitize=address -fsanitize=leak -DASAN_BUILD" \
-            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address -fsanitize=leak" \
-            -DCMAKE_MODULE_LINKER_FLAGS="-fsanitize=address -fsanitize=leak" \
+            -DCMAKE_CXX_FLAGS="-fsanitize=address,leak,undefined,thread -DASAN_BUILD" \
+            -DCMAKE_C_FLAGS="-fsanitize=address,leak,undefined,thread -DASAN_BUILD" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,leak,undefined,thread" \
+            -DCMAKE_MODULE_LINKER_FLAGS="-fsanitize=address,leak,undefined,thread" \
             -DCLANG_TIDY=/usr/bin/clang-tidy-13 \
             -DCLANG_FORMAT=/usr/bin/clang-format-13
       - name: Build
@@ -117,7 +117,12 @@ jobs:
         run: |
             mkdir build
             cd build
-            cmake .. -DCMAKE_BUILD_TYPE=Debug  -DDD_APPSEC_BUILD_EXTENSION=OFF
+            cmake .. -DCMAKE_BUILD_TYPE=Debug \
+            -DDD_APPSEC_BUILD_EXTENSION=OFF \
+            -DCMAKE_CXX_FLAGS="-fsanitize=address,leak,undefined,thread -DASAN_BUILD" \
+            -DCMAKE_C_FLAGS="-fsanitize=address,leak,undefined,thread -DASAN_BUILD" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,leak,undefined,thread" \
+            -DCMAKE_MODULE_LINKER_FLAGS="-fsanitize=address,leak,undefined,thread"
         env:
             CXX: clang++-13
             CC: clang-13
