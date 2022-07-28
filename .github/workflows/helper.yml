@@ -117,7 +117,11 @@ jobs:
         run: |
             mkdir build
             cd build
-            cmake .. -DCMAKE_BUILD_TYPE=Debug  -DDD_APPSEC_BUILD_EXTENSION=OFF
+            cmake .. -DCMAKE_BUILD_TYPE=Debug  -DDD_APPSEC_BUILD_EXTENSION=OFF \
+                     -DCMAKE_CXX_FLAGS="-fsanitize=thread" \
+                     -DCMAKE_C_FLAGS="-fsanitize=thread" \
+                     -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread" \
+                     -DCMAKE_MODULE_LINKER_FLAGS="-fsanitize=thread"
         env:
             CXX: clang++-13
             CC: clang-13
