@@ -12,12 +12,32 @@
 
 namespace dds::remote_config::protocol::tuf {
 
+const char *product_to_string(Product product)
+{
+    switch (product) {
+    case LIVE_DEBUGGING:
+        return "LIVE_DEBUGGING";
+    case ASM_DD:
+        return "ASM_DD";
+    case FEATURES:
+        return "FEATURES";
+    }
+}
+
 void serialize_client(rapidjson::Document::AllocatorType &alloc,
     rapidjson::Document &document, Client client)
 {
     rapidjson::Value client_object(rapidjson::kObjectType);
 
     client_object.AddMember("id", client.getId(), alloc);
+
+    rapidjson::Value products(rapidjson::kArrayType);
+    for (const Product p : client.get_products()) {
+        products.PushBack(
+            rapidjson::Value(product_to_string(p), alloc).Move(), alloc);
+    }
+    client_object.AddMember("products", products, alloc);
+
     document.AddMember("client", client_object, alloc);
 }
 
