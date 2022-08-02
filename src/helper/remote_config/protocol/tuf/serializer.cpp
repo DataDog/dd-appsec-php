@@ -24,6 +24,24 @@ const char *product_to_string(product product)
     }
 }
 
+void serialize_client_tracer(rapidjson::Document::AllocatorType &alloc,
+    rapidjson::Value &client_field, client_tracer client_tracer)
+{
+    rapidjson::Value tracer_object(rapidjson::kObjectType);
+
+    tracer_object.AddMember("language", "php", alloc);
+    tracer_object.AddMember(
+        "runtime_id", client_tracer.get_runtime_id(), alloc);
+    tracer_object.AddMember(
+        "tracer_version", client_tracer.get_tracer_version(), alloc);
+    tracer_object.AddMember("service", client_tracer.get_service(), alloc);
+    tracer_object.AddMember("env", client_tracer.get_env(), alloc);
+    tracer_object.AddMember(
+        "app_version", client_tracer.get_app_version(), alloc);
+
+    client_field.AddMember("client_tracer", tracer_object, alloc);
+}
+
 void serialize_client(rapidjson::Document::AllocatorType &alloc,
     rapidjson::Document &document, client client)
 {
@@ -37,6 +55,8 @@ void serialize_client(rapidjson::Document::AllocatorType &alloc,
             rapidjson::Value(product_to_string(p), alloc).Move(), alloc);
     }
     client_object.AddMember("products", products, alloc);
+
+    serialize_client_tracer(alloc, client_object, client.get_tracer());
 
     document.AddMember("client", client_object, alloc);
 }

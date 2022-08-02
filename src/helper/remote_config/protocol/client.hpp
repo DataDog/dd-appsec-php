@@ -8,20 +8,25 @@
 #include <list>
 #include <string>
 
+#include "client_tracer.hpp"
+
 namespace dds::remote_config::protocol {
 
 enum product { LIVE_DEBUGGING, ASM_DD, FEATURES };
 
 class client {
 public:
-    client(std::string id, std::list<product> products)
-        : id(id), products(products){};
+    client(std::string id, std::list<product> products,
+        client_tracer client_tracer)
+        : id(id), products(products), client_tracer(client_tracer){};
     std::string get_id() { return this->id; };
     std::list<product> get_products() { return this->products; };
+    client_tracer get_tracer() { return this->client_tracer; };
 
 private:
     std::string id;
     std::list<product> products;
+    client_tracer client_tracer;
 };
 
 } // namespace dds::remote_config::protocol
