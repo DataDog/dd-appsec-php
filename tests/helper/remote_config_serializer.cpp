@@ -33,20 +33,18 @@ bool array_contains_string(rapidjson::Value &array, const char *searched)
 
 TEST(RemoteConfigSerializer, RequestCanBeSerialized)
 {
-    std::list<remote_config::protocol::Product> products;
-    products.push_back(remote_config::protocol::Product::ASM_DD);
+    std::list<remote_config::protocol::product> products;
+    products.push_back(remote_config::protocol::product::ASM_DD);
 
     std::string client_id("some_id");
-    remote_config::protocol::Client client(client_id, products);
-    remote_config::protocol::tuf::ClientGetConfigsRequest request(client);
+    remote_config::protocol::client client(client_id, products);
+    remote_config::protocol::tuf::client_get_configs_request request(client);
 
     std::string serialised_string;
     auto result =
         remote_config::protocol::tuf::serialize(request, serialised_string);
 
     EXPECT_EQ(remote_config::protocol::tuf::SUCCESS, result);
-
-    std::cout << serialised_string << std::endl;
 
     // Lets transform the resulting string back to json so we can assert more
     // easily

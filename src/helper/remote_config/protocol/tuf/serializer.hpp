@@ -18,6 +18,6 @@ typedef enum {
 } dds_remote_config_result;
 
 dds_remote_config_result serialize(
-    ClientGetConfigsRequest request, std::string &output);
+    client_get_configs_request request, std::string &output);
 
 } // namespace dds::remote_config::protocol::tuf

@@ -10,18 +10,18 @@
 
 namespace dds::remote_config::protocol {
 
-enum product { LIVE_DEBUGGING, ASM_DD, FEATURES };
+enum Product { LIVE_DEBUGGING, ASM_DD, FEATURES };
 
-class client {
+class Client_tracer {
 public:
-    client(std::string id, std::list<product> products)
+    Client_tracer(std::string id, std::list<Product> products)
         : id(id), products(products){};
-    std::string get_id() { return this->id; };
-    std::list<product> get_products() { return this->products; };
+    std::string getId() { return this->id; };
+    std::list<Product> get_products() { return this->products; };
 
 private:
     std::string id;
-    std::list<product> products;
+    std::list<Product> products;
 };
 
 } // namespace dds::remote_config::protocol

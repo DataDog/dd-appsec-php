@@ -9,14 +9,14 @@
 
 namespace dds::remote_config::protocol::tuf {
 
-class ClientGetConfigsRequest {
+class client_get_configs_request {
 public:
-    ClientGetConfigsRequest(Client client) : client(client){};
+    client_get_configs_request(client client) : client(client){};
 
-    Client getClient() { return client; };
+    client get_client() { return client; };
 
 private:
-    Client client;
+    client client;
 };
 
 } // namespace dds::remote_config::protocol::tuf

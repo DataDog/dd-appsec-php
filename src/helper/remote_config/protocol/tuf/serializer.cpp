@@ -12,7 +12,7 @@
 
 namespace dds::remote_config::protocol::tuf {
 
-const char *product_to_string(Product product)
+const char *product_to_string(product product)
 {
     switch (product) {
     case LIVE_DEBUGGING:
@@ -25,14 +25,14 @@ const char *product_to_string(Product product)
 }
 
 void serialize_client(rapidjson::Document::AllocatorType &alloc,
-    rapidjson::Document &document, Client client)
+    rapidjson::Document &document, client client)
 {
     rapidjson::Value client_object(rapidjson::kObjectType);
 
-    client_object.AddMember("id", client.getId(), alloc);
+    client_object.AddMember("id", client.get_id(), alloc);
 
     rapidjson::Value products(rapidjson::kArrayType);
-    for (const Product p : client.get_products()) {
+    for (const product p : client.get_products()) {
         products.PushBack(
             rapidjson::Value(product_to_string(p), alloc).Move(), alloc);
     }
@@ -42,14 +42,14 @@ void serialize_client(rapidjson::Document::AllocatorType &alloc,
 }
 
 dds_remote_config_result serialize(
-    ClientGetConfigsRequest request, std::string &output)
+    client_get_configs_request request, std::string &output)
 {
     rapidjson::Document document;
     rapidjson::Document::AllocatorType &alloc = document.GetAllocator();
 
     document.SetObject();
 
-    serialize_client(alloc, document, request.getClient());
+    serialize_client(alloc, document, request.get_client());
 
     dds::string_buffer buffer;
     rapidjson::Writer<decltype(buffer)> writer(buffer);
