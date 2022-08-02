@@ -15,7 +15,7 @@
 
 namespace dds {
 
-bool array_contains_string(rapidjson::Value &array, const char *searched)
+bool array_contains_string(const rapidjson::Value &array, const char *searched)
 {
     if (!array.IsArray()) {
         return false;
@@ -30,6 +30,27 @@ bool array_contains_string(rapidjson::Value &array, const char *searched)
     }
 
     return result;
+}
+
+rapidjson::Value::ConstMemberIterator assert_it_contains_string(
+    const rapidjson::Value &parent_field, const char *key, const char *value)
+{
+    rapidjson::Value::ConstMemberIterator tmp_itr =
+        parent_field.FindMember(key);
+    EXPECT_EQ(rapidjson::kStringType, tmp_itr->value.GetType());
+    EXPECT_EQ(value, tmp_itr->value);
+
+    return tmp_itr;
+}
+
+rapidjson::Value::ConstMemberIterator find_and_assert_type(
+    const rapidjson::Value &parent_field, const char *key, rapidjson::Type type)
+{
+    rapidjson::Value::ConstMemberIterator tmp_itr =
+        parent_field.FindMember(key);
+    EXPECT_EQ(type, tmp_itr->value.GetType());
+
+    return tmp_itr;
 }
 
 TEST(RemoteConfigSerializer, RequestCanBeSerialized)
@@ -55,53 +76,33 @@ TEST(RemoteConfigSerializer, RequestCanBeSerialized)
     rapidjson::Document serialized_doc;
     serialized_doc.Parse(serialised_string);
 
-    EXPECT_TRUE(serialized_doc.HasMember("client"));
+    // Client fields
+    rapidjson::Value::ConstMemberIterator client_itr =
+        find_and_assert_type(serialized_doc, "client", rapidjson::kObjectType);
 
-    // Client id field
-    EXPECT_TRUE(serialized_doc["client"].HasMember("id"));
-    EXPECT_TRUE(serialized_doc["client"]["id"].IsString());
-    EXPECT_EQ("some_id", serialized_doc["client"]["id"]);
+    assert_it_contains_string(client_itr->value, "id", "some_id");
 
-    // Client products field
-    EXPECT_TRUE(serialized_doc["client"].HasMember("products"));
-    EXPECT_TRUE(serialized_doc["client"]["products"].IsArray());
-    EXPECT_TRUE(
-        array_contains_string(serialized_doc["client"]["products"], "ASM_DD"));
+    // Client products fields
+    rapidjson::Value::ConstMemberIterator products_itr = find_and_assert_type(
+        client_itr->value, "products", rapidjson::kArrayType);
+    array_contains_string(products_itr->value, "ASM_DD");
 
-    // Client tracer version
-    EXPECT_TRUE(serialized_doc["client"].HasMember("client_tracer"));
-    EXPECT_TRUE(serialized_doc["client"]["client_tracer"].IsObject());
-    EXPECT_TRUE(
-        serialized_doc["client"]["client_tracer"].HasMember("language"));
-    EXPECT_TRUE(
-        serialized_doc["client"]["client_tracer"].HasMember("runtime_id"));
-    EXPECT_TRUE(
-        serialized_doc["client"]["client_tracer"].HasMember("tracer_version"));
-    EXPECT_TRUE(serialized_doc["client"]["client_tracer"].HasMember("service"));
-    EXPECT_TRUE(serialized_doc["client"]["client_tracer"].HasMember("env"));
-    EXPECT_TRUE(
-        serialized_doc["client"]["client_tracer"].HasMember("app_version"));
-    EXPECT_TRUE(
-        serialized_doc["client"]["client_tracer"]["language"].IsString());
-    EXPECT_TRUE(
-        serialized_doc["client"]["client_tracer"]["runtime_id"].IsString());
-    EXPECT_TRUE(
-        serialized_doc["client"]["client_tracer"]["tracer_version"].IsString());
-    EXPECT_TRUE(
-        serialized_doc["client"]["client_tracer"]["service"].IsString());
-    EXPECT_TRUE(serialized_doc["client"]["client_tracer"]["env"].IsString());
-    EXPECT_TRUE(
-        serialized_doc["client"]["client_tracer"]["app_version"].IsString());
-    EXPECT_EQ("php", serialized_doc["client"]["client_tracer"]["language"]);
-    EXPECT_EQ("some runtime id",
-        serialized_doc["client"]["client_tracer"]["runtime_id"]);
-    EXPECT_EQ("some tracer version",
-        serialized_doc["client"]["client_tracer"]["tracer_version"]);
-    EXPECT_EQ(
-        "some service", serialized_doc["client"]["client_tracer"]["service"]);
-    EXPECT_EQ("some env", serialized_doc["client"]["client_tracer"]["env"]);
-    EXPECT_EQ("some app version",
-        serialized_doc["client"]["client_tracer"]["app_version"]);
+    // Client tracer fields
+    rapidjson::Value::ConstMemberIterator client_tracer_itr =
+        find_and_assert_type(
+            client_itr->value, "client_tracer", rapidjson::kObjectType);
+    assert_it_contains_string(client_tracer_itr->value, "id", "some_id");
+
+    assert_it_contains_string(client_tracer_itr->value, "language", "php");
+    assert_it_contains_string(
+        client_tracer_itr->value, "runtime_id", "some runtime id");
+    assert_it_contains_string(
+        client_tracer_itr->value, "tracer_version", "some tracer version");
+    assert_it_contains_string(
+        client_tracer_itr->value, "service", "some service");
+    assert_it_contains_string(client_tracer_itr->value, "env", "some env");
+    assert_it_contains_string(
+        client_tracer_itr->value, "app_version", "some app version");
 }
 
 } // namespace dds
