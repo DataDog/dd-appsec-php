@@ -84,6 +84,7 @@ void serialize_client(rapidjson::Document::AllocatorType &alloc,
     rapidjson::Value client_object(rapidjson::kObjectType);
 
     client_object.AddMember("id", client.get_id(), alloc);
+    client_object.AddMember("is_tracer", true, alloc);
 
     rapidjson::Value products(rapidjson::kArrayType);
     for (const product p : client.get_products()) {

@@ -141,6 +141,7 @@ TEST(RemoteConfigSerializer, RequestCanBeSerialized)
         find_and_assert_type(serialized_doc, "client", rapidjson::kObjectType);
 
     assert_it_contains_string(client_itr->value, "id", "some_id");
+    assert_it_contains_bool(client_itr->value, "is_tracer", true);
 
     // Client products fields
     rapidjson::Value::ConstMemberIterator products_itr = find_and_assert_type(
