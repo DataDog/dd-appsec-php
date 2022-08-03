@@ -8,6 +8,7 @@
 #include <rapidjson/prettywriter.h>
 
 #include "../../../json_helper.hpp"
+#include "../cached_target_files.hpp"
 #include "serializer.hpp"
 
 namespace dds::remote_config::protocol::tuf {
@@ -99,6 +100,43 @@ void serialize_client(rapidjson::Document::AllocatorType &alloc,
     document.AddMember("client", client_object, alloc);
 }
 
+void serialize_cached_target_files_hashes(
+    rapidjson::Document::AllocatorType &alloc, rapidjson::Value &parent,
+    const std::list<cached_target_files_hash> cached_target_files_hash_list)
+{
+    rapidjson::Value cached_target_files_array(rapidjson::kArrayType);
+
+    for (cached_target_files_hash ctfh : cached_target_files_hash_list) {
+        rapidjson::Value cached_target_file_hash_object(rapidjson::kObjectType);
+        cached_target_file_hash_object.AddMember(
+            "algorithm", ctfh.get_algorithm(), alloc);
+        cached_target_file_hash_object.AddMember(
+            "hash", ctfh.get_hash(), alloc);
+        cached_target_files_array.PushBack(
+            cached_target_file_hash_object, alloc);
+    }
+
+    parent.AddMember("hashes", cached_target_files_array, alloc);
+}
+
+void serialize_cached_target_files(rapidjson::Document::AllocatorType &alloc,
+    rapidjson::Document &document,
+    const std::list<cached_target_files> cached_target_files_list)
+{
+    rapidjson::Value cached_target_files_array(rapidjson::kArrayType);
+
+    for (cached_target_files ctf : cached_target_files_list) {
+        rapidjson::Value cached_target_file_object(rapidjson::kObjectType);
+        cached_target_file_object.AddMember("path", ctf.get_path(), alloc);
+        cached_target_file_object.AddMember("length", ctf.get_length(), alloc);
+        serialize_cached_target_files_hashes(
+            alloc, cached_target_file_object, ctf.get_hashes());
+        cached_target_files_array.PushBack(cached_target_file_object, alloc);
+    }
+
+    document.AddMember("cached_target_files", cached_target_files_array, alloc);
+}
+
 dds_remote_config_result serialize(
     client_get_configs_request request, std::string &output)
 {
@@ -108,6 +146,8 @@ dds_remote_config_result serialize(
     document.SetObject();
 
     serialize_client(alloc, document, request.get_client());
+    serialize_cached_target_files(
+        alloc, document, request.get_cached_target_files());
 
     dds::string_buffer buffer;
     rapidjson::Writer<decltype(buffer)> writer(buffer);

@@ -102,7 +102,10 @@ rapidjson::Value::ConstMemberIterator find_and_assert_type(
     return tmp_itr;
 }
 
-TEST(RemoteConfigSerializer, RequestCanBeSerialized)
+int config_state_version = 456;
+int targets_version = 123;
+
+remote_config::protocol::client get_client()
 {
     std::list<remote_config::protocol::product> products;
     products.push_back(remote_config::protocol::product::ASM_DD);
@@ -111,19 +114,49 @@ TEST(RemoteConfigSerializer, RequestCanBeSerialized)
         "some tracer version", "some service", "some env", "some app version");
 
     std::list<remote_config::protocol::config_state> config_states;
-    int config_state_version = 456;
+
     remote_config::protocol::config_state config_state("some config_state id",
         config_state_version, "some config_state product");
     config_states.push_back(config_state);
 
-    int targets_version = 123;
     remote_config::protocol::client_state client_state(
         targets_version, config_states, false, "", "some backend client state");
 
     std::string client_id("some_id");
     remote_config::protocol::client client(
         client_id, products, client_tracer, client_state);
-    remote_config::protocol::tuf::client_get_configs_request request(client);
+
+    return client;
+}
+
+std::list<remote_config::protocol::cached_target_files>
+get_cached_target_files()
+{
+    std::list<remote_config::protocol::cached_target_files> cached_target_files;
+
+    std::list<remote_config::protocol::cached_target_files_hash> first_hashes;
+    remote_config::protocol::cached_target_files_hash first_hash(
+        "first hash algorithm", "first hash hash");
+    first_hashes.push_back(first_hash);
+    remote_config::protocol::cached_target_files first(
+        "first some path", 1, first_hashes);
+    cached_target_files.push_back(first);
+
+    std::list<remote_config::protocol::cached_target_files_hash> second_hashes;
+    remote_config::protocol::cached_target_files_hash second_hash(
+        "second hash algorithm", "second hash hash");
+    second_hashes.push_back(second_hash);
+    remote_config::protocol::cached_target_files second(
+        "second some path", 1, second_hashes);
+    cached_target_files.push_back(second);
+
+    return cached_target_files;
+}
+
+TEST(RemoteConfigSerializer, RequestCanBeSerializedWithClientField)
+{
+    remote_config::protocol::tuf::client_get_configs_request request(
+        get_client(), get_cached_target_files());
 
     std::string serialised_string;
     auto result =
@@ -185,6 +218,58 @@ TEST(RemoteConfigSerializer, RequestCanBeSerialized)
     assert_it_contains_string(*itr, "id", "some config_state id");
     assert_it_contains_int(*itr, "version", config_state_version);
     assert_it_contains_string(*itr, "product", "some config_state product");
+}
+
+TEST(RemoteConfigSerializer, RequestCanBeSerializedWithCachedTargetFields)
+{
+    remote_config::protocol::tuf::client_get_configs_request request(
+        get_client(), get_cached_target_files());
+
+    std::string serialised_string;
+    auto result =
+        remote_config::protocol::tuf::serialize(request, serialised_string);
+
+    EXPECT_EQ(remote_config::protocol::tuf::SUCCESS, result);
+
+    // Lets transform the resulting string back to json so we can assert more
+    // easily
+    rapidjson::Document serialized_doc;
+    serialized_doc.Parse(serialised_string);
+
+    // cached_target_files fields
+    rapidjson::Value::ConstMemberIterator cached_target_files_itr =
+        find_and_assert_type(
+            serialized_doc, "cached_target_files", rapidjson::kArrayType);
+
+    EXPECT_EQ(2, cached_target_files_itr->value.Size());
+
+    rapidjson::Value::ConstValueIterator first =
+        cached_target_files_itr->value.Begin();
+    assert_it_contains_string(*first, "path", "first some path");
+    assert_it_contains_int(*first, "length", 1);
+
+    // Cached target file hash of first
+    rapidjson::Value::ConstMemberIterator first_cached_target_files_hash =
+        find_and_assert_type(*first, "hashes", rapidjson::kArrayType);
+    EXPECT_EQ(1, first_cached_target_files_hash->value.Size());
+    assert_it_contains_string(*first_cached_target_files_hash->value.Begin(),
+        "algorithm", "first hash algorithm");
+    assert_it_contains_string(*first_cached_target_files_hash->value.Begin(),
+        "hash", "first hash hash");
+
+    rapidjson::Value::ConstValueIterator second =
+        std::next(cached_target_files_itr->value.Begin());
+    assert_it_contains_string(*second, "path", "second some path");
+    assert_it_contains_int(*second, "length", 1);
+
+    // Cached target file hash of second
+    rapidjson::Value::ConstMemberIterator second_cached_target_files_hash =
+        find_and_assert_type(*second, "hashes", rapidjson::kArrayType);
+    EXPECT_EQ(1, second_cached_target_files_hash->value.Size());
+    assert_it_contains_string(*second_cached_target_files_hash->value.Begin(),
+        "algorithm", "second hash algorithm");
+    assert_it_contains_string(*second_cached_target_files_hash->value.Begin(),
+        "hash", "second hash hash");
 }
 
 } // namespace dds
