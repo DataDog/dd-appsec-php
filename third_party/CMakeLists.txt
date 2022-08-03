@@ -34,6 +34,40 @@ if(DD_APPSEC_BUILD_EXTENSION)
     else()
         target_compile_definitions(mpack PUBLIC MPACK_STDIO=0 MPACK_WRITE_TRACKING=1 MPACK_BUFFER_SIZE=131072)
     endif()
+
+    find_program(PHP_CONFIG php-config)
+    execute_process(
+            COMMAND ${PHP_CONFIG} --includes
+            RESULT_VARIABLE PHP_CONFIG_INCLUDES_RESULT
+            OUTPUT_VARIABLE PHP_CONFIG_INCLUDES
+            ERROR_VARIABLE PHP_CONFIG_INCLUDES_ERR
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+    if("${PHP_CONFIG_INCLUDES_RESULT}" STREQUAL "0")
+        string(REPLACE "-I " "-I" PHP_INCLUDES "${PHP_CONFIG_INCLUDES} -I${CMAKE_CURRENT_SOURCE_DIR}/ddtrace/zend_abstract_interface")
+        string(REPLACE "-I" "-isystem" PHP_INCLUDES "${PHP_INCLUDES}")
+        string(REPLACE " " ";" PHP_INCLUDES "${PHP_INCLUDES}")
+        message(STATUS "Using PHP include flags: ${PHP_INCLUDES}")
+    else()
+        message(FATAL_ERROR "Error executing ${PHP_CONFIG} --includes: ${PHP_CONFIG_INCLUDES_ERR}")
+    endif()
+
+    if(NOT MSVC)
+        set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fPIC")
+        set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELEASE} -fPIC")
+        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fPIC")
+    endif()
+
+    add_library(zai_zend_abstract_interface INTERFACE)
+    add_subdirectory(ddtrace/zend_abstract_interface/zai_string)
+    add_subdirectory(ddtrace/zend_abstract_interface/json)
+    target_compile_options(zai_json PRIVATE ${PHP_INCLUDES})
+    add_subdirectory(ddtrace/zend_abstract_interface/env)
+    target_compile_options(zai_env PRIVATE ${PHP_INCLUDES})
+    add_subdirectory(ddtrace/zend_abstract_interface/config)
+    target_compile_options(zai_config PRIVATE ${PHP_INCLUDES})
+    target_include_directories(zai_zend_abstract_interface INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/ddtrace/zend_abstract_interface)
 endif()
 
 FetchContent_Declare(
@@ -45,7 +79,7 @@ FetchContent_MakeAvailable(spdlog)
 
 include(ExternalProject)
 ExternalProject_Add(event_rules
-    GIT_REPOSITORY git@github.com:DataDog/appsec-event-rules.git
+    GIT_REPOSITORY https://github.com/DataDog/appsec-event-rules.git
     GIT_TAG 1.3.1
     GIT_SHALLOW ON
     CONFIGURE_COMMAND ""

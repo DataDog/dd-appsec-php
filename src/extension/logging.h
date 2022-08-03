@@ -8,6 +8,7 @@
 #include "attributes.h"
 #include "php_helpers.h"
 #include <stdbool.h>
+#include "configuration.h"
 
 /* log levels - the first argument to the mlog helper
  * The lower the number, the higher the priority */
@@ -28,11 +29,16 @@ extern const int _dd_size_source_prefix;
 extern __thread char _dd_strerror_buf[STRERROR_R_BUF_SIZE];
 #endif
 
-extern THREAD_LOCAL_ON_ZTS dd_log_level_t dd_log_level;
+static inline dd_log_level_t dd_log_level()
+{
+    return runtime_config_first_init ? get_DD_APPSEC_LOG_LEVEL() : get_global_DD_APPSEC_LOG_LEVEL();
+}
 
 void dd_log_startup(void);
 void dd_log_shutdown(void);
 const char *nonnull _strerror_r(int err, char *nonnull buf, size_t buflen);
+
+bool dd_parse_log_level(zai_string_view value, zval *nonnull decoded_value, bool persistent);
 
 void _mlog_relay(dd_log_level_t level, const char *nonnull format,
     const char *nonnull file, const char *nonnull function, int line, ...)
@@ -55,14 +61,14 @@ void _mlog_relay(dd_log_level_t level, const char *nonnull format,
 // guarded version, for performance
 #define mlog_g(level, format, ...)                                             \
     do {                                                                       \
-        if (dd_log_level >= level) {                                           \
+        if (dd_log_level() >= level) {                              \
             mlog(level, format, ##__VA_ARGS__);                                \
         }                                                                      \
     } while (0)
 
 static ATTR_ALWAYS_INLINE bool mlog_should_log(dd_log_level_t lvl)
 {
-    return dd_log_level >= lvl;
+    return dd_log_level() >= lvl;
 }
 
 // Do not call directly; only for support to mlog_err

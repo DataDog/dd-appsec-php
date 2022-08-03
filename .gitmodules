@@ -7,3 +7,6 @@
 [submodule "third_party/msgpack-c"]
 	path = third_party/msgpack-c
 	url = git@github.com:msgpack/msgpack-c.git
+[submodule "third_party/ddtrace"]
+	path = third_party/ddtrace
+	url = https://github.com/DataDog/dd-trace-php.git

@@ -1,11 +1,10 @@
 --TEST--
-Bad env var setting results in hardcoded default fallback
+Bad env var setting is ignored
 --ENV--
 DD_APPSEC_LOG_LEVEL=bad
 --GET--
 _force_cgi_sapi
 --INI--
-; ignored because overridden by environment
 datadog.appsec.log_level=trace
 --FILE--
 <?php
@@ -13,4 +12,4 @@ datadog.appsec.log_level=trace
 var_dump(ini_get("datadog.appsec.log_level"));
 ?>
 --EXPECTF--
-string(4) "warn"
+string(5) "trace"
