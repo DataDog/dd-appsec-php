@@ -13,14 +13,12 @@ namespace dds::remote_config::protocol {
 
 class client_state {
 public:
-    client_state(int targets_version, int root_version,
-        std::list<config_state> config_states, bool has_error,
-        std::string error, std::string backend_client_state)
-        : targets_version(targets_version), root_version(root_version),
-          config_states(config_states), has_error(has_error), error(error),
+    client_state(int targets_version, std::list<config_state> config_states,
+        bool has_error, std::string error, std::string backend_client_state)
+        : targets_version(targets_version), config_states(config_states),
+          has_error(has_error), error(error),
           backend_client_state(backend_client_state){};
     int get_targets_version() { return targets_version; };
-    int get_root_version() { return root_version; };
     std::list<config_state> get_config_states() { return config_states; };
     bool get_has_error() { return has_error; };
     std::string get_error() { return error; };
@@ -28,7 +26,6 @@ public:
 
 private:
     int targets_version;
-    int root_version;
     std::list<config_state> config_states;
     //@todo: Test the different combinations of not having error
     bool has_error;

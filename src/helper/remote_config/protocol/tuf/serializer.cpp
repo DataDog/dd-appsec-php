@@ -65,8 +65,7 @@ void serialize_client_state(rapidjson::Document::AllocatorType &alloc,
 
     client_state_object.AddMember(
         "targets_version", client_state.get_targets_version(), alloc);
-    client_state_object.AddMember(
-        "root_version", client_state.get_root_version(), alloc);
+    client_state_object.AddMember("root_version", 1, alloc);
     client_state_object.AddMember(
         "has_error", client_state.get_has_error(), alloc);
     client_state_object.AddMember("error", client_state.get_error(), alloc);

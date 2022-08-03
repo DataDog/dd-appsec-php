@@ -117,9 +117,8 @@ TEST(RemoteConfigSerializer, RequestCanBeSerialized)
     config_states.push_back(config_state);
 
     int targets_version = 123;
-    int root_version = 111;
-    remote_config::protocol::client_state client_state(targets_version,
-        root_version, config_states, false, "", "some backend client state");
+    remote_config::protocol::client_state client_state(
+        targets_version, config_states, false, "", "some backend client state");
 
     std::string client_id("some_id");
     remote_config::protocol::client client(
@@ -169,8 +168,7 @@ TEST(RemoteConfigSerializer, RequestCanBeSerialized)
             client_itr->value, "state", rapidjson::kObjectType);
     assert_it_contains_int(
         client_state_itr->value, "targets_version", targets_version);
-    assert_it_contains_int(
-        client_state_itr->value, "root_version", root_version);
+    assert_it_contains_int(client_state_itr->value, "root_version", 1);
     assert_it_contains_bool(client_state_itr->value, "has_error", false);
     assert_it_contains_string(client_state_itr->value, "error", "");
     assert_it_contains_string(client_state_itr->value, "backend_client_state",
