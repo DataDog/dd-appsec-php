@@ -11,7 +11,7 @@
 #include "../cached_target_files.hpp"
 #include "serializer.hpp"
 
-namespace dds::remote_config::protocol::tuf {
+namespace dds::remote_config {
 
 const char *product_to_string(product product)
 {
@@ -161,4 +161,4 @@ remote_config_result serialize(
     return remote_config_result::success;
 }
 
-} // namespace dds::remote_config::protocol::tuf
+} // namespace dds::remote_config

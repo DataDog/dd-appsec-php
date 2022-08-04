@@ -10,7 +10,7 @@
 #include "../cached_target_files.hpp"
 #include "../client.hpp"
 
-namespace dds::remote_config::protocol::tuf {
+namespace dds::remote_config {
 
 struct get_configs_request {
 public:
@@ -29,4 +29,4 @@ private:
     std::list<cached_target_files> cached_target_files;
 };
 
-} // namespace dds::remote_config::protocol::tuf
+} // namespace dds::remote_config

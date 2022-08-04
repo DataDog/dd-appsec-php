@@ -8,7 +8,7 @@
 #include <list>
 #include <string>
 
-namespace dds::remote_config::protocol {
+namespace dds::remote_config {
 
 struct config_state {
 public:
@@ -24,4 +24,4 @@ private:
     std::string product;
 };
 
-} // namespace dds::remote_config::protocol
+} // namespace dds::remote_config

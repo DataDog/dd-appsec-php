@@ -10,7 +10,7 @@
 
 #include "get_configs_request.hpp"
 
-namespace dds::remote_config::protocol::tuf {
+namespace dds::remote_config {
 
 enum class remote_config_result {
     success,
@@ -20,4 +20,4 @@ enum class remote_config_result {
 remote_config_result serialize(
     get_configs_request request, std::string &output);
 
-} // namespace dds::remote_config::protocol::tuf
+} // namespace dds::remote_config
