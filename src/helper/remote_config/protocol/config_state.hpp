@@ -11,8 +11,8 @@ namespace dds::remote_config {
 
 struct config_state {
 public:
-    config_state(std::string id, int version, std::string product)
-        : _id(id), _version(version), _product(product){};
+    config_state(std::string &&id, int version, std::string &&product)
+        : _id(std::move(id)), _version(version), _product(std::move(product)){};
     const std::string get_id() { return _id; };
     int get_version() { return _version; };
     std::string get_product() { return _product; };

@@ -11,10 +11,12 @@ namespace dds::remote_config {
 
 struct client_tracer {
 public:
-    client_tracer(std::string runtime_id, std::string tracer_version,
-        std::string service, std::string env, std::string app_version)
-        : _runtime_id(runtime_id), _tracer_version(tracer_version),
-          _service(service), _env(env), _app_version(app_version){};
+    client_tracer(std::string &&runtime_id, std::string &&tracer_version,
+        std::string &&service, std::string &&env, std::string &&app_version)
+        : _runtime_id(std::move(runtime_id)),
+          _tracer_version(std::move(tracer_version)),
+          _service(std::move(service)), _env(std::move(env)),
+          _app_version(std::move(app_version)){};
     std::string get_runtime_id() { return _runtime_id; };
     std::string get_tracer_version() { return _tracer_version; };
     std::string get_service() { return _service; };

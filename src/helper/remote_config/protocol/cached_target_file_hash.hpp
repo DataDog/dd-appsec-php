@@ -11,8 +11,8 @@ namespace dds::remote_config {
 
 struct cached_target_files_hash {
 public:
-    cached_target_files_hash(std::string algorithm, std::string hash)
-        : _algorithm(algorithm), _hash(hash){};
+    cached_target_files_hash(std::string &&algorithm, std::string &&hash)
+        : _algorithm(std::move(algorithm)), _hash(std::move(hash)){};
     std::string get_algorithm() { return _algorithm; };
     std::string get_hash() { return _hash; };
 

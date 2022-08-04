@@ -124,7 +124,7 @@ remote_config::client get_client()
 
     std::string client_id("some_id");
     remote_config::client client(
-        client_id, products, client_tracer, client_state);
+        std::move(client_id), products, client_tracer, client_state);
 
     return client;
 }
