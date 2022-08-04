@@ -16,11 +16,11 @@ namespace dds::remote_config::protocol::tuf {
 const char *product_to_string(product product)
 {
     switch (product) {
-    case LIVE_DEBUGGING:
+    case product::live_debugging:
         return "LIVE_DEBUGGING";
-    case ASM_DD:
+    case product::asm_dd:
         return "ASM_DD";
-    case FEATURES:
+    case product::features:
         return "FEATURES";
     }
 }

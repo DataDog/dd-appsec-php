@@ -13,7 +13,7 @@
 
 namespace dds::remote_config::protocol {
 
-enum product { LIVE_DEBUGGING, ASM_DD, FEATURES };
+enum class product { live_debugging, asm_dd, features };
 
 class client {
 public:
