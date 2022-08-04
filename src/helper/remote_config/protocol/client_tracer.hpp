@@ -14,20 +14,20 @@ struct client_tracer {
 public:
     client_tracer(std::string runtime_id, std::string tracer_version,
         std::string service, std::string env, std::string app_version)
-        : runtime_id(runtime_id), tracer_version(tracer_version),
-          service(service), env(env), app_version(app_version){};
-    std::string get_runtime_id() { return runtime_id; };
-    std::string get_tracer_version() { return tracer_version; };
-    std::string get_service() { return service; };
-    std::string get_env() { return env; };
-    std::string get_app_version() { return app_version; };
+        : _runtime_id(runtime_id), _tracer_version(tracer_version),
+          _service(service), _env(env), _app_version(app_version){};
+    std::string get_runtime_id() { return _runtime_id; };
+    std::string get_tracer_version() { return _tracer_version; };
+    std::string get_service() { return _service; };
+    std::string get_env() { return _env; };
+    std::string get_app_version() { return _app_version; };
 
 private:
-    std::string runtime_id;
-    std::string tracer_version;
-    std::string service;
-    std::string env;
-    std::string app_version;
+    std::string _runtime_id;
+    std::string _tracer_version;
+    std::string _service;
+    std::string _env;
+    std::string _app_version;
 };
 
 } // namespace dds::remote_config

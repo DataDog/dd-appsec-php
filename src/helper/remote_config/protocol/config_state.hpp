@@ -13,15 +13,15 @@ namespace dds::remote_config {
 struct config_state {
 public:
     config_state(std::string id, int version, std::string product)
-        : id(id), version(version), product(product){};
-    const std::string get_id() { return id; };
-    int get_version() { return version; };
-    std::string get_product() { return product; };
+        : _id(id), _version(version), _product(product){};
+    const std::string get_id() { return _id; };
+    int get_version() { return _version; };
+    std::string get_product() { return _product; };
 
 private:
-    std::string id;
-    int version;
-    std::string product;
+    std::string _id;
+    int _version;
+    std::string _product;
 };
 
 } // namespace dds::remote_config

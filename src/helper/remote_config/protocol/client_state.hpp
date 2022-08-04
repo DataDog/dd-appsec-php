@@ -13,24 +13,24 @@ namespace dds::remote_config {
 
 struct client_state {
 public:
-    client_state(int targets_version, std::list<config_state> config_states,
+    client_state(int targets_version, std::list<config_state> cs,
         bool has_error, std::string error, std::string backend_client_state)
-        : targets_version(targets_version), config_states(config_states),
-          has_error(has_error), error(error),
-          backend_client_state(backend_client_state){};
-    int get_targets_version() { return targets_version; };
-    std::list<config_state> get_config_states() { return config_states; };
-    bool get_has_error() { return has_error; };
-    std::string get_error() { return error; };
-    std::string get_backend_client_state() { return backend_client_state; };
+        : _targets_version(targets_version), _config_states(cs),
+          _has_error(has_error), _error(error),
+          _backend_client_state(backend_client_state){};
+    int get_targets_version() { return _targets_version; };
+    std::list<config_state> get_config_states() { return _config_states; };
+    bool get_has_error() { return _has_error; };
+    std::string get_error() { return _error; };
+    std::string get_backend_client_state() { return _backend_client_state; };
 
 private:
-    int targets_version;
-    std::list<config_state> config_states;
+    int _targets_version;
+    std::list<config_state> _config_states;
     //@todo: Test the different combinations of not having error
-    bool has_error;
-    std::string error;
-    std::string backend_client_state;
+    bool _has_error;
+    std::string _error;
+    std::string _backend_client_state;
 };
 
 } // namespace dds::remote_config

@@ -17,20 +17,19 @@ enum class product { live_debugging, asm_dd, features };
 
 struct client {
 public:
-    client(std::string id, std::list<product> products,
-        client_tracer client_tracer, client_state client_state)
-        : id(id), products(products), client_tracer(client_tracer),
-          client_state(client_state){};
-    std::string get_id() { return this->id; };
-    std::list<product> get_products() { return this->products; };
-    client_tracer get_tracer() { return this->client_tracer; };
-    client_state get_client_state() { return this->client_state; };
+    client(std::string id, std::list<product> products, client_tracer ct,
+        client_state cs)
+        : _id(id), _products(products), _client_tracer(ct), _client_state(cs){};
+    std::string get_id() { return _id; };
+    std::list<product> get_products() { return _products; };
+    client_tracer get_tracer() { return _client_tracer; };
+    client_state get_client_state() { return _client_state; };
 
 private:
-    std::string id;
-    std::list<product> products;
-    client_tracer client_tracer;
-    client_state client_state;
+    std::string _id;
+    std::list<product> _products;
+    client_tracer _client_tracer;
+    client_state _client_state;
 };
 
 } // namespace dds::remote_config

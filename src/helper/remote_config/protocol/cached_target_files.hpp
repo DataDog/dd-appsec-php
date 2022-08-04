@@ -16,15 +16,15 @@ struct cached_target_files {
 public:
     cached_target_files(std::string path, int length,
         std::list<cached_target_files_hash> hashes)
-        : path(path), length(length), hashes(hashes){};
-    const std::string get_path() { return path; };
-    const int get_length() { return length; };
-    const std::list<cached_target_files_hash> get_hashes() { return hashes; };
+        : _path(path), _length(length), _hashes(hashes){};
+    const std::string get_path() { return _path; };
+    const int get_length() { return _length; };
+    const std::list<cached_target_files_hash> get_hashes() { return _hashes; };
 
 private:
-    std::string path;
-    int length;
-    std::list<cached_target_files_hash> hashes;
+    std::string _path;
+    int _length;
+    std::list<cached_target_files_hash> _hashes;
 };
 
 } // namespace dds::remote_config

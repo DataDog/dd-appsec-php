@@ -12,13 +12,13 @@ namespace dds::remote_config {
 struct cached_target_files_hash {
 public:
     cached_target_files_hash(std::string algorithm, std::string hash)
-        : algorithm(algorithm), hash(hash){};
-    std::string get_algorithm() { return algorithm; };
-    std::string get_hash() { return hash; };
+        : _algorithm(algorithm), _hash(hash){};
+    std::string get_algorithm() { return _algorithm; };
+    std::string get_hash() { return _hash; };
 
 private:
-    std::string algorithm;
-    std::string hash;
+    std::string _algorithm;
+    std::string _hash;
 };
 
 } // namespace dds::remote_config
