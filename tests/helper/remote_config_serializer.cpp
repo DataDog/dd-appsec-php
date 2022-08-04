@@ -162,7 +162,8 @@ TEST(RemoteConfigSerializer, RequestCanBeSerializedWithClientField)
     auto result =
         remote_config::protocol::tuf::serialize(request, serialised_string);
 
-    EXPECT_EQ(remote_config::protocol::tuf::SUCCESS, result);
+    EXPECT_EQ(
+        remote_config::protocol::tuf::remote_config_result::success, result);
 
     // Lets transform the resulting string back to json so we can assert more
     // easily
@@ -229,7 +230,8 @@ TEST(RemoteConfigSerializer, RequestCanBeSerializedWithCachedTargetFields)
     auto result =
         remote_config::protocol::tuf::serialize(request, serialised_string);
 
-    EXPECT_EQ(remote_config::protocol::tuf::SUCCESS, result);
+    EXPECT_EQ(
+        remote_config::protocol::tuf::remote_config_result::success, result);
 
     // Lets transform the resulting string back to json so we can assert more
     // easily

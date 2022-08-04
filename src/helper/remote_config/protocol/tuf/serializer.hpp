@@ -12,12 +12,12 @@
 
 namespace dds::remote_config::protocol::tuf {
 
-typedef enum {
-    SUCCESS = 0,
-    ERROR,
-} dds_remote_config_result;
+enum class remote_config_result {
+    success,
+    error,
+};
 
-dds_remote_config_result serialize(
+remote_config_result serialize(
     client_get_configs_request request, std::string &output);
 
 } // namespace dds::remote_config::protocol::tuf

@@ -137,7 +137,7 @@ void serialize_cached_target_files(rapidjson::Document::AllocatorType &alloc,
     document.AddMember("cached_target_files", cached_target_files_array, alloc);
 }
 
-dds_remote_config_result serialize(
+remote_config_result serialize(
     client_get_configs_request request, std::string &output)
 {
     rapidjson::Document document;
@@ -154,11 +154,11 @@ dds_remote_config_result serialize(
 
     // This has to be tested
     if (!document.Accept(writer)) {
-        return dds_remote_config_result::ERROR;
+        return remote_config_result::error;
     }
 
     output = std::move(buffer.get_string_ref());
-    return dds_remote_config_result::SUCCESS;
+    return remote_config_result::success;
 }
 
 } // namespace dds::remote_config::protocol::tuf
