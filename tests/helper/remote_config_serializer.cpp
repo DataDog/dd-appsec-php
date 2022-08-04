@@ -119,12 +119,12 @@ remote_config::client get_client()
         config_state_version, "some config_state product");
     config_states.push_back(config_state);
 
-    remote_config::client_state client_state(
-        targets_version, config_states, false, "", "some backend client state");
+    remote_config::client_state client_state(targets_version,
+        std::move(config_states), false, "", "some backend client state");
 
     std::string client_id("some_id");
     remote_config::client client(
-        std::move(client_id), products, client_tracer, client_state);
+        std::move(client_id), std::move(products), client_tracer, client_state);
 
     return client;
 }
@@ -138,7 +138,7 @@ std::vector<remote_config::cached_target_files> get_cached_target_files()
         "first hash algorithm", "first hash hash");
     first_hashes.push_back(first_hash);
     remote_config::cached_target_files first(
-        "first some path", 1, first_hashes);
+        "first some path", 1, std::move(first_hashes));
     cached_target_files.push_back(first);
 
     std::vector<remote_config::cached_target_files_hash> second_hashes;
@@ -146,7 +146,7 @@ std::vector<remote_config::cached_target_files> get_cached_target_files()
         "second hash algorithm", "second hash hash");
     second_hashes.push_back(second_hash);
     remote_config::cached_target_files second(
-        "second some path", 1, second_hashes);
+        "second some path", 1, std::move(second_hashes));
     cached_target_files.push_back(second);
 
     return cached_target_files;

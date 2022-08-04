@@ -44,7 +44,8 @@ void serialize_client_tracer(rapidjson::Document::AllocatorType &alloc,
 }
 
 void serialize_config_states(rapidjson::Document::AllocatorType &alloc,
-    rapidjson::Value &client_field, std::vector<config_state> config_states)
+    rapidjson::Value &client_field,
+    const std::vector<config_state> config_states)
 {
     rapidjson::Value config_states_object(rapidjson::kArrayType);
 

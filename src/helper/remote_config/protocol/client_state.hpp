@@ -13,16 +13,22 @@ namespace dds::remote_config {
 
 struct client_state {
 public:
-    client_state(int targets_version, std::vector<config_state> cs,
+    client_state(int targets_version, std::vector<config_state> &&cs,
         bool has_error, std::string &&error, std::string &&backend_client_state)
-        : _targets_version(targets_version), _config_states(cs),
+        : _targets_version(targets_version), _config_states(std::move(cs)),
           _has_error(has_error), _error(std::move(error)),
           _backend_client_state(std::move(backend_client_state)){};
-    int get_targets_version() { return _targets_version; };
-    std::vector<config_state> get_config_states() { return _config_states; };
-    bool get_has_error() { return _has_error; };
-    std::string get_error() { return _error; };
-    std::string get_backend_client_state() { return _backend_client_state; };
+    const int get_targets_version() { return _targets_version; };
+    const std::vector<config_state> get_config_states()
+    {
+        return _config_states;
+    };
+    const bool get_has_error() { return _has_error; };
+    const std::string get_error() { return _error; };
+    const std::string get_backend_client_state()
+    {
+        return _backend_client_state;
+    };
 
 private:
     int _targets_version;
