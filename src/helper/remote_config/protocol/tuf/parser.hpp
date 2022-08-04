@@ -8,12 +8,11 @@
 #include <rapidjson/document.h>
 #include <string>
 
+#include "get_configs_response.hpp"
 #include "common.hpp"
-#include "get_configs_request.hpp"
 
 namespace dds::remote_config {
 
-remote_config_result serialize(
-    get_configs_request request, std::string &output);
+remote_config_result parser(const std::string &body, get_configs_response &output);
 
 } // namespace dds::remote_config
