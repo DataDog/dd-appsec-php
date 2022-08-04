@@ -6,7 +6,7 @@
 #pragma once
 
 #include <list>
-#include <string>
+#include <vector>
 
 #include "cached_target_file_hash.hpp"
 
@@ -15,16 +15,19 @@ namespace dds::remote_config {
 struct cached_target_files {
 public:
     cached_target_files(std::string path, int length,
-        std::list<cached_target_files_hash> hashes)
+        std::vector<cached_target_files_hash> hashes)
         : _path(path), _length(length), _hashes(hashes){};
     const std::string get_path() { return _path; };
     const int get_length() { return _length; };
-    const std::list<cached_target_files_hash> get_hashes() { return _hashes; };
+    const std::vector<cached_target_files_hash> get_hashes()
+    {
+        return _hashes;
+    };
 
 private:
     std::string _path;
     int _length;
-    std::list<cached_target_files_hash> _hashes;
+    std::vector<cached_target_files_hash> _hashes;
 };
 
 } // namespace dds::remote_config
