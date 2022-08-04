@@ -9,7 +9,7 @@
 
 namespace dds::remote_config::protocol {
 
-class cached_target_files_hash {
+struct cached_target_files_hash {
 public:
     cached_target_files_hash(std::string algorithm, std::string hash)
         : algorithm(algorithm), hash(hash){};

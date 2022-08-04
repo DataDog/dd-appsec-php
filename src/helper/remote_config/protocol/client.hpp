@@ -15,7 +15,7 @@ namespace dds::remote_config::protocol {
 
 enum class product { live_debugging, asm_dd, features };
 
-class client {
+struct client {
 public:
     client(std::string id, std::list<product> products,
         client_tracer client_tracer, client_state client_state)

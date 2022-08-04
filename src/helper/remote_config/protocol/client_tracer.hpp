@@ -10,7 +10,7 @@
 
 namespace dds::remote_config::protocol {
 
-class client_tracer {
+struct client_tracer {
 public:
     client_tracer(std::string runtime_id, std::string tracer_version,
         std::string service, std::string env, std::string app_version)

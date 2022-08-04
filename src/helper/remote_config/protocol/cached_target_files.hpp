@@ -12,7 +12,7 @@
 
 namespace dds::remote_config::protocol {
 
-class cached_target_files {
+struct cached_target_files {
 public:
     cached_target_files(std::string path, int length,
         std::list<cached_target_files_hash> hashes)

@@ -11,7 +11,7 @@
 
 namespace dds::remote_config::protocol {
 
-class client_state {
+struct client_state {
 public:
     client_state(int targets_version, std::list<config_state> config_states,
         bool has_error, std::string error, std::string backend_client_state)

@@ -13,7 +13,7 @@
 namespace dds::remote_config::protocol::tuf {
 
 //@todo: Remove client from the name
-class client_get_configs_request {
+struct client_get_configs_request {
 public:
     client_get_configs_request(
         client client, std::list<cached_target_files> cached_target_files)
