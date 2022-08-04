@@ -12,7 +12,7 @@
 #include "remote_config/protocol/client_state.hpp"
 #include "remote_config/protocol/client_tracer.hpp"
 #include "remote_config/protocol/config_state.hpp"
-#include "remote_config/protocol/tuf/client_get_configs_request.hpp"
+#include "remote_config/protocol/tuf/get_configs_request.hpp"
 #include "remote_config/protocol/tuf/serializer.hpp"
 
 namespace dds {
@@ -155,7 +155,7 @@ get_cached_target_files()
 
 TEST(RemoteConfigSerializer, RequestCanBeSerializedWithClientField)
 {
-    remote_config::protocol::tuf::client_get_configs_request request(
+    remote_config::protocol::tuf::get_configs_request request(
         get_client(), get_cached_target_files());
 
     std::string serialised_string;
@@ -223,7 +223,7 @@ TEST(RemoteConfigSerializer, RequestCanBeSerializedWithClientField)
 
 TEST(RemoteConfigSerializer, RequestCanBeSerializedWithCachedTargetFields)
 {
-    remote_config::protocol::tuf::client_get_configs_request request(
+    remote_config::protocol::tuf::get_configs_request request(
         get_client(), get_cached_target_files());
 
     std::string serialised_string;

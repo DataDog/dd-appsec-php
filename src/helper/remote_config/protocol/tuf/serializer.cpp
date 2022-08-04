@@ -138,7 +138,7 @@ void serialize_cached_target_files(rapidjson::Document::AllocatorType &alloc,
 }
 
 remote_config_result serialize(
-    client_get_configs_request request, std::string &output)
+    get_configs_request request, std::string &output)
 {
     rapidjson::Document document;
     rapidjson::Document::AllocatorType &alloc = document.GetAllocator();

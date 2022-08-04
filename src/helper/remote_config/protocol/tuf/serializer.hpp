@@ -8,7 +8,7 @@
 #include <rapidjson/document.h>
 #include <string>
 
-#include "client_get_configs_request.hpp"
+#include "get_configs_request.hpp"
 
 namespace dds::remote_config::protocol::tuf {
 
@@ -18,6 +18,6 @@ enum class remote_config_result {
 };
 
 remote_config_result serialize(
-    client_get_configs_request request, std::string &output);
+    get_configs_request request, std::string &output);
 
 } // namespace dds::remote_config::protocol::tuf
