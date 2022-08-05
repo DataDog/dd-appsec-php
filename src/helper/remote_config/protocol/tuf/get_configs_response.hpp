@@ -16,7 +16,10 @@ namespace dds::remote_config {
 struct get_configs_response {
 public:
     const std::vector<target_file> get_target_files() { return _target_files; };
-    void add_target_file(target_file tf) { _target_files.push_back(tf); };
+    void add_target_file(target_file &&tf)
+    {
+        _target_files.push_back(std::move(tf));
+    };
 
 private:
     std::vector<target_file> _target_files;

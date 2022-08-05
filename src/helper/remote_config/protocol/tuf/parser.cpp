@@ -63,7 +63,7 @@ remote_config_parser_result parse_target_files(
         }
         target_file tf(std::move(path_itr->value.GetString()),
             std::move(raw_itr->value.GetString()));
-        output.add_target_file(tf);
+        output.add_target_file(std::move(tf));
     }
 
     return remote_config_parser_result::success;
