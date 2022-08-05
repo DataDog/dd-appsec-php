@@ -27,6 +27,7 @@ enum class remote_config_parser_result {
     target_files_raw_field_invalid_type,
     client_config_field_missing,
     client_config_field_invalid_type,
+    client_config_field_invalid_entry,
 };
 
 remote_config_parser_result parse(

@@ -16,13 +16,22 @@ namespace dds::remote_config {
 struct get_configs_response {
 public:
     const std::vector<target_file> get_target_files() { return _target_files; };
+    const std::vector<std::string> get_client_configs()
+    {
+        return _client_configs;
+    };
     void add_target_file(target_file &&tf)
     {
         _target_files.push_back(std::move(tf));
     };
+    void add_client_config(std::string &&cc)
+    {
+        _client_configs.push_back(std::move(cc));
+    };
 
 private:
     std::vector<target_file> _target_files;
+    std::vector<std::string> _client_configs;
 };
 
 } // namespace dds::remote_config

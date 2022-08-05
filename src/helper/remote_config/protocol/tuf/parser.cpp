@@ -69,6 +69,24 @@ remote_config_parser_result parse_target_files(
     return remote_config_parser_result::success;
 }
 
+remote_config_parser_result parse_client_configs(
+    rapidjson::Value::ConstMemberIterator client_configs_itr,
+    get_configs_response &output)
+{
+    for (rapidjson::Value::ConstValueIterator itr =
+             client_configs_itr->value.Begin();
+         itr != client_configs_itr->value.End(); ++itr) {
+        if (!itr->IsString()) {
+            return remote_config_parser_result::
+                client_config_field_invalid_entry;
+        }
+
+        output.add_client_config(std::move(itr->GetString()));
+    }
+
+    return remote_config_parser_result::success;
+}
+
 remote_config_parser_result parse(
     const std::string &body, get_configs_response &output)
 {
@@ -106,6 +124,11 @@ remote_config_parser_result parse(
     }
 
     result = parse_target_files(target_files_itr, output);
+    if (result != remote_config_parser_result::success) {
+        return result;
+    }
+
+    result = parse_client_configs(client_configs_itr, output);
     if (result != remote_config_parser_result::success) {
         return result;
     }

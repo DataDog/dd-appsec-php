@@ -246,4 +246,38 @@ TEST(RemoteConfigParser, TargetFilesMustBeObjects)
         result);
 }
 
+TEST(RemoteConfigParser, ClientConfigsAreParsed)
+{
+    std::string response = get_example_response();
+    remote_config::get_configs_response gcr;
+
+    auto result = remote_config::parse(response, gcr);
+
+    EXPECT_EQ(remote_config::remote_config_parser_result::success, result);
+
+    EXPECT_EQ(2, gcr.get_client_configs().size());
+
+    auto client_configs = gcr.get_client_configs();
+
+    EXPECT_EQ("datadog/2/DEBUG/luke.steensen/config", client_configs[0]);
+    EXPECT_EQ("employee/DEBUG_DD/2.test1.config/config", client_configs[1]);
+}
+
+TEST(RemoteConfigParser, ClientConfigsMustBeStrings)
+{
+    std::string invalid_response(
+        "{\"roots\": [], \"targets\": \"b2s=\", "
+        "\"target_files\": [], \"client_configs\": "
+        "[[\"invalid\"], "
+        "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+
+    remote_config::get_configs_response gcr;
+
+    auto result = remote_config::parse(invalid_response, gcr);
+
+    EXPECT_EQ(remote_config::remote_config_parser_result::
+                  client_config_field_invalid_entry,
+        result);
+}
+
 } // namespace dds
