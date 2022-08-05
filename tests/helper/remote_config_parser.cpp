@@ -49,28 +49,6 @@ std::string get_example_response()
     return response;
 }
 
-// TEST(RemoteConfigParser, TargetFilesAreParsed) {
-//     std::string response = get_example_response();
-//     remote_config::get_configs_response gcr;
-//
-//     auto result = remote_config::parser(response, gcr);
-//
-//     EXPECT_EQ(remote_config::remote_config_result::success, result);
-//
-//     EXPECT_EQ(2, gcr.get_target_files().size());
-//
-//     auto  target_files = gcr.get_target_files();
-//
-//     EXPECT_EQ("employee/DEBUG_DD/2.test1.config/config",
-//     target_files[0].get_path());
-//     EXPECT_EQ("UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=",
-//     target_files[0].get_raw());
-//
-//     EXPECT_EQ("datadog/2/DEBUG/luke.steensen/config",
-//     target_files[1].get_path()); EXPECT_EQ("aGVsbG8gdmVjdG9yIQ==",
-//     target_files[1].get_raw());
-// }
-
 TEST(RemoteConfigParser, ItReturnsErrorWhenInvalidBodyIsGiven)
 {
     std::string response("invalid_json");
@@ -140,6 +118,93 @@ TEST(RemoteConfigParser, clientConfigsFieldMustBeArray)
     remote_config::get_configs_response gcr;
 
     auto result = remote_config::parser(response, gcr);
+
+    EXPECT_EQ(remote_config::remote_config_result::error, result);
+}
+
+TEST(RemoteConfigParser, TargetFilesAreParsed)
+{
+    std::string response = get_example_response();
+    remote_config::get_configs_response gcr;
+
+    auto result = remote_config::parser(response, gcr);
+
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
+
+    EXPECT_EQ(2, gcr.get_target_files().size());
+
+    auto target_files = gcr.get_target_files();
+
+    EXPECT_EQ(
+        "employee/DEBUG_DD/2.test1.config/config", target_files[0].get_path());
+    EXPECT_EQ("UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=",
+        target_files[0].get_raw());
+
+    EXPECT_EQ(
+        "datadog/2/DEBUG/luke.steensen/config", target_files[1].get_path());
+    EXPECT_EQ("aGVsbG8gdmVjdG9yIQ==", target_files[1].get_raw());
+}
+
+TEST(RemoteConfigParser, TargetFilesWithoutPathAreInvalid)
+{
+    std::string invalid_response(
+        "{\"roots\": [], \"targets\": \"b2s=\", \"target_files\": [{\"path\": "
+        "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+        "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
+        "{ \"raw\": "
+        "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
+        "[\"datadog/2/DEBUG/luke.steensen/config\", "
+        "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+    remote_config::get_configs_response gcr;
+    auto result = remote_config::parser(invalid_response, gcr);
+
+    EXPECT_EQ(remote_config::remote_config_result::error, result);
+}
+
+TEST(RemoteConfigParser, TargetFilesWithNonStringPathAreInvalid)
+{
+    std::string invalid_response(
+        "{\"roots\": [], \"targets\": \"b2s=\", \"target_files\": [{\"path\": "
+        "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+        "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
+        "{\"path\": [], \"raw\": "
+        "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
+        "[\"datadog/2/DEBUG/luke.steensen/config\", "
+        "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+    remote_config::get_configs_response gcr;
+    auto result = remote_config::parser(invalid_response, gcr);
+    EXPECT_EQ(remote_config::remote_config_result::error, result);
+}
+
+TEST(RemoteConfigParser, TargetFilesWithoutRawAreInvalid)
+{
+    std::string invalid_response(
+        "{\"roots\": [], \"targets\": \"b2s=\", \"target_files\": [{\"path\": "
+        "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+        "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
+        "{\"path\": \"datadog/2/DEBUG/luke.steensen/config\"} ], "
+        "\"client_configs\": "
+        "[\"datadog/2/DEBUG/luke.steensen/config\", "
+        "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+    remote_config::get_configs_response gcr;
+
+    auto result = remote_config::parser(invalid_response, gcr);
+
+    EXPECT_EQ(remote_config::remote_config_result::error, result);
+}
+
+TEST(RemoteConfigParser, TargetFilesWithNonNonStringRawAreInvalid)
+{
+    std::string invalid_response(
+        "{\"roots\": [], \"targets\": \"b2s=\", \"target_files\": [{\"path\": "
+        "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+        "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
+        "{\"path\": \"datadog/2/DEBUG/luke.steensen/config\", \"raw\": []} ], "
+        "\"client_configs\": "
+        "[\"datadog/2/DEBUG/luke.steensen/config\", "
+        "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+    remote_config::get_configs_response gcr;
+    auto result = remote_config::parser(invalid_response, gcr);
 
     EXPECT_EQ(remote_config::remote_config_result::error, result);
 }
