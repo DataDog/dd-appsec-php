@@ -29,7 +29,7 @@ enum class remote_config_parser_result {
     client_config_field_invalid_type,
 };
 
-remote_config_parser_result parser(
+remote_config_parser_result parse(
     const std::string &body, get_configs_response &output);
 
 } // namespace dds::remote_config

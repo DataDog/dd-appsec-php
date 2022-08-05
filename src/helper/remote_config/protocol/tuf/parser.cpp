@@ -69,7 +69,7 @@ remote_config_parser_result parse_target_files(
     return remote_config_parser_result::success;
 }
 
-remote_config_parser_result parser(
+remote_config_parser_result parse(
     const std::string &body, get_configs_response &output)
 {
     remote_config_parser_result result;
