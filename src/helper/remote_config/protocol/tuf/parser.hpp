@@ -8,11 +8,28 @@
 #include <rapidjson/document.h>
 #include <string>
 
-#include "get_configs_response.hpp"
 #include "common.hpp"
+#include "get_configs_response.hpp"
 
 namespace dds::remote_config {
 
-remote_config_result parser(const std::string &body, get_configs_response &output);
+enum class remote_config_parser_result {
+    success,
+    invalid_json,
+    targets_field_missing,
+    targets_field_invalid_type,
+    target_files_field_missing,
+    target_files_object_invalid,
+    target_files_field_invalid_type,
+    target_files_path_field_missing,
+    target_files_path_field_invalid_type,
+    target_files_raw_field_missing,
+    target_files_raw_field_invalid_type,
+    client_config_field_missing,
+    client_config_field_invalid_type,
+};
+
+remote_config_parser_result parser(
+    const std::string &body, get_configs_response &output);
 
 } // namespace dds::remote_config

@@ -56,20 +56,21 @@ TEST(RemoteConfigParser, ItReturnsErrorWhenInvalidBodyIsGiven)
 
     auto result = remote_config::parser(response, gcr);
 
-    EXPECT_EQ(remote_config::remote_config_result::error, result);
+    EXPECT_EQ(remote_config::remote_config_parser_result::invalid_json, result);
 }
 
-TEST(RemoteConfigParser, TargetFieldIsRequired)
+TEST(RemoteConfigParser, TargetsFieldIsRequired)
 {
     std::string response("{\"target_files\": [], \"client_configs\": [] }");
     remote_config::get_configs_response gcr;
 
     auto result = remote_config::parser(response, gcr);
 
-    EXPECT_EQ(remote_config::remote_config_result::error, result);
+    EXPECT_EQ(remote_config::remote_config_parser_result::targets_field_missing,
+        result);
 }
 
-TEST(RemoteConfigParser, TargetFieldMustBeString)
+TEST(RemoteConfigParser, TargetsFieldMustBeString)
 {
     std::string response(
         "{\"targets\": [], \"target_files\": [], \"client_configs\": [] }");
@@ -77,7 +78,9 @@ TEST(RemoteConfigParser, TargetFieldMustBeString)
 
     auto result = remote_config::parser(response, gcr);
 
-    EXPECT_EQ(remote_config::remote_config_result::error, result);
+    EXPECT_EQ(
+        remote_config::remote_config_parser_result::targets_field_invalid_type,
+        result);
 }
 
 TEST(RemoteConfigParser, targetFilesFieldIsRequired)
@@ -87,7 +90,9 @@ TEST(RemoteConfigParser, targetFilesFieldIsRequired)
 
     auto result = remote_config::parser(response, gcr);
 
-    EXPECT_EQ(remote_config::remote_config_result::error, result);
+    EXPECT_EQ(
+        remote_config::remote_config_parser_result::target_files_field_missing,
+        result);
 }
 
 TEST(RemoteConfigParser, targetFilesFieldMustBeArray)
@@ -98,7 +103,9 @@ TEST(RemoteConfigParser, targetFilesFieldMustBeArray)
 
     auto result = remote_config::parser(response, gcr);
 
-    EXPECT_EQ(remote_config::remote_config_result::error, result);
+    EXPECT_EQ(remote_config::remote_config_parser_result::
+                  target_files_field_invalid_type,
+        result);
 }
 
 TEST(RemoteConfigParser, clientConfigsFieldIsRequired)
@@ -108,7 +115,9 @@ TEST(RemoteConfigParser, clientConfigsFieldIsRequired)
 
     auto result = remote_config::parser(response, gcr);
 
-    EXPECT_EQ(remote_config::remote_config_result::error, result);
+    EXPECT_EQ(
+        remote_config::remote_config_parser_result::client_config_field_missing,
+        result);
 }
 
 TEST(RemoteConfigParser, clientConfigsFieldMustBeArray)
@@ -119,7 +128,9 @@ TEST(RemoteConfigParser, clientConfigsFieldMustBeArray)
 
     auto result = remote_config::parser(response, gcr);
 
-    EXPECT_EQ(remote_config::remote_config_result::error, result);
+    EXPECT_EQ(remote_config::remote_config_parser_result::
+                  client_config_field_invalid_type,
+        result);
 }
 
 TEST(RemoteConfigParser, TargetFilesAreParsed)
@@ -129,7 +140,7 @@ TEST(RemoteConfigParser, TargetFilesAreParsed)
 
     auto result = remote_config::parser(response, gcr);
 
-    EXPECT_EQ(remote_config::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_parser_result::success, result);
 
     EXPECT_EQ(2, gcr.get_target_files().size());
 
@@ -158,7 +169,9 @@ TEST(RemoteConfigParser, TargetFilesWithoutPathAreInvalid)
     remote_config::get_configs_response gcr;
     auto result = remote_config::parser(invalid_response, gcr);
 
-    EXPECT_EQ(remote_config::remote_config_result::error, result);
+    EXPECT_EQ(remote_config::remote_config_parser_result::
+                  target_files_path_field_missing,
+        result);
 }
 
 TEST(RemoteConfigParser, TargetFilesWithNonStringPathAreInvalid)
@@ -173,7 +186,9 @@ TEST(RemoteConfigParser, TargetFilesWithNonStringPathAreInvalid)
         "\"employee/DEBUG_DD/2.test1.config/config\"] }");
     remote_config::get_configs_response gcr;
     auto result = remote_config::parser(invalid_response, gcr);
-    EXPECT_EQ(remote_config::remote_config_result::error, result);
+    EXPECT_EQ(remote_config::remote_config_parser_result::
+                  target_files_path_field_invalid_type,
+        result);
 }
 
 TEST(RemoteConfigParser, TargetFilesWithoutRawAreInvalid)
@@ -190,7 +205,9 @@ TEST(RemoteConfigParser, TargetFilesWithoutRawAreInvalid)
 
     auto result = remote_config::parser(invalid_response, gcr);
 
-    EXPECT_EQ(remote_config::remote_config_result::error, result);
+    EXPECT_EQ(remote_config::remote_config_parser_result::
+                  target_files_raw_field_missing,
+        result);
 }
 
 TEST(RemoteConfigParser, TargetFilesWithNonNonStringRawAreInvalid)
@@ -206,7 +223,27 @@ TEST(RemoteConfigParser, TargetFilesWithNonNonStringRawAreInvalid)
     remote_config::get_configs_response gcr;
     auto result = remote_config::parser(invalid_response, gcr);
 
-    EXPECT_EQ(remote_config::remote_config_result::error, result);
+    EXPECT_EQ(remote_config::remote_config_parser_result::
+                  target_files_raw_field_invalid_type,
+        result);
+}
+
+TEST(RemoteConfigParser, TargetFilesMustBeObjects)
+{
+    std::string invalid_response(
+        "{\"roots\": [], \"targets\": \"b2s=\", \"target_files\": [ "
+        "\"invalid\", "
+        "{\"path\": \"datadog/2/DEBUG/luke.steensen/config\", \"raw\": "
+        "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
+        "[\"datadog/2/DEBUG/luke.steensen/config\", "
+        "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+    remote_config::get_configs_response gcr;
+
+    auto result = remote_config::parser(invalid_response, gcr);
+
+    EXPECT_EQ(
+        remote_config::remote_config_parser_result::target_files_object_invalid,
+        result);
 }
 
 } // namespace dds
