@@ -16,6 +16,7 @@
 - ([#109](https://github.com/DataDog/dd-appsec-php/pull/109)) Fix missing helper header coverage
 - ([#110](https://github.com/DataDog/dd-appsec-php/pull/110)) Upgrade integration test tracer version to 0.76.1
 - ([#111](https://github.com/DataDog/dd-appsec-php/pull/111)) Add a way to include local changes to the cmake build process
+- ([#116](https://github.com/DataDog/dd-appsec-php/pull/116)) libddwaf upgraded to 1.4.0
 
 ### v0.3.2
 #### Fixes
