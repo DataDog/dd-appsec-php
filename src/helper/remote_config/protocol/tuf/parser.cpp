@@ -4,9 +4,11 @@
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 
+#include <iostream>
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 
+#include "../../base64.hpp"
 #include "parser.hpp"
 
 namespace dds::remote_config {
@@ -19,6 +21,24 @@ remote_config_parser_result validate_field_is_present(
     output_itr = parent_field.FindMember(key);
 
     if (output_itr == parent_field.MemberEnd()) {
+        return missing;
+    }
+
+    if (type == output_itr->value.GetType()) {
+        return remote_config_parser_result::success;
+    }
+
+    return invalid;
+}
+
+remote_config_parser_result validate_field_is_present(
+    rapidjson::Value::ConstMemberIterator &parent_field, const char *key,
+    rapidjson::Type type, rapidjson::Value::ConstMemberIterator &output_itr,
+    remote_config_parser_result missing, remote_config_parser_result invalid)
+{
+    output_itr = parent_field->value.FindMember(key);
+
+    if (output_itr == parent_field->value.MemberEnd()) {
         return missing;
     }
 
@@ -87,6 +107,69 @@ remote_config_parser_result parse_client_configs(
     return remote_config_parser_result::success;
 }
 
+remote_config_parser_result parse_targets_signed(
+    rapidjson::Value::ConstMemberIterator targets_signed_itr,
+    get_configs_response &output)
+{
+
+    rapidjson::Value::ConstMemberIterator version_itr;
+    remote_config_parser_result result = validate_field_is_present(
+        targets_signed_itr, "version", rapidjson::kNumberType, version_itr,
+        remote_config_parser_result::version_signed_targets_field_missing,
+        remote_config_parser_result::version_signed_targets_field_invalid);
+    if (result != remote_config_parser_result::success) {
+        return result;
+    }
+
+    targets_signed ts = output.get_targets().get_target_signed();
+
+    ts.set_version(version_itr->value.GetInt());
+
+    return remote_config_parser_result::success;
+}
+
+remote_config_parser_result parse_targets(
+    rapidjson::Value::ConstMemberIterator targets_itr,
+    get_configs_response &output)
+{
+    std::string targets_encoded_content = targets_itr->value.GetString();
+
+    if (targets_encoded_content.size() == 0) {
+        return remote_config_parser_result::targets_field_empty;
+    }
+
+    std::string base64_decoded;
+    try {
+        base64_decoded =
+            dds::remote_config::base64_decode(targets_encoded_content, true);
+    } catch (std::runtime_error error) {
+        return remote_config_parser_result::targets_field_invalid_base64;
+    }
+
+    rapidjson::Document serialized_doc;
+    if (serialized_doc.Parse(base64_decoded).HasParseError()) {
+        return remote_config_parser_result::targets_field_invalid_json;
+    }
+
+    rapidjson::Value::ConstMemberIterator signed_itr;
+
+    // Lets validate the data and since we are there we get the iterators
+    remote_config_parser_result result = validate_field_is_present(
+        serialized_doc, "signed", rapidjson::kObjectType, signed_itr,
+        remote_config_parser_result::signed_targets_field_missing,
+        remote_config_parser_result::signed_targets_field_invalid);
+    if (result != remote_config_parser_result::success) {
+        return result;
+    }
+
+    result = parse_targets_signed(signed_itr, output);
+    if (result != remote_config_parser_result::success) {
+        return result;
+    }
+
+    return remote_config_parser_result::success;
+}
+
 remote_config_parser_result parse(
     const std::string &body, get_configs_response &output)
 {
@@ -129,6 +212,11 @@ remote_config_parser_result parse(
     }
 
     result = parse_client_configs(client_configs_itr, output);
+    if (result != remote_config_parser_result::success) {
+        return result;
+    }
+
+    result = parse_targets(targets_itr, output);
     if (result != remote_config_parser_result::success) {
         return result;
     }

@@ -10,6 +10,7 @@
 #include "../cached_target_files.hpp"
 #include "../client.hpp"
 #include "../target_file.hpp"
+#include "../targets.hpp"
 
 namespace dds::remote_config {
 
@@ -20,6 +21,7 @@ public:
     {
         return _client_configs;
     };
+    targets get_targets() { return _targets; };
     void add_target_file(target_file &&tf)
     {
         _target_files.push_back(std::move(tf));
@@ -32,6 +34,7 @@ public:
 private:
     std::vector<target_file> _target_files;
     std::vector<std::string> _client_configs;
+    targets _targets;
 };
 
 } // namespace dds::remote_config
