@@ -107,6 +107,59 @@ remote_config_parser_result parse_client_configs(
     return remote_config_parser_result::success;
 }
 
+remote_config_parser_result parse_target(
+    rapidjson::Value::ConstMemberIterator target_itr, targets *output)
+{
+    rapidjson::Value::ConstMemberIterator custom_itr;
+    remote_config_parser_result result = validate_field_is_present(target_itr,
+        "custom", rapidjson::kObjectType, custom_itr,
+        remote_config_parser_result::custom_path_targets_field_missing,
+        remote_config_parser_result::custom_path_targets_field_invalid);
+    if (result != remote_config_parser_result::success) {
+        return result;
+    }
+    rapidjson::Value::ConstMemberIterator v_itr;
+    result = validate_field_is_present(custom_itr, "v", rapidjson::kNumberType,
+        v_itr, remote_config_parser_result::v_path_targets_field_missing,
+        remote_config_parser_result::v_path_targets_field_invalid);
+    if (result != remote_config_parser_result::success) {
+        return result;
+    }
+
+    rapidjson::Value::ConstMemberIterator hashes_itr;
+    result = validate_field_is_present(target_itr, "hashes",
+        rapidjson::kObjectType, hashes_itr,
+        remote_config_parser_result::hashes_path_targets_field_missing,
+        remote_config_parser_result::hashes_path_targets_field_invalid);
+    if (result != remote_config_parser_result::success) {
+        return result;
+    }
+
+    rapidjson::Value::ConstMemberIterator sha256_itr;
+    result = validate_field_is_present(hashes_itr, "sha256",
+        rapidjson::kStringType, sha256_itr,
+        remote_config_parser_result::sha256_path_targets_field_missing,
+        remote_config_parser_result::sha256_path_targets_field_invalid);
+    if (result != remote_config_parser_result::success) {
+        return result;
+    }
+
+    rapidjson::Value::ConstMemberIterator length_itr;
+    result = validate_field_is_present(target_itr, "length",
+        rapidjson::kNumberType, length_itr,
+        remote_config_parser_result::length_path_targets_field_missing,
+        remote_config_parser_result::length_path_targets_field_invalid);
+    if (result != remote_config_parser_result::success) {
+        return result;
+    }
+
+    path path_object(v_itr->value.GetInt64(), sha256_itr->value.GetString(),
+        length_itr->value.GetInt64());
+    output->add_path(target_itr->name.GetString(), std::move(path_object));
+
+    return remote_config_parser_result::success;
+}
+
 remote_config_parser_result parse_targets_signed(
     rapidjson::Value::ConstMemberIterator targets_signed_itr,
     get_configs_response &output)
@@ -123,6 +176,21 @@ remote_config_parser_result parse_targets_signed(
 
     targets *_targets = output.get_targets();
     _targets->set_version(version_itr->value.GetInt64());
+
+    rapidjson::Value::ConstMemberIterator targets_itr;
+    result = validate_field_is_present(targets_signed_itr, "targets",
+        rapidjson::kObjectType, targets_itr,
+        remote_config_parser_result::targets_signed_targets_field_missing,
+        remote_config_parser_result::targets_signed_targets_field_invalid);
+    if (result != remote_config_parser_result::success) {
+        return result;
+    }
+
+    for (rapidjson::Value::ConstMemberIterator current_target =
+             targets_itr->value.MemberBegin();
+         current_target != targets_itr->value.MemberEnd(); ++current_target) {
+        parse_target(current_target, output.get_targets());
+    }
 
     return remote_config_parser_result::success;
 }

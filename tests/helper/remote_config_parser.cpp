@@ -483,6 +483,56 @@ TEST(RemoteConfigParser, VersionFieldOnSignedTargetsMustBeNumber)
         result);
 }
 
+TEST(RemoteConfigParser, TargetsFieldOnSignedTargetsMustBeObject)
+{
+    std::string invalid_response =
+        ("{\"roots\": [], \"targets\": "
+         "\"ewogICAgInNpZ25hdHVyZXMiOiBbCiAgICBdLAogICAgInNpZ25lZCI6IHsKICAgICA"
+         "gICAiY3VzdG9tIjogewogICAgICAgICAgICAib3BhcXVlX2JhY2tlbmRfc3RhdGUiOiBb"
+         "XQogICAgICAgIH0sCiAgICAgICAgInRhcmdldHMiOiBbXSwKICAgICAgICAidmVyc2lvb"
+         "iI6IDI3NDg3MTU2CiAgICB9Cn0=\", "
+         "\"target_files\": "
+         "[{\"path\": "
+         "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+         "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
+         "{\"path\": \"datadog/2/DEBUG/luke.steensen/config\", \"raw\": "
+         "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
+         "[\"datadog/2/DEBUG/luke.steensen/config\", "
+         "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+    remote_config::get_configs_response gcr;
+
+    auto result = remote_config::parse(invalid_response, gcr);
+
+    EXPECT_EQ(remote_config::remote_config_parser_result::
+                  targets_signed_targets_field_invalid,
+        result);
+}
+
+TEST(RemoteConfigParser, TargetsFieldOnSignedTargetsMustExists)
+{
+    std::string invalid_response =
+        ("{\"roots\": [], \"targets\": "
+         "\"ewogICAgInNpZ25hdHVyZXMiOiBbCiAgICBdLAogICAgInNpZ25lZCI6IHsKICAgICA"
+         "gICAiY3VzdG9tIjogewogICAgICAgICAgICAib3BhcXVlX2JhY2tlbmRfc3RhdGUiOiBb"
+         "XQogICAgICAgIH0sICAgICAgICAKICAgICAgICAidmVyc2lvbiI6IDI3NDg3MTU2CiAgI"
+         "CB9Cn0=\", "
+         "\"target_files\": "
+         "[{\"path\": "
+         "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+         "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
+         "{\"path\": \"datadog/2/DEBUG/luke.steensen/config\", \"raw\": "
+         "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
+         "[\"datadog/2/DEBUG/luke.steensen/config\", "
+         "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+    remote_config::get_configs_response gcr;
+
+    auto result = remote_config::parse(invalid_response, gcr);
+
+    EXPECT_EQ(remote_config::remote_config_parser_result::
+                  targets_signed_targets_field_missing,
+        result);
+}
+
 TEST(RemoteConfigParser, TargetsAreParsed)
 {
     std::string response = get_example_response();
@@ -495,6 +545,34 @@ TEST(RemoteConfigParser, TargetsAreParsed)
     remote_config::targets *_targets = gcr.get_targets();
 
     EXPECT_EQ(27487156, _targets->get_version());
+
+    std::map<std::string, remote_config::path> paths = _targets->get_paths();
+
+    EXPECT_EQ(3, paths.size());
+
+    auto path_itr = paths.find("datadog/2/APM_SAMPLING/dynamic_rates/config");
+    auto temp_path = path_itr->second;
+    EXPECT_EQ(36740, temp_path.get_custom_v());
+    EXPECT_EQ(
+        "07465cece47e4542abc0da040d9ebb42ec97224920d6870651dc3316528609d5",
+        temp_path.get_hash());
+    EXPECT_EQ(66399, temp_path.get_length());
+
+    path_itr = paths.find("datadog/2/DEBUG/luke.steensen/config");
+    temp_path = path_itr->second;
+    EXPECT_EQ(3, temp_path.get_custom_v());
+    EXPECT_EQ(
+        "c6a8cd53530b592a5097a3232ce49ca0806fa32473564c3ab386bebaea7d8740",
+        temp_path.get_hash());
+    EXPECT_EQ(13, temp_path.get_length());
+
+    path_itr = paths.find("employee/DEBUG_DD/2.test1.config/config");
+    temp_path = path_itr->second;
+    EXPECT_EQ(1, temp_path.get_custom_v());
+    EXPECT_EQ(
+        "47ed825647ad0ec6a789918890565d44c39a5e4bacd35bb34f9df38338912dae",
+        temp_path.get_hash());
+    EXPECT_EQ(41, temp_path.get_length());
 }
 
 } // namespace dds

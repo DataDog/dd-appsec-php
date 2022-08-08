@@ -35,6 +35,18 @@ enum class remote_config_parser_result {
     client_config_field_missing,
     client_config_field_invalid_type,
     client_config_field_invalid_entry,
+    targets_signed_targets_field_invalid,
+    targets_signed_targets_field_missing,
+    custom_path_targets_field_invalid,
+    custom_path_targets_field_missing,
+    v_path_targets_field_invalid,
+    v_path_targets_field_missing,
+    hashes_path_targets_field_invalid,
+    hashes_path_targets_field_missing,
+    sha256_path_targets_field_invalid,
+    sha256_path_targets_field_missing,
+    length_path_targets_field_invalid,
+    length_path_targets_field_missing
 };
 
 remote_config_parser_result parse(
