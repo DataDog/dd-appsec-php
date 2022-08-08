@@ -483,4 +483,18 @@ TEST(RemoteConfigParser, VersionFieldOnSignedTargetsMustBeNumber)
         result);
 }
 
+TEST(RemoteConfigParser, TargetsAreParsed)
+{
+    std::string response = get_example_response();
+    remote_config::get_configs_response gcr;
+
+    auto result = remote_config::parse(response, gcr);
+
+    EXPECT_EQ(remote_config::remote_config_parser_result::success, result);
+
+    remote_config::targets *_targets = gcr.get_targets();
+
+    EXPECT_EQ(27487156, _targets->get_version());
+}
+
 } // namespace dds

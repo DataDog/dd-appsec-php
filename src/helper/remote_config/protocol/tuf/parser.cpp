@@ -121,9 +121,8 @@ remote_config_parser_result parse_targets_signed(
         return result;
     }
 
-    targets_signed ts = output.get_targets().get_target_signed();
-
-    ts.set_version(version_itr->value.GetInt());
+    targets *_targets = output.get_targets();
+    _targets->set_version(version_itr->value.GetInt64());
 
     return remote_config_parser_result::success;
 }

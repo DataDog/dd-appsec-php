@@ -8,16 +8,15 @@
 #include <string>
 #include <vector>
 
-#include "targets_signed.hpp"
-
 namespace dds::remote_config {
 
 struct targets {
 public:
-    targets_signed get_target_signed() { return _target_signed; };
+    const int64_t get_version() { return _version; };
+    void set_version(int64_t version) { _version = version; };
 
 private:
-    targets_signed _target_signed;
+    int64_t _version;
 };
 
 } // namespace dds::remote_config

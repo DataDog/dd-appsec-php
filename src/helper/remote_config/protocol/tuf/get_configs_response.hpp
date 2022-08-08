@@ -21,7 +21,7 @@ public:
     {
         return _client_configs;
     };
-    targets get_targets() { return _targets; };
+    targets *get_targets() { return &_targets; };
     void add_target_file(target_file &&tf)
     {
         _target_files.push_back(std::move(tf));
