@@ -14,19 +14,20 @@ namespace dds::remote_config {
 
 struct get_configs_request {
 public:
-    get_configs_request(
-        client client, std::vector<cached_target_files> &&cached_target_files)
-        : client(client), cached_target_files(std::move(cached_target_files)){};
+    get_configs_request(client arg_client,
+        std::vector<cached_target_files> &&arg_cached_target_files)
+        : _client(arg_client),
+          _cached_target_files(std::move(arg_cached_target_files)){};
 
-    client get_client() { return client; };
+    client get_client() { return _client; };
     const std::vector<cached_target_files> get_cached_target_files()
     {
-        return cached_target_files;
+        return _cached_target_files;
     };
 
 private:
-    client client;
-    std::vector<cached_target_files> cached_target_files;
+    client _client;
+    std::vector<cached_target_files> _cached_target_files;
 };
 
 } // namespace dds::remote_config

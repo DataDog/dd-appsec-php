@@ -20,7 +20,7 @@ const char *product_to_string(product product)
         return "LIVE_DEBUGGING";
     case product::asm_dd:
         return "ASM_DD";
-    case product::features:
+    default:
         return "FEATURES";
     }
 }
