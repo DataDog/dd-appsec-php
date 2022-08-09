@@ -189,7 +189,10 @@ remote_config_parser_result parse_targets_signed(
     for (rapidjson::Value::ConstMemberIterator current_target =
              targets_itr->value.MemberBegin();
          current_target != targets_itr->value.MemberEnd(); ++current_target) {
-        parse_target(current_target, output.get_targets());
+        result = parse_target(current_target, output.get_targets());
+        if (result != remote_config_parser_result::success) {
+            return result;
+        }
     }
 
     return remote_config_parser_result::success;

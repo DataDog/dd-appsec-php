@@ -533,6 +533,296 @@ TEST(RemoteConfigParser, TargetsFieldOnSignedTargetsMustExists)
         result);
 }
 
+TEST(RemoteConfigParser, CustomOnPathMustBePresent)
+{
+    std::string invalid_response =
+        ("{\"roots\": [], \"targets\": "
+         "\"ewogICAgInNpZ25hdHVyZXMiOiBbXSwKICAgICJzaWduZWQiOiB7CiAgICAgICAgInR"
+         "hcmdldHMiOiB7CiAgICAgICAgICAgICJkYXRhZG9nLzIvQVBNX1NBTVBMSU5HL2R5bmFt"
+         "aWNfcmF0ZXMvY29uZmlnIjogewogICAgICAgICAgICAgICAgImhhc2hlcyI6IHsKICAgI"
+         "CAgICAgICAgICAgICAgICAic2hhMjU2IjogIjA3NDY1Y2VjZTQ3ZTQ1NDJhYmMwZGEwND"
+         "BkOWViYjQyZWM5NzIyNDkyMGQ2ODcwNjUxZGMzMzE2NTI4NjA5ZDUiCiAgICAgICAgICA"
+         "gICAgICB9LAogICAgICAgICAgICAgICAgImxlbmd0aCI6IDY2Mzk5CiAgICAgICAgICAg"
+         "IH0KICAgICAgICB9LAogICAgICAgICJ2ZXJzaW9uIjogMjc0ODcxNTYKICAgIH0KfQ=="
+         "\", "
+         "\"target_files\": "
+         "[{\"path\": "
+         "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+         "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
+         "{\"path\": \"datadog/2/DEBUG/luke.steensen/config\", \"raw\": "
+         "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
+         "[\"datadog/2/DEBUG/luke.steensen/config\", "
+         "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+    remote_config::get_configs_response gcr;
+
+    auto result = remote_config::parse(invalid_response, gcr);
+
+    EXPECT_EQ(remote_config::remote_config_parser_result::
+                  custom_path_targets_field_missing,
+        result);
+}
+
+TEST(RemoteConfigParser, CustomOnPathMustBeObject)
+{
+    std::string invalid_response =
+        ("{\"roots\": [], \"targets\": "
+         "\"ewogICAgInNpZ25hdHVyZXMiOiBbCiAgICBdLAogICAgInNpZ25lZCI6IHsKICAgICA"
+         "gICAiY3VzdG9tIjogewogICAgICAgICAgICAib3BhcXVlX2JhY2tlbmRfc3RhdGUiOiBb"
+         "XQogICAgICAgIH0sCiAgICAgICAgInRhcmdldHMiOiB7CiAgICAgICAgICAgICJkYXRhZ"
+         "G9nLzIvQVBNX1NBTVBMSU5HL2R5bmFtaWNfcmF0ZXMvY29uZmlnIjogewogICAgICAgIC"
+         "AgICAgICAgImN1c3RvbSI6ICJpbnZhbGlkIiwKICAgICAgICAgICAgICAgICJoYXNoZXM"
+         "iOiB7CiAgICAgICAgICAgICAgICAgICAgInNoYTI1NiI6ICIwNzQ2NWNlY2U0N2U0NTQy"
+         "YWJjMGRhMDQwZDllYmI0MmVjOTcyMjQ5MjBkNjg3MDY1MWRjMzMxNjUyODYwOWQ1IgogI"
+         "CAgICAgICAgICAgICAgfSwKICAgICAgICAgICAgICAgICJsZW5ndGgiOiA2NjM5OQogIC"
+         "AgICAgICAgICB9CiAgICAgICAgfSwKICAgICAgICAidmVyc2lvbiI6IDI3NDg3MTU2CiA"
+         "gICB9Cn0=\", "
+         "\"target_files\": "
+         "[{\"path\": "
+         "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+         "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
+         "{\"path\": \"datadog/2/DEBUG/luke.steensen/config\", \"raw\": "
+         "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
+         "[\"datadog/2/DEBUG/luke.steensen/config\", "
+         "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+    remote_config::get_configs_response gcr;
+
+    auto result = remote_config::parse(invalid_response, gcr);
+
+    EXPECT_EQ(remote_config::remote_config_parser_result::
+                  custom_path_targets_field_invalid,
+        result);
+}
+
+TEST(RemoteConfigParser, VCustomOnPathMustBePresent)
+{
+    std::string invalid_response =
+        ("{\"roots\": [], \"targets\": "
+         "\"ewogICAgInNpZ25hdHVyZXMiOiBbXSwKICAgICJzaWduZWQiOiB7CiAgICAgICAgInR"
+         "hcmdldHMiOiB7CiAgICAgICAgICAgICJkYXRhZG9nLzIvQVBNX1NBTVBMSU5HL2R5bmFt"
+         "aWNfcmF0ZXMvY29uZmlnIjogewogICAgICAgICAgICAgICAgImN1c3RvbSI6IHsKICAgI"
+         "CAgICAgICAgICAgIH0sCiAgICAgICAgICAgICAgICAiaGFzaGVzIjogewogICAgICAgIC"
+         "AgICAgICAgICAgICJzaGEyNTYiOiAiMDc0NjVjZWNlNDdlNDU0MmFiYzBkYTA0MGQ5ZWJ"
+         "iNDJlYzk3MjI0OTIwZDY4NzA2NTFkYzMzMTY1Mjg2MDlkNSIKICAgICAgICAgICAgICAg"
+         "IH0sCiAgICAgICAgICAgICAgICAibGVuZ3RoIjogNjYzOTkKICAgICAgICAgICAgfQogI"
+         "CAgICAgIH0sCiAgICAgICAgInZlcnNpb24iOiAyNzQ4NzE1NgogICAgfQp9\", "
+         "\"target_files\": "
+         "[{\"path\": "
+         "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+         "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
+         "{\"path\": \"datadog/2/DEBUG/luke.steensen/config\", \"raw\": "
+         "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
+         "[\"datadog/2/DEBUG/luke.steensen/config\", "
+         "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+    remote_config::get_configs_response gcr;
+
+    auto result = remote_config::parse(invalid_response, gcr);
+
+    EXPECT_EQ(remote_config::remote_config_parser_result::
+                  v_path_targets_field_missing,
+        result);
+}
+
+TEST(RemoteConfigParser, VCustomOnPathMustBeNumber)
+{
+    std::string invalid_response =
+        ("{\"roots\": [], \"targets\": "
+         "\"ewogICAgInNpZ25hdHVyZXMiOiBbXSwKICAgICJzaWduZWQiOiB7CiAgICAgICAgInR"
+         "hcmdldHMiOiB7CiAgICAgICAgICAgICJkYXRhZG9nLzIvQVBNX1NBTVBMSU5HL2R5bmFt"
+         "aWNfcmF0ZXMvY29uZmlnIjogewogICAgICAgICAgICAgICAgImN1c3RvbSI6IHsKICAgI"
+         "CAgICAgICAgICAgICAgICAidiI6ICJpbnZhbGlkIgogICAgICAgICAgICAgICAgfSwKIC"
+         "AgICAgICAgICAgICAgICJoYXNoZXMiOiB7CiAgICAgICAgICAgICAgICAgICAgInNoYTI"
+         "1NiI6ICIwNzQ2NWNlY2U0N2U0NTQyYWJjMGRhMDQwZDllYmI0MmVjOTcyMjQ5MjBkNjg3"
+         "MDY1MWRjMzMxNjUyODYwOWQ1IgogICAgICAgICAgICAgICAgfSwKICAgICAgICAgICAgI"
+         "CAgICJsZW5ndGgiOiA2NjM5OQogICAgICAgICAgICB9CiAgICAgICAgfSwKICAgICAgIC"
+         "AidmVyc2lvbiI6IDI3NDg3MTU2CiAgICB9Cn0=\", "
+         "\"target_files\": "
+         "[{\"path\": "
+         "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+         "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
+         "{\"path\": \"datadog/2/DEBUG/luke.steensen/config\", \"raw\": "
+         "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
+         "[\"datadog/2/DEBUG/luke.steensen/config\", "
+         "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+    remote_config::get_configs_response gcr;
+
+    auto result = remote_config::parse(invalid_response, gcr);
+
+    EXPECT_EQ(remote_config::remote_config_parser_result::
+                  v_path_targets_field_invalid,
+        result);
+}
+
+TEST(RemoteConfigParser, HashesOnPathMustBePresent)
+{
+    std::string invalid_response =
+        ("{\"roots\": [], \"targets\": "
+         "\"ewogICAgInNpZ25hdHVyZXMiOiBbXSwKICAgICJzaWduZWQiOiB7CiAgICAgICAgInR"
+         "hcmdldHMiOiB7CiAgICAgICAgICAgICJkYXRhZG9nLzIvQVBNX1NBTVBMSU5HL2R5bmFt"
+         "aWNfcmF0ZXMvY29uZmlnIjogewogICAgICAgICAgICAgICAgImN1c3RvbSI6IHsKICAgI"
+         "CAgICAgICAgICAgICAgICAidiI6IDM2NzQwCiAgICAgICAgICAgICAgICB9LAogICAgIC"
+         "AgICAgICAgICAgImxlbmd0aCI6IDY2Mzk5CiAgICAgICAgICAgIH0KICAgICAgICB9LAo"
+         "gICAgICAgICJ2ZXJzaW9uIjogMjc0ODcxNTYKICAgIH0KfQ==\", "
+         "\"target_files\": "
+         "[{\"path\": "
+         "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+         "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
+         "{\"path\": \"datadog/2/DEBUG/luke.steensen/config\", \"raw\": "
+         "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
+         "[\"datadog/2/DEBUG/luke.steensen/config\", "
+         "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+    remote_config::get_configs_response gcr;
+
+    auto result = remote_config::parse(invalid_response, gcr);
+
+    EXPECT_EQ(remote_config::remote_config_parser_result::
+                  hashes_path_targets_field_missing,
+        result);
+}
+
+TEST(RemoteConfigParser, HashesOnPathMustBeObject)
+{
+    std::string invalid_response =
+        ("{\"roots\": [], \"targets\": "
+         "\"ewogICAgInNpZ25hdHVyZXMiOiBbXSwKICAgICJzaWduZWQiOiB7CiAgICAgICAgInR"
+         "hcmdldHMiOiB7CiAgICAgICAgICAgICJkYXRhZG9nLzIvQVBNX1NBTVBMSU5HL2R5bmFt"
+         "aWNfcmF0ZXMvY29uZmlnIjogewogICAgICAgICAgICAgICAgImN1c3RvbSI6IHsKICAgI"
+         "CAgICAgICAgICAgICAgICAidiI6IDM2NzQwCiAgICAgICAgICAgICAgICB9LAogICAgIC"
+         "AgICAgICAgICAgImhhc2hlcyI6ICJpbnZhbGlkIiwKICAgICAgICAgICAgICAgICJsZW5"
+         "ndGgiOiA2NjM5OQogICAgICAgICAgICB9CiAgICAgICAgfSwKICAgICAgICAidmVyc2lv"
+         "biI6IDI3NDg3MTU2CiAgICB9Cn0=\", "
+         "\"target_files\": "
+         "[{\"path\": "
+         "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+         "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
+         "{\"path\": \"datadog/2/DEBUG/luke.steensen/config\", \"raw\": "
+         "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
+         "[\"datadog/2/DEBUG/luke.steensen/config\", "
+         "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+    remote_config::get_configs_response gcr;
+
+    auto result = remote_config::parse(invalid_response, gcr);
+
+    EXPECT_EQ(remote_config::remote_config_parser_result::
+                  hashes_path_targets_field_invalid,
+        result);
+}
+
+TEST(RemoteConfigParser, ShaHashesOnPathMustBePresent)
+{
+    std::string invalid_response =
+        ("{\"roots\": [], \"targets\": "
+         "\"ewogICAgInNpZ25hdHVyZXMiOiBbXSwKICAgICJzaWduZWQiOiB7CiAgICAgICAgInR"
+         "hcmdldHMiOiB7CiAgICAgICAgICAgICJkYXRhZG9nLzIvQVBNX1NBTVBMSU5HL2R5bmFt"
+         "aWNfcmF0ZXMvY29uZmlnIjogewogICAgICAgICAgICAgICAgImN1c3RvbSI6IHsKICAgI"
+         "CAgICAgICAgICAgICAgICAidiI6IDM2NzQwCiAgICAgICAgICAgICAgICB9LAogICAgIC"
+         "AgICAgICAgICAgImhhc2hlcyI6IHsKICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICA"
+         "gICAgICAibGVuZ3RoIjogNjYzOTkKICAgICAgICAgICAgfQogICAgICAgIH0sCiAgICAg"
+         "ICAgInZlcnNpb24iOiAyNzQ4NzE1NgogICAgfQp9\", "
+         "\"target_files\": "
+         "[{\"path\": "
+         "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+         "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
+         "{\"path\": \"datadog/2/DEBUG/luke.steensen/config\", \"raw\": "
+         "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
+         "[\"datadog/2/DEBUG/luke.steensen/config\", "
+         "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+    remote_config::get_configs_response gcr;
+
+    auto result = remote_config::parse(invalid_response, gcr);
+
+    EXPECT_EQ(remote_config::remote_config_parser_result::
+                  sha256_path_targets_field_missing,
+        result);
+}
+
+TEST(RemoteConfigParser, ShaHashesOnPathMustBeString)
+{
+    std::string invalid_response =
+        ("{\"roots\": [], \"targets\": "
+         "\"ewogICAgInNpZ25hdHVyZXMiOiBbXSwKICAgICJzaWduZWQiOiB7CiAgICAgICAgInR"
+         "hcmdldHMiOiB7CiAgICAgICAgICAgICJkYXRhZG9nLzIvQVBNX1NBTVBMSU5HL2R5bmFt"
+         "aWNfcmF0ZXMvY29uZmlnIjogewogICAgICAgICAgICAgICAgImN1c3RvbSI6IHsKICAgI"
+         "CAgICAgICAgICAgICAgICAidiI6IDM2NzQwCiAgICAgICAgICAgICAgICB9LAogICAgIC"
+         "AgICAgICAgICAgImhhc2hlcyI6IHsKICAgICAgICAgICAgICAgICAgICAic2hhMjU2Ijo"
+         "ge30KICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICAgICAgICAibGVuZ3RoIjogNjYz"
+         "OTkKICAgICAgICAgICAgfQogICAgICAgIH0sCiAgICAgICAgInZlcnNpb24iOiAyNzQ4N"
+         "zE1NgogICAgfQp9\", "
+         "\"target_files\": "
+         "[{\"path\": "
+         "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+         "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
+         "{\"path\": \"datadog/2/DEBUG/luke.steensen/config\", \"raw\": "
+         "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
+         "[\"datadog/2/DEBUG/luke.steensen/config\", "
+         "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+    remote_config::get_configs_response gcr;
+
+    auto result = remote_config::parse(invalid_response, gcr);
+
+    EXPECT_EQ(remote_config::remote_config_parser_result::
+                  sha256_path_targets_field_invalid,
+        result);
+}
+
+TEST(RemoteConfigParser, LengthOnPathMustBePresent)
+{
+    std::string invalid_response =
+        ("{\"roots\": [], \"targets\": "
+         "\"ewogICAgInNpZ25hdHVyZXMiOiBbXSwKICAgICJzaWduZWQiOiB7CiAgICAgICAgInR"
+         "hcmdldHMiOiB7CiAgICAgICAgICAgICJkYXRhZG9nLzIvQVBNX1NBTVBMSU5HL2R5bmFt"
+         "aWNfcmF0ZXMvY29uZmlnIjogewogICAgICAgICAgICAgICAgImN1c3RvbSI6IHsKICAgI"
+         "CAgICAgICAgICAgICAgICAidiI6IDM2NzQwCiAgICAgICAgICAgICAgICB9LAogICAgIC"
+         "AgICAgICAgICAgImhhc2hlcyI6IHsKICAgICAgICAgICAgICAgICAgICAic2hhMjU2Ijo"
+         "gIjA3NDY1Y2VjZTQ3ZTQ1NDJhYmMwZGEwNDBkOWViYjQyZWM5NzIyNDkyMGQ2ODcwNjUx"
+         "ZGMzMzE2NTI4NjA5ZDUiCiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgIH0KICAgI"
+         "CAgICB9LAogICAgICAgICJ2ZXJzaW9uIjogMjc0ODcxNTYKICAgIH0KfQ==\", "
+         "\"target_files\": "
+         "[{\"path\": "
+         "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+         "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
+         "{\"path\": \"datadog/2/DEBUG/luke.steensen/config\", \"raw\": "
+         "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
+         "[\"datadog/2/DEBUG/luke.steensen/config\", "
+         "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+    remote_config::get_configs_response gcr;
+
+    auto result = remote_config::parse(invalid_response, gcr);
+
+    EXPECT_EQ(remote_config::remote_config_parser_result::
+                  length_path_targets_field_missing,
+        result);
+}
+
+TEST(RemoteConfigParser, LengthOnPathMustBeString)
+{
+    std::string invalid_response =
+        ("{\"roots\": [], \"targets\": "
+         "\"ewogICAgInNpZ25hdHVyZXMiOiBbXSwKICAgICJzaWduZWQiOiB7CiAgICAgICAgInR"
+         "hcmdldHMiOiB7CiAgICAgICAgICAgICJkYXRhZG9nLzIvQVBNX1NBTVBMSU5HL2R5bmFt"
+         "aWNfcmF0ZXMvY29uZmlnIjogewogICAgICAgICAgICAgICAgImN1c3RvbSI6IHsKICAgI"
+         "CAgICAgICAgICAgICAgICAidiI6IDM2NzQwCiAgICAgICAgICAgICAgICB9LAogICAgIC"
+         "AgICAgICAgICAgImhhc2hlcyI6IHsKICAgICAgICAgICAgICAgICAgICAic2hhMjU2Ijo"
+         "gIjA3NDY1Y2VjZTQ3ZTQ1NDJhYmMwZGEwNDBkOWViYjQyZWM5NzIyNDkyMGQ2ODcwNjUx"
+         "ZGMzMzE2NTI4NjA5ZDUiCiAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgI"
+         "mxlbmd0aCI6ICJpbnZhbGlkIgogICAgICAgICAgICB9CiAgICAgICAgfSwKICAgICAgIC"
+         "AidmVyc2lvbiI6IDI3NDg3MTU2CiAgICB9Cn0=\", "
+         "\"target_files\": "
+         "[{\"path\": "
+         "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+         "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
+         "{\"path\": \"datadog/2/DEBUG/luke.steensen/config\", \"raw\": "
+         "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
+         "[\"datadog/2/DEBUG/luke.steensen/config\", "
+         "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+    remote_config::get_configs_response gcr;
+
+    auto result = remote_config::parse(invalid_response, gcr);
+
+    EXPECT_EQ(remote_config::remote_config_parser_result::
+                  length_path_targets_field_invalid,
+        result);
+}
+
 TEST(RemoteConfigParser, TargetsAreParsed)
 {
     std::string response = get_example_response();
