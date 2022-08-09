@@ -11,7 +11,7 @@
 #include "../../base64.hpp"
 #include "parser.hpp"
 
-namespace dds::remote_config {
+namespace dds::remote_config::protocol {
 
 remote_config_parser_result validate_field_is_present(
     const rapidjson::Value &parent_field, const char *key, rapidjson::Type type,
@@ -294,4 +294,4 @@ remote_config_parser_result parse(
     return remote_config_parser_result::success;
 }
 
-} // namespace dds::remote_config
+} // namespace dds::remote_config::protocol

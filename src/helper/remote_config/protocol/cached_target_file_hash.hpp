@@ -7,7 +7,7 @@
 
 #include <string>
 
-namespace dds::remote_config {
+namespace dds::remote_config::protocol {
 
 struct cached_target_files_hash {
 public:
@@ -21,4 +21,4 @@ private:
     std::string _hash;
 };
 
-} // namespace dds::remote_config
+} // namespace dds::remote_config::protocol

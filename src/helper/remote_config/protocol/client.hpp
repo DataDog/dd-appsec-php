@@ -11,7 +11,7 @@
 #include "client_state.hpp"
 #include "client_tracer.hpp"
 
-namespace dds::remote_config {
+namespace dds::remote_config::protocol {
 
 enum class product { live_debugging, asm_dd, features };
 
@@ -33,4 +33,4 @@ private:
     client_state _client_state;
 };
 
-} // namespace dds::remote_config
+} // namespace dds::remote_config::protocol

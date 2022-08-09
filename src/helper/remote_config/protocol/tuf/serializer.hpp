@@ -11,9 +11,9 @@
 #include "common.hpp"
 #include "get_configs_request.hpp"
 
-namespace dds::remote_config {
+namespace dds::remote_config::protocol {
 
 remote_config_result serialize(
     get_configs_request request, std::string &output);
 
-} // namespace dds::remote_config
+} // namespace dds::remote_config::protocol

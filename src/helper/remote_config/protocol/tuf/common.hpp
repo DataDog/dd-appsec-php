@@ -10,11 +10,11 @@
 
 #include "get_configs_request.hpp"
 
-namespace dds::remote_config {
+namespace dds::remote_config::protocol {
 
 enum class remote_config_result {
     success,
     error,
 };
 
-} // namespace dds::remote_config
+} // namespace dds::remote_config::protocol

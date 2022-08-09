@@ -7,7 +7,7 @@
 
 #include <string>
 
-namespace dds::remote_config {
+namespace dds::remote_config::protocol {
 
 struct client_tracer {
 public:
@@ -31,4 +31,4 @@ private:
     std::string _app_version;
 };
 
-} // namespace dds::remote_config
+} // namespace dds::remote_config::protocol

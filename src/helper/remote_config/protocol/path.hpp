@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-namespace dds::remote_config {
+namespace dds::remote_config::protocol {
 
 struct path {
 public:
@@ -24,4 +24,4 @@ private:
     int64_t _length;
 };
 
-} // namespace dds::remote_config
+} // namespace dds::remote_config::protocol

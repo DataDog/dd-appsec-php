@@ -10,7 +10,7 @@
 #include "../cached_target_files.hpp"
 #include "../client.hpp"
 
-namespace dds::remote_config {
+namespace dds::remote_config::protocol {
 
 struct get_configs_request {
 public:
@@ -30,4 +30,4 @@ private:
     std::vector<cached_target_files> _cached_target_files;
 };
 
-} // namespace dds::remote_config
+} // namespace dds::remote_config::protocol

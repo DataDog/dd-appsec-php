@@ -9,7 +9,7 @@
 
 #include "cached_target_file_hash.hpp"
 
-namespace dds::remote_config {
+namespace dds::remote_config::protocol {
 
 struct cached_target_files {
 public:
@@ -29,4 +29,4 @@ private:
     std::vector<cached_target_files_hash> _hashes;
 };
 
-} // namespace dds::remote_config
+} // namespace dds::remote_config::protocol

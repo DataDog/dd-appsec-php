@@ -11,7 +11,7 @@
 #include "common.hpp"
 #include "get_configs_response.hpp"
 
-namespace dds::remote_config {
+namespace dds::remote_config::protocol {
 
 enum class remote_config_parser_result {
     success,
@@ -52,4 +52,4 @@ enum class remote_config_parser_result {
 remote_config_parser_result parse(
     const std::string &body, get_configs_response &output);
 
-} // namespace dds::remote_config
+} // namespace dds::remote_config::protocol

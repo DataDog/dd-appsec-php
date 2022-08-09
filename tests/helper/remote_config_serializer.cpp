@@ -12,9 +12,9 @@
 #include "remote_config/protocol/client_state.hpp"
 #include "remote_config/protocol/client_tracer.hpp"
 #include "remote_config/protocol/config_state.hpp"
+#include "remote_config/protocol/tuf/common.hpp"
 #include "remote_config/protocol/tuf/get_configs_request.hpp"
 #include "remote_config/protocol/tuf/serializer.hpp"
-#include "remote_config/protocol/tuf/common.hpp"
 
 namespace dds {
 
@@ -106,47 +106,50 @@ rapidjson::Value::ConstMemberIterator find_and_assert_type(
 int config_state_version = 456;
 int targets_version = 123;
 
-remote_config::client get_client()
+remote_config::protocol::client get_client()
 {
-    std::vector<remote_config::product> products;
-    products.push_back(remote_config::product::asm_dd);
+    std::vector<remote_config::protocol::product> products;
+    products.push_back(remote_config::protocol::product::asm_dd);
 
-    remote_config::client_tracer client_tracer("some runtime id",
+    remote_config::protocol::client_tracer client_tracer("some runtime id",
         "some tracer version", "some service", "some env", "some app version");
 
-    std::vector<remote_config::config_state> config_states;
+    std::vector<remote_config::protocol::config_state> config_states;
 
-    remote_config::config_state config_state("some config_state id",
+    remote_config::protocol::config_state config_state("some config_state id",
         config_state_version, "some config_state product");
     config_states.push_back(config_state);
 
-    remote_config::client_state client_state(targets_version,
+    remote_config::protocol::client_state client_state(targets_version,
         std::move(config_states), false, "", "some backend client state");
 
     std::string client_id("some_id");
-    remote_config::client client(
+    remote_config::protocol::client client(
         std::move(client_id), std::move(products), client_tracer, client_state);
 
     return client;
 }
 
-std::vector<remote_config::cached_target_files> get_cached_target_files()
+std::vector<remote_config::protocol::cached_target_files>
+get_cached_target_files()
 {
-    std::vector<remote_config::cached_target_files> cached_target_files;
+    std::vector<remote_config::protocol::cached_target_files>
+        cached_target_files;
 
-    std::vector<remote_config::cached_target_files_hash> first_hashes;
-    remote_config::cached_target_files_hash first_hash(
+    std::vector<remote_config::protocol::cached_target_files_hash> first_hashes;
+    remote_config::protocol::cached_target_files_hash first_hash(
         "first hash algorithm", "first hash hash");
     first_hashes.push_back(first_hash);
-    remote_config::cached_target_files first(
+    remote_config::protocol::cached_target_files first(
         "first some path", 1, std::move(first_hashes));
     cached_target_files.push_back(first);
 
-    std::vector<remote_config::cached_target_files_hash> second_hashes;
-    remote_config::cached_target_files_hash second_hash(
+    std::vector<remote_config::protocol::cached_target_files_hash>
+        second_hashes;
+    remote_config::protocol::cached_target_files_hash second_hash(
         "second hash algorithm", "second hash hash");
     second_hashes.push_back(second_hash);
-    remote_config::cached_target_files second(
+    remote_config::protocol::cached_target_files second(
         "second some path", 1, std::move(second_hashes));
     cached_target_files.push_back(second);
 
@@ -155,13 +158,14 @@ std::vector<remote_config::cached_target_files> get_cached_target_files()
 
 TEST(RemoteConfigSerializer, RequestCanBeSerializedWithClientField)
 {
-    remote_config::get_configs_request request(
+    remote_config::protocol::get_configs_request request(
         get_client(), get_cached_target_files());
 
     std::string serialised_string;
-    auto result = remote_config::serialize(request, serialised_string);
+    auto result =
+        remote_config::protocol::serialize(request, serialised_string);
 
-    EXPECT_EQ(remote_config::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
 
     // Lets transform the resulting string back to json so we can assert more
     // easily
@@ -221,13 +225,14 @@ TEST(RemoteConfigSerializer, RequestCanBeSerializedWithClientField)
 
 TEST(RemoteConfigSerializer, RequestCanBeSerializedWithCachedTargetFields)
 {
-    remote_config::get_configs_request request(
+    remote_config::protocol::get_configs_request request(
         get_client(), get_cached_target_files());
 
     std::string serialised_string;
-    auto result = remote_config::serialize(request, serialised_string);
+    auto result =
+        remote_config::protocol::serialize(request, serialised_string);
 
-    EXPECT_EQ(remote_config::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
 
     // Lets transform the resulting string back to json so we can assert more
     // easily

@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-namespace dds::remote_config {
+namespace dds::remote_config::protocol {
 
 struct client_state {
 public:
@@ -39,4 +39,4 @@ private:
     std::string _backend_client_state;
 };
 
-} // namespace dds::remote_config
+} // namespace dds::remote_config::protocol

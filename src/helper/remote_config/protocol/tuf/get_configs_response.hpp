@@ -12,7 +12,7 @@
 #include "../target_file.hpp"
 #include "../targets.hpp"
 
-namespace dds::remote_config {
+namespace dds::remote_config::protocol {
 
 struct get_configs_response {
 public:
@@ -37,4 +37,4 @@ private:
     targets _targets;
 };
 
-} // namespace dds::remote_config
+} // namespace dds::remote_config::protocol

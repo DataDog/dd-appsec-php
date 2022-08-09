@@ -10,7 +10,7 @@
 
 #include "path.hpp"
 
-namespace dds::remote_config {
+namespace dds::remote_config::protocol {
 
 struct targets {
 public:
@@ -28,4 +28,4 @@ private:
     std::map<std::string, path> paths;
 };
 
-} // namespace dds::remote_config
+} // namespace dds::remote_config::protocol
