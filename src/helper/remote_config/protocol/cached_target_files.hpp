@@ -22,6 +22,11 @@ public:
     {
         return _hashes;
     };
+    bool operator==(cached_target_files const &b) const
+    {
+        return this->_path == b._path && this->_length == b._length &&
+               this->_hashes == b._hashes;
+    }
 
 private:
     std::string _path;

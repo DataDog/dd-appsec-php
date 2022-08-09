@@ -16,6 +16,11 @@ public:
     const std::string get_id() { return _id; };
     const int get_version() { return _version; };
     const std::string get_product() { return _product; };
+    bool operator==(config_state const &b) const
+    {
+        return this->_id == b._id && this->_version == b._version &&
+               this->_product == b._product;
+    }
 
 private:
     std::string _id;

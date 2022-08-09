@@ -15,6 +15,10 @@ public:
         : _algorithm(std::move(algorithm)), _hash(std::move(hash)){};
     std::string get_algorithm() { return _algorithm; };
     std::string get_hash() { return _hash; };
+    bool operator==(cached_target_files_hash const &b) const
+    {
+        return this->_algorithm == b._algorithm && this->_hash == b._hash;
+    }
 
 private:
     std::string _algorithm;

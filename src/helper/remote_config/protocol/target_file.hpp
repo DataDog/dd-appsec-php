@@ -17,6 +17,10 @@ public:
         : _path(std::move(path)), _raw(std::move(raw)){};
     const std::string get_path() { return _path; };
     const std::string get_raw() { return _raw; };
+    bool operator==(target_file const &b) const
+    {
+        return this->_path == b._path && this->_path == b._path;
+    }
 
 private:
     std::string _path;

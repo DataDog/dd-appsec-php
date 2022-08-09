@@ -17,6 +17,11 @@ public:
     const int64_t get_custom_v() { return _custom_v; };
     const std::string get_hash() { return _hash; };
     const int64_t get_length() { return _length; };
+    bool operator==(path const &b) const
+    {
+        return this->_custom_v == b._custom_v && this->_hash == b._hash &&
+               this->_length == b._length;
+    }
 
 private:
     int64_t _custom_v;

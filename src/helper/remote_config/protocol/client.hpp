@@ -25,6 +25,12 @@ public:
     const std::vector<product> get_products() { return _products; };
     const client_tracer get_tracer() { return _client_tracer; };
     const client_state get_client_state() { return _client_state; };
+    bool operator==(client const &b) const
+    {
+        return this->_id == b._id && this->_products == b._products &&
+               this->_client_tracer == b._client_tracer &&
+               this->_client_state == b._client_state;
+    }
 
 private:
     std::string _id;

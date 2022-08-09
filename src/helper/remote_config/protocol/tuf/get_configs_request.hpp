@@ -20,6 +20,10 @@ public:
           _cached_target_files(std::move(arg_cached_target_files)){};
 
     client get_client() { return _client; };
+    bool operator==(get_configs_request const& a) const {
+        return this->_client == a._client &&
+        this->_cached_target_files == a._cached_target_files;
+    }
     const std::vector<cached_target_files> get_cached_target_files()
     {
         return _cached_target_files;

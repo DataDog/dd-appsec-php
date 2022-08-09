@@ -22,6 +22,12 @@ public:
             std::move(plain_path), std::move(path_object)));
     }
     std::map<std::string, path> get_paths() { return paths; };
+    bool operator==(targets const &b) const
+    {
+        return this->_version == b._version &&
+               std::equal(this->paths.begin(), this->paths.end(),
+                   b.paths.begin(), b.paths.end());
+    }
 
 private:
     int64_t _version;
