@@ -37,11 +37,23 @@ protocol::remote_config_result client::process_response(
 {
     std::map<std::string, remote_config::protocol::path> paths_on_targets =
         response.get_targets()->get_paths();
+    std::map<std::string, remote_config::protocol::target_file> target_files =
+        response.get_target_files();
     for (std::string path : response.get_client_configs()) {
+        // Is path on targets?
         auto path_itr = paths_on_targets.find(path);
-
         if (path_itr == paths_on_targets.end()) {
+            // Not found
             this->_last_poll_error = "missing config " + path + " in targets";
+            return protocol::remote_config_result::error;
+        }
+
+        // Is path on target_files?
+        auto path_in_target_files = target_files.find(path);
+        if (path_in_target_files == target_files.end()) {
+            // Not found
+            this->_last_poll_error =
+                "missing config " + path + " in target files";
             return protocol::remote_config_result::error;
         }
     }

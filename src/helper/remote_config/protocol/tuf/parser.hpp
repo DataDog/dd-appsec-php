@@ -49,6 +49,9 @@ enum class remote_config_parser_result {
     length_path_targets_field_missing
 };
 
+std::string remote_config_parser_result_to_str(
+    remote_config_parser_result result);
+
 remote_config_parser_result parse(
     const std::string &body, get_configs_response &output);
 

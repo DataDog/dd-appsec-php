@@ -214,9 +214,7 @@ TEST(RemoteConfigClient,
     ItReturnErrorAndSaveLastErrorWhenClientConfigPathNotInTargetPaths)
 {
     std::string response(
-        "{\n"
-        "    \"roots\": [],\n"
-        "    \"targets\": "
+        "{\"roots\": [], \"targets\": "
         "\"eyAgIAogICAgInNpZ25lZCI6IHsKICAgICAgICAiY3VzdG9tIjogewogICAgICAgICAg"
         "ICAib3BhcXVlX2JhY2tlbmRfc3RhdGUiOiAic29tZXRoaW5nIgogICAgICAgIH0sCiAgIC"
         "AgICAgInRhcmdldHMiOiB7CiAgICAgICAgICAgICJkYXRhZG9nLzIvQVBNX1NBTVBMSU5H"
@@ -226,11 +224,9 @@ TEST(RemoteConfigClient,
         "ogIjA3NDY1Y2VjZTQ3ZTQ1NDJhYmMwZGEwNDBkOWViYjQyZWM5NzIyNDkyMGQ2ODcwNjUx"
         "ZGMzMzE2NTI4NjA5ZDUiCiAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgIm"
         "xlbmd0aCI6IDY2Mzk5CiAgICAgICAgICAgIH0KICAgICAgICB9LAogICAgICAgICJ2ZXJz"
-        "aW9uIjogMjc0ODcxNTYKICAgIH0KfQ==\",\n"
-        "    \"target_files\": [],\n"
-        "    \"client_configs\": [\n"
-        "        \"datadog/2/DEBUG/notfound.insignedtargets/config\"\n"
-        "    ]\n"
+        "aW9uIjogMjc0ODcxNTYKICAgIH0KfQ==\", \"target_files\": [], "
+        "\"client_configs\": "
+        "[\"datadog/2/DEBUG/notfound.insignedtargets/config\"] "
         "}");
 
     mock::api mock_api;
@@ -257,6 +253,52 @@ TEST(RemoteConfigClient,
     EXPECT_TRUE(validate_request_has_error(request_sent, true,
         "missing config datadog/2/DEBUG/notfound.insignedtargets/config in "
         "targets"));
+}
+
+TEST(RemoteConfigClient,
+    ItReturnErrorAndSaveLastErrorWhenClientConfigPathNotInTargetFiles)
+{
+    std::string response(
+        "{\"roots\": [], \"targets\": "
+        "\"eyAgIAogICAgInNpZ25lZCI6IHsKICAgICAgICAiY3VzdG9tIjogewogICAgICAgICAg"
+        "ICAib3BhcXVlX2JhY2tlbmRfc3RhdGUiOiAic29tZXRoaW5nIgogICAgICAgIH0sCiAgIC"
+        "AgICAgInRhcmdldHMiOiB7CiAgICAgICAgICAgICJkYXRhZG9nLzIvQVBNX1NBTVBMSU5H"
+        "L2R5bmFtaWNfcmF0ZXMvY29uZmlnIjogewogICAgICAgICAgICAgICAgImN1c3RvbSI6IH"
+        "sKICAgICAgICAgICAgICAgICAgICAidiI6IDM2NzQwCiAgICAgICAgICAgICAgICB9LAog"
+        "ICAgICAgICAgICAgICAgImhhc2hlcyI6IHsKICAgICAgICAgICAgICAgICAgICAic2hhMj"
+        "U2IjogIjA3NDY1Y2VjZTQ3ZTQ1NDJhYmMwZGEwNDBkOWViYjQyZWM5NzIyNDkyMGQ2ODcw"
+        "NjUxZGMzMzE2NTI4NjA5ZDUiCiAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgIC"
+        "AgImxlbmd0aCI6IDY2Mzk5CiAgICAgICAgICAgIH0KICAgICAgICB9LAogICAgICAgICJ2"
+        "ZXJzaW9uIjogMjc0ODcxNTYKICAgIH0KfQ==\", \"target_files\": [{\"path\": "
+        "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+        "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"} ], "
+        "\"client_configs\": [\"datadog/2/APM_SAMPLING/dynamic_rates/config\"] "
+        "}");
+
+    mock::api mock_api;
+    std::string request_sent;
+    EXPECT_CALL(mock_api, get_configs)
+        .WillRepeatedly(DoAll(mock::set_response_body(response),
+            testing::SaveArg<0>(&request_sent),
+            Return(remote_config::protocol::remote_config_result::success)));
+
+    dds::remote_config::client api_client(&mock_api, id.c_str(),
+        runtime_id.c_str(), tracer_version.c_str(), service.c_str(),
+        env.c_str(), app_version.c_str(), std::move(products));
+
+    // Validate first request does not contain any error
+    auto poll_result = api_client.poll();
+    EXPECT_EQ(
+        remote_config::protocol::remote_config_result::error, poll_result);
+    EXPECT_TRUE(validate_request_has_error(request_sent, false, ""));
+
+    // Validate second request contains error
+    poll_result = api_client.poll();
+    EXPECT_EQ(
+        remote_config::protocol::remote_config_result::error, poll_result);
+    EXPECT_TRUE(validate_request_has_error(request_sent, true,
+        "missing config datadog/2/APM_SAMPLING/dynamic_rates/config in "
+        "target files"));
 }
 
 } // namespace dds

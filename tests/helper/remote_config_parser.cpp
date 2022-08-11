@@ -150,14 +150,19 @@ TEST(RemoteConfigParser, TargetFilesAreParsed)
 
     auto target_files = gcr.get_target_files();
 
-    EXPECT_EQ(
-        "employee/DEBUG_DD/2.test1.config/config", target_files[0].get_path());
+    EXPECT_EQ("employee/DEBUG_DD/2.test1.config/config",
+        target_files.find("employee/DEBUG_DD/2.test1.config/config")
+            ->second.get_path());
     EXPECT_EQ("UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=",
-        target_files[0].get_raw());
+        target_files.find("employee/DEBUG_DD/2.test1.config/config")
+            ->second.get_raw());
 
-    EXPECT_EQ(
-        "datadog/2/DEBUG/luke.steensen/config", target_files[1].get_path());
-    EXPECT_EQ("aGVsbG8gdmVjdG9yIQ==", target_files[1].get_raw());
+    EXPECT_EQ("datadog/2/DEBUG/luke.steensen/config",
+        target_files.find("datadog/2/DEBUG/luke.steensen/config")
+            ->second.get_path());
+    EXPECT_EQ("aGVsbG8gdmVjdG9yIQ==",
+        target_files.find("datadog/2/DEBUG/luke.steensen/config")
+            ->second.get_raw());
 }
 
 TEST(RemoteConfigParser, TargetFilesWithoutPathAreInvalid)
