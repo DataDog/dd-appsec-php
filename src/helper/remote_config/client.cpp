@@ -32,6 +32,23 @@ protocol::get_configs_request client::generate_request()
     return request;
 };
 
+protocol::remote_config_result client::process_response(
+    protocol::get_configs_response response)
+{
+    std::map<std::string, remote_config::protocol::path> paths_on_targets =
+        response.get_targets()->get_paths();
+    for (std::string path : response.get_client_configs()) {
+        auto path_itr = paths_on_targets.find(path);
+
+        if (path_itr == paths_on_targets.end()) {
+            this->_last_poll_error = "missing config " + path + " in targets";
+            return protocol::remote_config_result::error;
+        }
+    }
+
+    return protocol::remote_config_result::success;
+}
+
 protocol::remote_config_result client::poll()
 {
     if (!this->_api) {
@@ -40,12 +57,12 @@ protocol::remote_config_result client::poll()
 
     auto request = generate_request();
 
-    std::string expected_out;
-    remote_config::protocol::serialize(request, expected_out);
+    std::string serialized_request;
+    remote_config::protocol::serialize(request, serialized_request);
 
     std::string response_body;
     protocol::remote_config_result result =
-        this->_api->get_configs(request, response_body);
+        this->_api->get_configs(serialized_request, response_body);
     if (result == protocol::remote_config_result::error) {
         return protocol::remote_config_result::error;
     }
@@ -56,7 +73,10 @@ protocol::remote_config_result client::poll()
         return protocol::remote_config_result::error;
     }
 
-    return protocol::remote_config_result::success;
+    this->_last_poll_error = "";
+    result = process_response(response);
+
+    return result;
 }
 
 } // namespace dds::remote_config

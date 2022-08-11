@@ -28,9 +28,7 @@ ACTION_P(set_response_body, response) { arg1.assign(response); }
 class api : public remote_config::http_api {
 public:
     MOCK_METHOD(remote_config::protocol::remote_config_result, get_configs,
-        (remote_config::protocol::get_configs_request request,
-            std::string &response_body),
-        (override));
+        (std::string request, std::string &response_body), (override));
 };
 } // namespace mock
 
@@ -110,6 +108,45 @@ remote_config::protocol::get_configs_request generate_request()
     return request;
 }
 
+std::string generate_request_serialized()
+{
+    std::string request_serialized;
+
+    remote_config::protocol::serialize(generate_request(), request_serialized);
+
+    return request_serialized;
+}
+
+bool validate_request_has_error(
+    std::string request_serialized, bool has_error, std::string error_msg)
+{
+    rapidjson::Document serialized_doc;
+    if (serialized_doc.Parse(request_serialized).HasParseError()) {
+        return false;
+    }
+
+    rapidjson::Value::ConstMemberIterator state_itr =
+        serialized_doc.FindMember("client")->value.FindMember("state");
+
+    // Has error field
+    rapidjson::Value::ConstMemberIterator itr =
+        state_itr->value.FindMember("has_error");
+    rapidjson::Type expected_type =
+        has_error ? rapidjson::kTrueType : rapidjson::kFalseType;
+    if (itr->value.GetType() != expected_type) {
+        return false;
+    }
+
+    // Error field
+    itr = state_itr->value.FindMember("error");
+    if (itr->value.GetType() != rapidjson::kStringType ||
+        error_msg != itr->value.GetString()) {
+        return false;
+    }
+
+    return true;
+}
+
 TEST(RemoteConfigClient, ItReturnsErrorIfApiReturnsError)
 {
     mock::api *const mock_api = new mock::api;
@@ -128,8 +165,7 @@ TEST(RemoteConfigClient, ItReturnsErrorIfApiReturnsError)
 
 TEST(RemoteConfigClient, ItCallsToApiOnPoll)
 {
-    remote_config::protocol::get_configs_request expected_request =
-        generate_request();
+    std::string expected_request = generate_request_serialized();
 
     mock::api *const mock_api = new mock::api;
     EXPECT_CALL(*mock_api, get_configs(expected_request, _))
@@ -149,9 +185,6 @@ TEST(RemoteConfigClient, ItCallsToApiOnPoll)
 
 TEST(RemoteConfigClient, ItReturnErrorWhenApiNotProvided)
 {
-    remote_config::protocol::get_configs_request expected_request =
-        generate_request();
-
     dds::remote_config::client api_client(nullptr, id.c_str(),
         runtime_id.c_str(), tracer_version.c_str(), service.c_str(),
         env.c_str(), app_version.c_str(), std::move(products));
@@ -163,9 +196,6 @@ TEST(RemoteConfigClient, ItReturnErrorWhenApiNotProvided)
 
 TEST(RemoteConfigClient, ItReturnErrorWhenResponseIsInvalidJson)
 {
-    remote_config::protocol::get_configs_request expected_request =
-        generate_request();
-
     mock::api mock_api;
     EXPECT_CALL(mock_api, get_configs)
         .WillOnce(DoAll(mock::set_response_body("invalid json here"),
@@ -178,6 +208,55 @@ TEST(RemoteConfigClient, ItReturnErrorWhenResponseIsInvalidJson)
     auto result = api_client.poll();
 
     EXPECT_EQ(remote_config::protocol::remote_config_result::error, result);
+}
+
+TEST(RemoteConfigClient,
+    ItReturnErrorAndSaveLastErrorWhenClientConfigPathNotInTargetPaths)
+{
+    std::string response(
+        "{\n"
+        "    \"roots\": [],\n"
+        "    \"targets\": "
+        "\"eyAgIAogICAgInNpZ25lZCI6IHsKICAgICAgICAiY3VzdG9tIjogewogICAgICAgICAg"
+        "ICAib3BhcXVlX2JhY2tlbmRfc3RhdGUiOiAic29tZXRoaW5nIgogICAgICAgIH0sCiAgIC"
+        "AgICAgInRhcmdldHMiOiB7CiAgICAgICAgICAgICJkYXRhZG9nLzIvQVBNX1NBTVBMSU5H"
+        "L3NvbWVfb3RoZXIvY29uZmlnIjogewogICAgICAgICAgICAgICAgImN1c3RvbSI6IHsKIC"
+        "AgICAgICAgICAgICAgICAgICAidiI6IDM2NzQwCiAgICAgICAgICAgICAgICB9LAogICAg"
+        "ICAgICAgICAgICAgImhhc2hlcyI6IHsKICAgICAgICAgICAgICAgICAgICAic2hhMjU2Ij"
+        "ogIjA3NDY1Y2VjZTQ3ZTQ1NDJhYmMwZGEwNDBkOWViYjQyZWM5NzIyNDkyMGQ2ODcwNjUx"
+        "ZGMzMzE2NTI4NjA5ZDUiCiAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgIm"
+        "xlbmd0aCI6IDY2Mzk5CiAgICAgICAgICAgIH0KICAgICAgICB9LAogICAgICAgICJ2ZXJz"
+        "aW9uIjogMjc0ODcxNTYKICAgIH0KfQ==\",\n"
+        "    \"target_files\": [],\n"
+        "    \"client_configs\": [\n"
+        "        \"datadog/2/DEBUG/notfound.insignedtargets/config\"\n"
+        "    ]\n"
+        "}");
+
+    mock::api mock_api;
+    std::string request_sent;
+    EXPECT_CALL(mock_api, get_configs)
+        .WillRepeatedly(DoAll(mock::set_response_body(response),
+            testing::SaveArg<0>(&request_sent),
+            Return(remote_config::protocol::remote_config_result::success)));
+
+    dds::remote_config::client api_client(&mock_api, id.c_str(),
+        runtime_id.c_str(), tracer_version.c_str(), service.c_str(),
+        env.c_str(), app_version.c_str(), std::move(products));
+
+    // Validate first request does not contain any error
+    auto poll_result = api_client.poll();
+    EXPECT_EQ(
+        remote_config::protocol::remote_config_result::error, poll_result);
+    EXPECT_TRUE(validate_request_has_error(request_sent, false, ""));
+
+    // Validate second request contains error
+    poll_result = api_client.poll();
+    EXPECT_EQ(
+        remote_config::protocol::remote_config_result::error, poll_result);
+    EXPECT_TRUE(validate_request_has_error(request_sent, true,
+        "missing config datadog/2/DEBUG/notfound.insignedtargets/config in "
+        "targets"));
 }
 
 } // namespace dds
