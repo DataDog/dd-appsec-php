@@ -4,6 +4,7 @@
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -20,10 +21,16 @@
 
 namespace dds {
 namespace mock {
+
+// The simple custom action
+ACTION_P(set_response_body, response) { arg1.assign(response); }
+
 class api : public remote_config::http_api {
 public:
     MOCK_METHOD(remote_config::protocol::remote_config_result, get_configs,
-        (remote_config::protocol::get_configs_request request), (override));
+        (remote_config::protocol::get_configs_request request,
+            std::string &response_body),
+        (override));
 };
 } // namespace mock
 
@@ -38,11 +45,8 @@ int target_version = 0;
 std::vector<remote_config::protocol::product> products = {
     remote_config::protocol::product::asm_dd,
     remote_config::protocol::product::features};
-std::vector<remote_config::protocol::product> products2 = {
-    remote_config::protocol::product::asm_dd,
-    remote_config::protocol::product::features};
 
-remote_config::protocol::client get_client_two()
+remote_config::protocol::client generate_client()
 {
     remote_config::protocol::client_tracer client_tracer(runtime_id.c_str(),
         tracer_version.c_str(), service.c_str(), env.c_str(),
@@ -53,32 +57,127 @@ remote_config::protocol::client get_client_two()
         std::move(config_states), false, "", backend_client_state.c_str());
 
     std::string client_id(id);
-    remote_config::protocol::client client(
-        std::move(client_id), std::move(products), client_tracer, client_state);
+    std::vector<remote_config::protocol::product> product_copy(products);
+    remote_config::protocol::client client(std::move(client_id),
+        std::move(product_copy), client_tracer, client_state);
 
     return client;
 }
 
-TEST(RemoteConfigClient, ItCallsToApiOnPoll)
+std::string generate_example_response()
 {
-    dds::remote_config::protocol::client protocol_client = get_client_two();
+    std::string response(
+        "{\"roots\": [], \"targets\": "
+        "\"eyJzaWduYXR1cmVzIjpbeyJrZXlpZCI6IjVjNGVjZTQxMjQxYTFiYjUxM2Y2ZTNlNWRm"
+        "NzRhYjdkNTE4M2RmZmZiZDcxYmZkNDMxMjc5MjBkODgwNTY5ZmQiLCJzaWciOiI0OWI5MG"
+        "Y1ZjRiZmMyN2NjYmQ4MGQ5Yzg0NThkN2QyMmJhOWZhMDg5MGZkNzc1ZGQxMTZjNTI4YjM2"
+        "ZGQ2MDViMWRmNzYxYjg3YjZjMGViOWIwMjY0MDVhMTNlZmVmNDgyNzkzNGQ2YzI1YTdkNm"
+        "I4OTI1ZmRhODkyNTgwOTAwZiJ9XSwic2lnbmVkIjp7Il90eXBlIjoidGFyZ2V0cyIsImN1"
+        "c3RvbSI6eyJvcGFxdWVfYmFja2VuZF9zdGF0ZSI6ImV5SjJaWEp6YVc5dUlqb3hMQ0p6ZE"
+        "dGMFpTSTZleUptYVd4bFgyaGhjMmhsY3lJNld5SlNLekpEVm10bGRFUnpZVzVwV2tkSmEw"
+        "WmFaRkpOVDJGWWEzVnpNREYxZWxRMU0zcG5lbWxTVEdFMFBTSXNJa0l3V21NM1QxSXJVbF"
+        "ZMY25kT2IwVkVXalkzVVhWNVdFbHJhMmN4YjJOSFZXUjNla1pzUzBkRFpGVTlJaXdpZUhG"
+        "cVRsVXhUVXhYVTNCUmJEWk5ha3hQVTJOdlNVSjJiM2xTZWxacmR6WnpOR0VyZFhWd09XZ3"
+        "dRVDBpWFgxOSJ9LCJleHBpcmVzIjoiMjAyMi0xMS0wNFQxMzozMTo1OVoiLCJzcGVjX3Zl"
+        "cnNpb24iOiIxLjAuMCIsInRhcmdldHMiOnsiZGF0YWRvZy8yL0FQTV9TQU1QTElORy9keW"
+        "5hbWljX3JhdGVzL2NvbmZpZyI6eyJjdXN0b20iOnsidiI6MzY3NDB9LCJoYXNoZXMiOnsi"
+        "c2hhMjU2IjoiMDc0NjVjZWNlNDdlNDU0MmFiYzBkYTA0MGQ5ZWJiNDJlYzk3MjI0OTIwZD"
+        "Y4NzA2NTFkYzMzMTY1Mjg2MDlkNSJ9LCJsZW5ndGgiOjY2Mzk5fSwiZGF0YWRvZy8yL0RF"
+        "QlVHL2x1a2Uuc3RlZW5zZW4vY29uZmlnIjp7ImN1c3RvbSI6eyJ2IjozfSwiaGFzaGVzIj"
+        "p7InNoYTI1NiI6ImM2YThjZDUzNTMwYjU5MmE1MDk3YTMyMzJjZTQ5Y2EwODA2ZmEzMjQ3"
+        "MzU2NGMzYWIzODZiZWJhZWE3ZDg3NDAifSwibGVuZ3RoIjoxM30sImVtcGxveWVlL0RFQl"
+        "VHX0RELzIudGVzdDEuY29uZmlnL2NvbmZpZyI6eyJjdXN0b20iOnsidiI6MX0sImhhc2hl"
+        "cyI6eyJzaGEyNTYiOiI0N2VkODI1NjQ3YWQwZWM2YTc4OTkxODg5MDU2NWQ0NGMzOWE1ZT"
+        "RiYWNkMzViYjM0ZjlkZjM4MzM4OTEyZGFlIn0sImxlbmd0aCI6NDF9fSwidmVyc2lvbiI6"
+        "Mjc0ODcxNTZ9fQ==\", \"target_files\": [{\"path\": "
+        "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+        "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
+        "{\"path\": \"datadog/2/DEBUG/luke.steensen/config\", \"raw\": "
+        "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
+        "[\"datadog/2/DEBUG/luke.steensen/config\", "
+        "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+
+    return response;
+}
+
+remote_config::protocol::get_configs_request generate_request()
+{
+    dds::remote_config::protocol::client protocol_client = generate_client();
     std::vector<remote_config::protocol::cached_target_files> files;
-    remote_config::protocol::get_configs_request expected_request(
+    remote_config::protocol::get_configs_request request(
         protocol_client, std::move(files));
 
-    mock::api mock_api;
-    EXPECT_CALL(mock_api, get_configs(expected_request))
-        .Times(1)
-        .WillRepeatedly(
-            Return(remote_config::protocol::remote_config_result::success));
+    return request;
+}
 
-    dds::remote_config::client api_client(&mock_api, id.c_str(),
+TEST(RemoteConfigClient, ItReturnsErrorIfApiReturnsError)
+{
+    mock::api *const mock_api = new mock::api;
+    EXPECT_CALL(*mock_api, get_configs)
+        .WillOnce(Return(remote_config::protocol::remote_config_result::error));
+
+    dds::remote_config::client api_client(mock_api, id.c_str(),
         runtime_id.c_str(), tracer_version.c_str(), service.c_str(),
-        env.c_str(), app_version.c_str(), std::move(products2));
+        env.c_str(), app_version.c_str(), std::move(products));
+
+    auto result = api_client.poll();
+
+    EXPECT_EQ(remote_config::protocol::remote_config_result::error, result);
+    delete mock_api;
+}
+
+TEST(RemoteConfigClient, ItCallsToApiOnPoll)
+{
+    remote_config::protocol::get_configs_request expected_request =
+        generate_request();
+
+    mock::api *const mock_api = new mock::api;
+    EXPECT_CALL(*mock_api, get_configs(expected_request, _))
+        .Times(AtLeast(1))
+        .WillOnce(DoAll(mock::set_response_body(generate_example_response()),
+            Return(remote_config::protocol::remote_config_result::success)));
+
+    dds::remote_config::client api_client(mock_api, id.c_str(),
+        runtime_id.c_str(), tracer_version.c_str(), service.c_str(),
+        env.c_str(), app_version.c_str(), std::move(products));
 
     auto result = api_client.poll();
 
     EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    delete mock_api;
+}
+
+TEST(RemoteConfigClient, ItReturnErrorWhenApiNotProvided)
+{
+    remote_config::protocol::get_configs_request expected_request =
+        generate_request();
+
+    dds::remote_config::client api_client(nullptr, id.c_str(),
+        runtime_id.c_str(), tracer_version.c_str(), service.c_str(),
+        env.c_str(), app_version.c_str(), std::move(products));
+
+    auto result = api_client.poll();
+
+    EXPECT_EQ(remote_config::protocol::remote_config_result::error, result);
+}
+
+TEST(RemoteConfigClient, ItReturnErrorWhenResponseIsInvalidJson)
+{
+    remote_config::protocol::get_configs_request expected_request =
+        generate_request();
+
+    mock::api mock_api;
+    EXPECT_CALL(mock_api, get_configs)
+        .WillOnce(DoAll(mock::set_response_body("invalid json here"),
+            Return(remote_config::protocol::remote_config_result::success)));
+
+    dds::remote_config::client api_client(&mock_api, id.c_str(),
+        runtime_id.c_str(), tracer_version.c_str(), service.c_str(),
+        env.c_str(), app_version.c_str(), std::move(products));
+
+    auto result = api_client.poll();
+
+    EXPECT_EQ(remote_config::protocol::remote_config_result::error, result);
 }
 
 } // namespace dds

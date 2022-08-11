@@ -12,7 +12,7 @@ namespace dds::remote_config {
 class http_api : api {
 public:
     protocol::remote_config_result get_configs(
-        protocol::get_configs_request request)
+        protocol::get_configs_request request, std::string &response_body)
     {
         return protocol::remote_config_result::success;
     };

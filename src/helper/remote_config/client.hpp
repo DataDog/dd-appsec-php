@@ -10,6 +10,7 @@
 
 #include "http_api.hpp"
 #include "protocol/client.hpp"
+#include "protocol/tuf/get_configs_response.hpp"
 
 namespace dds::remote_config {
 
@@ -27,6 +28,9 @@ public:
     protocol::remote_config_result poll();
 
 private:
+    protocol::get_configs_request generate_request();
+    protocol::remote_config_result process_response(protocol::get_configs_response response);
+
     http_api *_api;
     std::string _id;
     std::string _runtime_id;
