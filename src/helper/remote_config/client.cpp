@@ -7,8 +7,25 @@
 #include "protocol/tuf/parser.hpp"
 #include "protocol/tuf/serializer.hpp"
 #include <iostream>
+#include <regex>
 
 namespace dds::remote_config {
+
+protocol::remote_config_result config_path_from_path(
+    std::string path, config_path &cp)
+{
+    std::regex regex("^(datadog/\\d+|employee)/([^/]+)/([^/]+)/[^/]+$");
+
+    std::smatch base_match;
+    if (!std::regex_match(path, base_match, regex) || base_match.size() < 4) {
+        return protocol::remote_config_result::error;
+    }
+
+    cp.set_product(base_match[2].str());
+    cp.set_id(base_match[3].str());
+
+    return protocol::remote_config_result::success;
+}
 
 protocol::get_configs_request client::generate_request()
 {
@@ -40,6 +57,13 @@ protocol::remote_config_result client::process_response(
     std::map<std::string, remote_config::protocol::target_file> target_files =
         response.get_target_files();
     for (std::string path : response.get_client_configs()) {
+        config_path cp;
+        if (config_path_from_path(path, cp) !=
+            protocol::remote_config_result::success) {
+            this->_last_poll_error = "error parsing path " + path;
+            return protocol::remote_config_result::error;
+        }
+
         // Is path on targets?
         auto path_itr = paths_on_targets.find(path);
         if (path_itr == paths_on_targets.end()) {

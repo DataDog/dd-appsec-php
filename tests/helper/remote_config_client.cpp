@@ -301,4 +301,99 @@ TEST(RemoteConfigClient,
         "target files"));
 }
 
+TEST(ClientConfig, ItGetGeneratedFromString)
+{
+    remote_config::config_path cp;
+    remote_config::protocol::remote_config_result result;
+
+    result = config_path_from_path(
+        "datadog/2/LIVE_DEBUGGING/9e413cda-647b-335b-adcd-7ce453fc2284/config",
+        cp);
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ("LIVE_DEBUGGING", cp.get_product());
+    EXPECT_EQ("9e413cda-647b-335b-adcd-7ce453fc2284", cp.get_id());
+
+    result =
+        config_path_from_path("employee/DEBUG_DD/2.test1.config/config", cp);
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ("DEBUG_DD", cp.get_product());
+    EXPECT_EQ("2.test1.config", cp.get_id());
+
+    result = config_path_from_path(
+        "datadog/55/APM_SAMPLING/dynamic_rates/config", cp);
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ("APM_SAMPLING", cp.get_product());
+    EXPECT_EQ("dynamic_rates", cp.get_id());
+}
+
+TEST(ClientConfig, ItDoesNotGetGeneratedFromStringIfNotValidMatch)
+{
+    remote_config::config_path cp;
+    remote_config::protocol::remote_config_result result;
+
+    result = config_path_from_path("", cp);
+    EXPECT_EQ(remote_config::protocol::remote_config_result::error, result);
+
+    result = config_path_from_path("invalid", cp);
+    EXPECT_EQ(remote_config::protocol::remote_config_result::error, result);
+
+    result = config_path_from_path("datadog/55/APM_SAMPLING/config", cp);
+    EXPECT_EQ(remote_config::protocol::remote_config_result::error, result);
+
+    result = config_path_from_path("datadog/55/APM_SAMPLING//config", cp);
+    EXPECT_EQ(remote_config::protocol::remote_config_result::error, result);
+
+    result = config_path_from_path(
+        "datadog/aa/APM_SAMPLING/dynamic_rates/config", cp);
+    EXPECT_EQ(remote_config::protocol::remote_config_result::error, result);
+
+    result = config_path_from_path(
+        "something/APM_SAMPLING/dynamic_rates/config", cp);
+    EXPECT_EQ(remote_config::protocol::remote_config_result::error, result);
+}
+
+TEST(RemoteConfigClient, ItReturnsErrorWhenClientConfigPathCantBeParsed)
+{
+    std::string response(
+        "{\"roots\": [], \"targets\": "
+        "\"eyAgIAogICAgInNpZ25lZCI6IHsKICAgICAgICAiY3VzdG9tIjogewogICAgICAgICAg"
+        "ICAib3BhcXVlX2JhY2tlbmRfc3RhdGUiOiAic29tZXRoaW5nIgogICAgICAgIH0sCiAgIC"
+        "AgICAgInRhcmdldHMiOiB7CiAgICAgICAgICAgICJkYXRhZG9nLzIvQVBNX1NBTVBMSU5H"
+        "L2R5bmFtaWNfcmF0ZXMvY29uZmlnIjogewogICAgICAgICAgICAgICAgImN1c3RvbSI6IH"
+        "sKICAgICAgICAgICAgICAgICAgICAidiI6IDM2NzQwCiAgICAgICAgICAgICAgICB9LAog"
+        "ICAgICAgICAgICAgICAgImhhc2hlcyI6IHsKICAgICAgICAgICAgICAgICAgICAic2hhMj"
+        "U2IjogIjA3NDY1Y2VjZTQ3ZTQ1NDJhYmMwZGEwNDBkOWViYjQyZWM5NzIyNDkyMGQ2ODcw"
+        "NjUxZGMzMzE2NTI4NjA5ZDUiCiAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgIC"
+        "AgImxlbmd0aCI6IDY2Mzk5CiAgICAgICAgICAgIH0KICAgICAgICB9LAogICAgICAgICJ2"
+        "ZXJzaW9uIjogMjc0ODcxNTYKICAgIH0KfQ==\", \"target_files\": [{\"path\": "
+        "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+        "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"} ], "
+        "\"client_configs\": [\"invalid/path/dynamic_rates/config\"] "
+        "}");
+
+    mock::api mock_api;
+    std::string request_sent;
+    EXPECT_CALL(mock_api, get_configs)
+        .WillRepeatedly(DoAll(mock::set_response_body(response),
+            testing::SaveArg<0>(&request_sent),
+            Return(remote_config::protocol::remote_config_result::success)));
+
+    dds::remote_config::client api_client(&mock_api, id.c_str(),
+        runtime_id.c_str(), tracer_version.c_str(), service.c_str(),
+        env.c_str(), app_version.c_str(), std::move(products));
+
+    // Validate first request does not contain any error
+    auto poll_result = api_client.poll();
+    EXPECT_EQ(
+        remote_config::protocol::remote_config_result::error, poll_result);
+    EXPECT_TRUE(validate_request_has_error(request_sent, false, ""));
+
+    // Validate second request contains error
+    poll_result = api_client.poll();
+    EXPECT_EQ(
+        remote_config::protocol::remote_config_result::error, poll_result);
+    EXPECT_TRUE(validate_request_has_error(request_sent, true,
+        "error parsing path invalid/path/dynamic_rates/config"));
+}
+
 } // namespace dds
