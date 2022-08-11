@@ -66,34 +66,35 @@ std::string generate_example_response()
 {
     std::string response(
         "{\"roots\": [], \"targets\": "
-        "\"eyJzaWduYXR1cmVzIjpbeyJrZXlpZCI6IjVjNGVjZTQxMjQxYTFiYjUxM2Y2ZTNlNWRm"
-        "NzRhYjdkNTE4M2RmZmZiZDcxYmZkNDMxMjc5MjBkODgwNTY5ZmQiLCJzaWciOiI0OWI5MG"
-        "Y1ZjRiZmMyN2NjYmQ4MGQ5Yzg0NThkN2QyMmJhOWZhMDg5MGZkNzc1ZGQxMTZjNTI4YjM2"
-        "ZGQ2MDViMWRmNzYxYjg3YjZjMGViOWIwMjY0MDVhMTNlZmVmNDgyNzkzNGQ2YzI1YTdkNm"
-        "I4OTI1ZmRhODkyNTgwOTAwZiJ9XSwic2lnbmVkIjp7Il90eXBlIjoidGFyZ2V0cyIsImN1"
-        "c3RvbSI6eyJvcGFxdWVfYmFja2VuZF9zdGF0ZSI6ImV5SjJaWEp6YVc5dUlqb3hMQ0p6ZE"
-        "dGMFpTSTZleUptYVd4bFgyaGhjMmhsY3lJNld5SlNLekpEVm10bGRFUnpZVzVwV2tkSmEw"
-        "WmFaRkpOVDJGWWEzVnpNREYxZWxRMU0zcG5lbWxTVEdFMFBTSXNJa0l3V21NM1QxSXJVbF"
-        "ZMY25kT2IwVkVXalkzVVhWNVdFbHJhMmN4YjJOSFZXUjNla1pzUzBkRFpGVTlJaXdpZUhG"
-        "cVRsVXhUVXhYVTNCUmJEWk5ha3hQVTJOdlNVSjJiM2xTZWxacmR6WnpOR0VyZFhWd09XZ3"
-        "dRVDBpWFgxOSJ9LCJleHBpcmVzIjoiMjAyMi0xMS0wNFQxMzozMTo1OVoiLCJzcGVjX3Zl"
-        "cnNpb24iOiIxLjAuMCIsInRhcmdldHMiOnsiZGF0YWRvZy8yL0FQTV9TQU1QTElORy9keW"
-        "5hbWljX3JhdGVzL2NvbmZpZyI6eyJjdXN0b20iOnsidiI6MzY3NDB9LCJoYXNoZXMiOnsi"
-        "c2hhMjU2IjoiMDc0NjVjZWNlNDdlNDU0MmFiYzBkYTA0MGQ5ZWJiNDJlYzk3MjI0OTIwZD"
-        "Y4NzA2NTFkYzMzMTY1Mjg2MDlkNSJ9LCJsZW5ndGgiOjY2Mzk5fSwiZGF0YWRvZy8yL0RF"
-        "QlVHL2x1a2Uuc3RlZW5zZW4vY29uZmlnIjp7ImN1c3RvbSI6eyJ2IjozfSwiaGFzaGVzIj"
-        "p7InNoYTI1NiI6ImM2YThjZDUzNTMwYjU5MmE1MDk3YTMyMzJjZTQ5Y2EwODA2ZmEzMjQ3"
-        "MzU2NGMzYWIzODZiZWJhZWE3ZDg3NDAifSwibGVuZ3RoIjoxM30sImVtcGxveWVlL0RFQl"
-        "VHX0RELzIudGVzdDEuY29uZmlnL2NvbmZpZyI6eyJjdXN0b20iOnsidiI6MX0sImhhc2hl"
-        "cyI6eyJzaGEyNTYiOiI0N2VkODI1NjQ3YWQwZWM2YTc4OTkxODg5MDU2NWQ0NGMzOWE1ZT"
-        "RiYWNkMzViYjM0ZjlkZjM4MzM4OTEyZGFlIn0sImxlbmd0aCI6NDF9fSwidmVyc2lvbiI6"
-        "Mjc0ODcxNTZ9fQ==\", \"target_files\": [{\"path\": "
-        "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+        "\"eyJzaWduYXR1cmVzIjogW3sia2V5aWQiOiAiNWM0ZWNlNDEyNDFhMWJiNTEzZjZlM2U1"
+        "ZGY3NGFiN2Q1MTgzZGZmZmJkNzFiZmQ0MzEyNzkyMGQ4ODA1NjlmZCIsICJzaWciOiAiND"
+        "liOTBmNWY0YmZjMjdjY2JkODBkOWM4NDU4ZDdkMjJiYTlmYTA4OTBmZDc3NWRkMTE2YzUy"
+        "OGIzNmRkNjA1YjFkZjc2MWI4N2I2YzBlYjliMDI2NDA1YTEzZWZlZjQ4Mjc5MzRkNmMyNW"
+        "E3ZDZiODkyNWZkYTg5MjU4MDkwMGYifSBdLCAic2lnbmVkIjogeyJfdHlwZSI6ICJ0YXJn"
+        "ZXRzIiwgImN1c3RvbSI6IHsib3BhcXVlX2JhY2tlbmRfc3RhdGUiOiAiZXlKMlpYSnphVz"
+        "l1SWpveExDSnpkR0YwWlNJNmV5Sm1hV3hsWDJoaGMyaGxjeUk2V3lKU0t6SkRWbXRsZEVS"
+        "ellXNXBXa2RKYTBaYVpGSk5UMkZZYTNWek1ERjFlbFExTTNwbmVtbFNUR0UwUFNJc0lrSX"
+        "dXbU0zVDFJclVsVkxjbmRPYjBWRVdqWTNVWFY1V0VscmEyY3hiMk5IVldSM2VrWnNTMGRE"
+        "WkZVOUlpd2llSEZxVGxVeFRVeFhVM0JSYkRaTmFreFBVMk52U1VKMmIzbFNlbFpyZHpaek"
+        "5HRXJkWFZ3T1dnd1FUMGlYWDE5In0sICJleHBpcmVzIjogIjIwMjItMTEtMDRUMTM6MzE6"
+        "NTlaIiwgInNwZWNfdmVyc2lvbiI6ICIxLjAuMCIsICJ0YXJnZXRzIjogeyJkYXRhZG9nLz"
+        "IvRkVBVFVSRVMvZHluYW1pY19yYXRlcy9jb25maWciOiB7ImN1c3RvbSI6IHsidiI6IDM2"
+        "NzQwIH0sICJoYXNoZXMiOiB7InNoYTI1NiI6ICIwNzQ2NWNlY2U0N2U0NTQyYWJjMGRhMD"
+        "QwZDllYmI0MmVjOTcyMjQ5MjBkNjg3MDY1MWRjMzMxNjUyODYwOWQ1In0sICJsZW5ndGgi"
+        "OiA2NjM5OSB9LCAiZGF0YWRvZy8yL0ZFQVRVUkVTL2x1a2Uuc3RlZW5zZW4vY29uZmlnIj"
+        "ogeyJjdXN0b20iOiB7InYiOiAzIH0sICJoYXNoZXMiOiB7InNoYTI1NiI6ICJjNmE4Y2Q1"
+        "MzUzMGI1OTJhNTA5N2EzMjMyY2U0OWNhMDgwNmZhMzI0NzM1NjRjM2FiMzg2YmViYWVhN2"
+        "Q4NzQwIn0sICJsZW5ndGgiOiAxMyB9LCAiZW1wbG95ZWUvRkVBVFVSRVMvMi50ZXN0MS5j"
+        "b25maWcvY29uZmlnIjogeyJjdXN0b20iOiB7InYiOiAxIH0sICJoYXNoZXMiOiB7InNoYT"
+        "I1NiI6ICI0N2VkODI1NjQ3YWQwZWM2YTc4OTkxODg5MDU2NWQ0NGMzOWE1ZTRiYWNkMzVi"
+        "YjM0ZjlkZjM4MzM4OTEyZGFlIn0sICJsZW5ndGgiOiA0MSB9IH0sICJ2ZXJzaW9uIjogMj"
+        "c0ODcxNTYgfSB9\", \"target_files\": [{\"path\": "
+        "\"employee/FEATURES/2.test1.config/config\", \"raw\": "
         "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
-        "{\"path\": \"datadog/2/DEBUG/luke.steensen/config\", \"raw\": "
+        "{\"path\": \"datadog/2/FEATURES/luke.steensen/config\", \"raw\": "
         "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
-        "[\"datadog/2/DEBUG/luke.steensen/config\", "
-        "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+        "[\"datadog/2/FEATURES/luke.steensen/config\", "
+        "\"employee/FEATURES/2.test1.config/config\"] }");
 
     return response;
 }
@@ -153,9 +154,10 @@ TEST(RemoteConfigClient, ItReturnsErrorIfApiReturnsError)
     EXPECT_CALL(*mock_api, get_configs)
         .WillOnce(Return(remote_config::protocol::remote_config_result::error));
 
+    std::vector<remote_config::protocol::product> _products(products);
     dds::remote_config::client api_client(mock_api, id.c_str(),
         runtime_id.c_str(), tracer_version.c_str(), service.c_str(),
-        env.c_str(), app_version.c_str(), std::move(products));
+        env.c_str(), app_version.c_str(), std::move(_products));
 
     auto result = api_client.poll();
 
@@ -173,9 +175,10 @@ TEST(RemoteConfigClient, ItCallsToApiOnPoll)
         .WillOnce(DoAll(mock::set_response_body(generate_example_response()),
             Return(remote_config::protocol::remote_config_result::success)));
 
+    std::vector<remote_config::protocol::product> _products(products);
     dds::remote_config::client api_client(mock_api, id.c_str(),
         runtime_id.c_str(), tracer_version.c_str(), service.c_str(),
-        env.c_str(), app_version.c_str(), std::move(products));
+        env.c_str(), app_version.c_str(), std::move(_products));
 
     auto result = api_client.poll();
 
@@ -185,9 +188,10 @@ TEST(RemoteConfigClient, ItCallsToApiOnPoll)
 
 TEST(RemoteConfigClient, ItReturnErrorWhenApiNotProvided)
 {
+    std::vector<remote_config::protocol::product> _products(products);
     dds::remote_config::client api_client(nullptr, id.c_str(),
         runtime_id.c_str(), tracer_version.c_str(), service.c_str(),
-        env.c_str(), app_version.c_str(), std::move(products));
+        env.c_str(), app_version.c_str(), std::move(_products));
 
     auto result = api_client.poll();
 
@@ -201,9 +205,10 @@ TEST(RemoteConfigClient, ItReturnErrorWhenResponseIsInvalidJson)
         .WillOnce(DoAll(mock::set_response_body("invalid json here"),
             Return(remote_config::protocol::remote_config_result::success)));
 
+    std::vector<remote_config::protocol::product> _products(products);
     dds::remote_config::client api_client(&mock_api, id.c_str(),
         runtime_id.c_str(), tracer_version.c_str(), service.c_str(),
-        env.c_str(), app_version.c_str(), std::move(products));
+        env.c_str(), app_version.c_str(), std::move(_products));
 
     auto result = api_client.poll();
 
@@ -236,9 +241,10 @@ TEST(RemoteConfigClient,
             testing::SaveArg<0>(&request_sent),
             Return(remote_config::protocol::remote_config_result::success)));
 
+    std::vector<remote_config::protocol::product> _products(products);
     dds::remote_config::client api_client(&mock_api, id.c_str(),
         runtime_id.c_str(), tracer_version.c_str(), service.c_str(),
-        env.c_str(), app_version.c_str(), std::move(products));
+        env.c_str(), app_version.c_str(), std::move(_products));
 
     // Validate first request does not contain any error
     auto poll_result = api_client.poll();
@@ -282,9 +288,10 @@ TEST(RemoteConfigClient,
             testing::SaveArg<0>(&request_sent),
             Return(remote_config::protocol::remote_config_result::success)));
 
+    std::vector<remote_config::protocol::product> _products(products);
     dds::remote_config::client api_client(&mock_api, id.c_str(),
         runtime_id.c_str(), tracer_version.c_str(), service.c_str(),
-        env.c_str(), app_version.c_str(), std::move(products));
+        env.c_str(), app_version.c_str(), std::move(_products));
 
     // Validate first request does not contain any error
     auto poll_result = api_client.poll();
@@ -378,9 +385,10 @@ TEST(RemoteConfigClient, ItReturnsErrorWhenClientConfigPathCantBeParsed)
             testing::SaveArg<0>(&request_sent),
             Return(remote_config::protocol::remote_config_result::success)));
 
+    std::vector<remote_config::protocol::product> _products(products);
     dds::remote_config::client api_client(&mock_api, id.c_str(),
         runtime_id.c_str(), tracer_version.c_str(), service.c_str(),
-        env.c_str(), app_version.c_str(), std::move(products));
+        env.c_str(), app_version.c_str(), std::move(_products));
 
     // Validate first request does not contain any error
     auto poll_result = api_client.poll();
@@ -394,6 +402,53 @@ TEST(RemoteConfigClient, ItReturnsErrorWhenClientConfigPathCantBeParsed)
         remote_config::protocol::remote_config_result::error, poll_result);
     EXPECT_TRUE(validate_request_has_error(request_sent, true,
         "error parsing path invalid/path/dynamic_rates/config"));
+}
+
+TEST(RemoteConfigClient, ItReturnsErrorIfProductOnPathNotRequested)
+{
+    std::string response(
+        "{\"roots\": [], \"targets\": "
+        "\"eyAgIAogICAgInNpZ25lZCI6IHsKICAgICAgICAiY3VzdG9tIjogewogICAgICAgICAg"
+        "ICAib3BhcXVlX2JhY2tlbmRfc3RhdGUiOiAic29tZXRoaW5nIgogICAgICAgIH0sCiAgIC"
+        "AgICAgInRhcmdldHMiOiB7CiAgICAgICAgICAgICJkYXRhZG9nLzIvQVBNX1NBTVBMSU5H"
+        "L2R5bmFtaWNfcmF0ZXMvY29uZmlnIjogewogICAgICAgICAgICAgICAgImN1c3RvbSI6IH"
+        "sKICAgICAgICAgICAgICAgICAgICAidiI6IDM2NzQwCiAgICAgICAgICAgICAgICB9LAog"
+        "ICAgICAgICAgICAgICAgImhhc2hlcyI6IHsKICAgICAgICAgICAgICAgICAgICAic2hhMj"
+        "U2IjogIjA3NDY1Y2VjZTQ3ZTQ1NDJhYmMwZGEwNDBkOWViYjQyZWM5NzIyNDkyMGQ2ODcw"
+        "NjUxZGMzMzE2NTI4NjA5ZDUiCiAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgIC"
+        "AgImxlbmd0aCI6IDY2Mzk5CiAgICAgICAgICAgIH0KICAgICAgICB9LAogICAgICAgICJ2"
+        "ZXJzaW9uIjogMjc0ODcxNTYKICAgIH0KfQ==\", \"target_files\": [{\"path\": "
+        "\"datadog/2/APM_SAMPLING/dynamic_rates/config\", \"raw\": "
+        "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"} ], "
+        "\"client_configs\": [\"datadog/2/APM_SAMPLING/dynamic_rates/config\"] "
+        "}");
+
+    mock::api mock_api;
+    std::string request_sent;
+    EXPECT_CALL(mock_api, get_configs)
+        .WillRepeatedly(DoAll(mock::set_response_body(response),
+            testing::SaveArg<0>(&request_sent),
+            Return(remote_config::protocol::remote_config_result::success)));
+
+    std::vector<remote_config::protocol::product> requested_products = {
+        remote_config::protocol::product::features};
+    dds::remote_config::client api_client(&mock_api, id.c_str(),
+        runtime_id.c_str(), tracer_version.c_str(), service.c_str(),
+        env.c_str(), app_version.c_str(), std::move(requested_products));
+
+    // Validate first request does not contain any error
+    auto poll_result = api_client.poll();
+    EXPECT_EQ(
+        remote_config::protocol::remote_config_result::error, poll_result);
+    EXPECT_TRUE(validate_request_has_error(request_sent, false, ""));
+
+    // Validate second request contains error
+    poll_result = api_client.poll();
+    EXPECT_EQ(
+        remote_config::protocol::remote_config_result::error, poll_result);
+    EXPECT_TRUE(validate_request_has_error(request_sent, true,
+        "received config datadog/2/APM_SAMPLING/dynamic_rates/config for a "
+        "product that was not requested"));
 }
 
 } // namespace dds
