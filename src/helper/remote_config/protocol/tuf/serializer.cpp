@@ -13,12 +13,12 @@
 
 namespace dds::remote_config::protocol {
 
-const char *product_to_string(product product)
+const char *product_to_string(product_e product)
 {
     switch (product) {
-    case product::live_debugging:
+    case product_e::live_debugging:
         return "LIVE_DEBUGGING";
-    case product::asm_dd:
+    case product_e::asm_dd:
         return "ASM_DD";
     default:
         return "FEATURES";
@@ -89,7 +89,7 @@ void serialize_client(rapidjson::Document::AllocatorType &alloc,
     client_object.AddMember("is_tracer", true, alloc);
 
     rapidjson::Value products(rapidjson::kArrayType);
-    for (const product p : client.get_products()) {
+    for (const product_e p : client.get_products()) {
         products.PushBack(
             rapidjson::Value(product_to_string(p), alloc).Move(), alloc);
     }

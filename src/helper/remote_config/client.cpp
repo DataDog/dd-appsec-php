@@ -6,7 +6,6 @@
 #include "client.hpp"
 #include "protocol/tuf/parser.hpp"
 #include "protocol/tuf/serializer.hpp"
-#include <iostream>
 #include <regex>
 
 namespace dds::remote_config {
@@ -40,7 +39,7 @@ protocol::get_configs_request client::generate_request()
     protocol::client_state cs(0, std::move(config_states),
         this->_last_poll_error.size() > 0, std::move(this->_last_poll_error),
         std::move(this->_opaque_backend_state));
-    std::vector<protocol::product> products(this->_products);
+    std::vector<protocol::product_e> products(this->_products);
     dds::remote_config::protocol::client protocol_client(
         std::move(this->_id), std::move(products), ct, cs);
 
@@ -51,16 +50,16 @@ protocol::get_configs_request client::generate_request()
 };
 
 protocol::remote_config_result product_from_string(
-    const std::string &product_str, protocol::product &parsed)
+    const std::string &product_str, protocol::product_e &parsed)
 {
     if (product_str == "LIVE_DEBUGGING") {
-        parsed = protocol::product::live_debugging;
+        parsed = protocol::product_e::live_debugging;
         return protocol::remote_config_result::success;
     } else if (product_str == "ASM_DD") {
-        parsed = protocol::product::asm_dd;
+        parsed = protocol::product_e::asm_dd;
         return protocol::remote_config_result::success;
     } else if (product_str == "FEATURES") {
-        parsed = protocol::product::features;
+        parsed = protocol::product_e::features;
         return protocol::remote_config_result::success;
     }
 
