@@ -108,8 +108,7 @@ int targets_version = 123;
 
 remote_config::protocol::client get_client()
 {
-    std::vector<remote_config::protocol::product_e> products;
-    products.push_back(remote_config::protocol::product_e::asm_dd);
+    std::vector<std::string> products = {"ASM_DD"};
 
     remote_config::protocol::client_tracer client_tracer("some runtime id",
         "some tracer version", "some service", "some env", "some app version");

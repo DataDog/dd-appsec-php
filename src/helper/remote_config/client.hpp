@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "http_api.hpp"
+#include "product.hpp"
 #include "protocol/client.hpp"
 #include "protocol/tuf/get_configs_response.hpp"
 
@@ -34,12 +35,17 @@ class client {
 public:
     client(http_api *arg_api, std::string &&id, std::string &&runtime_id,
         std::string &&tracer_version, std::string &&service, std::string &&env,
-        std::string &&app_version, std::vector<protocol::product> &&products)
+        std::string &&app_version, std::vector<product> &&products)
         : _api(arg_api), _id(std::move(id)), _runtime_id(std::move(runtime_id)),
           _tracer_version(std::move(tracer_version)),
           _service(std::move(service)), _env(std::move(env)),
-          _app_version(std::move(app_version)),
-          _products(std::move(products)){};
+          _app_version(std::move(app_version))
+    {
+        for (product p : products) {
+            _products.insert(std::pair<std::string, remote_config::product>(
+                p.get_name(), p));
+        }
+    };
 
     protocol::remote_config_result poll();
 
@@ -57,7 +63,7 @@ private:
     std::string _app_version;
     std::string _last_poll_error;
     std::string _opaque_backend_state;
-    std::vector<protocol::product> _products;
+    std::map<std::string, remote_config::product> _products;
 };
 
 } // namespace dds::remote_config

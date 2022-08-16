@@ -4,6 +4,7 @@
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #include "client.hpp"
+#include "product.hpp"
 #include "protocol/tuf/parser.hpp"
 #include "protocol/tuf/serializer.hpp"
 #include <regex>
@@ -39,32 +40,19 @@ protocol::get_configs_request client::generate_request()
     protocol::client_state cs(0, std::move(config_states),
         this->_last_poll_error.size() > 0, std::move(this->_last_poll_error),
         std::move(this->_opaque_backend_state));
-    std::vector<protocol::product_e> products(this->_products);
+    std::vector<std::string> products_str;
+    for (std::map<std::string, product>::iterator it = this->_products.begin();
+         it != this->_products.end(); ++it) {
+        products_str.push_back(it->first);
+    }
     dds::remote_config::protocol::client protocol_client(
-        std::move(this->_id), std::move(products), ct, cs);
+        std::move(this->_id), std::move(products_str), ct, cs);
 
     protocol::get_configs_request request(
         protocol_client, std::vector<protocol::cached_target_files>());
 
     return request;
 };
-
-protocol::remote_config_result product_from_string(
-    const std::string &product_str, protocol::product_e &parsed)
-{
-    if (product_str == "LIVE_DEBUGGING") {
-        parsed = protocol::product_e::live_debugging;
-        return protocol::remote_config_result::success;
-    } else if (product_str == "ASM_DD") {
-        parsed = protocol::product_e::asm_dd;
-        return protocol::remote_config_result::success;
-    } else if (product_str == "FEATURES") {
-        parsed = protocol::product_e::features;
-        return protocol::remote_config_result::success;
-    }
-
-    return protocol::remote_config_result::error;
-}
 
 protocol::remote_config_result client::process_response(
     protocol::get_configs_response response)
@@ -98,12 +86,8 @@ protocol::remote_config_result client::process_response(
             return protocol::remote_config_result::error;
         }
 
-        // Is product on the requested?
-        protocol::product product_on_path;
-        if (product_from_string(cp.get_product(), product_on_path) ==
-                protocol::remote_config_result::error ||
-            std::find(this->_products.begin(), this->_products.end(),
-                product_on_path) == this->_products.end()) {
+        // Is product on the requested ones?
+        if (this->_products.find(cp.get_product()) == this->_products.end()) {
             // Not found
             this->_last_poll_error = "received config " + path +
                                      " for a product that was not requested";

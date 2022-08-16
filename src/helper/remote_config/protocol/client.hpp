@@ -8,21 +8,20 @@
 #include <string>
 #include <vector>
 
+#include "../product.hpp"
 #include "client_state.hpp"
 #include "client_tracer.hpp"
 
 namespace dds::remote_config::protocol {
 
-enum class product_e { live_debugging, asm_dd, features };
-
 struct client {
 public:
-    client(std::string &&id, std::vector<product_e> &&products, client_tracer ct,
-        client_state cs)
+    client(std::string &&id, std::vector<std::string> &&products,
+        client_tracer ct, client_state cs)
         : _id(std::move(id)), _products(std::move(products)),
           _client_tracer(ct), _client_state(cs){};
     const std::string get_id() { return _id; };
-    const std::vector<product_e> get_products() { return _products; };
+    const std::vector<std::string> get_products() { return _products; };
     const client_tracer get_tracer() { return _client_tracer; };
     const client_state get_client_state() { return _client_state; };
     bool operator==(client const &b) const
@@ -34,7 +33,7 @@ public:
 
 private:
     std::string _id;
-    std::vector<product_e> _products;
+    std::vector<std::string> _products;
     client_tracer _client_tracer;
     client_state _client_state;
 };
