@@ -29,14 +29,23 @@ protocol::remote_config_result config_path_from_path(
 
 protocol::get_configs_request client::generate_request()
 {
-    //@Todo when processing response
+    //@Todo Test2 - Cs are parsed from response
     std::vector<remote_config::protocol::config_state> config_states;
+    for (std::pair<std::string, product> pair : this->_products) {
+        auto configs_on_product = pair.second.get_configs();
+        for (config _c : configs_on_product) {
+            std::string c_id(_c.get_id());
+            std::string c_product(_c.get_product());
+            remote_config::protocol::config_state cs(
+                std::move(c_id), _c.get_version(), std::move(c_product));
+            config_states.push_back(cs);
+        }
+    }
 
     protocol::client_tracer ct(std::move(this->_runtime_id),
         std::move(this->_tracer_version), std::move(this->_service),
         std::move(this->_env), std::move(this->_app_version));
 
-    //@Todo generate situations with errors on tests
     protocol::client_state cs(0, std::move(config_states),
         this->_last_poll_error.size() > 0, std::move(this->_last_poll_error),
         std::move(this->_opaque_backend_state));
@@ -61,6 +70,7 @@ protocol::remote_config_result client::process_response(
         response.get_targets()->get_paths();
     std::map<std::string, remote_config::protocol::target_file> target_files =
         response.get_target_files();
+    std::map<std::string, std::vector<config>> configs;
     for (std::string path : response.get_client_configs()) {
         config_path cp;
         if (config_path_from_path(path, cp) !=
@@ -93,6 +103,25 @@ protocol::remote_config_result client::process_response(
                                      " for a product that was not requested";
             return protocol::remote_config_result::error;
         }
+
+        config _config(cp.get_product(), cp.get_id(),
+            path_in_target_files->second.get_raw(), path_itr->second.get_hash(),
+            path_itr->second.get_custom_v());
+        auto configs_itr = configs.find(cp.get_product());
+        if (configs_itr ==
+            configs.end()) { // Product not in configs yet. Create entry
+            std::vector<config> configs_on_product = {_config};
+            configs.insert(std::pair<std::string, std::vector<config>>(
+                cp.get_product(), configs_on_product));
+        } else { // Product already exists in configs. Add new config
+            configs_itr->second.push_back(_config);
+        }
+    }
+
+    // Since there have not been errors, we can now update product configs
+    for (std::pair<std::string, std::vector<config>> pair : configs) {
+        auto _p = this->_products.find(pair.first);
+        _p->second.assign_configs(pair.second);
     }
 
     return protocol::remote_config_result::success;

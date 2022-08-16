@@ -45,9 +45,15 @@ std::vector<std::string> products = {"ASM_DD", "FEATURES"};
 std::vector<remote_config::product> get_products()
 {
     std::vector<remote_config::product> _products;
+    int i = 0;
     for (std::string product_str : products) {
         remote_config::product _p(product_str);
+        remote_config::config _config(
+            product_str, std::to_string(i), "some contents", "some hash", i);
+        std::vector<remote_config::config> configs = {_config};
+        _p.assign_configs(configs);
         _products.push_back(_p);
+        i++;
     }
 
     return _products;
@@ -59,7 +65,17 @@ remote_config::protocol::client generate_client()
         tracer_version.c_str(), service.c_str(), env.c_str(),
         app_version.c_str());
 
-    std::vector<remote_config::protocol::config_state> config_states;
+    std::string id00 = "0";
+    std::string product00(products[0]);
+    remote_config::protocol::config_state cs00(
+        std::move(id00), 0, std::move(product00));
+    std::string id01 = "1";
+    std::string product01(products[1]);
+    remote_config::protocol::config_state cs01(
+        std::move(id01), 1, std::move(product01));
+
+    std::vector<remote_config::protocol::config_state> config_states = {
+        cs00, cs01};
     remote_config::protocol::client_state client_state(target_version,
         std::move(config_states), false, "", backend_client_state.c_str());
 

@@ -6,6 +6,7 @@
 #pragma once
 
 #include "config.hpp"
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -16,6 +17,7 @@ public:
     //@todo add listeners
     product(std::string name) : _name(name){};
     void assign_configs(std::vector<config> configs) { _configs = configs; };
+    const std::vector<config> get_configs() { return this->_configs; };
     bool operator==(product const &b) const
     {
         return this->_name == b._name && this->_configs == b._configs;
