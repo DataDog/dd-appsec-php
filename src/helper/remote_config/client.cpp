@@ -31,7 +31,6 @@ protocol::remote_config_result config_path_from_path(
 
 protocol::get_configs_request client::generate_request()
 {
-    //@Todo Test2 - Cs are parsed from response
     std::vector<remote_config::protocol::config_state> config_states;
     for (std::pair<std::string, product> pair : this->_products) {
         auto configs_on_product = pair.second.get_configs();
@@ -47,8 +46,9 @@ protocol::get_configs_request client::generate_request()
     protocol::client_tracer ct(this->_runtime_id, this->_tracer_version,
         this->_service, this->_env, this->_app_version);
 
-    protocol::client_state cs(0, config_states, !this->_last_poll_error.empty(),
-        this->_last_poll_error, this->_opaque_backend_state);
+    protocol::client_state cs(this->_targets_version, config_states,
+        !this->_last_poll_error.empty(), this->_last_poll_error,
+        this->_opaque_backend_state);
     std::vector<std::string> products_str;
     for (std::pair<std::string, product> pair : this->_products) {
         products_str.push_back(pair.first);
@@ -126,6 +126,7 @@ protocol::remote_config_result client::process_response(
         auto _p = this->_products.find(pair.first);
         _p->second.assign_configs(pair.second);
     }
+    this->_targets_version = response.get_targets()->get_version();
 
     return protocol::remote_config_result::success;
 }

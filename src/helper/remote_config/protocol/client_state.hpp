@@ -34,7 +34,6 @@ public:
 private:
     int _targets_version;
     std::vector<config_state> _config_states;
-    //@todo: Test the different combinations of not having error
     bool _has_error;
     std::string _error;
     std::string _backend_client_state;
