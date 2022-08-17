@@ -15,6 +15,7 @@ namespace dds::remote_config::protocol {
 struct targets {
 public:
     int get_version() { return _version; };
+    std::string get_opaque_backend_state() { return _opaque_backend_state; };
     void set_version(int version) { _version = version; };
     void set_opaque_backend_state(std::string opaque_backend_state)
     {

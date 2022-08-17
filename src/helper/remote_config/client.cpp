@@ -127,6 +127,7 @@ protocol::remote_config_result client::process_response(
         _p->second.assign_configs(pair.second);
     }
     this->_targets_version = response.get_targets()->get_version();
+    this->_opaque_backend_state = response.get_targets()->get_opaque_backend_state();
 
     return protocol::remote_config_result::success;
 }

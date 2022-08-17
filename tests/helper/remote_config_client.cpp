@@ -49,6 +49,7 @@ remote_config::protocol::client generate_client(bool generate_state)
 
     std::vector<remote_config::protocol::config_state> config_states;
     int _target_version;
+    std::string _backend_client_state;
     if (generate_state) {
         // All these states are extracted from the harcoded request/response
         std::string id00 = "luke.steensen";
@@ -61,12 +62,20 @@ remote_config::protocol::client generate_client(bool generate_state)
         config_states.push_back(cs00);
         config_states.push_back(cs01);
         _target_version = 27487156;
+        // This field is extracted from the harcoded resposne
+        _backend_client_state =
+            "eyJ2ZXJzaW9uIjoxLCJzdGF0ZSI6eyJmaWxlX2hhc2hlcyI6WyJSKzJDVmtldERzYW"
+            "5pWkdJa0ZaZFJNT2FYa3VzMDF1elQ1M3pnemlSTGE0PSIsIkIwWmM3T1IrUlVLcndO"
+            "b0VEWjY3UXV5WElra2cxb2NHVWR3ekZsS0dDZFU9IiwieHFqTlUxTUxXU3BRbDZNak"
+            "xPU2NvSUJ2b3lSelZrdzZzNGErdXVwOWgwQT0iXX19";
+
     } else {
         _target_version = target_version; // Default target version
+        _backend_client_state = "";
     }
     std::string error = "";
     remote_config::protocol::client_state client_state(
-        _target_version, config_states, false, error, backend_client_state);
+        _target_version, config_states, false, error, _backend_client_state);
 
     remote_config::protocol::client client(
         id, products, client_tracer, client_state);
@@ -182,7 +191,7 @@ TEST(RemoteConfigClient, ItReturnsErrorIfApiReturnsError)
 
 TEST(RemoteConfigClient, ItCallsToApiOnPoll)
 {
-    //First poll dont have state
+    // First poll dont have state
     std::string expected_request = generate_request_serialized(false);
 
     mock::api *const mock_api = new mock::api;
