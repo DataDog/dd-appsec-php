@@ -13,9 +13,9 @@ struct config_state {
 public:
     config_state(std::string &&id, int version, std::string &&product)
         : _id(std::move(id)), _version(version), _product(std::move(product)){};
-    const std::string get_id() { return _id; };
-    const int get_version() { return _version; };
-    const std::string get_product() { return _product; };
+    std::string get_id() { return _id; };
+    int get_version() { return _version; };
+    std::string get_product() { return _product; };
     bool operator==(config_state const &b) const
     {
         return this->_id == b._id && this->_version == b._version &&

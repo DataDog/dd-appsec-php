@@ -18,17 +18,11 @@ public:
         : _targets_version(targets_version), _config_states(std::move(cs)),
           _has_error(has_error), _error(std::move(error)),
           _backend_client_state(std::move(backend_client_state)){};
-    const int get_targets_version() { return _targets_version; };
-    const std::vector<config_state> get_config_states()
-    {
-        return _config_states;
-    };
-    const bool get_has_error() { return _has_error; };
-    const std::string get_error() { return _error; };
-    const std::string get_backend_client_state()
-    {
-        return _backend_client_state;
-    };
+    int get_targets_version() { return _targets_version; };
+    std::vector<config_state> get_config_states() { return _config_states; };
+    bool get_has_error() { return _has_error; };
+    std::string get_error() { return _error; };
+    std::string get_backend_client_state() { return _backend_client_state; };
     bool operator==(client_state const &b) const
     {
         return this->_targets_version == b._targets_version &&

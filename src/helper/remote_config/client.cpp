@@ -12,7 +12,7 @@
 namespace dds::remote_config {
 
 protocol::remote_config_result config_path_from_path(
-    std::string path, config_path &cp)
+    const std::string &path, config_path &cp)
 {
     std::regex regex("^(datadog/\\d+|employee)/([^/]+)/([^/]+)/[^/]+$");
 
@@ -47,12 +47,11 @@ protocol::get_configs_request client::generate_request()
         std::move(this->_env), std::move(this->_app_version));
 
     protocol::client_state cs(0, std::move(config_states),
-        this->_last_poll_error.size() > 0, std::move(this->_last_poll_error),
+        !this->_last_poll_error.empty(), std::move(this->_last_poll_error),
         std::move(this->_opaque_backend_state));
     std::vector<std::string> products_str;
-    for (std::map<std::string, product>::iterator it = this->_products.begin();
-         it != this->_products.end(); ++it) {
-        products_str.push_back(it->first);
+    for(std::pair<std::string, product> pair: this->_products) {
+        products_str.push_back(pair.first);
     }
     dds::remote_config::protocol::client protocol_client(
         std::move(this->_id), std::move(products_str), ct, cs);
@@ -71,7 +70,7 @@ protocol::remote_config_result client::process_response(
     std::map<std::string, remote_config::protocol::target_file> target_files =
         response.get_target_files();
     std::map<std::string, std::vector<config>> configs;
-    for (std::string path : response.get_client_configs()) {
+    for (const std::string &path : response.get_client_configs()) {
         config_path cp;
         if (config_path_from_path(path, cp) !=
             protocol::remote_config_result::success) {
@@ -129,7 +128,7 @@ protocol::remote_config_result client::process_response(
 
 protocol::remote_config_result client::poll()
 {
-    if (!this->_api) {
+    if (this->_api == nullptr) {
         return protocol::remote_config_result::error;
     }
 

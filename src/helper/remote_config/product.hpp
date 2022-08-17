@@ -15,9 +15,9 @@ namespace dds::remote_config {
 struct product {
 public:
     //@todo add listeners
-    product(std::string name) : _name(name){};
+    explicit product(std::string name) : _name(name){};
     void assign_configs(std::vector<config> configs) { _configs = configs; };
-    const std::vector<config> get_configs() { return this->_configs; };
+    std::vector<config> get_configs() { return this->_configs; };
     bool operator==(product const &b) const
     {
         return this->_name == b._name && this->_configs == b._configs;

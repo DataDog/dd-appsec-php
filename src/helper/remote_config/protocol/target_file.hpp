@@ -15,8 +15,8 @@ struct target_file {
 public:
     target_file(std::string &&path, std::string &&raw)
         : _path(std::move(path)), _raw(std::move(raw)){};
-    const std::string get_path() { return _path; };
-    const std::string get_raw() { return _raw; };
+    std::string get_path() { return _path; };
+    std::string get_raw() { return _raw; };
     bool operator==(target_file const &b) const
     {
         return this->_path == b._path && this->_raw == b._raw;

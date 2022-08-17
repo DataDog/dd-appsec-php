@@ -17,9 +17,9 @@ namespace dds::remote_config {
 
 struct config_path {
 public:
-    config_path(){};
-    const std::string get_id() { return _id; };
-    const std::string get_product() { return _product; };
+    config_path() = default;
+    std::string get_id() { return _id; };
+    std::string get_product() { return _product; };
     void set_id(std::string &&id) { _id = std::move(id); };
     void set_product(std::string &&product) { _product = std::move(product); };
 
@@ -29,7 +29,7 @@ private:
 };
 
 protocol::remote_config_result config_path_from_path(
-    std::string path, config_path &cp);
+    const std::string &path, config_path &cp);
 
 class client {
 public:

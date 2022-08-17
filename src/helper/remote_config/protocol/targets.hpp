@@ -14,8 +14,8 @@ namespace dds::remote_config::protocol {
 
 struct targets {
 public:
-    const int64_t get_version() { return _version; };
-    void set_version(int64_t version) { _version = version; };
+    int get_version() { return _version; };
+    void set_version(int version) { _version = version; };
     void add_path(std::string &&plain_path, path &&path_object)
     {
         paths.insert(std::pair<std::string, path>(
@@ -30,7 +30,7 @@ public:
     }
 
 private:
-    int64_t _version;
+    int _version;
     std::map<std::string, path> paths;
 };
 

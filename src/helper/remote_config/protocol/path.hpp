@@ -12,11 +12,11 @@ namespace dds::remote_config::protocol {
 
 struct path {
 public:
-    path(int64_t v, std::string &&hash, int64_t length)
+    path(int v, std::string &&hash, int length)
         : _custom_v(v), _hash(std::move(hash)), _length(length){};
-    const int64_t get_custom_v() { return _custom_v; };
-    const std::string get_hash() { return _hash; };
-    const int64_t get_length() { return _length; };
+    int get_custom_v() { return _custom_v; };
+    std::string get_hash() { return _hash; };
+    int get_length() { return _length; };
     bool operator==(path const &b) const
     {
         return this->_custom_v == b._custom_v && this->_hash == b._hash &&
@@ -24,9 +24,9 @@ public:
     }
 
 private:
-    int64_t _custom_v;
+    int _custom_v;
     std::string _hash;
-    int64_t _length;
+    int _length;
 };
 
 } // namespace dds::remote_config::protocol

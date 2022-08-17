@@ -24,9 +24,9 @@ public:
                this->_contents == b._contents && this->_hash == b._hash &&
                this->_version == b._version;
     }
-    const std::string get_id() { return this->_id; };
-    const int get_version() { return this->_version; };
-    const std::string get_product() { return this->_product; };
+    std::string get_id() { return this->_id; };
+    int get_version() const { return this->_version; };
+    std::string get_product() { return this->_product; };
 
 private:
     std::string _product;

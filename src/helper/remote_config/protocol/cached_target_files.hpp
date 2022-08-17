@@ -16,9 +16,9 @@ public:
     cached_target_files(std::string &&path, int length,
         std::vector<cached_target_files_hash> &&hashes)
         : _path(std::move(path)), _length(length), _hashes(std::move(hashes)){};
-    const std::string get_path() { return _path; };
-    const int get_length() { return _length; };
-    const std::vector<cached_target_files_hash> get_hashes()
+    std::string get_path() { return _path; };
+    int get_length() { return _length; };
+    std::vector<cached_target_files_hash> get_hashes()
     {
         return _hashes;
     };
