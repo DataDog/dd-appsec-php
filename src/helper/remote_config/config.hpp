@@ -14,7 +14,7 @@ struct config {
 public:
     //@todo contents should be bytes
     //@todo hash should be map<string, string>
-    config(std::string product, std::string id, std::string contents,
+    config(std::string &product, std::string &id, std::string &contents,
         std::string hash, int version)
         : _product(product), _id(id), _contents(contents), _hash(hash),
           _version(version){};

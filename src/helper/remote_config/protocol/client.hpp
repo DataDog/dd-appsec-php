@@ -16,10 +16,9 @@ namespace dds::remote_config::protocol {
 
 struct client {
 public:
-    client(std::string &&id, std::vector<std::string> &&products,
+    client(std::string &id, std::vector<std::string> &products,
         client_tracer ct, client_state cs)
-        : _id(std::move(id)), _products(std::move(products)),
-          _client_tracer(ct), _client_state(cs){};
+        : _id(id), _products(products), _client_tracer(ct), _client_state(cs){};
     std::string get_id() { return _id; };
     std::vector<std::string> get_products() { return _products; };
     client_tracer get_tracer() { return _client_tracer; };

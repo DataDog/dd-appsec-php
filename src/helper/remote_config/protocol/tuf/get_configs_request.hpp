@@ -15,14 +15,14 @@ namespace dds::remote_config::protocol {
 struct get_configs_request {
 public:
     get_configs_request(client arg_client,
-        std::vector<cached_target_files> &&arg_cached_target_files)
-        : _client(arg_client),
-          _cached_target_files(std::move(arg_cached_target_files)){};
+        std::vector<cached_target_files> &arg_cached_target_files)
+        : _client(arg_client), _cached_target_files(arg_cached_target_files){};
 
     client get_client() { return _client; };
-    bool operator==(get_configs_request const& a) const {
+    bool operator==(get_configs_request const &a) const
+    {
         return this->_client == a._client &&
-        this->_cached_target_files == a._cached_target_files;
+               this->_cached_target_files == a._cached_target_files;
     }
     const std::vector<cached_target_files> get_cached_target_files()
     {

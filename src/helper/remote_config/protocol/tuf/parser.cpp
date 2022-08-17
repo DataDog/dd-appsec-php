@@ -81,9 +81,10 @@ remote_config_parser_result parse_target_files(
             return remote_config_parser_result::
                 target_files_raw_field_invalid_type;
         }
-        target_file tf(std::move(path_itr->value.GetString()),
-            std::move(raw_itr->value.GetString()));
-        output.add_target_file(std::move(tf));
+        std::string path(path_itr->value.GetString());
+        std::string raw(raw_itr->value.GetString());
+        target_file tf(path, raw);
+        output.add_target_file(tf);
     }
 
     return remote_config_parser_result::success;
@@ -101,7 +102,8 @@ remote_config_parser_result parse_client_configs(
                 client_config_field_invalid_entry;
         }
 
-        output.add_client_config(std::move(itr->GetString()));
+        std::string client_c(itr->GetString());
+        output.add_client_config(client_c);
     }
 
     return remote_config_parser_result::success;
@@ -153,9 +155,11 @@ remote_config_parser_result parse_target(
         return result;
     }
 
-    path path_object(v_itr->value.GetInt64(), sha256_itr->value.GetString(),
-        length_itr->value.GetInt64());
-    output->add_path(target_itr->name.GetString(), std::move(path_object));
+    std::string sha256(sha256_itr->value.GetString());
+    std::string target_name(target_itr->name.GetString());
+    path path_object(
+        v_itr->value.GetInt64(), sha256, length_itr->value.GetInt64());
+    output->add_path(target_name, path_object);
 
     return remote_config_parser_result::success;
 }

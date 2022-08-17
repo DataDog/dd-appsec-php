@@ -25,15 +25,12 @@ public:
         return _client_configs;
     };
     targets *get_targets() { return &_targets; };
-    void add_target_file(target_file &&tf)
+    void add_target_file(target_file &tf)
     {
         _target_files.insert(
-            std::pair<std::string, target_file>(tf.get_path(), std::move(tf)));
+            std::pair<std::string, target_file>(tf.get_path(), tf));
     };
-    void add_client_config(std::string &&cc)
-    {
-        _client_configs.push_back(std::move(cc));
-    };
+    void add_client_config(std::string &cc) { _client_configs.push_back(cc); };
 
 private:
     std::map<std::string, target_file> _target_files;

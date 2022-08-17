@@ -13,8 +13,7 @@ namespace dds::remote_config::protocol {
 
 struct target_file {
 public:
-    target_file(std::string &&path, std::string &&raw)
-        : _path(std::move(path)), _raw(std::move(raw)){};
+    target_file(std::string &path, std::string &raw) : _path(path), _raw(raw){};
     std::string get_path() { return _path; };
     std::string get_raw() { return _raw; };
     bool operator==(target_file const &b) const

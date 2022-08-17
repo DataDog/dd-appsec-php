@@ -20,8 +20,8 @@ public:
     config_path() = default;
     std::string get_id() { return _id; };
     std::string get_product() { return _product; };
-    void set_id(std::string &&id) { _id = std::move(id); };
-    void set_product(std::string &&product) { _product = std::move(product); };
+    void set_id(std::string &id) { _id = id; };
+    void set_product(std::string &product) { _product = product; };
 
 private:
     std::string _product;
@@ -33,13 +33,12 @@ protocol::remote_config_result config_path_from_path(
 
 class client {
 public:
-    client(http_api *arg_api, std::string &&id, std::string &&runtime_id,
-        std::string &&tracer_version, std::string &&service, std::string &&env,
-        std::string &&app_version, std::vector<product> &&products)
-        : _api(arg_api), _id(std::move(id)), _runtime_id(std::move(runtime_id)),
-          _tracer_version(std::move(tracer_version)),
-          _service(std::move(service)), _env(std::move(env)),
-          _app_version(std::move(app_version))
+    client(http_api *arg_api, std::string &id, std::string &runtime_id,
+        std::string &tracer_version, std::string &service, std::string &env,
+        std::string &app_version, std::vector<product> &products)
+        : _api(arg_api), _id(id), _runtime_id(runtime_id),
+          _tracer_version(tracer_version), _service(service), _env(env),
+          _app_version(app_version)
     {
         for (product p : products) {
             _products.insert(std::pair<std::string, remote_config::product>(

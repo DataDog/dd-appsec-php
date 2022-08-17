@@ -12,8 +12,8 @@ namespace dds::remote_config::protocol {
 
 struct path {
 public:
-    path(int v, std::string &&hash, int length)
-        : _custom_v(v), _hash(std::move(hash)), _length(length){};
+    path(int v, std::string &hash, int length)
+        : _custom_v(v), _hash(hash), _length(length){};
     int get_custom_v() { return _custom_v; };
     std::string get_hash() { return _hash; };
     int get_length() { return _length; };

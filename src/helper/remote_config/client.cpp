@@ -21,8 +21,10 @@ protocol::remote_config_result config_path_from_path(
         return protocol::remote_config_result::error;
     }
 
-    cp.set_product(base_match[2].str());
-    cp.set_id(base_match[3].str());
+    std::string product(base_match[2].str());
+    std::string id(base_match[3].str());
+    cp.set_product(product);
+    cp.set_id(id);
 
     return protocol::remote_config_result::success;
 }
@@ -37,27 +39,26 @@ protocol::get_configs_request client::generate_request()
             std::string c_id(_c.get_id());
             std::string c_product(_c.get_product());
             remote_config::protocol::config_state cs(
-                std::move(c_id), _c.get_version(), std::move(c_product));
+                c_id, _c.get_version(), c_product);
             config_states.push_back(cs);
         }
     }
 
-    protocol::client_tracer ct(std::move(this->_runtime_id),
-        std::move(this->_tracer_version), std::move(this->_service),
-        std::move(this->_env), std::move(this->_app_version));
+    protocol::client_tracer ct(this->_runtime_id, this->_tracer_version,
+        this->_service, this->_env, this->_app_version);
 
-    protocol::client_state cs(0, std::move(config_states),
-        !this->_last_poll_error.empty(), std::move(this->_last_poll_error),
-        std::move(this->_opaque_backend_state));
+    protocol::client_state cs(0, config_states, !this->_last_poll_error.empty(),
+        this->_last_poll_error, this->_opaque_backend_state);
     std::vector<std::string> products_str;
-    for(std::pair<std::string, product> pair: this->_products) {
+    for (std::pair<std::string, product> pair : this->_products) {
         products_str.push_back(pair.first);
     }
     dds::remote_config::protocol::client protocol_client(
-        std::move(this->_id), std::move(products_str), ct, cs);
+        this->_id, products_str, ct, cs);
 
-    protocol::get_configs_request request(
-        protocol_client, std::vector<protocol::cached_target_files>());
+    //@todo should files be emtpy?
+    std::vector<protocol::cached_target_files> files;
+    protocol::get_configs_request request(protocol_client, files);
 
     return request;
 };
@@ -103,9 +104,12 @@ protocol::remote_config_result client::process_response(
             return protocol::remote_config_result::error;
         }
 
-        config _config(cp.get_product(), cp.get_id(),
-            path_in_target_files->second.get_raw(), path_itr->second.get_hash(),
-            path_itr->second.get_custom_v());
+        std::string product = cp.get_product();
+        std::string id = cp.get_id();
+        std::string raw = path_in_target_files->second.get_raw();
+        std::string hash = path_itr->second.get_hash();
+        int custom_v = path_itr->second.get_custom_v();
+        config _config(product, id, raw, hash, custom_v);
         auto configs_itr = configs.find(cp.get_product());
         if (configs_itr ==
             configs.end()) { // Product not in configs yet. Create entry

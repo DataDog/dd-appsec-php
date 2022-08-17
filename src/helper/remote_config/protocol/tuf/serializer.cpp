@@ -144,7 +144,7 @@ remote_config_result serialize(get_configs_request request, std::string &output)
         return remote_config_result::error;
     }
 
-    output = std::move(buffer.get_string_ref());
+    output = buffer.get_string_ref();
     return remote_config_result::success;
 }
 

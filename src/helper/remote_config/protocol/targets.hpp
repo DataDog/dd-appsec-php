@@ -16,10 +16,9 @@ struct targets {
 public:
     int get_version() { return _version; };
     void set_version(int version) { _version = version; };
-    void add_path(std::string &&plain_path, path &&path_object)
+    void add_path(std::string &plain_path, path &path_object)
     {
-        paths.insert(std::pair<std::string, path>(
-            std::move(plain_path), std::move(path_object)));
+        paths.insert(std::pair<std::string, path>(plain_path, path_object));
     }
     std::map<std::string, path> get_paths() { return paths; };
     bool operator==(targets const &b) const
