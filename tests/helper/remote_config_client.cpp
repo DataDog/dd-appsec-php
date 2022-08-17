@@ -46,19 +46,28 @@ std::vector<remote_config::product> get_products(bool generate_state)
 {
     std::vector<remote_config::product> _products;
     int i = 0;
-    for (std::string product_str : products) {
-        remote_config::product _p(product_str);
-        if (generate_state) {
-            std::string contents = "some contents";
-            std::string hash = "some hash";
-            std::string id = std::to_string(i);
-            remote_config::config _config(product_str, id, contents, hash, i);
-            std::vector<remote_config::config> configs = {_config};
-            _p.assign_configs(configs);
-            _products.push_back(_p);
-        }
-        i++;
+    remote_config::product _p1(products[1]);
+    remote_config::product _p2(products[0]);
+    if (generate_state) {
+        // These values are extracted from the harcoded response/request
+        std::string contents01 = "aGVsbG8gdmVjdG9yIQ==";
+        std::string hash01 =
+            "c6a8cd53530b592a5097a3232ce49ca0806fa32473564c3ab386bebaea7d8740";
+        std::string id01 = "luke.steensen";
+        remote_config::config _config01(
+            products[1], id01, contents01, hash01, 3);
+        std::string contents02 =
+            "UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=";
+        std::string hash02 =
+            "47ed825647ad0ec6a789918890565d44c39a5e4bacd35bb34f9df38338912dae";
+        std::string id02 = "2.test1.config";
+        remote_config::config _config02(
+            products[1], id02, contents02, hash02, 1);
+        std::vector<remote_config::config> configs = {_config01, _config02};
+        _p1.assign_configs(configs);
     }
+    _products.push_back(_p1);
+    _products.push_back(_p2);
 
     return _products;
 }
@@ -71,11 +80,11 @@ remote_config::protocol::client generate_client(bool generate_state)
     std::vector<remote_config::protocol::config_state> config_states;
 
     if (generate_state) {
-        std::string id00 = "0";
-        std::string product00(products[0]);
-        remote_config::protocol::config_state cs00(id00, 0, product00);
-        std::string id01 = "1";
-        std::string product01(products[1]);
+        std::string id00 = "luke.steensen";
+        std::string product00("FEATURES");
+        remote_config::protocol::config_state cs00(id00, 3, product00);
+        std::string id01 = "2.test1.config";
+        std::string product01("FEATURES");
         remote_config::protocol::config_state cs01(id01, 1, product01);
 
         config_states.push_back(cs00);
@@ -480,36 +489,36 @@ TEST(RemoteConfigClient, ItReturnsErrorIfProductOnPathNotRequested)
         "product that was not requested"));
 }
 
-//TEST(RemoteConfigClient, ItGeneratesClientStateFromResponse)
-//{
-//    mock::api *const mock_api = new mock::api;
-//
-//    // First call should not contain state
-//    std::string first_request_no_state = generate_request_serialized(false);
-//    EXPECT_CALL(*mock_api, get_configs(first_request_no_state, _))
-//        .Times(1)
-//        .WillOnce(DoAll(mock::set_response_body(generate_example_response()),
-//            Return(remote_config::protocol::remote_config_result::success)));
-//
-//    // Second call. This should contain state from previous response
-//    std::string second_request_with_state = generate_request_serialized(false);
-//    EXPECT_CALL(*mock_api, get_configs(second_request_with_state, _))
-//        .Times(1)
-//        .WillOnce(DoAll(mock::set_response_body(generate_example_response()),
-//            Return(remote_config::protocol::remote_config_result::success)));
-//
-//    std::vector<remote_config::product> _products(get_products(false));
-//    dds::remote_config::client api_client(mock_api, id, runtime_id,
-//        tracer_version, service, env, app_version, _products);
-//
-//    auto result = api_client.poll();
-//
-//    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
-//
-//    result = api_client.poll();
-//    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
-//
-//    delete mock_api;
-//}
+TEST(RemoteConfigClient, ItGeneratesClientStateFromResponse)
+{
+    mock::api *const mock_api = new mock::api;
+
+    // First call should not contain state
+    std::string first_request_no_state = generate_request_serialized(false);
+    EXPECT_CALL(*mock_api, get_configs(first_request_no_state, _))
+        .Times(1)
+        .WillOnce(DoAll(mock::set_response_body(generate_example_response()),
+            Return(remote_config::protocol::remote_config_result::success)));
+
+    // Second call. This should contain state from previous response
+    std::string second_request_with_state = generate_request_serialized(true);
+    EXPECT_CALL(*mock_api, get_configs(second_request_with_state, _))
+        .Times(1)
+        .WillOnce(DoAll(mock::set_response_body(generate_example_response()),
+            Return(remote_config::protocol::remote_config_result::success)));
+
+    std::vector<remote_config::product> _products(get_products(false));
+    dds::remote_config::client api_client(mock_api, id, runtime_id,
+        tracer_version, service, env, app_version, _products);
+
+    auto result = api_client.poll();
+
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+
+    result = api_client.poll();
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+
+    delete mock_api;
+}
 
 } // namespace dds
