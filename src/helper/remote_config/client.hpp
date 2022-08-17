@@ -38,12 +38,13 @@ public:
         std::string &app_version, std::vector<std::string> &products)
         : _api(arg_api), _id(id), _runtime_id(runtime_id),
           _tracer_version(tracer_version), _service(service), _env(env),
-          _app_version(app_version), _targets_version(0)
+          _app_version(app_version), _targets_version(0),
+          _opaque_backend_state("")
     {
         for (std::string &p_str : products) {
             product p(p_str);
-            _products.insert(std::pair<std::string, remote_config::product>(
-                p_str, p));
+            _products.insert(
+                std::pair<std::string, remote_config::product>(p_str, p));
         }
     };
 

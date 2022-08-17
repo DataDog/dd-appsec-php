@@ -199,6 +199,26 @@ remote_config_parser_result parse_targets_signed(
         }
     }
 
+    rapidjson::Value::ConstMemberIterator custom_itr;
+    result = validate_field_is_present(targets_signed_itr, "custom",
+        rapidjson::kObjectType, custom_itr,
+        remote_config_parser_result::custom_signed_targets_field_missing,
+        remote_config_parser_result::custom_signed_targets_field_invalid);
+    if (result != remote_config_parser_result::success) {
+        return result;
+    }
+
+    rapidjson::Value::ConstMemberIterator opaque_backend_state_itr;
+    result = validate_field_is_present(custom_itr, "opaque_backend_state",
+        rapidjson::kStringType, opaque_backend_state_itr,
+        remote_config_parser_result::obs_custom_signed_targets_field_missing,
+        remote_config_parser_result::obs_custom_signed_targets_field_invalid);
+    if (result != remote_config_parser_result::success) {
+        return result;
+    }
+    _targets->set_opaque_backend_state(
+        opaque_backend_state_itr->value.GetString());
+
     return remote_config_parser_result::success;
 }
 
@@ -368,6 +388,14 @@ std::string remote_config_parser_result_to_str(
         return "length_path_targets_field_invalid";
     case remote_config_parser_result::length_path_targets_field_missing:
         return "length_path_targets_field_missing";
+    case remote_config_parser_result::custom_signed_targets_field_invalid:
+        return "custom_signed_targets_field_invalid";
+    case remote_config_parser_result::custom_signed_targets_field_missing:
+        return "custom_signed_targets_field_missing";
+    case remote_config_parser_result::obs_custom_signed_targets_field_invalid:
+        return "obs_custom_signed_targets_field_invalid";
+    case remote_config_parser_result::obs_custom_signed_targets_field_missing:
+        return "obs_custom_signed_targets_field_missing";
     }
 
     return "";

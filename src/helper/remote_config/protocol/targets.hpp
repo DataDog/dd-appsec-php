@@ -16,6 +16,10 @@ struct targets {
 public:
     int get_version() { return _version; };
     void set_version(int version) { _version = version; };
+    void set_opaque_backend_state(std::string opaque_backend_state)
+    {
+        _opaque_backend_state = opaque_backend_state;
+    };
     void add_path(std::string &plain_path, path &path_object)
     {
         paths.insert(std::pair<std::string, path>(plain_path, path_object));
@@ -30,6 +34,7 @@ public:
 
 private:
     int _version;
+    std::string _opaque_backend_state;
     std::map<std::string, path> paths;
 };
 
