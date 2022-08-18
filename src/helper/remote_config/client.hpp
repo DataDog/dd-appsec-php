@@ -35,16 +35,15 @@ class client {
 public:
     client(http_api *arg_api, std::string &id, std::string &runtime_id,
         std::string &tracer_version, std::string &service, std::string &env,
-        std::string &app_version, std::vector<std::string> &products)
+        std::string &app_version, std::vector<product> &products)
         : _api(arg_api), _id(id), _runtime_id(runtime_id),
           _tracer_version(tracer_version), _service(service), _env(env),
           _app_version(app_version), _targets_version(0),
           _opaque_backend_state("")
     {
-        for (std::string &p_str : products) {
-            product p(p_str);
-            _products.insert(
-                std::pair<std::string, remote_config::product>(p_str, p));
+        for (product &p : products) {
+            _products.insert(std::pair<std::string, remote_config::product>(
+                p.get_name(), p));
         }
     };
 
