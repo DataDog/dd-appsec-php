@@ -7,6 +7,7 @@
 #include "product.hpp"
 #include "protocol/tuf/parser.hpp"
 #include "protocol/tuf/serializer.hpp"
+#include <map>
 #include <regex>
 
 namespace dds::remote_config {
@@ -107,9 +108,10 @@ protocol::remote_config_result client::process_response(
         std::string product = cp.get_product();
         std::string id = cp.get_id();
         std::string raw = path_in_target_files->second.get_raw();
-        std::string hash = path_itr->second.get_hash();
+        std::map<std::string, std::string> hashes =
+            path_itr->second.get_hashes();
         int custom_v = path_itr->second.get_custom_v();
-        config _config(product, id, raw, hash, custom_v);
+        config _config(product, id, raw, hashes, custom_v);
         auto configs_itr = configs.find(cp.get_product());
         if (configs_itr ==
             configs.end()) { // Product not in configs yet. Create entry
@@ -127,7 +129,8 @@ protocol::remote_config_result client::process_response(
         _p->second.assign_configs(pair.second);
     }
     this->_targets_version = response.get_targets()->get_version();
-    this->_opaque_backend_state = response.get_targets()->get_opaque_backend_state();
+    this->_opaque_backend_state =
+        response.get_targets()->get_opaque_backend_state();
 
     return protocol::remote_config_result::success;
 }

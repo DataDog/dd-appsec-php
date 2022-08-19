@@ -137,13 +137,23 @@ remote_config_parser_result parse_target(
         return result;
     }
 
-    rapidjson::Value::ConstMemberIterator sha256_itr;
-    result = validate_field_is_present(hashes_itr, "sha256",
-        rapidjson::kStringType, sha256_itr,
-        remote_config_parser_result::sha256_path_targets_field_missing,
-        remote_config_parser_result::sha256_path_targets_field_invalid);
-    if (result != remote_config_parser_result::success) {
-        return result;
+    std::map<std::string, std::string> hashes_mapped;
+    auto hashes_object = hashes_itr->value.GetObject();
+    for (rapidjson::Value::ConstMemberIterator itr =
+             hashes_object.MemberBegin();
+         itr != hashes_object.MemberEnd(); ++itr) {
+        if (itr->value.GetType() != rapidjson::kStringType) {
+            return remote_config_parser_result::
+                hash_hashes_path_targets_field_invalid;
+        }
+
+        std::pair<std::string, std::string> hash_pair(
+            itr->name.GetString(), itr->value.GetString());
+        hashes_mapped.insert(hash_pair);
+    }
+
+    if (hashes_mapped.empty()) {
+        return remote_config_parser_result::hashes_path_targets_field_empty;
     }
 
     rapidjson::Value::ConstMemberIterator length_itr;
@@ -155,10 +165,9 @@ remote_config_parser_result parse_target(
         return result;
     }
 
-    std::string sha256(sha256_itr->value.GetString());
     std::string target_name(target_itr->name.GetString());
     path path_object(
-        v_itr->value.GetInt64(), sha256, length_itr->value.GetInt64());
+        v_itr->value.GetInt64(), hashes_mapped, length_itr->value.GetInt64());
     output->add_path(target_name, path_object);
 
     return remote_config_parser_result::success;
@@ -380,10 +389,6 @@ std::string remote_config_parser_result_to_str(
         return "hashes_path_targets_field_invalid";
     case remote_config_parser_result::hashes_path_targets_field_missing:
         return "hashes_path_targets_field_missing";
-    case remote_config_parser_result::sha256_path_targets_field_invalid:
-        return "sha256_path_targets_field_invalid";
-    case remote_config_parser_result::sha256_path_targets_field_missing:
-        return "sha256_path_targets_field_missing";
     case remote_config_parser_result::length_path_targets_field_invalid:
         return "length_path_targets_field_invalid";
     case remote_config_parser_result::length_path_targets_field_missing:
@@ -396,6 +401,10 @@ std::string remote_config_parser_result_to_str(
         return "obs_custom_signed_targets_field_invalid";
     case remote_config_parser_result::obs_custom_signed_targets_field_missing:
         return "obs_custom_signed_targets_field_missing";
+    case remote_config_parser_result::hashes_path_targets_field_empty:
+        return "hashes_path_targets_field_empty";
+    case remote_config_parser_result::hash_hashes_path_targets_field_invalid:
+        return "hash_hashes_path_targets_field_invalid";
     }
 
     return "";

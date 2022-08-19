@@ -17,28 +17,43 @@ std::string get_example_response()
 {
     std::string response(
         "{\"roots\": [], \"targets\": "
-        "\"eyJzaWduYXR1cmVzIjpbeyJrZXlpZCI6IjVjNGVjZTQxMjQxYTFiYjUxM2Y2ZTNlNWRm"
-        "NzRhYjdkNTE4M2RmZmZiZDcxYmZkNDMxMjc5MjBkODgwNTY5ZmQiLCJzaWciOiI0OWI5MG"
-        "Y1ZjRiZmMyN2NjYmQ4MGQ5Yzg0NThkN2QyMmJhOWZhMDg5MGZkNzc1ZGQxMTZjNTI4YjM2"
-        "ZGQ2MDViMWRmNzYxYjg3YjZjMGViOWIwMjY0MDVhMTNlZmVmNDgyNzkzNGQ2YzI1YTdkNm"
-        "I4OTI1ZmRhODkyNTgwOTAwZiJ9XSwic2lnbmVkIjp7Il90eXBlIjoidGFyZ2V0cyIsImN1"
-        "c3RvbSI6eyJvcGFxdWVfYmFja2VuZF9zdGF0ZSI6ImV5SjJaWEp6YVc5dUlqb3hMQ0p6ZE"
-        "dGMFpTSTZleUptYVd4bFgyaGhjMmhsY3lJNld5SlNLekpEVm10bGRFUnpZVzVwV2tkSmEw"
-        "WmFaRkpOVDJGWWEzVnpNREYxZWxRMU0zcG5lbWxTVEdFMFBTSXNJa0l3V21NM1QxSXJVbF"
-        "ZMY25kT2IwVkVXalkzVVhWNVdFbHJhMmN4YjJOSFZXUjNla1pzUzBkRFpGVTlJaXdpZUhG"
-        "cVRsVXhUVXhYVTNCUmJEWk5ha3hQVTJOdlNVSjJiM2xTZWxacmR6WnpOR0VyZFhWd09XZ3"
-        "dRVDBpWFgxOSJ9LCJleHBpcmVzIjoiMjAyMi0xMS0wNFQxMzozMTo1OVoiLCJzcGVjX3Zl"
-        "cnNpb24iOiIxLjAuMCIsInRhcmdldHMiOnsiZGF0YWRvZy8yL0FQTV9TQU1QTElORy9keW"
-        "5hbWljX3JhdGVzL2NvbmZpZyI6eyJjdXN0b20iOnsidiI6MzY3NDB9LCJoYXNoZXMiOnsi"
-        "c2hhMjU2IjoiMDc0NjVjZWNlNDdlNDU0MmFiYzBkYTA0MGQ5ZWJiNDJlYzk3MjI0OTIwZD"
-        "Y4NzA2NTFkYzMzMTY1Mjg2MDlkNSJ9LCJsZW5ndGgiOjY2Mzk5fSwiZGF0YWRvZy8yL0RF"
-        "QlVHL2x1a2Uuc3RlZW5zZW4vY29uZmlnIjp7ImN1c3RvbSI6eyJ2IjozfSwiaGFzaGVzIj"
-        "p7InNoYTI1NiI6ImM2YThjZDUzNTMwYjU5MmE1MDk3YTMyMzJjZTQ5Y2EwODA2ZmEzMjQ3"
-        "MzU2NGMzYWIzODZiZWJhZWE3ZDg3NDAifSwibGVuZ3RoIjoxM30sImVtcGxveWVlL0RFQl"
-        "VHX0RELzIudGVzdDEuY29uZmlnL2NvbmZpZyI6eyJjdXN0b20iOnsidiI6MX0sImhhc2hl"
-        "cyI6eyJzaGEyNTYiOiI0N2VkODI1NjQ3YWQwZWM2YTc4OTkxODg5MDU2NWQ0NGMzOWE1ZT"
-        "RiYWNkMzViYjM0ZjlkZjM4MzM4OTEyZGFlIn0sImxlbmd0aCI6NDF9fSwidmVyc2lvbiI6"
-        "Mjc0ODcxNTZ9fQ==\", \"target_files\": [{\"path\": "
+        "\"ewogICAgInNpZ25hdHVyZXMiOiBbCiAgICAgICAgewogICAgICAgICAgICAia2V5aWQi"
+        "OiAiNWM0ZWNlNDEyNDFhMWJiNTEzZjZlM2U1ZGY3NGFiN2Q1MTgzZGZmZmJkNzFiZmQ0Mz"
+        "EyNzkyMGQ4ODA1NjlmZCIsCiAgICAgICAgICAgICJzaWciOiAiNDliOTBmNWY0YmZjMjdj"
+        "Y2JkODBkOWM4NDU4ZDdkMjJiYTlmYTA4OTBmZDc3NWRkMTE2YzUyOGIzNmRkNjA1YjFkZj"
+        "c2MWI4N2I2YzBlYjliMDI2NDA1YTEzZWZlZjQ4Mjc5MzRkNmMyNWE3ZDZiODkyNWZkYTg5"
+        "MjU4MDkwMGYiCiAgICAgICAgfQogICAgXSwKICAgICJzaWduZWQiOiB7CiAgICAgICAgIl"
+        "90eXBlIjogInRhcmdldHMiLAogICAgICAgICJjdXN0b20iOiB7CiAgICAgICAgICAgICJv"
+        "cGFxdWVfYmFja2VuZF9zdGF0ZSI6ICJleUoyWlhKemFXOXVJam94TENKemRHRjBaU0k2ZX"
+        "lKbWFXeGxYMmhoYzJobGN5STZXeUpTS3pKRFZtdGxkRVJ6WVc1cFdrZEphMFphWkZKTlQy"
+        "RllhM1Z6TURGMWVsUTFNM3BuZW1sU1RHRTBQU0lzSWtJd1dtTTNUMUlyVWxWTGNuZE9iMF"
+        "ZFV2pZM1VYVjVXRWxyYTJjeGIyTkhWV1IzZWtac1MwZERaRlU5SWl3aWVIRnFUbFV4VFV4"
+        "WFUzQlJiRFpOYWt4UFUyTnZTVUoyYjNsU2VsWnJkelp6TkdFcmRYVndPV2d3UVQwaVhYMT"
+        "kiCiAgICAgICAgfSwKICAgICAgICAiZXhwaXJlcyI6ICIyMDIyLTExLTA0VDEzOjMxOjU5"
+        "WiIsCiAgICAgICAgInNwZWNfdmVyc2lvbiI6ICIxLjAuMCIsCiAgICAgICAgInRhcmdldH"
+        "MiOiB7CiAgICAgICAgICAgICJkYXRhZG9nLzIvQVBNX1NBTVBMSU5HL2R5bmFtaWNfcmF0"
+        "ZXMvY29uZmlnIjogewogICAgICAgICAgICAgICAgImN1c3RvbSI6IHsKICAgICAgICAgIC"
+        "AgICAgICAgICAidiI6IDM2NzQwCiAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAg"
+        "ICAgImhhc2hlcyI6IHsKICAgICAgICAgICAgICAgICAgICAic2hhMjU2IjogIjA3NDY1Y2"
+        "VjZTQ3ZTQ1NDJhYmMwZGEwNDBkOWViYjQyZWM5NzIyNDkyMGQ2ODcwNjUxZGMzMzE2NTI4"
+        "NjA5ZDUiLAogICAgICAgICAgICAgICAgICAgICJzaGE1MTIiOiAic2hhNTEyaGFzaGhlcm"
+        "UwMSIKICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICAgICAgICAibGVuZ3RoIjogNjYz"
+        "OTkKICAgICAgICAgICAgfSwKICAgICAgICAgICAgImRhdGFkb2cvMi9ERUJVRy9sdWtlLn"
+        "N0ZWVuc2VuL2NvbmZpZyI6IHsKICAgICAgICAgICAgICAgICJjdXN0b20iOiB7CiAgICAg"
+        "ICAgICAgICAgICAgICAgInYiOiAzCiAgICAgICAgICAgICAgICB9LAogICAgICAgICAgIC"
+        "AgICAgImhhc2hlcyI6IHsKICAgICAgICAgICAgICAgICAgICAic2hhMjU2IjogImM2YThj"
+        "ZDUzNTMwYjU5MmE1MDk3YTMyMzJjZTQ5Y2EwODA2ZmEzMjQ3MzU2NGMzYWIzODZiZWJhZW"
+        "E3ZDg3NDAiLAogICAgICAgICAgICAgICAgICAgICJzaGE1MTIiOiAic2hhNTEyaGFzaGhl"
+        "cmUwMiIKICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICAgICAgICAibGVuZ3RoIjogMT"
+        "MKICAgICAgICAgICAgfSwKICAgICAgICAgICAgImVtcGxveWVlL0RFQlVHX0RELzIudGVz"
+        "dDEuY29uZmlnL2NvbmZpZyI6IHsKICAgICAgICAgICAgICAgICJjdXN0b20iOiB7CiAgIC"
+        "AgICAgICAgICAgICAgICAgInYiOiAxCiAgICAgICAgICAgICAgICB9LAogICAgICAgICAg"
+        "ICAgICAgImhhc2hlcyI6IHsKICAgICAgICAgICAgICAgICAgICAic2hhMjU2IjogIjQ3ZW"
+        "Q4MjU2NDdhZDBlYzZhNzg5OTE4ODkwNTY1ZDQ0YzM5YTVlNGJhY2QzNWJiMzRmOWRmMzgz"
+        "Mzg5MTJkYWUiLAogICAgICAgICAgICAgICAgICAgICJzaGE1MTIiOiAic2hhNTEyaGFzaG"
+        "hlcmUwMyIKICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICAgICAgICAibGVuZ3RoIjog"
+        "NDEKICAgICAgICAgICAgfQogICAgICAgIH0sCiAgICAgICAgInZlcnNpb24iOiAyNzQ4Nz"
+        "E1NgogICAgfQp9\", \"target_files\": [{\"path\": "
         "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
         "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
         "{\"path\": \"datadog/2/DEBUG/luke.steensen/config\", \"raw\": "
@@ -962,7 +977,7 @@ TEST(RemoteConfigParser, HashesOnPathMustBeObject)
         result);
 }
 
-TEST(RemoteConfigParser, ShaHashesOnPathMustBePresent)
+TEST(RemoteConfigParser, AtLeastOneHashMustBePresent)
 {
     std::string invalid_response =
         ("{\"roots\": [], \"targets\": "
@@ -986,11 +1001,11 @@ TEST(RemoteConfigParser, ShaHashesOnPathMustBePresent)
     auto result = remote_config::protocol::parse(invalid_response, gcr);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
-                  sha256_path_targets_field_missing,
+                  hashes_path_targets_field_empty,
         result);
 }
 
-TEST(RemoteConfigParser, ShaHashesOnPathMustBeString)
+TEST(RemoteConfigParser, HashesOnPathMustBeString)
 {
     std::string invalid_response =
         ("{\"roots\": [], \"targets\": "
@@ -1015,7 +1030,7 @@ TEST(RemoteConfigParser, ShaHashesOnPathMustBeString)
     auto result = remote_config::protocol::parse(invalid_response, gcr);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
-                  sha256_path_targets_field_invalid,
+                  hash_hashes_path_targets_field_invalid,
         result);
 }
 
@@ -1100,25 +1115,31 @@ TEST(RemoteConfigParser, TargetsAreParsed)
     auto path_itr = paths.find("datadog/2/APM_SAMPLING/dynamic_rates/config");
     auto temp_path = path_itr->second;
     EXPECT_EQ(36740, temp_path.get_custom_v());
+    EXPECT_EQ(2, temp_path.get_hashes().size());
     EXPECT_EQ(
         "07465cece47e4542abc0da040d9ebb42ec97224920d6870651dc3316528609d5",
-        temp_path.get_hash());
+        temp_path.get_hashes()["sha256"]);
+    EXPECT_EQ("sha512hashhere01", temp_path.get_hashes()["sha512"]);
     EXPECT_EQ(66399, temp_path.get_length());
 
     path_itr = paths.find("datadog/2/DEBUG/luke.steensen/config");
     temp_path = path_itr->second;
     EXPECT_EQ(3, temp_path.get_custom_v());
+    EXPECT_EQ(2, temp_path.get_hashes().size());
     EXPECT_EQ(
         "c6a8cd53530b592a5097a3232ce49ca0806fa32473564c3ab386bebaea7d8740",
-        temp_path.get_hash());
+        temp_path.get_hashes()["sha256"]);
+    EXPECT_EQ("sha512hashhere02", temp_path.get_hashes()["sha512"]);
     EXPECT_EQ(13, temp_path.get_length());
 
     path_itr = paths.find("employee/DEBUG_DD/2.test1.config/config");
     temp_path = path_itr->second;
     EXPECT_EQ(1, temp_path.get_custom_v());
+    EXPECT_EQ(2, temp_path.get_hashes().size());
     EXPECT_EQ(
         "47ed825647ad0ec6a789918890565d44c39a5e4bacd35bb34f9df38338912dae",
-        temp_path.get_hash());
+        temp_path.get_hashes()["sha256"]);
+    EXPECT_EQ("sha512hashhere03", temp_path.get_hashes()["sha512"]);
     EXPECT_EQ(41, temp_path.get_length());
 }
 

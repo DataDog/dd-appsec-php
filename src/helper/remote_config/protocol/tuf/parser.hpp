@@ -47,8 +47,8 @@ enum class remote_config_parser_result {
     v_path_targets_field_missing,
     hashes_path_targets_field_invalid,
     hashes_path_targets_field_missing,
-    sha256_path_targets_field_invalid,
-    sha256_path_targets_field_missing,
+    hashes_path_targets_field_empty,
+    hash_hashes_path_targets_field_invalid,
     length_path_targets_field_invalid,
     length_path_targets_field_missing
 };
