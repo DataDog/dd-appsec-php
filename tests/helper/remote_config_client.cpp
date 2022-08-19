@@ -7,6 +7,7 @@
 #include <ctime>
 #include <iomanip>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -568,11 +569,22 @@ TEST(RemoteConfigClient, ItCallProductListenersOfUpdatedProduct)
         .WillOnce(DoAll(mock::set_response_body(response),
             Return(remote_config::protocol::remote_config_result::success)));
 
+    std::string product_str = "APM_SAMPLING";
+    std::string id_product = "dynamic_rates";
+    std::string content =
+        "UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=";
+    std::map<std::string, std::string> hashes = {std::pair<std::string,
+        std::string>("sha256",
+        "07465cece47e4542abc0da040d9ebb42ec97224920d6870651dc3316528609d5")};
+    remote_config::config expected_config(
+        product_str, id_product, content, hashes, 36740);
+    std::vector<remote_config::config> expected_configs = {expected_config};
+
     // Product on response
     mock::listener_mock listener01;
-    EXPECT_CALL(listener01, on_update(_)).Times(1);
+    EXPECT_CALL(listener01, on_update(expected_configs)).Times(1);
     mock::listener_mock listener02;
-    EXPECT_CALL(listener02, on_update(_)).Times(1);
+    EXPECT_CALL(listener02, on_update(expected_configs)).Times(1);
     std::vector<remote_config::product_listener *> listeners = {
         &listener01, &listener02};
     remote_config::product product("APM_SAMPLING", listeners);

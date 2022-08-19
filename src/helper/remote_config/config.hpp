@@ -27,6 +27,7 @@ public:
     std::string get_id() { return this->_id; };
     int get_version() const { return this->_version; };
     std::string get_product() { return this->_product; };
+    std::string get_contents() { return this->_contents; };
 
 private:
     std::string _product;
