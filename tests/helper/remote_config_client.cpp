@@ -4,7 +4,10 @@
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 
+#include <ctime>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -20,6 +23,21 @@
 #include "remote_config/protocol/tuf/serializer.hpp"
 
 namespace dds {
+
+class cout_listener : remote_config::product_listener {
+public:
+    void on_update(std::vector<remote_config::config> configs) override
+    {
+        std::cout << std::endl
+                  << "Product update " << std::endl
+                  << "---------------" << std::endl;
+        std::cout << "Updating " << configs[0].get_product() << " with config "
+                  << configs[0].get_id() << " version "
+                  << configs[0].get_version() << std::endl;
+    };
+    void on_unapply(std::vector<remote_config::config> configs) override{};
+};
+
 namespace mock {
 
 // The simple custom action
@@ -581,5 +599,40 @@ TEST(RemoteConfigClient, ItCallProductListenersOfUpdatedProduct)
 
     delete mock_api;
 }
+
+/*
+TEST(RemoteConfigClient, TestAgainstDocker)
+{
+    dds::cout_listener *listener = new dds::cout_listener();
+    std::vector<remote_config::product_listener *> listeners = {
+(remote_config::product_listener *)listener}; remote_config::product
+product("ASM_DD", listeners);
+
+    std::vector<dds::remote_config::product> _products = {product};
+
+    remote_config::http_api api;
+
+    auto t = std::time(nullptr);
+    auto tm = *std::localtime(&t);
+
+    std::ostringstream oss;
+    oss << std::put_time(&tm, "%d-%m-%Y %H-%M-%S");
+    auto current_id = oss.str();
+
+    dds::remote_config::client api_client(&api, current_id, runtime_id,
+tracer_version, service, env, app_version, _products);
+
+    std::cout << "First poll" << std::endl;
+    auto result = api_client.poll();
+
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+
+    sleep(6);
+    std::cout << "Second poll" << std::endl;
+    result = api_client.poll();
+
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+}
+*/
 
 } // namespace dds
