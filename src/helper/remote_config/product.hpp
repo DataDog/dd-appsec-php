@@ -15,7 +15,6 @@ namespace dds::remote_config {
 class product_listener_abstract {
 public:
     virtual void on_update(std::vector<remote_config::config> configs) = 0;
-    //@todo implement the unapply call
     virtual void on_unapply(std::vector<remote_config::config> configs) = 0;
 };
 
@@ -32,8 +31,28 @@ public:
         : _name(name), _listeners(listeners){};
     void assign_configs(std::vector<config> configs)
     {
-        _configs = configs;
-        for (product_listener *l : _listeners) { l->on_update(_configs); }
+        std::vector<config> to_update;
+        std::vector<config> to_keep;
+
+        for (config _config : configs) {
+            auto previous_config =
+                std::find(_configs.begin(), _configs.end(), _config);
+            if (previous_config == _configs.end()) { // New config
+                to_update.push_back(_config);
+            } else { // Already existed
+                //@todo compute if it is a new version
+                to_keep.push_back(_config);
+                _configs.erase(previous_config);
+            }
+        }
+
+        for (product_listener *l : _listeners) {
+            l->on_update(to_update);
+            l->on_unapply(_configs);
+        }
+        to_keep.insert(to_keep.end(), to_update.begin(), to_update.end());
+
+        _configs = to_keep;
     };
     std::vector<config> get_configs() { return this->_configs; };
     bool operator==(product const &b) const
