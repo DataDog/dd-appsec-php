@@ -164,9 +164,11 @@ static PHP_GSHUTDOWN_FUNCTION(ddappsec)
     int prev = atomic_fetch_add(&_thread_count, -1);
     if (prev == 1) {
         dd_log_shutdown();
+        zai_config_mshutdown();
     }
 #else
     dd_log_shutdown();
+    zai_config_mshutdown();
 #endif
 
     memset(ddappsec_globals, '\0', sizeof(*ddappsec_globals)); // NOLINT
@@ -210,13 +212,14 @@ static PHP_MSHUTDOWN_FUNCTION(ddappsec)
     UNUSED(type);
     UNUSED(module_number);
 
+    // no other thread is running now. reset config to global config only.
+    runtime_config_first_init = false;
+
     dd_tags_shutdown();
     dd_trace_shutdown();
     dd_helper_shutdown();
 
     dd_phpobj_shutdown();
-
-    zai_config_mshutdown();
 
     return SUCCESS;
 }
