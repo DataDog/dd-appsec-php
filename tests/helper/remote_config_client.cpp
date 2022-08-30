@@ -545,7 +545,7 @@ TEST(RemoteConfigClient, ItGeneratesClientStateFromResponse)
     delete mock_api;
 }
 
-TEST(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdate)
+TEST(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
 {
     mock::api *const mock_api = new mock::api;
 
@@ -688,6 +688,100 @@ TEST(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
         .Times(1)
         .RetiresOnSaturation();
     EXPECT_CALL(listener01, on_unapply(expected_configs_first_call))
+        .Times(1)
+        .RetiresOnSaturation();
+    // First poll expectations
+    EXPECT_CALL(listener01, on_update(expected_configs_first_call))
+        .Times(1)
+        .RetiresOnSaturation();
+    EXPECT_CALL(listener01, on_unapply(no_updates))
+        .Times(1)
+        .RetiresOnSaturation();
+    std::vector<remote_config::product_listener *> listeners = {&listener01};
+    remote_config::product product("APM_SAMPLING", listeners);
+
+    std::vector<dds::remote_config::product> _products = {product};
+
+    dds::remote_config::client api_client(mock_api, id, runtime_id,
+        tracer_version, service, env, app_version, _products);
+
+    auto result = api_client.poll();
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+
+    result = api_client.poll();
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+
+    delete mock_api;
+}
+
+TEST(
+    RemoteConfigClient, WhenAConfigGetsUpdatedOnFollowingPollsItCallsToUnUpdate)
+{
+    mock::api *const mock_api = new mock::api;
+
+    std::string response01(
+        "{\"roots\": [], \"targets\": "
+        "\"eyAgIAogICAgInNpZ25lZCI6IHsKICAgICAgICAiY3VzdG9tIjogewogICAgICAgICAg"
+        "ICAib3BhcXVlX2JhY2tlbmRfc3RhdGUiOiAic29tZXRoaW5nIgogICAgICAgIH0sCiAgIC"
+        "AgICAgInRhcmdldHMiOiB7CiAgICAgICAgICAgICJkYXRhZG9nLzIvQVBNX1NBTVBMSU5H"
+        "L2R5bmFtaWNfcmF0ZXMvY29uZmlnIjogewogICAgICAgICAgICAgICAgImN1c3RvbSI6IH"
+        "sKICAgICAgICAgICAgICAgICAgICAidiI6IDM2NzQwCiAgICAgICAgICAgICAgICB9LAog"
+        "ICAgICAgICAgICAgICAgImhhc2hlcyI6IHsKICAgICAgICAgICAgICAgICAgICAic2hhMj"
+        "U2IjogIjA3NDY1Y2VjZTQ3ZTQ1NDJhYmMwZGEwNDBkOWViYjQyZWM5NzIyNDkyMGQ2ODcw"
+        "NjUxZGMzMzE2NTI4NjA5ZDUiCiAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgIC"
+        "AgImxlbmd0aCI6IDY2Mzk5CiAgICAgICAgICAgIH0KICAgICAgICB9LAogICAgICAgICJ2"
+        "ZXJzaW9uIjogMjc0ODcxNTYKICAgIH0KfQ==\", \"target_files\": [{\"path\": "
+        "\"datadog/2/APM_SAMPLING/dynamic_rates/config\", \"raw\": "
+        "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"} ], "
+        "\"client_configs\": [\"datadog/2/APM_SAMPLING/dynamic_rates/config\"] "
+        "}");
+
+    std::string response02(
+        "{\"roots\": [], \"targets\": "
+        "\"eyJzaWduZWQiOiB7ImN1c3RvbSI6IHsib3BhcXVlX2JhY2tlbmRfc3RhdGUiOiAic29t"
+        "ZXRoaW5nIn0sICJ0YXJnZXRzIjogeyJkYXRhZG9nLzIvQVBNX1NBTVBMSU5HL2R5bmFtaW"
+        "NfcmF0ZXMvY29uZmlnIjogeyJjdXN0b20iOiB7InYiOiAzNjc0MCB9LCAiaGFzaGVzIjog"
+        "eyJzaGEyNTYiOiAiYW5vdGhlcl9oYXNoX2hlcmUifSwgImxlbmd0aCI6IDY2Mzk5IH0gfS"
+        "wgInZlcnNpb24iOiAyNzQ4NzE1NiB9IH0=\", \"target_files\": [{\"path\": "
+        "\"datadog/2/APM_SAMPLING/dynamic_rates/config\", \"raw\": "
+        "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"} ], "
+        "\"client_configs\": [\"datadog/2/APM_SAMPLING/dynamic_rates/config\"] "
+        "}");
+
+    EXPECT_CALL(*mock_api, get_configs(_, _))
+        .Times(2)
+        .WillOnce(DoAll(mock::set_response_body(response01),
+            Return(remote_config::protocol::remote_config_result::success)))
+        .WillOnce(DoAll(mock::set_response_body(response02),
+            Return(remote_config::protocol::remote_config_result::success)));
+
+    std::string product_str = "APM_SAMPLING";
+    std::string id_product = "dynamic_rates";
+    std::string content =
+        "UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=";
+    std::map<std::string, std::string> hashes_01 = {std::pair<std::string,
+        std::string>("sha256",
+        "07465cece47e4542abc0da040d9ebb42ec97224920d6870651dc3316528609d5")};
+    remote_config::config expected_config(
+        product_str, id_product, content, hashes_01, 36740);
+    std::vector<remote_config::config> expected_configs_first_call = {
+        expected_config};
+    std::vector<remote_config::config> no_updates;
+
+    std::map<std::string, std::string> hashes_02 = {
+        std::pair<std::string, std::string>("sha256", "another_hash_here")};
+    remote_config::config expected_config_02(
+        product_str, id_product, content, hashes_02, 36740);
+    std::vector<remote_config::config> expected_configs_second_call = {
+        expected_config_02};
+
+    // Product on response
+    mock::listener_mock listener01;
+    // Second poll expectations
+    EXPECT_CALL(listener01, on_update(expected_configs_second_call))
+        .Times(1)
+        .RetiresOnSaturation();
+    EXPECT_CALL(listener01, on_unapply(no_updates))
         .Times(1)
         .RetiresOnSaturation();
     // First poll expectations

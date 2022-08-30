@@ -28,6 +28,7 @@ public:
     int get_version() const { return this->_version; };
     std::string get_product() { return this->_product; };
     std::string get_contents() { return this->_contents; };
+    std::map<std::string, std::string> get_hashes() { return this->_hashes; };
 
 private:
     std::string _product;

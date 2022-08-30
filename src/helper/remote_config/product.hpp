@@ -35,13 +35,19 @@ public:
         std::vector<config> to_keep;
 
         for (config _config : configs) {
-            auto previous_config =
-                std::find(_configs.begin(), _configs.end(), _config);
+            auto previous_config = std::find_if(
+                _configs.begin(), _configs.end(), [&_config](config c) {
+                    return c.get_id() == _config.get_id();
+                });
             if (previous_config == _configs.end()) { // New config
                 to_update.push_back(_config);
             } else { // Already existed
-                //@todo compute if it is a new version
-                to_keep.push_back(_config);
+                if (_config.get_hashes() ==
+                    previous_config->get_hashes()) { // No changes in config
+                    to_keep.push_back(_config);
+                } else { // Config updated
+                    to_update.push_back(_config);
+                }
                 _configs.erase(previous_config);
             }
         }
