@@ -7,8 +7,6 @@
 
 #include <vector>
 
-#include "cached_target_file_hash.hpp"
-
 namespace dds::remote_config::protocol {
 
 struct target_file {

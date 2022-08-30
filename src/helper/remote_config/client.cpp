@@ -33,7 +33,10 @@ protocol::remote_config_result config_path_from_path(
 protocol::get_configs_request client::generate_request()
 {
     std::vector<remote_config::protocol::config_state> config_states;
+    std::vector<protocol::cached_target_files> files;
+
     for (std::pair<std::string, product> pair : this->_products) {
+        // State
         auto configs_on_product = pair.second.get_configs();
         for (config _c : configs_on_product) {
             std::string c_id(_c.get_id());
@@ -41,6 +44,21 @@ protocol::get_configs_request client::generate_request()
             remote_config::protocol::config_state cs(
                 c_id, _c.get_version(), c_product);
             config_states.push_back(cs);
+        }
+
+        // Cached files
+        auto configs = pair.second.get_configs();
+        for (config c : configs) {
+            std::vector<protocol::cached_target_files_hash> hashes;
+            for (std::pair<std::string, std::string> hash_pair :
+                c.get_hashes()) {
+                protocol::cached_target_files_hash hash(
+                    hash_pair.first, hash_pair.second);
+                hashes.push_back(hash);
+            }
+            std::string path = c.get_path();
+            protocol::cached_target_files file(path, c.get_length(), hashes);
+            files.push_back(file);
         }
     }
 
@@ -57,8 +75,6 @@ protocol::get_configs_request client::generate_request()
     dds::remote_config::protocol::client protocol_client(
         this->_id, products_str, ct, cs);
 
-    //@todo should files be emtpy?
-    std::vector<protocol::cached_target_files> files;
     protocol::get_configs_request request(protocol_client, files);
 
     return request;
@@ -82,19 +98,43 @@ protocol::remote_config_result client::process_response(
 
         // Is path on targets?
         auto path_itr = paths_on_targets.find(path);
+        int lenght;
         if (path_itr == paths_on_targets.end()) {
             // Not found
             this->_last_poll_error = "missing config " + path + " in targets";
             return protocol::remote_config_result::error;
         }
+        lenght = path_itr->second.get_length();
 
         // Is path on target_files?
         auto path_in_target_files = target_files.find(path);
+        std::string raw;
         if (path_in_target_files == target_files.end()) {
-            // Not found
-            this->_last_poll_error =
-                "missing config " + path + " in target files";
-            return protocol::remote_config_result::error;
+            // Check if file in cache
+            auto product = this->_products.find(cp.get_product());
+            if (product == this->_products.end()) {
+                // Not found
+                this->_last_poll_error = "missing config " + path +
+                                         " in target files and in cache files";
+                return protocol::remote_config_result::error;
+            }
+
+            auto config_itr =
+                std::find_if(product->second.get_configs().begin(),
+                    product->second.get_configs().end(),
+                    [&cp](config c) { return c.get_id() == cp.get_id(); });
+
+            if (config_itr == product->second.get_configs().end()) {
+                // Not found
+                this->_last_poll_error = "missing config " + path +
+                                         " in target files and in cache files";
+                return protocol::remote_config_result::error;
+            }
+
+            raw = config_itr->get_contents();
+            lenght = config_itr->get_length();
+        } else {
+            raw = path_in_target_files->second.get_raw();
         }
 
         // Is product on the requested ones?
@@ -107,11 +147,11 @@ protocol::remote_config_result client::process_response(
 
         std::string product = cp.get_product();
         std::string id = cp.get_id();
-        std::string raw = path_in_target_files->second.get_raw();
         std::map<std::string, std::string> hashes =
             path_itr->second.get_hashes();
         int custom_v = path_itr->second.get_custom_v();
-        config _config(product, id, raw, hashes, custom_v);
+        std::string path_c = path;
+        config _config(product, id, raw, hashes, custom_v, path_c, lenght);
         auto configs_itr = configs.find(cp.get_product());
         if (configs_itr ==
             configs.end()) { // Product not in configs yet. Create entry

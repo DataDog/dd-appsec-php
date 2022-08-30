@@ -161,23 +161,50 @@ std::string generate_example_response()
 }
 
 remote_config::protocol::get_configs_request generate_request(
-    bool generate_state)
+    bool generate_state, bool generate_cache)
 {
     dds::remote_config::protocol::client protocol_client =
         generate_client(generate_state);
     std::vector<remote_config::protocol::cached_target_files> files;
+    if (generate_cache) {
+        // First cached file
+        std::string hash_key = "sha256";
+        std::string hash_value_01 =
+            "c6a8cd53530b592a5097a3232ce49ca0806fa32473564c3ab386bebaea7d8740";
+        remote_config::protocol::cached_target_files_hash hash01(
+            hash_key, hash_value_01);
+        std::vector<remote_config::protocol::cached_target_files_hash>
+            hashes01 = {hash01};
+        std::string path01 = "datadog/2/FEATURES/luke.steensen/config";
+        remote_config::protocol::cached_target_files file01(
+            path01, 13, hashes01);
+        files.push_back(file01);
+
+        // Second cached file
+        std::string hash_value_02 =
+            "47ed825647ad0ec6a789918890565d44c39a5e4bacd35bb34f9df38338912dae";
+        remote_config::protocol::cached_target_files_hash hash02(
+            hash_key, hash_value_02);
+        std::vector<remote_config::protocol::cached_target_files_hash>
+            hashes02 = {hash02};
+        std::string path02 = "employee/FEATURES/2.test1.config/config";
+        remote_config::protocol::cached_target_files file02(
+            path02, 41, hashes02);
+        files.push_back(file02);
+    }
     remote_config::protocol::get_configs_request request(
         protocol_client, files);
 
     return request;
 }
 
-std::string generate_request_serialized(bool generate_state)
+std::string generate_request_serialized(
+    bool generate_state, bool generate_cache)
 {
     std::string request_serialized;
 
     remote_config::protocol::serialize(
-        generate_request(generate_state), request_serialized);
+        generate_request(generate_state, generate_cache), request_serialized);
 
     return request_serialized;
 }
@@ -232,7 +259,7 @@ TEST(RemoteConfigClient, ItReturnsErrorIfApiReturnsError)
 TEST(RemoteConfigClient, ItCallsToApiOnPoll)
 {
     // First poll dont have state
-    std::string expected_request = generate_request_serialized(false);
+    std::string expected_request = generate_request_serialized(false, false);
 
     mock::api *const mock_api = new mock::api;
     EXPECT_CALL(*mock_api, get_configs(expected_request, _))
@@ -367,7 +394,7 @@ TEST(RemoteConfigClient,
         remote_config::protocol::remote_config_result::error, poll_result);
     EXPECT_TRUE(validate_request_has_error(request_sent, true,
         "missing config datadog/2/APM_SAMPLING/dynamic_rates/config in "
-        "target files"));
+        "target files and in cache files"));
 }
 
 TEST(ClientConfig, ItGetGeneratedFromString)
@@ -513,20 +540,22 @@ TEST(RemoteConfigClient, ItReturnsErrorIfProductOnPathNotRequested)
         "product that was not requested"));
 }
 
-TEST(RemoteConfigClient, ItGeneratesClientStateFromResponse)
+TEST(RemoteConfigClient, ItGeneratesClientStateAndCacheFromResponse)
 {
     mock::api *const mock_api = new mock::api;
 
-    // First call should not contain state
-    std::string first_request_no_state = generate_request_serialized(false);
-    EXPECT_CALL(*mock_api, get_configs(first_request_no_state, _))
+    // First call should not contain state neither cache
+    std::string first_request_no_state_no_cache =
+        generate_request_serialized(false, false);
+    EXPECT_CALL(*mock_api, get_configs(first_request_no_state_no_cache, _))
         .Times(1)
         .WillOnce(DoAll(mock::set_response_body(generate_example_response()),
             Return(remote_config::protocol::remote_config_result::success)));
 
-    // Second call. This should contain state from previous response
-    std::string second_request_with_state = generate_request_serialized(true);
-    EXPECT_CALL(*mock_api, get_configs(second_request_with_state, _))
+    // Second call. This should contain state and cache from previous response
+    std::string second_request_with_state_and_cache =
+        generate_request_serialized(true, true);
+    EXPECT_CALL(*mock_api, get_configs(second_request_with_state_and_cache, _))
         .Times(1)
         .WillOnce(DoAll(mock::set_response_body(generate_example_response()),
             Return(remote_config::protocol::remote_config_result::success)));
@@ -573,13 +602,14 @@ TEST(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
 
     std::string product_str = "APM_SAMPLING";
     std::string id_product = "dynamic_rates";
+    std::string path = "datadog/2/APM_SAMPLING/dynamic_rates/config";
     std::string content =
         "UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=";
     std::map<std::string, std::string> hashes = {std::pair<std::string,
         std::string>("sha256",
         "07465cece47e4542abc0da040d9ebb42ec97224920d6870651dc3316528609d5")};
     remote_config::config expected_config(
-        product_str, id_product, content, hashes, 36740);
+        product_str, id_product, content, hashes, 36740, path, 66399);
     std::vector<remote_config::config> expected_configs = {expected_config};
 
     // Product on response
@@ -664,20 +694,22 @@ TEST(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
 
     std::string product_str = "APM_SAMPLING";
     std::string id_product = "dynamic_rates";
+    std::string path_01 = "datadog/2/APM_SAMPLING/dynamic_rates/config";
     std::string content =
         "UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=";
     std::map<std::string, std::string> hashes = {std::pair<std::string,
         std::string>("sha256",
         "07465cece47e4542abc0da040d9ebb42ec97224920d6870651dc3316528609d5")};
     remote_config::config expected_config(
-        product_str, id_product, content, hashes, 36740);
+        product_str, id_product, content, hashes, 36740, path_01, 66399);
     std::vector<remote_config::config> expected_configs_first_call = {
         expected_config};
     std::vector<remote_config::config> no_updates;
 
     std::string id_product_02 = "another_one";
+    std::string path_02 = "datadog/2/APM_SAMPLING/another_one/config";
     remote_config::config expected_config_02(
-        product_str, id_product_02, content, hashes, 36740);
+        product_str, id_product_02, content, hashes, 36740, path_02, 66399);
     std::vector<remote_config::config> expected_configs_second_call = {
         expected_config_02};
 
@@ -757,13 +789,14 @@ TEST(
 
     std::string product_str = "APM_SAMPLING";
     std::string id_product = "dynamic_rates";
+    std::string path = "datadog/2/APM_SAMPLING/dynamic_rates/config";
     std::string content =
         "UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=";
     std::map<std::string, std::string> hashes_01 = {std::pair<std::string,
         std::string>("sha256",
         "07465cece47e4542abc0da040d9ebb42ec97224920d6870651dc3316528609d5")};
     remote_config::config expected_config(
-        product_str, id_product, content, hashes_01, 36740);
+        product_str, id_product, content, hashes_01, 36740, path, 66399);
     std::vector<remote_config::config> expected_configs_first_call = {
         expected_config};
     std::vector<remote_config::config> no_updates;
@@ -771,7 +804,7 @@ TEST(
     std::map<std::string, std::string> hashes_02 = {
         std::pair<std::string, std::string>("sha256", "another_hash_here")};
     remote_config::config expected_config_02(
-        product_str, id_product, content, hashes_02, 36740);
+        product_str, id_product, content, hashes_02, 36740, path, 66399);
     std::vector<remote_config::config> expected_configs_second_call = {
         expected_config_02};
 
