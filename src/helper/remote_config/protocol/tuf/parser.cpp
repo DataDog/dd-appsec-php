@@ -8,8 +8,8 @@
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 
-#include <base64.h>
 #include "parser.hpp"
+#include <base64.h>
 
 namespace dds::remote_config::protocol {
 
@@ -238,13 +238,12 @@ remote_config_parser_result parse_targets(
     std::string targets_encoded_content = targets_itr->value.GetString();
 
     if (targets_encoded_content.size() == 0) {
-        return remote_config_parser_result::targets_field_empty;
+        return remote_config_parser_result::success;
     }
 
     std::string base64_decoded;
     try {
-        base64_decoded =
-            base64_decode(targets_encoded_content, true);
+        base64_decoded = base64_decode(targets_encoded_content, true);
     } catch (std::runtime_error error) {
         return remote_config_parser_result::targets_field_invalid_base64;
     }
@@ -335,8 +334,6 @@ std::string remote_config_parser_result_to_str(
         return "success";
     case remote_config_parser_result::invalid_json:
         return "invalid_json";
-    case remote_config_parser_result::targets_field_empty:
-        return "targets_field_empty";
     case remote_config_parser_result::targets_field_invalid_base64:
         return "targets_field_invalid_base64";
     case remote_config_parser_result::targets_field_invalid_json:

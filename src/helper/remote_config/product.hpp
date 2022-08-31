@@ -20,8 +20,29 @@ public:
 
 class product_listener : product_listener_abstract {
 public:
-    void on_update(std::vector<remote_config::config> configs) override{};
-    void on_unapply(std::vector<remote_config::config> configs) override{};
+    void on_update(std::vector<remote_config::config> configs) override{
+        //        std::cout << "On on_update - " << configs.size() << std::endl;
+        //        for (config c : configs) {
+        //            std::cout << "\t" << c.get_product() << " - " <<
+        //            c.get_id() << " - "
+        //                      << c.get_length() << " - " << c.get_path() << "
+        //                      - "
+        //                      << c.get_contents() << " - " << c.get_version()
+        //                      << std::endl;
+        //        }
+    };
+    void on_unapply(std::vector<remote_config::config> configs) override{
+        //        std::cout << "On on_unapply - " << configs.size() <<
+        //        std::endl;
+        //        for (config c : configs) {
+        //            std::cout << "\t" << c.get_product() << " - " <<
+        //            c.get_id() << " - "
+        //                      << c.get_length() << " - " << c.get_path() << "
+        //                      - "
+        //                      << c.get_contents() << " - " << c.get_version()
+        //                      << std::endl;
+        //        }
+    };
 };
 
 struct product {

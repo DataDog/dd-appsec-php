@@ -164,10 +164,16 @@ protocol::remote_config_result client::process_response(
     }
 
     // Since there have not been errors, we can now update product configs
-    for (std::pair<std::string, std::vector<config>> pair : configs) {
-        auto _p = this->_products.find(pair.first);
-        _p->second.assign_configs(pair.second);
+    for (auto it = std::begin(this->_products); it != std::end(this->_products);
+         ++it) {
+        auto product_configs = configs.find(it->first);
+        if (product_configs != configs.end()) {
+            it->second.assign_configs(product_configs->second);
+        } else {
+            it->second.assign_configs({});
+        }
     }
+
     this->_targets_version = response.get_targets()->get_version();
     this->_opaque_backend_state =
         response.get_targets()->get_opaque_backend_state();

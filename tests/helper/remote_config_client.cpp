@@ -123,6 +123,13 @@ remote_config::protocol::client generate_client(bool generate_state)
     return client;
 }
 
+std::string generate_empty_response()
+{
+    return ("{\"roots\": [], \"targets\": \"\", \"target_files\": [], "
+            "\"client_configs\": [] "
+            "}");
+}
+
 std::string generate_example_response()
 {
     std::string response(
@@ -625,16 +632,17 @@ TEST(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
     remote_config::product product("APM_SAMPLING", listeners);
 
     // Product on response
-    mock::listener_mock listener_not_called01;
-    EXPECT_CALL(listener_not_called01, on_update(_)).Times(0);
-    EXPECT_CALL(listener_not_called01, on_unapply(_)).Times(0);
-    mock::listener_mock listener_not_called02;
-    EXPECT_CALL(listener_not_called02, on_update(_)).Times(0);
-    EXPECT_CALL(listener_not_called02, on_unapply(_)).Times(0);
-    std::vector<remote_config::product_listener *> listeners_not_called = {
-        &listener_not_called01, &listener_not_called02};
+    mock::listener_mock listener_called_no_configs01;
+    EXPECT_CALL(listener_called_no_configs01, on_update(no_updates)).Times(1);
+    EXPECT_CALL(listener_called_no_configs01, on_unapply(no_updates)).Times(1);
+    mock::listener_mock listener_called_no_configs02;
+    EXPECT_CALL(listener_called_no_configs02, on_update(no_updates)).Times(1);
+    EXPECT_CALL(listener_called_no_configs02, on_unapply(no_updates)).Times(1);
+    std::vector<remote_config::product_listener *>
+        listeners_called_with_no_configs = {
+            &listener_called_no_configs01, &listener_called_no_configs02};
     remote_config::product product_not_in_response(
-        "NOT_IN_RESPONSE", listeners);
+        "NOT_IN_RESPONSE", listeners_called_with_no_configs);
 
     std::vector<dds::remote_config::product> _products = {
         product, product_not_in_response};
@@ -837,6 +845,47 @@ TEST(
 
     result = api_client.poll();
     EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+
+    delete mock_api;
+}
+
+TEST(RemoteConfigClient, NotTrackedFilesAreDeletedFromCache)
+{
+    mock::api *const mock_api = new mock::api;
+
+    std::string request_sent;
+    EXPECT_CALL(*mock_api, get_configs(_, _))
+        .Times(3)
+        .WillOnce(DoAll(mock::set_response_body(generate_example_response()),
+            Return(remote_config::protocol::remote_config_result::success)))
+        .WillOnce(DoAll(mock::set_response_body(generate_empty_response()),
+            Return(remote_config::protocol::remote_config_result::success)))
+        .WillOnce(DoAll(testing::SaveArg<0>(&request_sent),
+            mock::set_response_body(generate_empty_response()),
+            Return(remote_config::protocol::remote_config_result::success)));
+
+    std::vector<dds::remote_config::product> _products = {get_products()};
+
+    dds::remote_config::client api_client(mock_api, id, runtime_id,
+        tracer_version, service, env, app_version, _products);
+
+    auto result = api_client.poll();
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+
+    result = api_client.poll();
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+
+    result = api_client.poll();
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+
+    // Lets validate cached_target_files is empty
+    rapidjson::Document serialized_doc;
+    serialized_doc.Parse(request_sent);
+    auto output_itr = serialized_doc.FindMember("cached_target_files");
+
+    EXPECT_FALSE(output_itr == serialized_doc.MemberEnd());
+    EXPECT_TRUE(rapidjson::kArrayType == output_itr->value.GetType());
+    EXPECT_EQ(0, output_itr->value.GetArray().Size());
 
     delete mock_api;
 }

@@ -16,7 +16,6 @@ namespace dds::remote_config::protocol {
 enum class remote_config_parser_result {
     success,
     invalid_json,
-    targets_field_empty,
     targets_field_invalid_base64,
     targets_field_invalid_json,
     targets_field_missing,
