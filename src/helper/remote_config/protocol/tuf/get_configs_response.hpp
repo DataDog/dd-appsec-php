@@ -20,10 +20,7 @@ public:
     {
         return _target_files;
     };
-    const std::vector<std::string> get_client_configs()
-    {
-        return _client_configs;
-    };
+    std::vector<std::string> get_client_configs() { return _client_configs; };
     targets *get_targets() { return &_targets; };
     void add_target_file(target_file &tf)
     {

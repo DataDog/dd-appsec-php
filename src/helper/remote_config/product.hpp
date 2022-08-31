@@ -51,7 +51,7 @@ public:
     explicit product(
         std::string &name, std::vector<product_listener *> &listeners)
         : _name(name), _listeners(listeners){};
-    void assign_configs(std::vector<config> configs)
+    void assign_configs(std::vector<config> &configs)
     {
         std::vector<config> to_update;
         std::vector<config> to_keep;

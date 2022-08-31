@@ -15,9 +15,9 @@ struct path {
 public:
     path(int v, std::map<std::string, std::string> &hashes, int length)
         : _custom_v(v), _hashes(hashes), _length(length){};
-    int get_custom_v() { return _custom_v; };
+    [[nodiscard]] int get_custom_v() const { return _custom_v; };
     std::map<std::string, std::string> get_hashes() { return _hashes; };
-    int get_length() { return _length; };
+    [[nodiscard]] int get_length() const { return _length; };
     bool operator==(path const &b) const
     {
         return this->_custom_v == b._custom_v && this->_hashes == b._hashes &&

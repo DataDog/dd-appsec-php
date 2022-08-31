@@ -19,9 +19,9 @@ public:
         : _targets_version(targets_version), _config_states(cs),
           _has_error(has_error), _error(error),
           _backend_client_state(backend_client_state){};
-    int get_targets_version() { return _targets_version; };
+    [[nodiscard]] int get_targets_version() const { return _targets_version; };
     std::vector<config_state> get_config_states() { return _config_states; };
-    bool get_has_error() { return _has_error; };
+    bool get_has_error() const { return _has_error; };
     std::string get_error() { return _error; };
     std::string get_backend_client_state() { return _backend_client_state; };
     bool operator==(client_state const &b) const

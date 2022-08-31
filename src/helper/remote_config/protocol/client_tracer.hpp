@@ -11,7 +11,9 @@ namespace dds::remote_config::protocol {
 
 struct client_tracer {
 public:
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     client_tracer(std::string &runtime_id, std::string &tracer_version,
+        // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
         std::string &service, std::string &env, std::string &app_version)
         : _runtime_id(runtime_id), _tracer_version(tracer_version),
           _service(service), _env(env), _app_version(app_version){};

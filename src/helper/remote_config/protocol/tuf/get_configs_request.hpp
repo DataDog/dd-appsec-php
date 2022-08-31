@@ -24,7 +24,7 @@ public:
         return this->_client == a._client &&
                this->_cached_target_files == a._cached_target_files;
     }
-    const std::vector<cached_target_files> get_cached_target_files()
+    std::vector<cached_target_files> get_cached_target_files()
     {
         return _cached_target_files;
     };

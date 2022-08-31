@@ -14,6 +14,7 @@ namespace dds::remote_config {
 struct config {
 public:
     //@todo contents should be bytes
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     config(std::string &product, std::string &id, std::string &contents,
         std::map<std::string, std::string> &hashes, int version,
         std::string &path, int length)

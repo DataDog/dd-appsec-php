@@ -11,7 +11,6 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/version.hpp>
-#include <boost/lexical_cast.hpp>
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -22,6 +21,8 @@ namespace net = boost::asio;    // from <boost/asio.hpp>
 using tcp = net::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
 namespace dds::remote_config {
+
+static const int version = 11;
 
 class http_api : api {
 public:
@@ -51,15 +52,15 @@ public:
             http::request<http::string_body> req;
             req.method(http::verb::post);
             req.target(target);
-            req.version(11);
+            req.version(version);
             req.set(http::field::host, host);
             req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-            req.set(http::field::content_length,
-                boost::lexical_cast<std::string>(request.size()));
+            req.set(
+                http::field::content_length, std::to_string(request.size()));
             req.set(http::field::accept, "*/*");
             req.set(
                 http::field::content_type, "application/x-www-form-urlencoded");
-            req.body() = request.c_str();
+            req.body() = request;
             req.keep_alive(true);
 
             // Send the HTTP request to the remote host
@@ -83,8 +84,9 @@ public:
             // not_connected happens sometimes
             // so don't bother reporting it.
             //
-            if (ec && ec != beast::errc::not_connected)
+            if (ec && ec != beast::errc::not_connected) {
                 throw beast::system_error{ec};
+            }
 
             // If we get here then the connection is closed gracefully
         } catch (std::exception const &e) {

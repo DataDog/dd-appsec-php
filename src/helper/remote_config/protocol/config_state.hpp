@@ -14,7 +14,7 @@ public:
     config_state(std::string &id, int version, std::string &product)
         : _id(id), _version(version), _product(product){};
     std::string get_id() { return _id; };
-    int get_version() { return _version; };
+    [[nodiscard]] int get_version() const { return _version; };
     std::string get_product() { return _product; };
     bool operator==(config_state const &b) const
     {

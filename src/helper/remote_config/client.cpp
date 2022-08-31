@@ -171,7 +171,8 @@ protocol::remote_config_result client::process_response(
         if (product_configs != configs.end()) {
             it->second.assign_configs(product_configs->second);
         } else {
-            it->second.assign_configs({});
+            std::vector<config> empty;
+            it->second.assign_configs(empty);
         }
     }
 

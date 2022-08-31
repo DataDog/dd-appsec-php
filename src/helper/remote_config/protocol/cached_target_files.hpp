@@ -17,7 +17,7 @@ public:
         std::vector<cached_target_files_hash> &hashes)
         : _path(path), _length(length), _hashes(hashes){};
     std::string get_path() { return _path; };
-    int get_length() { return _length; };
+    [[nodiscard]] int get_length() const { return _length; };
     std::vector<cached_target_files_hash> get_hashes() { return _hashes; };
     bool operator==(cached_target_files const &b) const
     {

@@ -167,7 +167,7 @@ remote_config_parser_result parse_target(
 
     std::string target_name(target_itr->name.GetString());
     path path_object(
-        v_itr->value.GetInt64(), hashes_mapped, length_itr->value.GetInt64());
+        v_itr->value.GetInt(), hashes_mapped, length_itr->value.GetInt());
     output->add_path(target_name, path_object);
 
     return remote_config_parser_result::success;
@@ -188,7 +188,7 @@ remote_config_parser_result parse_targets_signed(
     }
 
     targets *_targets = output.get_targets();
-    _targets->set_version(version_itr->value.GetInt64());
+    _targets->set_version(version_itr->value.GetInt());
 
     rapidjson::Value::ConstMemberIterator targets_itr;
     result = validate_field_is_present(targets_signed_itr, "targets",
@@ -225,8 +225,8 @@ remote_config_parser_result parse_targets_signed(
     if (result != remote_config_parser_result::success) {
         return result;
     }
-    _targets->set_opaque_backend_state(
-        opaque_backend_state_itr->value.GetString());
+    std::string obs = opaque_backend_state_itr->value.GetString();
+    _targets->set_opaque_backend_state(obs);
 
     return remote_config_parser_result::success;
 }
