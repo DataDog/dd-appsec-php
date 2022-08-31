@@ -7,6 +7,7 @@
 #include "product.hpp"
 #include "protocol/tuf/parser.hpp"
 #include "protocol/tuf/serializer.hpp"
+#include <algorithm>
 #include <map>
 #include <regex>
 

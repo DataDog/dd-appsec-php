@@ -6,6 +6,7 @@
 #pragma once
 
 #include "config.hpp"
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <vector>
