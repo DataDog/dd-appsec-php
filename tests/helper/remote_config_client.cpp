@@ -130,8 +130,18 @@ std::string generate_empty_response()
             "}");
 }
 
-std::string generate_example_response()
+std::string generate_example_response(bool add_target_files)
 {
+    std::string target_files = "";
+
+    if (add_target_files) {
+        target_files =
+            "{\"path\": "
+            "\"employee/FEATURES/2.test1.config/config\", \"raw\": "
+            "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
+            "{\"path\": \"datadog/2/FEATURES/luke.steensen/config\", \"raw\": "
+            "\"aGVsbG8gdmVjdG9yIQ==\"}";
+    }
     std::string response(
         "{\"roots\": [], \"targets\": "
         "\"eyJzaWduYXR1cmVzIjogW3sia2V5aWQiOiAiNWM0ZWNlNDEyNDFhMWJiNTEzZjZlM2U1"
@@ -156,11 +166,9 @@ std::string generate_example_response()
         "b25maWcvY29uZmlnIjogeyJjdXN0b20iOiB7InYiOiAxIH0sICJoYXNoZXMiOiB7InNoYT"
         "I1NiI6ICI0N2VkODI1NjQ3YWQwZWM2YTc4OTkxODg5MDU2NWQ0NGMzOWE1ZTRiYWNkMzVi"
         "YjM0ZjlkZjM4MzM4OTEyZGFlIn0sICJsZW5ndGgiOiA0MSB9IH0sICJ2ZXJzaW9uIjogMj"
-        "c0ODcxNTYgfSB9\", \"target_files\": [{\"path\": "
-        "\"employee/FEATURES/2.test1.config/config\", \"raw\": "
-        "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
-        "{\"path\": \"datadog/2/FEATURES/luke.steensen/config\", \"raw\": "
-        "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
+        "c0ODcxNTYgfSB9\", \"target_files\": [" +
+        target_files +
+        "], \"client_configs\": "
         "[\"datadog/2/FEATURES/luke.steensen/config\", "
         "\"employee/FEATURES/2.test1.config/config\"] }");
 
@@ -271,7 +279,8 @@ TEST(RemoteConfigClient, ItCallsToApiOnPoll)
     mock::api *const mock_api = new mock::api;
     EXPECT_CALL(*mock_api, get_configs(expected_request, _))
         .Times(AtLeast(1))
-        .WillOnce(DoAll(mock::set_response_body(generate_example_response()),
+        .WillOnce(DoAll(
+            mock::set_response_body(generate_example_response(true)),
             Return(remote_config::protocol::remote_config_result::success)));
 
     std::vector<dds::remote_config::product> _products(get_products());
@@ -556,7 +565,8 @@ TEST(RemoteConfigClient, ItGeneratesClientStateAndCacheFromResponse)
         generate_request_serialized(false, false);
     EXPECT_CALL(*mock_api, get_configs(first_request_no_state_no_cache, _))
         .Times(1)
-        .WillOnce(DoAll(mock::set_response_body(generate_example_response()),
+        .WillOnce(DoAll(
+            mock::set_response_body(generate_example_response(true)),
             Return(remote_config::protocol::remote_config_result::success)));
 
     // Second call. This should contain state and cache from previous response
@@ -564,7 +574,8 @@ TEST(RemoteConfigClient, ItGeneratesClientStateAndCacheFromResponse)
         generate_request_serialized(true, true);
     EXPECT_CALL(*mock_api, get_configs(second_request_with_state_and_cache, _))
         .Times(1)
-        .WillOnce(DoAll(mock::set_response_body(generate_example_response()),
+        .WillOnce(DoAll(
+            mock::set_response_body(generate_example_response(true)),
             Return(remote_config::protocol::remote_config_result::success)));
 
     std::vector<dds::remote_config::product> _products(get_products());
@@ -849,6 +860,51 @@ TEST(
     delete mock_api;
 }
 
+TEST(RemoteConfigClient, FilesThatAreInCacheAreUsedWhenNotInTargetFiles)
+{
+    mock::api *const mock_api = new mock::api;
+
+    // First call should not contain state neither cache
+    std::string first_request_no_state_no_cache =
+        generate_request_serialized(false, false);
+    EXPECT_CALL(*mock_api, get_configs(first_request_no_state_no_cache, _))
+        .Times(1)
+        .WillOnce(
+            DoAll(mock::set_response_body(generate_example_response(true)),
+                Return(remote_config::protocol::remote_config_result::success)))
+        .RetiresOnSaturation();
+
+    // Second call. Since this call has cache, response comes without
+    // target_files
+    // Third call. Cache and state should be keeped even though
+    // target_files came empty on second
+    std::string second_request_with_state_and_cache =
+        generate_request_serialized(true, true);
+    EXPECT_CALL(*mock_api, get_configs(second_request_with_state_and_cache, _))
+        .Times(2)
+        .WillOnce(
+            DoAll(mock::set_response_body(generate_example_response(false)),
+                Return(remote_config::protocol::remote_config_result::success)))
+        .WillOnce(DoAll(
+            mock::set_response_body(generate_example_response(false)),
+            Return(remote_config::protocol::remote_config_result::success)));
+
+    std::vector<dds::remote_config::product> _products(get_products());
+    dds::remote_config::client api_client(mock_api, id, runtime_id,
+        tracer_version, service, env, app_version, _products);
+
+    auto result = api_client.poll();
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+
+    result = api_client.poll();
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+
+    result = api_client.poll();
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+
+    delete mock_api;
+}
+
 TEST(RemoteConfigClient, NotTrackedFilesAreDeletedFromCache)
 {
     mock::api *const mock_api = new mock::api;
@@ -856,8 +912,9 @@ TEST(RemoteConfigClient, NotTrackedFilesAreDeletedFromCache)
     std::string request_sent;
     EXPECT_CALL(*mock_api, get_configs(_, _))
         .Times(3)
-        .WillOnce(DoAll(mock::set_response_body(generate_example_response()),
-            Return(remote_config::protocol::remote_config_result::success)))
+        .WillOnce(
+            DoAll(mock::set_response_body(generate_example_response(true)),
+                Return(remote_config::protocol::remote_config_result::success)))
         .WillOnce(DoAll(mock::set_response_body(generate_empty_response()),
             Return(remote_config::protocol::remote_config_result::success)))
         .WillOnce(DoAll(testing::SaveArg<0>(&request_sent),
