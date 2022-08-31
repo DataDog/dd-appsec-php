@@ -237,7 +237,7 @@ remote_config_parser_result parse_targets(
 {
     std::string targets_encoded_content = targets_itr->value.GetString();
 
-    if (targets_encoded_content.size() == 0) {
+    if (targets_encoded_content.empty()) {
         return remote_config_parser_result::success;
     }
 

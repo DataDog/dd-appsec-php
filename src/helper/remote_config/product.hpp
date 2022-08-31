@@ -49,7 +49,7 @@ public:
 struct product {
 public:
     explicit product(
-        std::string name, std::vector<product_listener *> &listeners)
+        std::string &name, std::vector<product_listener *> &listeners)
         : _name(name), _listeners(listeners){};
     void assign_configs(std::vector<config> configs)
     {

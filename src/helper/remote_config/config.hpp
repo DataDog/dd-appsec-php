@@ -27,11 +27,11 @@ public:
                this->_length == b._length;
     }
     std::string get_id() { return this->_id; };
-    int get_version() const { return this->_version; };
+    [[nodiscard]] int get_version() const { return this->_version; };
     std::string get_product() { return this->_product; };
     std::string get_contents() { return this->_contents; };
     std::string get_path() { return this->_path; };
-    int get_length() { return this->_length; };
+    [[nodiscard]] int get_length() const { return this->_length; };
     std::map<std::string, std::string> get_hashes() { return this->_hashes; };
 
 private:

@@ -33,13 +33,14 @@ protocol::remote_config_result config_path_from_path(
 
 class client {
 public:
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     client(http_api *arg_api, std::string &id, std::string &runtime_id,
+        // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
         std::string &tracer_version, std::string &service, std::string &env,
         std::string &app_version, std::vector<product> &products)
         : _api(arg_api), _id(id), _runtime_id(runtime_id),
           _tracer_version(tracer_version), _service(service), _env(env),
-          _app_version(app_version), _targets_version(0),
-          _opaque_backend_state("")
+          _app_version(app_version), _targets_version(0)
     {
         for (product &p : products) {
             _products.insert(std::pair<std::string, remote_config::product>(

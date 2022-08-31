@@ -67,7 +67,10 @@ std::string env = "some env";
 std::string app_version = "some app version";
 std::string backend_client_state = "";
 int target_version = 0;
-std::vector<std::string> products = {"ASM_DD", "FEATURES"};
+std::string features = "FEATURES";
+std::string asm_dd = "ASM_DD";
+std::string apm_sampling = "APM_SAMPLING";
+std::vector<std::string> products = {asm_dd, features};
 
 std::vector<remote_config::product> get_products()
 {
@@ -93,10 +96,10 @@ remote_config::protocol::client generate_client(bool generate_state)
     if (generate_state) {
         // All these states are extracted from the harcoded request/response
         std::string id00 = "luke.steensen";
-        std::string product00("FEATURES");
+        std::string product00(features);
         remote_config::protocol::config_state cs00(id00, 3, product00);
         std::string id01 = "2.test1.config";
-        std::string product01("FEATURES");
+        std::string product01(features);
         remote_config::protocol::config_state cs01(id01, 1, product01);
 
         config_states.push_back(cs00);
@@ -434,7 +437,7 @@ TEST(ClientConfig, ItGetGeneratedFromString)
     result = config_path_from_path(
         "datadog/55/APM_SAMPLING/dynamic_rates/config", cp);
     EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
-    EXPECT_EQ("APM_SAMPLING", cp.get_product());
+    EXPECT_EQ(apm_sampling, cp.get_product());
     EXPECT_EQ("dynamic_rates", cp.get_id());
 }
 
@@ -535,7 +538,7 @@ TEST(RemoteConfigClient, ItReturnsErrorIfProductOnPathNotRequested)
             Return(remote_config::protocol::remote_config_result::success)));
 
     std::vector<remote_config::product_listener *> listeners;
-    remote_config::product p("FEATURES", listeners);
+    remote_config::product p(features, listeners);
     std::vector<remote_config::product> requested_products;
     std::string _runtime_id(runtime_id);
     dds::remote_config::client api_client(&mock_api, id, _runtime_id,
@@ -640,7 +643,7 @@ TEST(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
     EXPECT_CALL(listener02, on_unapply(no_updates)).Times(1);
     std::vector<remote_config::product_listener *> listeners = {
         &listener01, &listener02};
-    remote_config::product product("APM_SAMPLING", listeners);
+    remote_config::product product(apm_sampling, listeners);
 
     // Product on response
     mock::listener_mock listener_called_no_configs01;
@@ -652,8 +655,9 @@ TEST(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
     std::vector<remote_config::product_listener *>
         listeners_called_with_no_configs = {
             &listener_called_no_configs01, &listener_called_no_configs02};
+    std::string product_str_not_in_response = "NOT_IN_RESPONSE";
     remote_config::product product_not_in_response(
-        "NOT_IN_RESPONSE", listeners_called_with_no_configs);
+        product_str_not_in_response, listeners_called_with_no_configs);
 
     std::vector<dds::remote_config::product> _products = {
         product, product_not_in_response};
@@ -749,7 +753,7 @@ TEST(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
         .Times(1)
         .RetiresOnSaturation();
     std::vector<remote_config::product_listener *> listeners = {&listener01};
-    remote_config::product product("APM_SAMPLING", listeners);
+    remote_config::product product(apm_sampling, listeners);
 
     std::vector<dds::remote_config::product> _products = {product};
 
@@ -844,7 +848,7 @@ TEST(
         .Times(1)
         .RetiresOnSaturation();
     std::vector<remote_config::product_listener *> listeners = {&listener01};
-    remote_config::product product("APM_SAMPLING", listeners);
+    remote_config::product product(apm_sampling, listeners);
 
     std::vector<dds::remote_config::product> _products = {product};
 
@@ -953,7 +957,7 @@ TEST(RemoteConfigClient, TestAgainstDocker)
     dds::cout_listener *listener = new dds::cout_listener();
     std::vector<remote_config::product_listener *> listeners = {
 (remote_config::product_listener *)listener}; remote_config::product
-product("ASM_DD", listeners);
+product(asm_dd, listeners);
 
     std::vector<dds::remote_config::product> _products = {product};
 

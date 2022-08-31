@@ -31,9 +31,8 @@ public:
         try {
             //@todo deharcode these values
             std::string const host = "localhost";
-            auto const port = "8126";
-            auto const target = "/v0.7/config";
-            int version = 11;
+            const char *port = "8126";
+            const char *target = "/v0.7/config";
 
             // The io_context is required for all I/O
             net::io_context ioc;
@@ -52,7 +51,7 @@ public:
             http::request<http::string_body> req;
             req.method(http::verb::post);
             req.target(target);
-            req.version(version);
+            req.version(11);
             req.set(http::field::host, host);
             req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
             req.set(http::field::content_length,

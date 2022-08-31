@@ -33,7 +33,7 @@ void serialize_client_tracer(rapidjson::Document::AllocatorType &alloc,
 
 void serialize_config_states(rapidjson::Document::AllocatorType &alloc,
     rapidjson::Value &client_field,
-    const std::vector<config_state> config_states)
+    const std::vector<config_state> &config_states)
 {
     rapidjson::Value config_states_object(rapidjson::kArrayType);
 
@@ -90,7 +90,7 @@ void serialize_client(rapidjson::Document::AllocatorType &alloc,
 
 void serialize_cached_target_files_hashes(
     rapidjson::Document::AllocatorType &alloc, rapidjson::Value &parent,
-    const std::vector<cached_target_files_hash> cached_target_files_hash_list)
+    const std::vector<cached_target_files_hash> &cached_target_files_hash_list)
 {
     rapidjson::Value cached_target_files_array(rapidjson::kArrayType);
 
@@ -109,7 +109,7 @@ void serialize_cached_target_files_hashes(
 
 void serialize_cached_target_files(rapidjson::Document::AllocatorType &alloc,
     rapidjson::Document &document,
-    const std::vector<cached_target_files> cached_target_files_list)
+    const std::vector<cached_target_files> &cached_target_files_list)
 {
     rapidjson::Value cached_target_files_array(rapidjson::kArrayType);
 

@@ -5,6 +5,7 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #pragma once
 
+#include <string>
 #include <vector>
 
 namespace dds::remote_config::protocol {
