@@ -244,7 +244,7 @@ remote_config_parser_result parse_targets(
     std::string base64_decoded;
     try {
         base64_decoded = base64_decode(targets_encoded_content, true);
-    } catch (std::runtime_error error) {
+    } catch (std::runtime_error &error) {
         return remote_config_parser_result::targets_field_invalid_base64;
     }
 

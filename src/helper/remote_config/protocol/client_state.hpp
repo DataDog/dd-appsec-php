@@ -21,7 +21,7 @@ public:
           _backend_client_state(backend_client_state){};
     [[nodiscard]] int get_targets_version() const { return _targets_version; };
     std::vector<config_state> get_config_states() { return _config_states; };
-    bool get_has_error() const { return _has_error; };
+    [[nodiscard]] bool get_has_error() const { return _has_error; };
     std::string get_error() { return _error; };
     std::string get_backend_client_state() { return _backend_client_state; };
     bool operator==(client_state const &b) const
