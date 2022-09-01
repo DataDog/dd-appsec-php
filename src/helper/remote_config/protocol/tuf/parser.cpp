@@ -208,6 +208,19 @@ remote_config_parser_result parse_targets_signed(
         }
     }
 
+    rapidjson::Value::ConstMemberIterator type_itr;
+    result = validate_field_is_present(targets_signed_itr, "_type",
+        rapidjson::kStringType, type_itr,
+        remote_config_parser_result::type_signed_targets_field_missing,
+        remote_config_parser_result::type_signed_targets_field_invalid);
+    if (result != remote_config_parser_result::success) {
+        return result;
+    }
+    if (strcmp(type_itr->value.GetString(), "targets") != 0) {
+        return remote_config_parser_result::
+            type_signed_targets_field_invalid_type;
+    }
+
     rapidjson::Value::ConstMemberIterator custom_itr;
     result = validate_field_is_present(targets_signed_itr, "custom",
         rapidjson::kObjectType, custom_itr,
@@ -402,6 +415,12 @@ std::string remote_config_parser_result_to_str(
         return "hashes_path_targets_field_empty";
     case remote_config_parser_result::hash_hashes_path_targets_field_invalid:
         return "hash_hashes_path_targets_field_invalid";
+    case remote_config_parser_result::type_signed_targets_field_invalid:
+        return "type_signed_targets_field_invalid";
+    case remote_config_parser_result::type_signed_targets_field_missing:
+        return "type_signed_targets_field_missing";
+    case remote_config_parser_result::type_signed_targets_field_invalid_type:
+        return "type_signed_targets_field_invalid_type";
     }
 
     return "";
