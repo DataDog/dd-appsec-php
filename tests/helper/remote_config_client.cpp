@@ -951,10 +951,196 @@ TEST(RemoteConfigClient, NotTrackedFilesAreDeletedFromCache)
     delete mock_api;
 }
 
-TEST(RemoteConfigClient, TestHashIsDifferentFromTheCache) {}
+TEST(RemoteConfigClient, TestHashIsDifferentFromTheCache)
+{
+    mock::api *const mock_api = new mock::api;
 
-TEST(RemoteConfigClient, TestWhenFileGotFromCacheItsLenIsUsed) {}
-TEST(RemoteConfigClient, TestWhenFileGotFromCacheItsVersionIsUsed) {}
+    std::string first_response =
+        "{\"roots\": [], \"targets\": "
+        "\"ewogICAgICAgICJzaWduYXR1cmVzIjogWwogICAgICAgICAgICAgICAgewogICAgICAg"
+        "ICAgICAgICAgICAgICAgICAia2V5aWQiOiAiNWM0ZWNlNDEyNDFhMWJiNTEzZjZlM2U1ZG"
+        "Y3NGFiN2Q1MTgzZGZmZmJkNzFiZmQ0MzEyNzkyMGQ4ODA1NjlmZCIsCiAgICAgICAgICAg"
+        "ICAgICAgICAgICAgICJzaWciOiAiNDliOTBmNWY0YmZjMjdjY2JkODBkOWM4NDU4ZDdkMj"
+        "JiYTlmYTA4OTBmZDc3NWRkMTE2YzUyOGIzNmRkNjA1YjFkZjc2MWI4N2I2YzBlYjliMDI2"
+        "NDA1YTEzZWZlZjQ4Mjc5MzRkNmMyNWE3ZDZiODkyNWZkYTg5MjU4MDkwMGYiCiAgICAgIC"
+        "AgICAgICAgICB9CiAgICAgICAgXSwKICAgICAgICAic2lnbmVkIjogewogICAgICAgICAg"
+        "ICAgICAgIl90eXBlIjogInRhcmdldHMiLAogICAgICAgICAgICAgICAgImN1c3RvbSI6IH"
+        "sKICAgICAgICAgICAgICAgICAgICAgICAgIm9wYXF1ZV9iYWNrZW5kX3N0YXRlIjogInNv"
+        "bWV0aGluZyIKICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICAgICAgICAiZXhwaXJlcy"
+        "I6ICIyMDIyLTExLTA0VDEzOjMxOjU5WiIsCiAgICAgICAgICAgICAgICAic3BlY192ZXJz"
+        "aW9uIjogIjEuMC4wIiwKICAgICAgICAgICAgICAgICJ0YXJnZXRzIjogewogICAgICAgIC"
+        "AgICAgICAgICAgICAgICAiZW1wbG95ZWUvRkVBVFVSRVMvMi50ZXN0MS5jb25maWcvY29u"
+        "ZmlnIjogewogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICJjdXN0b20iOiB7Ci"
+        "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAidiI6IDEKICAgICAg"
+        "ICAgICAgICAgICAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgICAgICAgIC"
+        "AgICAgICAgICJoYXNoZXMiOiB7CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg"
+        "ICAgICAgICAic2hhMjU2IjogInNvbWVfaGFzaCIKICAgICAgICAgICAgICAgICAgICAgIC"
+        "AgICAgICAgICB9LAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICJsZW5ndGgi"
+        "OiA0MQogICAgICAgICAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICB9LAogIC"
+        "AgICAgICAgICAgICAgInZlcnNpb24iOiAyNzQ4NzE1NgogICAgICAgIH0KfQ==\", "
+        "\"target_files\": [{\"path\": "
+        "\"employee/FEATURES/2.test1.config/config\", \"raw\": \"some_raw=\"} "
+        "], \"client_configs\": [\"employee/FEATURES/2.test1.config/config\"] "
+        "}";
+
+    // This response has a cached file with different hash, it should not be
+    // used
+    std::string second_response =
+        "{\"roots\": [], \"targets\": "
+        "\"ewogICAgICAgICJzaWduYXR1cmVzIjogWwogICAgICAgICAgICAgICAgewogICAgICAg"
+        "ICAgICAgICAgICAgICAgICAia2V5aWQiOiAiNWM0ZWNlNDEyNDFhMWJiNTEzZjZlM2U1ZG"
+        "Y3NGFiN2Q1MTgzZGZmZmJkNzFiZmQ0MzEyNzkyMGQ4ODA1NjlmZCIsCiAgICAgICAgICAg"
+        "ICAgICAgICAgICAgICJzaWciOiAiNDliOTBmNWY0YmZjMjdjY2JkODBkOWM4NDU4ZDdkMj"
+        "JiYTlmYTA4OTBmZDc3NWRkMTE2YzUyOGIzNmRkNjA1YjFkZjc2MWI4N2I2YzBlYjliMDI2"
+        "NDA1YTEzZWZlZjQ4Mjc5MzRkNmMyNWE3ZDZiODkyNWZkYTg5MjU4MDkwMGYiCiAgICAgIC"
+        "AgICAgICAgICB9CiAgICAgICAgXSwKICAgICAgICAic2lnbmVkIjogewogICAgICAgICAg"
+        "ICAgICAgIl90eXBlIjogInRhcmdldHMiLAogICAgICAgICAgICAgICAgImN1c3RvbSI6IH"
+        "sKICAgICAgICAgICAgICAgICAgICAgICAgIm9wYXF1ZV9iYWNrZW5kX3N0YXRlIjogInNv"
+        "bWV0aGluZyIKICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICAgICAgICAiZXhwaXJlcy"
+        "I6ICIyMDIyLTExLTA0VDEzOjMxOjU5WiIsCiAgICAgICAgICAgICAgICAic3BlY192ZXJz"
+        "aW9uIjogIjEuMC4wIiwKICAgICAgICAgICAgICAgICJ0YXJnZXRzIjogewogICAgICAgIC"
+        "AgICAgICAgICAgICAgICAiZW1wbG95ZWUvRkVBVFVSRVMvMi50ZXN0MS5jb25maWcvY29u"
+        "ZmlnIjogewogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICJjdXN0b20iOiB7Ci"
+        "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAidiI6IDEKICAgICAg"
+        "ICAgICAgICAgICAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgICAgICAgIC"
+        "AgICAgICAgICJoYXNoZXMiOiB7CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg"
+        "ICAgICAgICAic2hhMjU2IjogInNvbWVfb3RoZXJfaGFzaCIKICAgICAgICAgICAgICAgIC"
+        "AgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICJs"
+        "ZW5ndGgiOiA0MQogICAgICAgICAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgIC"
+        "B9LAogICAgICAgICAgICAgICAgInZlcnNpb24iOiAyNzQ4NzE1NgogICAgICAgIH0KfQ=="
+        "\", \"target_files\": [], \"client_configs\": "
+        "[\"employee/FEATURES/2.test1.config/config\"] }";
+
+    std::string request_sent;
+    EXPECT_CALL(*mock_api, get_configs(_, _))
+        .Times(3)
+        .WillOnce(DoAll(mock::set_response_body(first_response),
+            Return(remote_config::protocol::remote_config_result::success)))
+        .WillRepeatedly(DoAll(mock::set_response_body(second_response),
+            testing::SaveArg<0>(&request_sent),
+            Return(remote_config::protocol::remote_config_result::success)))
+        .RetiresOnSaturation();
+
+    std::vector<dds::remote_config::product> _products(get_products());
+    dds::remote_config::client api_client(mock_api, id, runtime_id,
+        tracer_version, service, env, app_version, _products);
+
+    auto result = api_client.poll();
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+
+    result = api_client.poll();
+    EXPECT_EQ(remote_config::protocol::remote_config_result::error, result);
+
+    result = api_client.poll();
+    EXPECT_EQ(remote_config::protocol::remote_config_result::error, result);
+
+    EXPECT_TRUE(validate_request_has_error(request_sent, true,
+        "missing config employee/FEATURES/2.test1.config/config in "
+        "target files and in cache files"));
+
+    delete mock_api;
+}
+
+TEST(RemoteConfigClient, TestWhenFileGetsFromCacheItsCachedLenUsed)
+{
+    mock::api *const mock_api = new mock::api;
+
+    std::string first_response =
+        "{\"roots\": [], \"targets\": "
+        "\"ewogICAgICAgICJzaWduYXR1cmVzIjogWwogICAgICAgICAgICAgICAgewogICAgICAg"
+        "ICAgICAgICAgICAgICAgICAia2V5aWQiOiAiNWM0ZWNlNDEyNDFhMWJiNTEzZjZlM2U1ZG"
+        "Y3NGFiN2Q1MTgzZGZmZmJkNzFiZmQ0MzEyNzkyMGQ4ODA1NjlmZCIsCiAgICAgICAgICAg"
+        "ICAgICAgICAgICAgICJzaWciOiAiNDliOTBmNWY0YmZjMjdjY2JkODBkOWM4NDU4ZDdkMj"
+        "JiYTlmYTA4OTBmZDc3NWRkMTE2YzUyOGIzNmRkNjA1YjFkZjc2MWI4N2I2YzBlYjliMDI2"
+        "NDA1YTEzZWZlZjQ4Mjc5MzRkNmMyNWE3ZDZiODkyNWZkYTg5MjU4MDkwMGYiCiAgICAgIC"
+        "AgICAgICAgICB9CiAgICAgICAgXSwKICAgICAgICAic2lnbmVkIjogewogICAgICAgICAg"
+        "ICAgICAgIl90eXBlIjogInRhcmdldHMiLAogICAgICAgICAgICAgICAgImN1c3RvbSI6IH"
+        "sKICAgICAgICAgICAgICAgICAgICAgICAgIm9wYXF1ZV9iYWNrZW5kX3N0YXRlIjogInNv"
+        "bWV0aGluZyIKICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICAgICAgICAiZXhwaXJlcy"
+        "I6ICIyMDIyLTExLTA0VDEzOjMxOjU5WiIsCiAgICAgICAgICAgICAgICAic3BlY192ZXJz"
+        "aW9uIjogIjEuMC4wIiwKICAgICAgICAgICAgICAgICJ0YXJnZXRzIjogewogICAgICAgIC"
+        "AgICAgICAgICAgICAgICAiZW1wbG95ZWUvRkVBVFVSRVMvMi50ZXN0MS5jb25maWcvY29u"
+        "ZmlnIjogewogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICJjdXN0b20iOiB7Ci"
+        "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAidiI6IDEKICAgICAg"
+        "ICAgICAgICAgICAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgICAgICAgIC"
+        "AgICAgICAgICJoYXNoZXMiOiB7CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg"
+        "ICAgICAgICAic2hhMjU2IjogInNvbWVfaGFzaCIKICAgICAgICAgICAgICAgICAgICAgIC"
+        "AgICAgICAgICB9LAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICJsZW5ndGgi"
+        "OiA0MQogICAgICAgICAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICB9LAogIC"
+        "AgICAgICAgICAgICAgInZlcnNpb24iOiAyNzQ4NzE1NgogICAgICAgIH0KfQ==\", "
+        "\"target_files\": [{\"path\": "
+        "\"employee/FEATURES/2.test1.config/config\", \"raw\": \"some_raw=\"} "
+        "], \"client_configs\": [\"employee/FEATURES/2.test1.config/config\"] "
+        "}";
+
+    // This response has a cached file with different len and version, it should
+    // not be used
+    std::string second_response =
+        "{\"roots\": [], \"targets\": "
+        "\"ewogICAgICAgICJzaWduYXR1cmVzIjogWwogICAgICAgICAgICAgICAgewogICAgICAg"
+        "ICAgICAgICAgICAgICAgICAia2V5aWQiOiAiNWM0ZWNlNDEyNDFhMWJiNTEzZjZlM2U1ZG"
+        "Y3NGFiN2Q1MTgzZGZmZmJkNzFiZmQ0MzEyNzkyMGQ4ODA1NjlmZCIsCiAgICAgICAgICAg"
+        "ICAgICAgICAgICAgICJzaWciOiAiNDliOTBmNWY0YmZjMjdjY2JkODBkOWM4NDU4ZDdkMj"
+        "JiYTlmYTA4OTBmZDc3NWRkMTE2YzUyOGIzNmRkNjA1YjFkZjc2MWI4N2I2YzBlYjliMDI2"
+        "NDA1YTEzZWZlZjQ4Mjc5MzRkNmMyNWE3ZDZiODkyNWZkYTg5MjU4MDkwMGYiCiAgICAgIC"
+        "AgICAgICAgICB9CiAgICAgICAgXSwKICAgICAgICAic2lnbmVkIjogewogICAgICAgICAg"
+        "ICAgICAgIl90eXBlIjogInRhcmdldHMiLAogICAgICAgICAgICAgICAgImN1c3RvbSI6IH"
+        "sKICAgICAgICAgICAgICAgICAgICAgICAgIm9wYXF1ZV9iYWNrZW5kX3N0YXRlIjogInNv"
+        "bWV0aGluZyIKICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICAgICAgICAiZXhwaXJlcy"
+        "I6ICIyMDIyLTExLTA0VDEzOjMxOjU5WiIsCiAgICAgICAgICAgICAgICAic3BlY192ZXJz"
+        "aW9uIjogIjEuMC4wIiwKICAgICAgICAgICAgICAgICJ0YXJnZXRzIjogewogICAgICAgIC"
+        "AgICAgICAgICAgICAgICAiZW1wbG95ZWUvRkVBVFVSRVMvMi50ZXN0MS5jb25maWcvY29u"
+        "ZmlnIjogewogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICJjdXN0b20iOiB7Ci"
+        "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAidiI6IDQKICAgICAg"
+        "ICAgICAgICAgICAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgICAgICAgIC"
+        "AgICAgICAgICJoYXNoZXMiOiB7CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg"
+        "ICAgICAgICAic2hhMjU2IjogInNvbWVfaGFzaCIKICAgICAgICAgICAgICAgICAgICAgIC"
+        "AgICAgICAgICB9LAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICJsZW5ndGgi"
+        "OiA1NQogICAgICAgICAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICB9LAogIC"
+        "AgICAgICAgICAgICAgInZlcnNpb24iOiAyNzQ4NzE1NgogICAgICAgIH0KfQ==\", "
+        "\"target_files\": [], \"client_configs\": "
+        "[\"employee/FEATURES/2.test1.config/config\"] }";
+
+    std::string request_sent;
+    EXPECT_CALL(*mock_api, get_configs(_, _))
+        .Times(3)
+        .WillOnce(DoAll(mock::set_response_body(first_response),
+            Return(remote_config::protocol::remote_config_result::success)))
+        .WillRepeatedly(DoAll(mock::set_response_body(second_response),
+            testing::SaveArg<0>(&request_sent),
+            Return(remote_config::protocol::remote_config_result::success)))
+        .RetiresOnSaturation();
+
+    std::vector<dds::remote_config::product> _products(get_products());
+    dds::remote_config::client api_client(mock_api, id, runtime_id,
+        tracer_version, service, env, app_version, _products);
+
+    auto result = api_client.poll();
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+
+    result = api_client.poll();
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+
+    result = api_client.poll();
+    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+
+    // Lets validate cached_target_files is empty
+    rapidjson::Document serialized_doc;
+    serialized_doc.Parse(request_sent);
+    auto output_itr = serialized_doc.FindMember("cached_target_files");
+
+    auto files_cached = output_itr->value.GetArray();
+    EXPECT_FALSE(output_itr == serialized_doc.MemberEnd());
+    EXPECT_TRUE(rapidjson::kArrayType == output_itr->value.GetType());
+    EXPECT_EQ(1, files_cached.Size());
+
+    auto len_itr = files_cached[0].FindMember("length");
+    EXPECT_FALSE(len_itr == files_cached[0].MemberEnd());
+    EXPECT_TRUE(rapidjson::kNumberType == len_itr->value.GetType());
+    EXPECT_EQ(41, len_itr->value.GetInt());
+
+    delete mock_api;
+}
 
 /*
 TEST(RemoteConfigClient, TestAgainstDocker)
