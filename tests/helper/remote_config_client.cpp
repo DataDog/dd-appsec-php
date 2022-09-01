@@ -951,6 +951,11 @@ TEST(RemoteConfigClient, NotTrackedFilesAreDeletedFromCache)
     delete mock_api;
 }
 
+TEST(RemoteConfigClient, TestHashIsDifferentFromTheCache) {}
+
+TEST(RemoteConfigClient, TestWhenFileGotFromCacheItsLenIsUsed) {}
+TEST(RemoteConfigClient, TestWhenFileGotFromCacheItsVersionIsUsed) {}
+
 /*
 TEST(RemoteConfigClient, TestAgainstDocker)
 {
