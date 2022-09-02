@@ -64,10 +64,12 @@ static dd_result _pack_command(
     mpack_write(w, get_global_DD_APPSEC_TRACE_RATE_LIMIT());
 
     dd_mpack_write_lstr(w, "obfuscator_key_regex");
-    dd_mpack_write_nullable_cstr(w, ZSTR_VAL(get_global_DD_APPSEC_OBFUSCATION_PARAMETER_KEY_REGEXP()));
+    dd_mpack_write_nullable_cstr(
+        w, ZSTR_VAL(get_global_DD_APPSEC_OBFUSCATION_PARAMETER_KEY_REGEXP()));
 
     dd_mpack_write_lstr(w, "obfuscator_value_regex");
-    dd_mpack_write_nullable_cstr(w, ZSTR_VAL(get_global_DD_APPSEC_OBFUSCATION_PARAMETER_VALUE_REGEXP()));
+    dd_mpack_write_nullable_cstr(
+        w, ZSTR_VAL(get_global_DD_APPSEC_OBFUSCATION_PARAMETER_VALUE_REGEXP()));
 
     mpack_finish_map(w);
 

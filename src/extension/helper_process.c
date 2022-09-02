@@ -74,7 +74,10 @@ static void _register_testing_objects(void);
 
 void dd_helper_startup(void)
 {
-    dd_on_runtime_path_update(NULL, &zai_config_memoized_entries[DDAPPSEC_CONFIG_DD_APPSEC_HELPER_RUNTIME_PATH].decoded_value);
+    dd_on_runtime_path_update(
+        NULL, &zai_config_memoized_entries
+                   [DDAPPSEC_CONFIG_DD_APPSEC_HELPER_RUNTIME_PATH]
+                       .decoded_value);
     atomic_store(&_launch_failure_fd_lock, -1);
 #ifdef TESTING
     _register_testing_objects();
@@ -210,7 +213,8 @@ static char *_concat_paths(const char *nonnull base, size_t base_len,
     return ret;
 }
 
-bool dd_on_runtime_path_update(zval *nullable old_value, zval *nonnull new_value)
+bool dd_on_runtime_path_update(
+    zval *nullable old_value, zval *nonnull new_value)
 {
     UNUSED(old_value);
 
@@ -220,8 +224,8 @@ bool dd_on_runtime_path_update(zval *nullable old_value, zval *nonnull new_value
     }
 
     pefree(_mgr.socket_path, 1);
-    _mgr.socket_path = _concat_paths(
-        Z_STRVAL_P(new_value), Z_STRLEN_P(new_value), ZEND_STRL(DD_SOCKET_PATH));
+    _mgr.socket_path = _concat_paths(Z_STRVAL_P(new_value),
+        Z_STRLEN_P(new_value), ZEND_STRL(DD_SOCKET_PATH));
 
     pefree(_mgr.lock_path, 1);
     _mgr.lock_path = _concat_paths(
@@ -401,8 +405,8 @@ static dd_result _launch_helper_daemon(int lock_fd)
     char *helperlog = ZSTR_VAL(get_global_DD_APPSEC_HELPER_LOG_FILE());
     int log_fd = open(helperlog, log_mode, 0600); // NOLINT
     if (log_fd == -1) {
-        mlog_err(dd_log_warning, "Could not open log file for helper %s",
-            helperlog);
+        mlog_err(
+            dd_log_warning, "Could not open log file for helper %s", helperlog);
         return dd_error;
     }
     mlog_g(dd_log_debug, "Opened helper log at %s", helperlog);
@@ -420,8 +424,8 @@ static dd_result _launch_helper_daemon(int lock_fd)
     {
         char *args;
         char *extra_args = ZSTR_VAL(get_DD_APPSEC_HELPER_EXTRA_ARGS());
-        spprintf(&args, 0, "%s%s--lock_path - --socket_path fd:%d",
-            extra_args, *extra_args ? " " : "", sock_fd);
+        spprintf(&args, 0, "%s%s--lock_path - --socket_path fd:%d", extra_args,
+            *extra_args ? " " : "", sock_fd);
         argv = _split_params(binary, args);
         efree(args);
     }
@@ -869,7 +873,11 @@ static PHP_FUNCTION(datadog_appsec_testing_set_helper_path)
         RETURN_FALSE;
     }
 
-    zend_alter_ini_entry(zai_config_memoized_entries[DDAPPSEC_CONFIG_DD_APPSEC_HELPER_PATH].ini_entries[0]->name, zstr, ZEND_INI_USER, ZEND_INI_STAGE_RUNTIME);
+    zend_alter_ini_entry(
+        zai_config_memoized_entries[DDAPPSEC_CONFIG_DD_APPSEC_HELPER_PATH]
+            .ini_entries[0]
+            ->name,
+        zstr, ZEND_INI_USER, ZEND_INI_STAGE_RUNTIME);
 }
 static PHP_FUNCTION(datadog_appsec_testing_set_helper_extra_args)
 {
@@ -878,7 +886,11 @@ static PHP_FUNCTION(datadog_appsec_testing_set_helper_extra_args)
         RETURN_FALSE;
     }
 
-    zend_alter_ini_entry(zai_config_memoized_entries[DDAPPSEC_CONFIG_DD_APPSEC_HELPER_EXTRA_ARGS].ini_entries[0]->name, zstr, ZEND_INI_USER, ZEND_INI_STAGE_RUNTIME);
+    zend_alter_ini_entry(
+        zai_config_memoized_entries[DDAPPSEC_CONFIG_DD_APPSEC_HELPER_EXTRA_ARGS]
+            .ini_entries[0]
+            ->name,
+        zstr, ZEND_INI_USER, ZEND_INI_STAGE_RUNTIME);
 }
 static PHP_FUNCTION(datadog_appsec_testing_get_helper_argv)
 {
@@ -887,7 +899,8 @@ static PHP_FUNCTION(datadog_appsec_testing_get_helper_argv)
         return;
     }
 
-    char **argv = _split_params(ZSTR_VAL(get_DD_APPSEC_HELPER_PATH()), ZSTR_VAL(get_DD_APPSEC_HELPER_EXTRA_ARGS()));
+    char **argv = _split_params(ZSTR_VAL(get_DD_APPSEC_HELPER_PATH()),
+        ZSTR_VAL(get_DD_APPSEC_HELPER_EXTRA_ARGS()));
     if (!argv) {
         return;
     }

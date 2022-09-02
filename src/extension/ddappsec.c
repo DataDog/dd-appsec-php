@@ -330,7 +330,8 @@ int _post_deactivate(void)
 zend_result _post_deactivate(void)
 #endif
 {
-    // zai config may be accessed indirectly via other modules RSHUTDOWN, so delay this until the last possible time
+    // zai config may be accessed indirectly via other modules RSHUTDOWN, so
+    // delay this until the last possible time
     zai_config_rshutdown();
     return SUCCESS;
 }
@@ -356,12 +357,12 @@ static PHP_MINFO_FUNCTION(ddappsec)
 __thread void *unspecnull TSRMLS_CACHE = NULL;
 #endif
 
-static void _check_enabled() {
+static void _check_enabled()
+{
     bool is_cli =
         strcmp(sapi_module.name, "cli") == 0 || sapi_module.phpinfo_as_text;
-    DDAPPSEC_NOCACHE_G(enabled) = is_cli
-        ? get_global_DD_APPSEC_ENABLED_ON_CLI()
-        : get_global_DD_APPSEC_ENABLED();
+    DDAPPSEC_NOCACHE_G(enabled) = is_cli ? get_global_DD_APPSEC_ENABLED_ON_CLI()
+                                         : get_global_DD_APPSEC_ENABLED();
 }
 
 static PHP_FUNCTION(datadog_appsec_is_enabled)

@@ -149,7 +149,8 @@ static void _init_relevant_headers()
 
 #undef ADD_RELEVANT_HEADER
 
-    zend_hash_copy(&_relevant_headers, get_global_DD_APPSEC_EXTRA_HEADERS(), NULL);
+    zend_hash_copy(
+        &_relevant_headers, get_global_DD_APPSEC_EXTRA_HEADERS(), NULL);
 }
 
 void dd_tags_shutdown()

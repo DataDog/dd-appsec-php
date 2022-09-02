@@ -1,14 +1,14 @@
 // Unless explicitly stated otherwise all files in this repository are
 // dual-licensed under the Apache-2.0 License or BSD-3-Clause License.
 //
-// This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2021 Datadog, Inc.
+// This product includes software developed at Datadog
+// (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #pragma once
 
 #include "attributes.h"
+#include "configuration.h"
 #include "php_helpers.h"
 #include <stdbool.h>
-#include "configuration.h"
 
 /* log levels - the first argument to the mlog helper
  * The lower the number, the higher the priority */
@@ -25,20 +25,22 @@ typedef enum {
 // these are only in the header to support the macros/inline functions
 extern const int _dd_size_source_prefix;
 #ifdef ZTS
-#define STRERROR_R_BUF_SIZE 1024
+#    define STRERROR_R_BUF_SIZE 1024
 extern __thread char _dd_strerror_buf[STRERROR_R_BUF_SIZE];
 #endif
 
 static inline dd_log_level_t dd_log_level()
 {
-    return runtime_config_first_init ? get_DD_APPSEC_LOG_LEVEL() : get_global_DD_APPSEC_LOG_LEVEL();
+    return runtime_config_first_init ? get_DD_APPSEC_LOG_LEVEL()
+                                     : get_global_DD_APPSEC_LOG_LEVEL();
 }
 
 void dd_log_startup(void);
 void dd_log_shutdown(void);
 const char *nonnull _strerror_r(int err, char *nonnull buf, size_t buflen);
 
-bool dd_parse_log_level(zai_string_view value, zval *nonnull decoded_value, bool persistent);
+bool dd_parse_log_level(
+    zai_string_view value, zval *nonnull decoded_value, bool persistent);
 
 void _mlog_relay(dd_log_level_t level, const char *nonnull format,
     const char *nonnull file, const char *nonnull function, int line, ...)
@@ -61,7 +63,7 @@ void _mlog_relay(dd_log_level_t level, const char *nonnull format,
 // guarded version, for performance
 #define mlog_g(level, format, ...)                                             \
     do {                                                                       \
-        if (dd_log_level() >= level) {                              \
+        if (dd_log_level() >= level) {                                         \
             mlog(level, format, ##__VA_ARGS__);                                \
         }                                                                      \
     } while (0)

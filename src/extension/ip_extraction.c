@@ -5,8 +5,8 @@
 // (https://www.datadoghq.com/). Copyright 2022 Datadog, Inc.
 
 #include "ip_extraction.h"
-#include "configuration.h"
 #include "attributes.h"
+#include "configuration.h"
 #include "ddappsec.h"
 #include "dddefs.h"
 #include "logging.h"
@@ -36,7 +36,8 @@ static zend_string *nonnull _x_forwarded_for_key, *nonnull _x_real_ip_key,
 
 typedef bool (*extract_func_t)(zend_string *nonnull value, ipaddr *nonnull out);
 
-bool dd_parse_ipheader_config(zai_string_view value, zval *nonnull decoded_value, bool persistent)
+bool dd_parse_ipheader_config(
+    zai_string_view value, zval *nonnull decoded_value, bool persistent)
 {
     if (!value.ptr[0]) {
         if (persistent) {

@@ -7,8 +7,8 @@
 #include <ext/standard/url.h>
 #include <php.h>
 
-#include "../configuration.h"
 #include "../commands_helpers.h"
+#include "../configuration.h"
 #include "../ddappsec.h"
 #include "../ddtrace.h"
 #include "../logging.h"
@@ -47,8 +47,8 @@ static dd_result _request_pack(
 {
     UNUSED(ctx);
 
-    bool send_raw_body = get_global_DD_APPSEC_TESTING()
-                         && get_global_DD_APPSEC_TESTING_RAW_BODY();
+    bool send_raw_body = get_global_DD_APPSEC_TESTING() &&
+                         get_global_DD_APPSEC_TESTING_RAW_BODY();
 #define REQUEST_INIT_MAP_NUM_ENTRIES 9
     if (send_raw_body) {
         mpack_start_map(w, REQUEST_INIT_MAP_NUM_ENTRIES + 1);

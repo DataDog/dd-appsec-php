@@ -4,8 +4,8 @@
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #include "logging.h"
-#include "configuration.h"
 #include "attributes.h"
+#include "configuration.h"
 #include "ddappsec.h"
 #include "dddefs.h"
 #include "php_compat.h"
@@ -146,7 +146,8 @@ static dd_result _do_dd_log_init() // guarded by mutex
         } else if (zend_string_equals_literal(log_file, "stderr")) {
             _log_strategy = log_use_file;
             _mlog_fd = fileno(stderr);
-        } else if (zend_string_equals_literal(log_file, "php_error_reporting")) {
+        } else if (zend_string_equals_literal(
+                       log_file, "php_error_reporting")) {
             _log_strategy = log_use_php_err_rep;
         } else {
             _log_strategy = log_use_file;
@@ -462,7 +463,8 @@ const char *nonnull _strerror_r(int err, char *nonnull buf, size_t buflen)
     return buf;
 }
 
-bool dd_parse_log_level(zai_string_view value, zval *nonnull decoded_value, bool persistent)
+bool dd_parse_log_level(
+    zai_string_view value, zval *nonnull decoded_value, bool persistent)
 {
     UNUSED(persistent);
     if (!value.len) {
