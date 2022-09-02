@@ -13,46 +13,54 @@
 
 namespace dds::remote_config::protocol {
 
+#define PARSER_RESULTS(X)                                                      \
+    X(success)                                                                 \
+    X(invalid_json)                                                            \
+    X(targets_field_invalid_base64)                                            \
+    X(targets_field_invalid_json)                                              \
+    X(targets_field_missing)                                                   \
+    X(targets_field_invalid_type)                                              \
+    X(signed_targets_field_invalid)                                            \
+    X(signed_targets_field_missing)                                            \
+    X(type_signed_targets_field_invalid)                                       \
+    X(type_signed_targets_field_invalid_type)                                  \
+    X(type_signed_targets_field_missing)                                       \
+    X(version_signed_targets_field_invalid)                                    \
+    X(version_signed_targets_field_missing)                                    \
+    X(custom_signed_targets_field_invalid)                                     \
+    X(custom_signed_targets_field_missing)                                     \
+    X(obs_custom_signed_targets_field_invalid)                                 \
+    X(obs_custom_signed_targets_field_missing)                                 \
+    X(target_files_field_missing)                                              \
+    X(target_files_object_invalid)                                             \
+    X(target_files_field_invalid_type)                                         \
+    X(target_files_path_field_missing)                                         \
+    X(target_files_path_field_invalid_type)                                    \
+    X(target_files_raw_field_missing)                                          \
+    X(target_files_raw_field_invalid_type)                                     \
+    X(client_config_field_missing)                                             \
+    X(client_config_field_invalid_type)                                        \
+    X(client_config_field_invalid_entry)                                       \
+    X(targets_signed_targets_field_invalid)                                    \
+    X(targets_signed_targets_field_missing)                                    \
+    X(custom_path_targets_field_invalid)                                       \
+    X(custom_path_targets_field_missing)                                       \
+    X(v_path_targets_field_invalid)                                            \
+    X(v_path_targets_field_missing)                                            \
+    X(hashes_path_targets_field_invalid)                                       \
+    X(hashes_path_targets_field_missing)                                       \
+    X(hashes_path_targets_field_empty)                                         \
+    X(hash_hashes_path_targets_field_invalid)                                  \
+    X(length_path_targets_field_invalid)                                       \
+    X(length_path_targets_field_missing)
+
+#define RESULT_AS_ENUM_ENTRY(entry) entry,
+#define RESULT_AS_CASE(entry)                                                  \
+    case remote_config_parser_result::entry:                                   \
+        return #entry;
+
 enum class remote_config_parser_result {
-    success,
-    invalid_json,
-    targets_field_invalid_base64,
-    targets_field_invalid_json,
-    targets_field_missing,
-    targets_field_invalid_type,
-    signed_targets_field_invalid,
-    signed_targets_field_missing,
-    type_signed_targets_field_invalid,
-    type_signed_targets_field_invalid_type,
-    type_signed_targets_field_missing,
-    version_signed_targets_field_invalid,
-    version_signed_targets_field_missing,
-    custom_signed_targets_field_invalid,
-    custom_signed_targets_field_missing,
-    obs_custom_signed_targets_field_invalid,
-    obs_custom_signed_targets_field_missing,
-    target_files_field_missing,
-    target_files_object_invalid,
-    target_files_field_invalid_type,
-    target_files_path_field_missing,
-    target_files_path_field_invalid_type,
-    target_files_raw_field_missing,
-    target_files_raw_field_invalid_type,
-    client_config_field_missing,
-    client_config_field_invalid_type,
-    client_config_field_invalid_entry,
-    targets_signed_targets_field_invalid,
-    targets_signed_targets_field_missing,
-    custom_path_targets_field_invalid,
-    custom_path_targets_field_missing,
-    v_path_targets_field_invalid,
-    v_path_targets_field_missing,
-    hashes_path_targets_field_invalid,
-    hashes_path_targets_field_missing,
-    hashes_path_targets_field_empty,
-    hash_hashes_path_targets_field_invalid,
-    length_path_targets_field_invalid,
-    length_path_targets_field_missing
+    PARSER_RESULTS(RESULT_AS_ENUM_ENTRY) last_one
 };
 
 std::string remote_config_parser_result_to_str(

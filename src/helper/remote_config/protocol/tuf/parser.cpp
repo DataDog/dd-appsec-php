@@ -343,87 +343,10 @@ std::string remote_config_parser_result_to_str(
     remote_config_parser_result result)
 {
     switch (result) {
-    case remote_config_parser_result::success:
-        return "success";
-    case remote_config_parser_result::invalid_json:
-        return "invalid_json";
-    case remote_config_parser_result::targets_field_invalid_base64:
-        return "targets_field_invalid_base64";
-    case remote_config_parser_result::targets_field_invalid_json:
-        return "targets_field_invalid_json";
-    case remote_config_parser_result::targets_field_missing:
-        return "targets_field_missing";
-    case remote_config_parser_result::targets_field_invalid_type:
-        return "targets_field_invalid_type";
-    case remote_config_parser_result::signed_targets_field_invalid:
-        return "signed_targets_field_invalid";
-    case remote_config_parser_result::signed_targets_field_missing:
-        return "signed_targets_field_missing";
-    case remote_config_parser_result::version_signed_targets_field_invalid:
-        return "version_signed_targets_field_invalid";
-    case remote_config_parser_result::version_signed_targets_field_missing:
-        return "version_signed_targets_field_missing";
-    case remote_config_parser_result::target_files_field_missing:
-        return "target_files_field_missing";
-    case remote_config_parser_result::target_files_object_invalid:
-        return "target_files_object_invalid";
-    case remote_config_parser_result::target_files_field_invalid_type:
-        return "target_files_field_invalid_type";
-    case remote_config_parser_result::target_files_path_field_missing:
-        return "target_files_path_field_missing";
-    case remote_config_parser_result::target_files_path_field_invalid_type:
-        return "target_files_path_field_invalid_type";
-    case remote_config_parser_result::target_files_raw_field_missing:
-        return "target_files_raw_field_missing";
-    case remote_config_parser_result::target_files_raw_field_invalid_type:
-        return "target_files_raw_field_invalid_type";
-    case remote_config_parser_result::client_config_field_missing:
-        return "client_config_field_missing";
-    case remote_config_parser_result::client_config_field_invalid_type:
-        return "client_config_field_invalid_type";
-    case remote_config_parser_result::client_config_field_invalid_entry:
-        return "client_config_field_invalid_entry";
-    case remote_config_parser_result::targets_signed_targets_field_invalid:
-        return "targets_signed_targets_field_invalid";
-    case remote_config_parser_result::targets_signed_targets_field_missing:
-        return "targets_signed_targets_field_missing";
-    case remote_config_parser_result::custom_path_targets_field_invalid:
-        return "custom_path_targets_field_invalid";
-    case remote_config_parser_result::custom_path_targets_field_missing:
-        return "custom_path_targets_field_missing";
-    case remote_config_parser_result::v_path_targets_field_invalid:
-        return "v_path_targets_field_invalid";
-    case remote_config_parser_result::v_path_targets_field_missing:
-        return "v_path_targets_field_missing";
-    case remote_config_parser_result::hashes_path_targets_field_invalid:
-        return "hashes_path_targets_field_invalid";
-    case remote_config_parser_result::hashes_path_targets_field_missing:
-        return "hashes_path_targets_field_missing";
-    case remote_config_parser_result::length_path_targets_field_invalid:
-        return "length_path_targets_field_invalid";
-    case remote_config_parser_result::length_path_targets_field_missing:
-        return "length_path_targets_field_missing";
-    case remote_config_parser_result::custom_signed_targets_field_invalid:
-        return "custom_signed_targets_field_invalid";
-    case remote_config_parser_result::custom_signed_targets_field_missing:
-        return "custom_signed_targets_field_missing";
-    case remote_config_parser_result::obs_custom_signed_targets_field_invalid:
-        return "obs_custom_signed_targets_field_invalid";
-    case remote_config_parser_result::obs_custom_signed_targets_field_missing:
-        return "obs_custom_signed_targets_field_missing";
-    case remote_config_parser_result::hashes_path_targets_field_empty:
-        return "hashes_path_targets_field_empty";
-    case remote_config_parser_result::hash_hashes_path_targets_field_invalid:
-        return "hash_hashes_path_targets_field_invalid";
-    case remote_config_parser_result::type_signed_targets_field_invalid:
-        return "type_signed_targets_field_invalid";
-    case remote_config_parser_result::type_signed_targets_field_missing:
-        return "type_signed_targets_field_missing";
-    case remote_config_parser_result::type_signed_targets_field_invalid_type:
-        return "type_signed_targets_field_invalid_type";
+        PARSER_RESULTS(RESULT_AS_CASE)
+    default:
+        return "";
     }
-
-    return "";
 };
 
 } // namespace dds::remote_config::protocol
