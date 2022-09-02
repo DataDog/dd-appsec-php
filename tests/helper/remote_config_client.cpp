@@ -36,7 +36,15 @@ public:
                   << configs[0].get_id() << " version "
                   << configs[0].get_version() << std::endl;
     };
-    void on_unapply(std::vector<remote_config::config> configs) override{};
+    void on_unapply(std::vector<remote_config::config> configs) override
+    {
+        std::cout << std::endl
+                  << "Removing config from product " << std::endl
+                  << "---------------" << std::endl;
+        std::cout << "Unapplying " << configs[0].get_product()
+                  << " with config " << configs[0].get_id() << " version "
+                  << configs[0].get_version() << std::endl;
+    };
 };
 
 namespace mock {
