@@ -218,11 +218,6 @@ bool dd_on_runtime_path_update(
 {
     UNUSED(old_value);
 
-    if (!Z_STRLEN_P(new_value)) {
-        mlog(dd_log_warning, "Empty runtime path");
-        return false;
-    }
-
     pefree(_mgr.socket_path, 1);
     _mgr.socket_path = _concat_paths(Z_STRVAL_P(new_value),
         Z_STRLEN_P(new_value), ZEND_STRL(DD_SOCKET_PATH));
