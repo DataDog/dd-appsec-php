@@ -30,7 +30,7 @@ std::optional<config_path> config_path_from_path(const std::string &path)
 
 protocol::get_configs_request client::generate_request()
 {
-    std::vector<remote_config::protocol::config_state> config_states;
+    std::vector<protocol::config_state> config_states;
     std::vector<protocol::cached_target_files> files;
 
     for (std::pair<std::string, product> pair : this->_products) {
@@ -39,8 +39,7 @@ protocol::get_configs_request client::generate_request()
         for (config _c : configs_on_product) {
             std::string c_id(_c.get_id());
             std::string c_product(_c.get_product());
-            remote_config::protocol::config_state cs(
-                c_id, _c.get_version(), c_product);
+            protocol::config_state cs(c_id, _c.get_version(), c_product);
             config_states.push_back(cs);
         }
 
@@ -70,8 +69,7 @@ protocol::get_configs_request client::generate_request()
     for (std::pair<std::string, product> pair : this->_products) {
         products_str.push_back(pair.first);
     }
-    dds::remote_config::protocol::client protocol_client(
-        this->_id, products_str, ct, cs);
+    protocol::client protocol_client(this->_id, products_str, ct, cs);
 
     protocol::get_configs_request request(protocol_client, files);
 
@@ -81,9 +79,9 @@ protocol::get_configs_request client::generate_request()
 protocol::remote_config_result client::process_response(
     protocol::get_configs_response &response)
 {
-    std::map<std::string, remote_config::protocol::path> paths_on_targets =
+    std::map<std::string, protocol::path> paths_on_targets =
         response.get_targets().get_paths();
-    std::map<std::string, remote_config::protocol::target_file> target_files =
+    std::map<std::string, protocol::target_file> target_files =
         response.get_target_files();
     std::map<std::string, std::vector<config>> configs;
     for (const std::string &path : response.get_client_configs()) {
@@ -191,7 +189,7 @@ protocol::remote_config_result client::poll()
     auto request = generate_request();
 
     std::optional<std::string> serialized_request;
-    serialized_request = remote_config::protocol::serialize(request);
+    serialized_request = protocol::serialize(request);
     if (!serialized_request) {
         return protocol::remote_config_result::error;
     }

@@ -15,14 +15,14 @@ namespace dds::remote_config {
 
 class product_listener_abstract {
 public:
-    virtual void on_update(std::vector<remote_config::config> configs) = 0;
-    virtual void on_unapply(std::vector<remote_config::config> configs) = 0;
+    virtual void on_update(std::vector<config> configs) = 0;
+    virtual void on_unapply(std::vector<config> configs) = 0;
 };
 
 class product_listener : product_listener_abstract {
 public:
-    void on_update(std::vector<remote_config::config> configs) override{};
-    void on_unapply(std::vector<remote_config::config> configs) override{};
+    void on_update(std::vector<config> configs) override{};
+    void on_unapply(std::vector<config> configs) override{};
 };
 
 struct product {

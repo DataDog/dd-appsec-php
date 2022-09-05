@@ -41,8 +41,7 @@ public:
           _app_version(app_version), _targets_version(0)
     {
         for (product &p : products) {
-            _products.insert(std::pair<std::string, remote_config::product>(
-                p.get_name(), p));
+            _products.insert(std::pair<std::string, product>(p.get_name(), p));
         }
     };
 
@@ -63,7 +62,7 @@ private:
     std::string _last_poll_error;
     std::string _opaque_backend_state;
     int _targets_version;
-    std::map<std::string, remote_config::product> _products;
+    std::map<std::string, product> _products;
 };
 
 } // namespace dds::remote_config
