@@ -18,13 +18,13 @@ namespace dds::remote_config {
 struct config_path {
 public:
     config_path(std::string &&id, std::string &&product)
-        : _id(std::move(id)), _product(std::move(product)){};
-    std::string get_id() { return _id; };
-    std::string get_product() { return _product; };
+        : id_(std::move(id)), product_(std::move(product)){};
+    std::string get_id() { return id_; };
+    std::string get_product() { return product_; };
 
 private:
-    std::string _product;
-    std::string _id;
+    std::string product_;
+    std::string id_;
 };
 
 std::optional<config_path> config_path_from_path(const std::string &path);
@@ -36,12 +36,12 @@ public:
         // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
         std::string &tracer_version, std::string &service, std::string &env,
         std::string &app_version, std::vector<product> &products)
-        : _api(arg_api), _id(id), _runtime_id(runtime_id),
-          _tracer_version(tracer_version), _service(service), _env(env),
-          _app_version(app_version), _targets_version(0)
+        : api_(arg_api), id_(id), runtime_id_(runtime_id),
+          tracer_version_(tracer_version), service_(service), env_(env),
+          app_version_(app_version), targets_version_(0)
     {
         for (product &p : products) {
-            _products.insert(std::pair<std::string, product>(p.get_name(), p));
+            products_.insert(std::pair<std::string, product>(p.get_name(), p));
         }
     };
 
@@ -52,17 +52,17 @@ private:
     protocol::remote_config_result process_response(
         protocol::get_configs_response &response);
 
-    http_api *_api;
-    std::string _id;
-    std::string _runtime_id;
-    std::string _tracer_version;
-    std::string _service;
-    std::string _env;
-    std::string _app_version;
-    std::string _last_poll_error;
-    std::string _opaque_backend_state;
-    int _targets_version;
-    std::map<std::string, product> _products;
+    http_api *api_;
+    std::string id_;
+    std::string runtime_id_;
+    std::string tracer_version_;
+    std::string service_;
+    std::string env_;
+    std::string app_version_;
+    std::string last_poll_error_;
+    std::string opaque_backend_state_;
+    int targets_version_;
+    std::map<std::string, product> products_;
 };
 
 } // namespace dds::remote_config

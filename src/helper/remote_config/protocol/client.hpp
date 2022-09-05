@@ -18,23 +18,23 @@ struct client {
 public:
     client(std::string &id, std::vector<std::string> &products,
         client_tracer &ct, client_state &cs)
-        : _id(id), _products(products), _client_tracer(ct), _client_state(cs){};
-    std::string get_id() { return _id; };
-    std::vector<std::string> get_products() { return _products; };
-    client_tracer get_tracer() { return _client_tracer; };
-    client_state get_client_state() { return _client_state; };
+        : id_(id), products_(products), client_tracer_(ct), client_state_(cs){};
+    std::string get_id() { return id_; };
+    std::vector<std::string> get_products() { return products_; };
+    client_tracer get_tracer() { return client_tracer_; };
+    client_state get_client_state() { return client_state_; };
     bool operator==(client const &b) const
     {
-        return _id == b._id && _products == b._products &&
-               _client_tracer == b._client_tracer &&
-               _client_state == b._client_state;
+        return id_ == b.id_ && products_ == b.products_ &&
+               client_tracer_ == b.client_tracer_ &&
+               client_state_ == b.client_state_;
     }
 
 private:
-    std::string _id;
-    std::vector<std::string> _products;
-    client_tracer _client_tracer;
-    client_state _client_state;
+    std::string id_;
+    std::vector<std::string> products_;
+    client_tracer client_tracer_;
+    client_state client_state_;
 };
 
 } // namespace dds::remote_config::protocol

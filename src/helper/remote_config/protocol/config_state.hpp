@@ -12,19 +12,19 @@ namespace dds::remote_config::protocol {
 struct config_state {
 public:
     config_state(std::string &id, int version, std::string &product)
-        : _id(id), _version(version), _product(product){};
-    std::string get_id() { return _id; };
-    [[nodiscard]] int get_version() const { return _version; };
-    std::string get_product() { return _product; };
+        : id_(id), version_(version), product_(product){};
+    std::string get_id() { return id_; };
+    [[nodiscard]] int get_version() const { return version_; };
+    std::string get_product() { return product_; };
     bool operator==(config_state const &b) const
     {
-        return _id == b._id && _version == b._version && _product == b._product;
+        return id_ == b.id_ && version_ == b.version_ && product_ == b.product_;
     }
 
 private:
-    std::string _id;
-    int _version;
-    std::string _product;
+    std::string id_;
+    int version_;
+    std::string product_;
 };
 
 } // namespace dds::remote_config::protocol

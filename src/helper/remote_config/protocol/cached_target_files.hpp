@@ -15,19 +15,19 @@ struct cached_target_files {
 public:
     cached_target_files(std::string &path, int length,
         std::vector<cached_target_files_hash> &hashes)
-        : _path(path), _length(length), _hashes(hashes){};
-    std::string get_path() { return _path; };
-    [[nodiscard]] int get_length() const { return _length; };
-    std::vector<cached_target_files_hash> get_hashes() { return _hashes; };
+        : path_(path), length_(length), hashes_(hashes){};
+    std::string get_path() { return path_; };
+    [[nodiscard]] int get_length() const { return length_; };
+    std::vector<cached_target_files_hash> get_hashes() { return hashes_; };
     bool operator==(cached_target_files const &b) const
     {
-        return _path == b._path && _length == b._length && _hashes == b._hashes;
+        return path_ == b.path_ && length_ == b.length_ && hashes_ == b.hashes_;
     }
 
 private:
-    std::string _path;
-    int _length;
-    std::vector<cached_target_files_hash> _hashes;
+    std::string path_;
+    int length_;
+    std::vector<cached_target_files_hash> hashes_;
 };
 
 } // namespace dds::remote_config::protocol

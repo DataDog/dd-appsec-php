@@ -14,20 +14,20 @@ namespace dds::remote_config::protocol {
 struct path {
 public:
     path(int v, std::map<std::string, std::string> &hashes, int length)
-        : _custom_v(v), _hashes(hashes), _length(length){};
-    [[nodiscard]] int get_custom_v() const { return _custom_v; };
-    std::map<std::string, std::string> get_hashes() { return _hashes; };
-    [[nodiscard]] int get_length() const { return _length; };
+        : custom_v_(v), hashes_(hashes), length_(length){};
+    [[nodiscard]] int get_custom_v() const { return custom_v_; };
+    std::map<std::string, std::string> get_hashes() { return hashes_; };
+    [[nodiscard]] int get_length() const { return length_; };
     bool operator==(path const &b) const
     {
-        return _custom_v == b._custom_v && _hashes == b._hashes &&
-               _length == b._length;
+        return custom_v_ == b.custom_v_ && hashes_ == b.hashes_ &&
+               length_ == b.length_;
     }
 
 private:
-    int _custom_v;
-    std::map<std::string, std::string> _hashes;
-    int _length;
+    int custom_v_;
+    std::map<std::string, std::string> hashes_;
+    int length_;
 };
 
 } // namespace dds::remote_config::protocol

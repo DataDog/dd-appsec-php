@@ -33,13 +33,13 @@ protocol::get_configs_request client::generate_request()
     std::vector<protocol::config_state> config_states;
     std::vector<protocol::cached_target_files> files;
 
-    for (auto &[product_name, product] : _products) {
+    for (auto &[product_name, product] : products_) {
         // State
         auto configs_on_product = product.get_configs();
-        for (config _c : configs_on_product) {
-            std::string c_id(_c.get_id());
-            std::string c_product(_c.get_product());
-            protocol::config_state cs(c_id, _c.get_version(), c_product);
+        for (config c : configs_on_product) {
+            std::string c_id(c.get_id());
+            std::string c_product(c.get_product());
+            protocol::config_state cs(c_id, c.get_version(), c_product);
             config_states.push_back(cs);
         }
 
@@ -58,15 +58,15 @@ protocol::get_configs_request client::generate_request()
     }
 
     protocol::client_tracer ct(
-        _runtime_id, _tracer_version, _service, _env, _app_version);
+        runtime_id_, tracer_version_, service_, env_, app_version_);
 
-    protocol::client_state cs(_targets_version, config_states,
-        !_last_poll_error.empty(), _last_poll_error, _opaque_backend_state);
+    protocol::client_state cs(targets_version_, config_states,
+        !last_poll_error_.empty(), last_poll_error_, opaque_backend_state_);
     std::vector<std::string> products_str;
-    for (const auto &[product_name, product] : _products) {
+    for (const auto &[product_name, product] : products_) {
         products_str.push_back(product_name);
     }
-    protocol::client protocol_client(_id, products_str, ct, cs);
+    protocol::client protocol_client(id_, products_str, ct, cs);
 
     protocol::get_configs_request request(protocol_client, files);
 
@@ -85,7 +85,7 @@ protocol::remote_config_result client::process_response(
         std::optional<config_path> cp;
         cp = config_path_from_path(path);
         if (!cp) {
-            _last_poll_error = "error parsing path " + path;
+            last_poll_error_ = "error parsing path " + path;
             return protocol::remote_config_result::error;
         }
 
@@ -94,7 +94,7 @@ protocol::remote_config_result client::process_response(
         int length;
         if (path_itr == paths_on_targets.end()) {
             // Not found
-            _last_poll_error = "missing config " + path + " in targets";
+            last_poll_error_ = "missing config " + path + " in targets";
             return protocol::remote_config_result::error;
         }
         length = path_itr->second.get_length();
@@ -107,10 +107,10 @@ protocol::remote_config_result client::process_response(
         std::string raw;
         if (path_in_target_files == target_files.end()) {
             // Check if file in cache
-            auto product = _products.find(cp->get_product());
-            if (product == _products.end()) {
+            auto product = products_.find(cp->get_product());
+            if (product == products_.end()) {
                 // Not found
-                _last_poll_error = "missing config " + path +
+                last_poll_error_ = "missing config " + path +
                                    " in target files and in cache files";
                 return protocol::remote_config_result::error;
             }
@@ -123,7 +123,7 @@ protocol::remote_config_result client::process_response(
 
             if (config_itr == configs_on_product.end()) {
                 // Not found
-                _last_poll_error = "missing config " + path +
+                last_poll_error_ = "missing config " + path +
                                    " in target files and in cache files";
                 return protocol::remote_config_result::error;
             }
@@ -136,9 +136,9 @@ protocol::remote_config_result client::process_response(
         }
 
         // Is product on the requested ones?
-        if (_products.find(cp->get_product()) == _products.end()) {
+        if (products_.find(cp->get_product()) == products_.end()) {
             // Not found
-            _last_poll_error = "received config " + path +
+            last_poll_error_ = "received config " + path +
                                " for a product that was not requested";
             return protocol::remote_config_result::error;
         }
@@ -146,20 +146,20 @@ protocol::remote_config_result client::process_response(
         std::string product = cp->get_product();
         std::string id = cp->get_id();
         std::string path_c = path;
-        config _config(product, id, raw, hashes, custom_v, path_c, length);
+        config config_(product, id, raw, hashes, custom_v, path_c, length);
         auto configs_itr = configs.find(cp->get_product());
         if (configs_itr ==
             configs.end()) { // Product not in configs yet. Create entry
-            std::vector<config> configs_on_product = {_config};
+            std::vector<config> configs_on_product = {config_};
             configs.insert(std::pair<std::string, std::vector<config>>(
                 cp->get_product(), configs_on_product));
         } else { // Product already exists in configs. Add new config
-            configs_itr->second.push_back(_config);
+            configs_itr->second.push_back(config_);
         }
     }
 
     // Since there have not been errors, we can now update product configs
-    for (auto it = std::begin(_products); it != std::end(_products); ++it) {
+    for (auto it = std::begin(products_); it != std::end(products_); ++it) {
         auto product_configs = configs.find(it->first);
         if (product_configs != configs.end()) {
             it->second.assign_configs(product_configs->second);
@@ -169,15 +169,15 @@ protocol::remote_config_result client::process_response(
         }
     }
 
-    _targets_version = response.get_targets().get_version();
-    _opaque_backend_state = response.get_targets().get_opaque_backend_state();
+    targets_version_ = response.get_targets().get_version();
+    opaque_backend_state_ = response.get_targets().get_opaque_backend_state();
 
     return protocol::remote_config_result::success;
 }
 
 protocol::remote_config_result client::poll()
 {
-    if (_api == nullptr) {
+    if (api_ == nullptr) {
         return protocol::remote_config_result::error;
     }
 
@@ -191,7 +191,7 @@ protocol::remote_config_result client::poll()
 
     std::string response_body;
     protocol::remote_config_result result =
-        _api->get_configs(serialized_request.value(), response_body);
+        api_->get_configs(serialized_request.value(), response_body);
     if (result == protocol::remote_config_result::error) {
         return protocol::remote_config_result::error;
     }
@@ -200,7 +200,7 @@ protocol::remote_config_result client::poll()
         return protocol::remote_config_result::error;
     }
 
-    _last_poll_error = "";
+    last_poll_error_ = "";
     result = process_response(response.value());
 
     return result;

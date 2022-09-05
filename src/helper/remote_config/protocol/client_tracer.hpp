@@ -15,26 +15,26 @@ public:
     client_tracer(std::string &runtime_id, std::string &tracer_version,
         // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
         std::string &service, std::string &env, std::string &app_version)
-        : _runtime_id(runtime_id), _tracer_version(tracer_version),
-          _service(service), _env(env), _app_version(app_version){};
-    std::string get_runtime_id() { return _runtime_id; };
-    std::string get_tracer_version() { return _tracer_version; };
-    std::string get_service() { return _service; };
-    std::string get_env() { return _env; };
-    std::string get_app_version() { return _app_version; };
+        : runtime_id_(runtime_id), tracer_version_(tracer_version),
+          service_(service), env_(env), app_version_(app_version){};
+    std::string get_runtime_id() { return runtime_id_; };
+    std::string get_tracer_version() { return tracer_version_; };
+    std::string get_service() { return service_; };
+    std::string get_env() { return env_; };
+    std::string get_app_version() { return app_version_; };
     bool operator==(client_tracer const &b) const
     {
-        return _runtime_id == b._runtime_id &&
-               _tracer_version == b._tracer_version && _service == b._service &&
-               _env == b._env && _app_version == b._app_version;
+        return runtime_id_ == b.runtime_id_ &&
+               tracer_version_ == b.tracer_version_ && service_ == b.service_ &&
+               env_ == b.env_ && app_version_ == b.app_version_;
     }
 
 private:
-    std::string _runtime_id;
-    std::string _tracer_version;
-    std::string _service;
-    std::string _env;
-    std::string _app_version;
+    std::string runtime_id_;
+    std::string tracer_version_;
+    std::string service_;
+    std::string env_;
+    std::string app_version_;
 };
 
 } // namespace dds::remote_config::protocol

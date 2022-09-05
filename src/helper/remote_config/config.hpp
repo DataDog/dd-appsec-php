@@ -18,31 +18,31 @@ public:
     config(std::string &product, std::string &id, std::string &contents,
         std::map<std::string, std::string> &hashes, int version,
         std::string &path, int length)
-        : _product(product), _id(id), _contents(contents), _hashes(hashes),
-          _version(version), _path(path), _length(length){};
+        : product_(product), id_(id), contents_(contents), hashes_(hashes),
+          version_(version), path_(path), length_(length){};
     bool operator==(config const &b) const
     {
-        return _product == b._product && _id == b._id &&
-               _contents == b._contents && _hashes == b._hashes &&
-               _version == b._version && _path == b._path &&
-               _length == b._length;
+        return product_ == b.product_ && id_ == b.id_ &&
+               contents_ == b.contents_ && hashes_ == b.hashes_ &&
+               version_ == b.version_ && path_ == b.path_ &&
+               length_ == b.length_;
     }
-    std::string get_id() { return _id; };
-    [[nodiscard]] int get_version() const { return _version; };
-    std::string get_product() { return _product; };
-    std::string get_contents() { return _contents; };
-    std::string get_path() { return _path; };
-    [[nodiscard]] int get_length() const { return _length; };
-    std::map<std::string, std::string> get_hashes() { return _hashes; };
+    std::string get_id() { return id_; };
+    [[nodiscard]] int get_version() const { return version_; };
+    std::string get_product() { return product_; };
+    std::string get_contents() { return contents_; };
+    std::string get_path() { return path_; };
+    [[nodiscard]] int get_length() const { return length_; };
+    std::map<std::string, std::string> get_hashes() { return hashes_; };
 
 private:
-    std::string _product;
-    std::string _id;
-    std::string _contents;
-    std::string _path;
-    std::map<std::string, std::string> _hashes;
-    int _version;
-    int _length;
+    std::string product_;
+    std::string id_;
+    std::string contents_;
+    std::string path_;
+    std::map<std::string, std::string> hashes_;
+    int version_;
+    int length_;
 };
 
 } // namespace dds::remote_config

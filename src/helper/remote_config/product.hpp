@@ -29,49 +29,49 @@ struct product {
 public:
     explicit product(
         std::string &name, std::vector<product_listener *> &listeners)
-        : _name(name), _listeners(listeners){};
+        : name_(name), listeners_(listeners){};
     void assign_configs(std::vector<config> &configs)
     {
         std::vector<config> to_update;
         std::vector<config> to_keep;
 
-        for (config _config : configs) {
+        for (config config_ : configs) {
             auto previous_config = std::find_if(
-                _configs.begin(), _configs.end(), [&_config](config c) {
-                    return c.get_id() == _config.get_id();
+                configs_.begin(), configs_.end(), [&config_](config c) {
+                    return c.get_id() == config_.get_id();
                 });
-            if (previous_config == _configs.end()) { // New config
-                to_update.push_back(_config);
+            if (previous_config == configs_.end()) { // New config
+                to_update.push_back(config_);
             } else { // Already existed
-                if (_config.get_hashes() ==
+                if (config_.get_hashes() ==
                     previous_config->get_hashes()) { // No changes in config
-                    to_keep.push_back(_config);
+                    to_keep.push_back(config_);
                 } else { // Config updated
-                    to_update.push_back(_config);
+                    to_update.push_back(config_);
                 }
-                _configs.erase(previous_config);
+                configs_.erase(previous_config);
             }
         }
 
-        for (product_listener *l : _listeners) {
+        for (product_listener *l : listeners_) {
             l->on_update(to_update);
-            l->on_unapply(_configs);
+            l->on_unapply(configs_);
         }
         to_keep.insert(to_keep.end(), to_update.begin(), to_update.end());
 
-        _configs = to_keep;
+        configs_ = to_keep;
     };
-    std::vector<config> get_configs() { return _configs; };
+    std::vector<config> get_configs() { return configs_; };
     bool operator==(product const &b) const
     {
-        return _name == b._name && _configs == b._configs;
+        return name_ == b.name_ && configs_ == b.configs_;
     }
-    std::string get_name() { return _name; };
+    std::string get_name() { return name_; };
 
 private:
-    std::string _name;
-    std::vector<config> _configs;
-    std::vector<product_listener *> _listeners;
+    std::string name_;
+    std::vector<config> configs_;
+    std::vector<product_listener *> listeners_;
 };
 
 } // namespace dds::remote_config

@@ -13,17 +13,17 @@ struct cached_target_files_hash {
 public:
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     cached_target_files_hash(const std::string &algorithm, std::string &hash)
-        : _algorithm(algorithm), _hash(hash){};
-    std::string get_algorithm() { return _algorithm; };
-    std::string get_hash() { return _hash; };
+        : algorithm_(algorithm), hash_(hash){};
+    std::string get_algorithm() { return algorithm_; };
+    std::string get_hash() { return hash_; };
     bool operator==(cached_target_files_hash const &b) const
     {
-        return _algorithm == b._algorithm && _hash == b._hash;
+        return algorithm_ == b.algorithm_ && hash_ == b.hash_;
     }
 
 private:
-    std::string _algorithm;
-    std::string _hash;
+    std::string algorithm_;
+    std::string hash_;
 };
 
 } // namespace dds::remote_config::protocol

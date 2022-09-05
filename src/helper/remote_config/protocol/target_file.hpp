@@ -13,17 +13,17 @@ namespace dds::remote_config::protocol {
 struct target_file {
 public:
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    target_file(std::string &path, std::string &raw) : _path(path), _raw(raw){};
-    std::string get_path() { return _path; };
-    std::string get_raw() { return _raw; };
+    target_file(std::string &path, std::string &raw) : path_(path), raw_(raw){};
+    std::string get_path() { return path_; };
+    std::string get_raw() { return raw_; };
     bool operator==(target_file const &b) const
     {
-        return _path == b._path && _raw == b._raw;
+        return path_ == b.path_ && raw_ == b.raw_;
     }
 
 private:
-    std::string _path;
-    std::string _raw;
+    std::string path_;
+    std::string raw_;
 };
 
 } // namespace dds::remote_config::protocol
