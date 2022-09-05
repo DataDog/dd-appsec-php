@@ -20,10 +20,16 @@ public:
           has_error_(has_error), error_(error),
           backend_client_state_(backend_client_state){};
     [[nodiscard]] int get_targets_version() const { return targets_version_; };
-    std::vector<config_state> get_config_states() { return config_states_; };
+    std::vector<config_state> get_config_states() const
+    {
+        return config_states_;
+    };
     [[nodiscard]] bool get_has_error() const { return has_error_; };
-    std::string get_error() { return error_; };
-    std::string get_backend_client_state() { return backend_client_state_; };
+    std::string get_error() const { return error_; };
+    std::string get_backend_client_state() const
+    {
+        return backend_client_state_;
+    };
     bool operator==(client_state const &b) const
     {
         return targets_version_ == b.targets_version_ &&

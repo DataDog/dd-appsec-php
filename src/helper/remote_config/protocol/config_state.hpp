@@ -13,9 +13,9 @@ class config_state {
 public:
     config_state(std::string &id, int version, std::string &product)
         : id_(id), version_(version), product_(product){};
-    std::string get_id() { return id_; };
+    std::string get_id() const { return id_; };
     [[nodiscard]] int get_version() const { return version_; };
-    std::string get_product() { return product_; };
+    std::string get_product() const { return product_; };
     bool operator==(config_state const &b) const
     {
         return id_ == b.id_ && version_ == b.version_ && product_ == b.product_;

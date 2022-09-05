@@ -18,13 +18,13 @@ public:
         std::vector<cached_target_files> &arg_cached_target_files)
         : client_(arg_client), cached_target_files_(arg_cached_target_files){};
 
-    client get_client() { return client_; };
+    client get_client() const { return client_; };
     bool operator==(get_configs_request const &a) const
     {
         return client_ == a.client_ &&
                cached_target_files_ == a.cached_target_files_;
     }
-    std::vector<cached_target_files> get_cached_target_files()
+    std::vector<cached_target_files> get_cached_target_files() const
     {
         return cached_target_files_;
     };

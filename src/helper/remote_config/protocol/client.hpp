@@ -19,10 +19,10 @@ public:
     client(std::string &id, std::vector<std::string> &products,
         client_tracer &ct, client_state &cs)
         : id_(id), products_(products), client_tracer_(ct), client_state_(cs){};
-    std::string get_id() { return id_; };
-    std::vector<std::string> get_products() { return products_; };
-    client_tracer get_tracer() { return client_tracer_; };
-    client_state get_client_state() { return client_state_; };
+    std::string get_id() const { return id_; };
+    std::vector<std::string> get_products() const { return products_; };
+    client_tracer get_tracer() const { return client_tracer_; };
+    client_state get_client_state() const { return client_state_; };
     bool operator==(client const &b) const
     {
         return id_ == b.id_ && products_ == b.products_ &&

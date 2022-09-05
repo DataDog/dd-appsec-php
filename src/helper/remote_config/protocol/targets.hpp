@@ -20,9 +20,12 @@ public:
     {
         for (auto pair : paths) { paths_.insert(pair); }
     }
-    std::string get_opaque_backend_state() { return opaque_backend_state_; };
+    std::string get_opaque_backend_state() const
+    {
+        return opaque_backend_state_;
+    };
     [[nodiscard]] int get_version() const { return version_; };
-    std::map<std::string, path> get_paths() { return paths_; };
+    std::map<std::string, path> get_paths() const { return paths_; };
     bool operator==(targets const &b) const
     {
         return version_ == b.version_ &&

@@ -61,12 +61,12 @@ public:
 
         configs_ = to_keep;
     };
-    std::vector<config> get_configs() { return configs_; };
+    std::vector<config> get_configs() const { return configs_; };
     bool operator==(product const &b) const
     {
         return name_ == b.name_ && configs_ == b.configs_;
     }
-    std::string get_name() { return name_; };
+    std::string get_name() const { return name_; };
 
 private:
     std::string name_;

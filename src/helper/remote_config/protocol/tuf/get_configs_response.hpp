@@ -25,11 +25,14 @@ public:
                 target_file.get_path(), target_file));
         }
     }
-    std::map<std::string, target_file> get_target_files()
+    std::map<std::string, target_file> get_target_files() const
     {
         return target_files_;
     };
-    std::vector<std::string> get_client_configs() { return client_configs_; };
+    std::vector<std::string> get_client_configs() const
+    {
+        return client_configs_;
+    };
     [[nodiscard]] targets get_targets() const { return targets_; };
 
 private:

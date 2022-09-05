@@ -19,8 +19,8 @@ class config_path {
 public:
     config_path(std::string &&id, std::string &&product)
         : id_(std::move(id)), product_(std::move(product)){};
-    std::string get_id() { return id_; };
-    std::string get_product() { return product_; };
+    std::string get_id() const { return id_; };
+    std::string get_product() const { return product_; };
 
 private:
     std::string product_;

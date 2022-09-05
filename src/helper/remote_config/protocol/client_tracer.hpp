@@ -17,11 +17,11 @@ public:
         std::string &service, std::string &env, std::string &app_version)
         : runtime_id_(runtime_id), tracer_version_(tracer_version),
           service_(service), env_(env), app_version_(app_version){};
-    std::string get_runtime_id() { return runtime_id_; };
-    std::string get_tracer_version() { return tracer_version_; };
-    std::string get_service() { return service_; };
-    std::string get_env() { return env_; };
-    std::string get_app_version() { return app_version_; };
+    std::string get_runtime_id() const { return runtime_id_; };
+    std::string get_tracer_version() const { return tracer_version_; };
+    std::string get_service() const { return service_; };
+    std::string get_env() const { return env_; };
+    std::string get_app_version() const { return app_version_; };
     bool operator==(client_tracer const &b) const
     {
         return runtime_id_ == b.runtime_id_ &&

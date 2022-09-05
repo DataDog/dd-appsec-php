@@ -27,13 +27,13 @@ public:
                version_ == b.version_ && path_ == b.path_ &&
                length_ == b.length_;
     }
-    std::string get_id() { return id_; };
+    std::string get_id() const { return id_; };
     [[nodiscard]] int get_version() const { return version_; };
-    std::string get_product() { return product_; };
-    std::string get_contents() { return contents_; };
-    std::string get_path() { return path_; };
+    std::string get_product() const { return product_; };
+    std::string get_contents() const { return contents_; };
+    std::string get_path() const { return path_; };
     [[nodiscard]] int get_length() const { return length_; };
-    std::map<std::string, std::string> get_hashes() { return hashes_; };
+    std::map<std::string, std::string> get_hashes() const { return hashes_; };
 
 private:
     std::string product_;

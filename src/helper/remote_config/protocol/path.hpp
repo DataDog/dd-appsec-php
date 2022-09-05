@@ -16,7 +16,7 @@ public:
     path(int v, std::map<std::string, std::string> &hashes, int length)
         : custom_v_(v), hashes_(hashes), length_(length){};
     [[nodiscard]] int get_custom_v() const { return custom_v_; };
-    std::map<std::string, std::string> get_hashes() { return hashes_; };
+    std::map<std::string, std::string> get_hashes() const { return hashes_; };
     [[nodiscard]] int get_length() const { return length_; };
     bool operator==(path const &b) const
     {
