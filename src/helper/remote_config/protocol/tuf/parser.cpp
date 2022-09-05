@@ -111,7 +111,7 @@ parse_client_configs(rapidjson::Value::ConstMemberIterator client_configs_itr)
             return result;
         }
 
-        result.second.push_back(itr->GetString());
+        result.second.emplace_back(itr->GetString());
     }
 
     result.first = remote_config_parser_result::success;
