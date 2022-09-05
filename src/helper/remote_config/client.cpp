@@ -38,9 +38,8 @@ protocol::get_configs_request client::generate_request()
         for (auto &config : configs_on_product) {
             std::string c_id(config.get_id());
             std::string c_product(config.get_product());
-            protocol::config_state cs(
+            config_states.emplace_back(
                 std::move(c_id), config.get_version(), std::move(c_product));
-            config_states.push_back(cs);
         }
 
         // Cached files
@@ -49,13 +48,10 @@ protocol::get_configs_request client::generate_request()
             std::vector<protocol::cached_target_files_hash> hashes;
             hashes.reserve(config.get_hashes().size());
             for (auto &[algo, hash_sting] : config.get_hashes()) {
-                protocol::cached_target_files_hash hash(algo, hash_sting);
-                hashes.push_back(hash);
+                hashes.emplace_back(algo, hash_sting);
             }
             std::string path = config.get_path();
-            protocol::cached_target_files file(
-                path, config.get_length(), hashes);
-            files.push_back(file);
+            files.emplace_back(path, config.get_length(), hashes);
         }
     }
 
