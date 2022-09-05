@@ -23,10 +23,8 @@ protocol::remote_config_result config_path_from_path(
         return protocol::remote_config_result::error;
     }
 
-    std::string product(base_match[2].str());
-    std::string id(base_match[3].str());
-    cp.set_product(product);
-    cp.set_id(id);
+    cp.set_product(base_match[2].str());
+    cp.set_id(base_match[3].str());
 
     return protocol::remote_config_result::success;
 }

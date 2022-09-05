@@ -20,8 +20,8 @@ public:
     config_path() = default;
     std::string get_id() { return _id; };
     std::string get_product() { return _product; };
-    void set_id(std::string &id) { _id = id; };
-    void set_product(std::string &product) { _product = product; };
+    void set_id(std::string &&id) { _id = std::move(id); };
+    void set_product(std::string &&product) { _product = std::move(product); };
 
 private:
     std::string _product;
