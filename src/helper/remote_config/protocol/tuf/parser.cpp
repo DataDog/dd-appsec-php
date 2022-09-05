@@ -356,7 +356,7 @@ parse(const std::string &body)
 
     return parser_result;
 }
-
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define RESULT_AS_STR(entry) #entry,
 constexpr static std::array<std::string_view,
     (size_t)remote_config_parser_result::num_of_values>
@@ -367,6 +367,7 @@ std::string_view remote_config_parser_result_to_str(
     if (result == remote_config_parser_result::num_of_values) {
         return "";
     }
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
     return results_as_str[(size_t)result];
 }
 

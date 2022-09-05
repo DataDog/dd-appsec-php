@@ -14,6 +14,7 @@
 
 namespace dds::remote_config::protocol {
 
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define PARSER_RESULTS(X)                                                      \
     X(success)                                                                 \
     X(invalid_json)                                                            \
@@ -55,6 +56,7 @@ namespace dds::remote_config::protocol {
     X(length_path_targets_field_invalid)                                       \
     X(length_path_targets_field_missing)
 
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define RESULT_AS_ENUM_ENTRY(entry) entry,
 enum class remote_config_parser_result : size_t {
     PARSER_RESULTS(RESULT_AS_ENUM_ENTRY) num_of_values
