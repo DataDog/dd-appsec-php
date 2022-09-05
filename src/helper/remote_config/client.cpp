@@ -36,23 +36,24 @@ protocol::get_configs_request client::generate_request()
     for (auto &[product_name, product] : products_) {
         // State
         auto configs_on_product = product.get_configs();
-        for (config c : configs_on_product) {
-            std::string c_id(c.get_id());
-            std::string c_product(c.get_product());
-            protocol::config_state cs(c_id, c.get_version(), c_product);
+        for (auto &config : configs_on_product) {
+            std::string c_id(config.get_id());
+            std::string c_product(config.get_product());
+            protocol::config_state cs(c_id, config.get_version(), c_product);
             config_states.push_back(cs);
         }
 
         // Cached files
         auto configs = product.get_configs();
-        for (config c : configs) {
+        for (auto config : configs) {
             std::vector<protocol::cached_target_files_hash> hashes;
-            for (auto [algo, hash_sting] : c.get_hashes()) {
+            for (auto [algo, hash_sting] : config.get_hashes()) {
                 protocol::cached_target_files_hash hash(algo, hash_sting);
                 hashes.push_back(hash);
             }
-            std::string path = c.get_path();
-            protocol::cached_target_files file(path, c.get_length(), hashes);
+            std::string path = config.get_path();
+            protocol::cached_target_files file(
+                path, config.get_length(), hashes);
             files.push_back(file);
         }
     }

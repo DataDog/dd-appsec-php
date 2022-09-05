@@ -40,8 +40,9 @@ public:
           tracer_version_(tracer_version), service_(service), env_(env),
           app_version_(app_version), targets_version_(0)
     {
-        for (product &p : products) {
-            products_.insert(std::pair<std::string, product>(p.get_name(), p));
+        for (auto &product : products) {
+            products_.insert(std::pair<std::string, remote_config::product>(
+                product.get_name(), product));
         }
     };
 

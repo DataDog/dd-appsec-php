@@ -35,27 +35,27 @@ public:
         std::vector<config> to_update;
         std::vector<config> to_keep;
 
-        for (config config_ : configs) {
-            auto previous_config = std::find_if(
-                configs_.begin(), configs_.end(), [&config_](config c) {
-                    return c.get_id() == config_.get_id();
+        for (auto config : configs) {
+            auto previous_config = std::find_if(configs_.begin(),
+                configs_.end(), [&config](remote_config::config config_) {
+                    return config_.get_id() == config.get_id();
                 });
             if (previous_config == configs_.end()) { // New config
-                to_update.push_back(config_);
+                to_update.push_back(config);
             } else { // Already existed
-                if (config_.get_hashes() ==
+                if (config.get_hashes() ==
                     previous_config->get_hashes()) { // No changes in config
-                    to_keep.push_back(config_);
+                    to_keep.push_back(config);
                 } else { // Config updated
-                    to_update.push_back(config_);
+                    to_update.push_back(config);
                 }
                 configs_.erase(previous_config);
             }
         }
 
-        for (product_listener *l : listeners_) {
-            l->on_update(to_update);
-            l->on_unapply(configs_);
+        for (product_listener *listener : listeners_) {
+            listener->on_update(to_update);
+            listener->on_unapply(configs_);
         }
         to_keep.insert(to_keep.end(), to_update.begin(), to_update.end());
 

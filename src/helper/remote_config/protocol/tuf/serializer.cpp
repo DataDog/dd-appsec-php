@@ -37,11 +37,13 @@ void serialize_config_states(rapidjson::Document::AllocatorType &alloc,
 {
     rapidjson::Value config_states_object(rapidjson::kArrayType);
 
-    for (config_state c : config_states) {
+    for (auto config_state : config_states) {
         rapidjson::Value config_state_object(rapidjson::kObjectType);
-        config_state_object.AddMember("id", c.get_id(), alloc);
-        config_state_object.AddMember("version", c.get_version(), alloc);
-        config_state_object.AddMember("product", c.get_product(), alloc);
+        config_state_object.AddMember("id", config_state.get_id(), alloc);
+        config_state_object.AddMember(
+            "version", config_state.get_version(), alloc);
+        config_state_object.AddMember(
+            "product", config_state.get_product(), alloc);
         config_states_object.PushBack(config_state_object, alloc);
     }
 
@@ -77,8 +79,8 @@ void serialize_client(rapidjson::Document::AllocatorType &alloc,
     client_object.AddMember("is_tracer", true, alloc);
 
     rapidjson::Value products(rapidjson::kArrayType);
-    for (std::string &p : client.get_products()) {
-        products.PushBack(rapidjson::Value(p, alloc).Move(), alloc);
+    for (std::string &product_str : client.get_products()) {
+        products.PushBack(rapidjson::Value(product_str, alloc).Move(), alloc);
     }
     client_object.AddMember("products", products, alloc);
 

@@ -20,9 +20,9 @@ public:
         std::vector<target_file> target_files, targets &targets)
         : client_configs_(client_configs), targets_(targets)
     {
-        for (auto &tf : target_files) {
-            target_files_.insert(
-                std::pair<std::string, target_file>(tf.get_path(), tf));
+        for (auto &target_file : target_files) {
+            target_files_.insert(std::pair<std::string, protocol::target_file>(
+                target_file.get_path(), target_file));
         }
     }
     std::map<std::string, target_file> get_target_files()
