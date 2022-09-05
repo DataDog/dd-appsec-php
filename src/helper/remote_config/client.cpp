@@ -190,12 +190,15 @@ protocol::remote_config_result client::poll()
 
     auto request = generate_request();
 
-    std::string serialized_request;
-    remote_config::protocol::serialize(request, serialized_request);
+    std::optional<std::string> serialized_request;
+    serialized_request = remote_config::protocol::serialize(request);
+    if (!serialized_request) {
+        return protocol::remote_config_result::error;
+    }
 
     std::string response_body;
     protocol::remote_config_result result =
-        this->_api->get_configs(serialized_request, response_body);
+        this->_api->get_configs(serialized_request.value(), response_body);
     if (result == protocol::remote_config_result::error) {
         return protocol::remote_config_result::error;
     }

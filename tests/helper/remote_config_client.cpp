@@ -269,12 +269,12 @@ remote_config::protocol::get_configs_request generate_request(
 std::string generate_request_serialized(
     bool generate_state, bool generate_cache)
 {
-    std::string request_serialized;
+    std::optional<std::string> request_serialized;
 
-    remote_config::protocol::serialize(
-        generate_request(generate_state, generate_cache), request_serialized);
+    request_serialized = remote_config::protocol::serialize(
+        generate_request(generate_state, generate_cache));
 
-    return request_serialized;
+    return request_serialized.value();
 }
 
 bool validate_request_has_error(

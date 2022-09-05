@@ -177,16 +177,15 @@ TEST(RemoteConfigSerializer, RequestCanBeSerializedWithClientField)
         get_cached_target_files();
     remote_config::protocol::get_configs_request request(client, vector);
 
-    std::string serialised_string;
-    auto result =
-        remote_config::protocol::serialize(request, serialised_string);
+    std::optional<std::string> serialised_string;
+    serialised_string = remote_config::protocol::serialize(request);
 
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_TRUE(serialised_string);
 
     // Lets transform the resulting string back to json so we can assert more
     // easily
     rapidjson::Document serialized_doc;
-    serialized_doc.Parse(serialised_string);
+    serialized_doc.Parse(serialised_string.value());
 
     // Client fields
     rapidjson::Value::ConstMemberIterator client_itr =
@@ -246,16 +245,15 @@ TEST(RemoteConfigSerializer, RequestCanBeSerializedWithCachedTargetFields)
         get_cached_target_files();
     remote_config::protocol::get_configs_request request(client, vector);
 
-    std::string serialised_string;
-    auto result =
-        remote_config::protocol::serialize(request, serialised_string);
+    std::optional<std::string> serialised_string;
+    serialised_string = remote_config::protocol::serialize(request);
 
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_TRUE(serialised_string);
 
     // Lets transform the resulting string back to json so we can assert more
     // easily
     rapidjson::Document serialized_doc;
-    serialized_doc.Parse(serialised_string);
+    serialized_doc.Parse(serialised_string.value());
 
     // cached_target_files fields
     rapidjson::Value::ConstMemberIterator cached_target_files_itr =
