@@ -5,6 +5,7 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #pragma once
 
+#include <array>
 #include <rapidjson/document.h>
 #include <string>
 
@@ -55,15 +56,11 @@ namespace dds::remote_config::protocol {
     X(length_path_targets_field_missing)
 
 #define RESULT_AS_ENUM_ENTRY(entry) entry,
-#define RESULT_AS_CASE(entry)                                                  \
-    case remote_config_parser_result::entry:                                   \
-        return #entry;
-
-enum class remote_config_parser_result {
-    PARSER_RESULTS(RESULT_AS_ENUM_ENTRY) last_one
+enum class remote_config_parser_result : size_t {
+    PARSER_RESULTS(RESULT_AS_ENUM_ENTRY) num_of_values
 };
 
-std::string remote_config_parser_result_to_str(
+std::string_view remote_config_parser_result_to_str(
     remote_config_parser_result result);
 
 remote_config_parser_result parse(

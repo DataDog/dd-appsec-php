@@ -339,14 +339,17 @@ remote_config_parser_result parse(
     return remote_config_parser_result::success;
 }
 
-std::string remote_config_parser_result_to_str(
+#define RESULT_AS_STR(entry) #entry,
+constexpr std::array<std::string_view,
+    (size_t)remote_config_parser_result::num_of_values>
+    results_as_str = {PARSER_RESULTS(RESULT_AS_STR)};
+std::string_view remote_config_parser_result_to_str(
     remote_config_parser_result result)
 {
-    switch (result) {
-        PARSER_RESULTS(RESULT_AS_CASE)
-    default:
+    if (result == remote_config_parser_result::num_of_values) {
         return "";
     }
-};
+    return results_as_str[(size_t)result];
+}
 
 } // namespace dds::remote_config::protocol

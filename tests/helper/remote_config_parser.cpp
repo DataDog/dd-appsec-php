@@ -1217,4 +1217,22 @@ TEST(RemoteConfigParser, TargetsAreParsed)
     EXPECT_EQ(41, temp_path.get_length());
 }
 
+TEST(RemoteConfigParser, RemoteConfigParserResultCanBeCastToString)
+{
+    EXPECT_EQ("success",
+        remote_config::protocol::remote_config_parser_result_to_str(
+            remote_config::protocol::remote_config_parser_result::success));
+    EXPECT_EQ("target_files_path_field_invalid_type",
+        remote_config::protocol::remote_config_parser_result_to_str(
+            remote_config::protocol::remote_config_parser_result::
+                target_files_path_field_invalid_type));
+    EXPECT_EQ("length_path_targets_field_missing",
+        remote_config::protocol::remote_config_parser_result_to_str(
+            remote_config::protocol::remote_config_parser_result::
+                length_path_targets_field_missing));
+    EXPECT_EQ("", remote_config::protocol::remote_config_parser_result_to_str(
+                      remote_config::protocol::remote_config_parser_result::
+                          num_of_values));
+}
+
 } // namespace dds
