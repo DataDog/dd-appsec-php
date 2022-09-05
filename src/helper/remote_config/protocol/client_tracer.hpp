@@ -9,7 +9,7 @@
 
 namespace dds::remote_config::protocol {
 
-struct client_tracer {
+class client_tracer {
 public:
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     client_tracer(std::string &runtime_id, std::string &tracer_version,

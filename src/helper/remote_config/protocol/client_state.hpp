@@ -11,7 +11,7 @@
 
 namespace dds::remote_config::protocol {
 
-struct client_state {
+class client_state {
 public:
     client_state(int targets_version, std::vector<config_state> &cs,
         // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)

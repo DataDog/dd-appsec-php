@@ -12,7 +12,7 @@
 
 namespace dds::remote_config::protocol {
 
-struct get_configs_request {
+class get_configs_request {
 public:
     get_configs_request(client &arg_client,
         std::vector<cached_target_files> &arg_cached_target_files)

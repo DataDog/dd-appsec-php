@@ -9,7 +9,7 @@
 
 namespace dds::remote_config::protocol {
 
-struct config_state {
+class config_state {
 public:
     config_state(std::string &id, int version, std::string &product)
         : id_(id), version_(version), product_(product){};

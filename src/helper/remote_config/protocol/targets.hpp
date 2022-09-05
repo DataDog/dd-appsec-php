@@ -12,7 +12,7 @@
 
 namespace dds::remote_config::protocol {
 
-struct targets {
+class targets {
 public:
     targets(int version, std::string opaque_backend_state,
         std::vector<std::pair<std::string, path>> paths)

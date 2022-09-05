@@ -14,7 +14,7 @@
 
 namespace dds::remote_config::protocol {
 
-struct get_configs_response {
+class get_configs_response {
 public:
     get_configs_response(std::vector<std::string> &client_configs,
         std::vector<target_file> target_files, targets &targets)

@@ -11,7 +11,7 @@
 
 namespace dds::remote_config {
 
-struct config {
+class config {
 public:
     //@todo contents should be bytes
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)

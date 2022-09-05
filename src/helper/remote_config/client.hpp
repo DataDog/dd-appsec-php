@@ -15,7 +15,7 @@
 
 namespace dds::remote_config {
 
-struct config_path {
+class config_path {
 public:
     config_path(std::string &&id, std::string &&product)
         : id_(std::move(id)), product_(std::move(product)){};

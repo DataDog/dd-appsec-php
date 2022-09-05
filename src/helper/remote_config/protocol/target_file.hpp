@@ -10,7 +10,7 @@
 
 namespace dds::remote_config::protocol {
 
-struct target_file {
+class target_file {
 public:
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     target_file(std::string &path, std::string &raw) : path_(path), raw_(raw){};

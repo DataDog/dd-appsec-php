@@ -25,7 +25,7 @@ public:
     void on_unapply(std::vector<config> configs) override{};
 };
 
-struct product {
+class product {
 public:
     explicit product(
         std::string &name, std::vector<product_listener *> &listeners)

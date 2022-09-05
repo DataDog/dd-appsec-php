@@ -11,7 +11,7 @@
 
 namespace dds::remote_config::protocol {
 
-struct path {
+class path {
 public:
     path(int v, std::map<std::string, std::string> &hashes, int length)
         : custom_v_(v), hashes_(hashes), length_(length){};
