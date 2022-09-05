@@ -16,23 +16,26 @@ namespace dds::remote_config::protocol {
 
 struct get_configs_response {
 public:
+    get_configs_response(std::vector<std::string> &client_configs,
+        std::vector<target_file> target_files, targets &targets)
+        : client_configs_(client_configs), targets_(targets)
+    {
+        for (auto &tf : target_files) {
+            target_files_.insert(
+                std::pair<std::string, target_file>(tf.get_path(), tf));
+        }
+    }
     std::map<std::string, target_file> get_target_files()
     {
-        return _target_files;
+        return target_files_;
     };
-    std::vector<std::string> get_client_configs() { return _client_configs; };
-    targets *get_targets() { return &_targets; };
-    void add_target_file(target_file &tf)
-    {
-        _target_files.insert(
-            std::pair<std::string, target_file>(tf.get_path(), tf));
-    };
-    void add_client_config(std::string &cc) { _client_configs.push_back(cc); };
+    std::vector<std::string> get_client_configs() { return client_configs_; };
+    [[nodiscard]] targets get_targets() const { return targets_; };
 
 private:
-    std::map<std::string, target_file> _target_files;
-    std::vector<std::string> _client_configs;
-    targets _targets;
+    std::map<std::string, target_file> target_files_;
+    std::vector<std::string> client_configs_;
+    targets targets_;
 };
 
 } // namespace dds::remote_config::protocol

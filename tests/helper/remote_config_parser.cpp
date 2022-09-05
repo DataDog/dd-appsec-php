@@ -153,9 +153,9 @@ TEST(RemoteConfigParser, TargetFilesAreParsed)
     EXPECT_EQ(
         remote_config::protocol::remote_config_parser_result::success, result);
 
-    EXPECT_EQ(2, gcr.get_target_files().size());
+    EXPECT_EQ(2, gcr->get_target_files().size());
 
-    auto target_files = gcr.get_target_files();
+    auto target_files = gcr->get_target_files();
 
     EXPECT_EQ("employee/DEBUG_DD/2.test1.config/config",
         target_files.find("employee/DEBUG_DD/2.test1.config/config")
@@ -266,9 +266,9 @@ TEST(RemoteConfigParser, ClientConfigsAreParsed)
     EXPECT_EQ(
         remote_config::protocol::remote_config_parser_result::success, result);
 
-    EXPECT_EQ(2, gcr.get_client_configs().size());
+    EXPECT_EQ(2, gcr->get_client_configs().size());
 
-    auto client_configs = gcr.get_client_configs();
+    auto client_configs = gcr->get_client_configs();
 
     EXPECT_EQ("datadog/2/DEBUG/luke.steensen/config", client_configs[0]);
     EXPECT_EQ("employee/DEBUG_DD/2.test1.config/config", client_configs[1]);
@@ -1135,12 +1135,12 @@ TEST(RemoteConfigParser, TargetsAreParsed)
     EXPECT_EQ(
         remote_config::protocol::remote_config_parser_result::success, result);
 
-    remote_config::protocol::targets *_targets = gcr.get_targets();
+    remote_config::protocol::targets _targets = gcr->get_targets();
 
-    EXPECT_EQ(27487156, _targets->get_version());
+    EXPECT_EQ(27487156, _targets.get_version());
 
     std::map<std::string, remote_config::protocol::path> paths =
-        _targets->get_paths();
+        _targets.get_paths();
 
     EXPECT_EQ(3, paths.size());
 

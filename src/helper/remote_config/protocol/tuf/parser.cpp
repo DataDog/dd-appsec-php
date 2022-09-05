@@ -49,68 +49,77 @@ remote_config_parser_result validate_field_is_present(
     return invalid;
 }
 
-remote_config_parser_result parse_target_files(
-    rapidjson::Value::ConstMemberIterator target_files_itr,
-    get_configs_response &output)
+std::pair<remote_config_parser_result, std::vector<target_file>>
+parse_target_files(rapidjson::Value::ConstMemberIterator target_files_itr)
 {
+    std::pair<remote_config_parser_result, std::vector<target_file>> result;
     for (rapidjson::Value::ConstValueIterator itr =
              target_files_itr->value.Begin();
          itr != target_files_itr->value.End(); ++itr) {
         if (!itr->IsObject()) {
-            return remote_config_parser_result::target_files_object_invalid;
+            result.first =
+                remote_config_parser_result::target_files_object_invalid;
+            return result;
         }
 
         // Path checks
         rapidjson::Value::ConstMemberIterator path_itr =
             itr->GetObject().FindMember("path");
         if (path_itr == itr->GetObject().MemberEnd()) {
-            return remote_config_parser_result::target_files_path_field_missing;
+            result.first =
+                remote_config_parser_result::target_files_path_field_missing;
+            return result;
         }
         if (!path_itr->value.IsString()) {
-            return remote_config_parser_result::
+            result.first = remote_config_parser_result::
                 target_files_path_field_invalid_type;
+            return result;
         }
 
         // Raw checks
         rapidjson::Value::ConstMemberIterator raw_itr =
             itr->GetObject().FindMember("raw");
         if (raw_itr == itr->GetObject().MemberEnd()) {
-            return remote_config_parser_result::target_files_raw_field_missing;
+            result.first =
+                remote_config_parser_result::target_files_raw_field_missing;
+            return result;
         }
         if (!raw_itr->value.IsString()) {
-            return remote_config_parser_result::
+            result.first = remote_config_parser_result::
                 target_files_raw_field_invalid_type;
+            return result;
         }
         std::string path(path_itr->value.GetString());
         std::string raw(raw_itr->value.GetString());
-        target_file tf(path, raw);
-        output.add_target_file(tf);
+        result.second.emplace_back(path, raw);
     }
 
-    return remote_config_parser_result::success;
+    result.first = remote_config_parser_result::success;
+    return result;
 }
 
-remote_config_parser_result parse_client_configs(
-    rapidjson::Value::ConstMemberIterator client_configs_itr,
-    get_configs_response &output)
+std::pair<remote_config_parser_result, std::vector<std::string>>
+parse_client_configs(rapidjson::Value::ConstMemberIterator client_configs_itr)
 {
+    std::pair<remote_config_parser_result, std::vector<std::string>> result;
     for (rapidjson::Value::ConstValueIterator itr =
              client_configs_itr->value.Begin();
          itr != client_configs_itr->value.End(); ++itr) {
         if (!itr->IsString()) {
-            return remote_config_parser_result::
-                client_config_field_invalid_entry;
+            result.first =
+                remote_config_parser_result::client_config_field_invalid_entry;
+            return result;
         }
 
-        std::string client_c(itr->GetString());
-        output.add_client_config(client_c);
+        result.second.push_back(itr->GetString());
     }
 
-    return remote_config_parser_result::success;
+    result.first = remote_config_parser_result::success;
+    return result;
 }
 
 remote_config_parser_result parse_target(
-    rapidjson::Value::ConstMemberIterator target_itr, targets *output)
+    rapidjson::Value::ConstMemberIterator target_itr, targets &output)
 {
     rapidjson::Value::ConstMemberIterator custom_itr;
     remote_config_parser_result result = validate_field_is_present(target_itr,
@@ -168,14 +177,14 @@ remote_config_parser_result parse_target(
     std::string target_name(target_itr->name.GetString());
     path path_object(
         v_itr->value.GetInt(), hashes_mapped, length_itr->value.GetInt());
-    output->add_path(target_name, path_object);
+    output.add_path(target_name, path_object);
 
     return remote_config_parser_result::success;
 }
 
+// @todo return targets here rather than passing as argument
 remote_config_parser_result parse_targets_signed(
-    rapidjson::Value::ConstMemberIterator targets_signed_itr,
-    get_configs_response &output)
+    rapidjson::Value::ConstMemberIterator targets_signed_itr, targets &_targets)
 {
 
     rapidjson::Value::ConstMemberIterator version_itr;
@@ -187,8 +196,7 @@ remote_config_parser_result parse_targets_signed(
         return result;
     }
 
-    targets *_targets = output.get_targets();
-    _targets->set_version(version_itr->value.GetInt());
+    _targets.set_version(version_itr->value.GetInt());
 
     rapidjson::Value::ConstMemberIterator targets_itr;
     result = validate_field_is_present(targets_signed_itr, "targets",
@@ -202,7 +210,7 @@ remote_config_parser_result parse_targets_signed(
     for (rapidjson::Value::ConstMemberIterator current_target =
              targets_itr->value.MemberBegin();
          current_target != targets_itr->value.MemberEnd(); ++current_target) {
-        result = parse_target(current_target, output.get_targets());
+        result = parse_target(current_target, _targets);
         if (result != remote_config_parser_result::success) {
             return result;
         }
@@ -239,57 +247,59 @@ remote_config_parser_result parse_targets_signed(
         return result;
     }
     std::string obs = opaque_backend_state_itr->value.GetString();
-    _targets->set_opaque_backend_state(obs);
+    _targets.set_opaque_backend_state(obs);
 
     return remote_config_parser_result::success;
 }
 
-remote_config_parser_result parse_targets(
-    rapidjson::Value::ConstMemberIterator targets_itr,
-    get_configs_response &output)
+std::pair<remote_config_parser_result, targets> parse_targets(
+    rapidjson::Value::ConstMemberIterator targets_itr)
 {
     std::string targets_encoded_content = targets_itr->value.GetString();
+    std::pair<remote_config_parser_result, targets> result;
 
     if (targets_encoded_content.empty()) {
-        return remote_config_parser_result::success;
+        result.first = remote_config_parser_result::success;
+        return result;
     }
 
     std::string base64_decoded;
     try {
         base64_decoded = base64_decode(targets_encoded_content, true);
     } catch (std::runtime_error &error) {
-        return remote_config_parser_result::targets_field_invalid_base64;
+        result.first =
+            remote_config_parser_result::targets_field_invalid_base64;
+        return result;
     }
 
     rapidjson::Document serialized_doc;
     if (serialized_doc.Parse(base64_decoded).HasParseError()) {
-        return remote_config_parser_result::targets_field_invalid_json;
+        result.first = remote_config_parser_result::targets_field_invalid_json;
+        return result;
     }
 
     rapidjson::Value::ConstMemberIterator signed_itr;
 
     // Lets validate the data and since we are there we get the iterators
-    remote_config_parser_result result = validate_field_is_present(
-        serialized_doc, "signed", rapidjson::kObjectType, signed_itr,
+    result.first = validate_field_is_present(serialized_doc, "signed",
+        rapidjson::kObjectType, signed_itr,
         remote_config_parser_result::signed_targets_field_missing,
         remote_config_parser_result::signed_targets_field_invalid);
-    if (result != remote_config_parser_result::success) {
+    if (result.first != remote_config_parser_result::success) {
         return result;
     }
 
-    result = parse_targets_signed(signed_itr, output);
-    if (result != remote_config_parser_result::success) {
-        return result;
-    }
+    result.first = parse_targets_signed(signed_itr, result.second);
 
-    return remote_config_parser_result::success;
+    return result;
 }
 
-std::pair<remote_config_parser_result, get_configs_response> parse(
-    const std::string &body)
+std::pair<remote_config_parser_result, std::optional<get_configs_response>>
+parse(const std::string &body)
 {
     rapidjson::Document serialized_doc;
-    std::pair<remote_config_parser_result, get_configs_response> parser_result;
+    std::pair<remote_config_parser_result, std::optional<get_configs_response>>
+        parser_result;
     if (serialized_doc.Parse(body).HasParseError()) {
         parser_result.first = remote_config_parser_result::invalid_json;
         return parser_result;
@@ -322,22 +332,27 @@ std::pair<remote_config_parser_result, get_configs_response> parse(
         return parser_result;
     }
 
-    parser_result.first =
-        parse_target_files(target_files_itr, parser_result.second);
+    auto [result_parse_tf, target_files] = parse_target_files(target_files_itr);
+    parser_result.first = result_parse_tf;
     if (parser_result.first != remote_config_parser_result::success) {
         return parser_result;
     }
 
-    parser_result.first =
-        parse_client_configs(client_configs_itr, parser_result.second);
+    auto [result_parse_cc, client_configs] =
+        parse_client_configs(client_configs_itr);
+    parser_result.first = result_parse_cc;
     if (parser_result.first != remote_config_parser_result::success) {
         return parser_result;
     }
 
-    parser_result.first = parse_targets(targets_itr, parser_result.second);
+    auto [result_parse_targets, targets] = parse_targets(targets_itr);
+    parser_result.first = result_parse_targets;
     if (parser_result.first != remote_config_parser_result::success) {
         return parser_result;
     }
+
+    parser_result.second =
+        get_configs_response(client_configs, target_files, targets);
 
     return parser_result;
 }

@@ -82,7 +82,7 @@ protocol::remote_config_result client::process_response(
     protocol::get_configs_response &response)
 {
     std::map<std::string, remote_config::protocol::path> paths_on_targets =
-        response.get_targets()->get_paths();
+        response.get_targets().get_paths();
     std::map<std::string, remote_config::protocol::target_file> target_files =
         response.get_target_files();
     std::map<std::string, std::vector<config>> configs;
@@ -175,9 +175,9 @@ protocol::remote_config_result client::process_response(
         }
     }
 
-    this->_targets_version = response.get_targets()->get_version();
+    this->_targets_version = response.get_targets().get_version();
     this->_opaque_backend_state =
-        response.get_targets()->get_opaque_backend_state();
+        response.get_targets().get_opaque_backend_state();
 
     return protocol::remote_config_result::success;
 }
@@ -208,7 +208,7 @@ protocol::remote_config_result client::poll()
     }
 
     this->_last_poll_error = "";
-    result = process_response(response);
+    result = process_response(response.value());
 
     return result;
 }
