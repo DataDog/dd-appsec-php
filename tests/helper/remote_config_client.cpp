@@ -140,11 +140,13 @@ remote_config::protocol::client generate_client(bool generate_state)
     if (generate_state) {
         // All these states are extracted from the harcoded request/response
         std::string product00(first_product_product);
-        remote_config::protocol::config_state cs00(first_product_id,
-            test_helpers::version_from_path(first_path), product00);
+        std::string product00_id(first_product_id);
+        remote_config::protocol::config_state cs00(std::move(product00_id),
+            test_helpers::version_from_path(first_path), std::move(product00));
         std::string product01(second_product_product);
-        remote_config::protocol::config_state cs01(second_product_id,
-            test_helpers::version_from_path(second_path), product01);
+        std::string product01_id(second_product_id);
+        remote_config::protocol::config_state cs01(std::move(product01_id),
+            test_helpers::version_from_path(second_path), std::move(product01));
 
         config_states.push_back(cs00);
         config_states.push_back(cs01);

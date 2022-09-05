@@ -122,8 +122,8 @@ remote_config::protocol::client get_client()
 
     std::string config_state = "some config_state id";
     std::string config_state_product = "some config_state product";
-    remote_config::protocol::config_state cs(
-        config_state, config_state_version, config_state_product);
+    remote_config::protocol::config_state cs(std::move(config_state),
+        config_state_version, std::move(config_state_product));
     config_states.push_back(cs);
 
     std::string error = "";
