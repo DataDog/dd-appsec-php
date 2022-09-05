@@ -13,20 +13,19 @@
 
 namespace dds::remote_config {
 
-protocol::remote_config_result config_path_from_path(
-    const std::string &path, config_path &cp)
+std::optional<config_path> config_path_from_path(const std::string &path)
 {
+
     std::regex regex("^(datadog/\\d+|employee)/([^/]+)/([^/]+)/[^/]+$");
 
     std::smatch base_match;
     if (!std::regex_match(path, base_match, regex) || base_match.size() < 4) {
-        return protocol::remote_config_result::error;
+        return std::nullopt;
     }
 
-    cp.set_product(base_match[2].str());
-    cp.set_id(base_match[3].str());
+    config_path cp(base_match[3].str(), base_match[2].str());
 
-    return protocol::remote_config_result::success;
+    return cp;
 }
 
 protocol::get_configs_request client::generate_request()
@@ -88,9 +87,9 @@ protocol::remote_config_result client::process_response(
         response.get_target_files();
     std::map<std::string, std::vector<config>> configs;
     for (const std::string &path : response.get_client_configs()) {
-        config_path cp;
-        if (config_path_from_path(path, cp) !=
-            protocol::remote_config_result::success) {
+        std::optional<config_path> cp;
+        cp = config_path_from_path(path);
+        if (!cp) {
             this->_last_poll_error = "error parsing path " + path;
             return protocol::remote_config_result::error;
         }
@@ -113,7 +112,7 @@ protocol::remote_config_result client::process_response(
         std::string raw;
         if (path_in_target_files == target_files.end()) {
             // Check if file in cache
-            auto product = this->_products.find(cp.get_product());
+            auto product = this->_products.find(cp->get_product());
             if (product == this->_products.end()) {
                 // Not found
                 this->_last_poll_error = "missing config " + path +
@@ -142,23 +141,23 @@ protocol::remote_config_result client::process_response(
         }
 
         // Is product on the requested ones?
-        if (this->_products.find(cp.get_product()) == this->_products.end()) {
+        if (this->_products.find(cp->get_product()) == this->_products.end()) {
             // Not found
             this->_last_poll_error = "received config " + path +
                                      " for a product that was not requested";
             return protocol::remote_config_result::error;
         }
 
-        std::string product = cp.get_product();
-        std::string id = cp.get_id();
+        std::string product = cp->get_product();
+        std::string id = cp->get_id();
         std::string path_c = path;
         config _config(product, id, raw, hashes, custom_v, path_c, length);
-        auto configs_itr = configs.find(cp.get_product());
+        auto configs_itr = configs.find(cp->get_product());
         if (configs_itr ==
             configs.end()) { // Product not in configs yet. Create entry
             std::vector<config> configs_on_product = {_config};
             configs.insert(std::pair<std::string, std::vector<config>>(
-                cp.get_product(), configs_on_product));
+                cp->get_product(), configs_on_product));
         } else { // Product already exists in configs. Add new config
             configs_itr->second.push_back(_config);
         }
