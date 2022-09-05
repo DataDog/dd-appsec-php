@@ -12,7 +12,7 @@ namespace dds::remote_config::protocol {
 struct cached_target_files_hash {
 public:
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    cached_target_files_hash(std::string &algorithm, std::string &hash)
+    cached_target_files_hash(const std::string &algorithm, std::string &hash)
         : _algorithm(algorithm), _hash(hash){};
     std::string get_algorithm() { return _algorithm; };
     std::string get_hash() { return _hash; };

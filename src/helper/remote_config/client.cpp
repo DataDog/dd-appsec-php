@@ -33,9 +33,9 @@ protocol::get_configs_request client::generate_request()
     std::vector<protocol::config_state> config_states;
     std::vector<protocol::cached_target_files> files;
 
-    for (std::pair<std::string, product> pair : this->_products) {
+    for (auto &[product_name, product] : this->_products) {
         // State
-        auto configs_on_product = pair.second.get_configs();
+        auto configs_on_product = product.get_configs();
         for (config _c : configs_on_product) {
             std::string c_id(_c.get_id());
             std::string c_product(_c.get_product());
@@ -44,13 +44,11 @@ protocol::get_configs_request client::generate_request()
         }
 
         // Cached files
-        auto configs = pair.second.get_configs();
+        auto configs = product.get_configs();
         for (config c : configs) {
             std::vector<protocol::cached_target_files_hash> hashes;
-            for (std::pair<std::string, std::string> hash_pair :
-                c.get_hashes()) {
-                protocol::cached_target_files_hash hash(
-                    hash_pair.first, hash_pair.second);
+            for (auto [algo, hash_sting] : c.get_hashes()) {
+                protocol::cached_target_files_hash hash(algo, hash_sting);
                 hashes.push_back(hash);
             }
             std::string path = c.get_path();
@@ -66,8 +64,8 @@ protocol::get_configs_request client::generate_request()
         !this->_last_poll_error.empty(), this->_last_poll_error,
         this->_opaque_backend_state);
     std::vector<std::string> products_str;
-    for (std::pair<std::string, product> pair : this->_products) {
-        products_str.push_back(pair.first);
+    for (const auto &[product_name, product] : this->_products) {
+        products_str.push_back(product_name);
     }
     protocol::client protocol_client(this->_id, products_str, ct, cs);
 
