@@ -14,29 +14,28 @@ namespace dds::remote_config::protocol {
 
 struct targets {
 public:
-    [[nodiscard]] int get_version() const { return _version; };
-    std::string get_opaque_backend_state() { return _opaque_backend_state; };
-    void set_version(int version) { _version = version; };
-    void set_opaque_backend_state(std::string &opaque_backend_state)
+    targets(int version, std::string opaque_backend_state, std::vector<std::pair<std::string, path>> paths):
+    version_(version), opaque_backend_state_(opaque_backend_state)
     {
-        _opaque_backend_state = opaque_backend_state;
-    };
-    void add_path(std::string &plain_path, path &path_object)
-    {
-        paths.insert(std::pair<std::string, path>(plain_path, path_object));
+        for (auto pair: paths) {
+            paths_.insert(pair);
+        }
+
     }
-    std::map<std::string, path> get_paths() { return paths; };
+    std::string get_opaque_backend_state() { return opaque_backend_state_; };
+    [[nodiscard]] int get_version() const { return version_; };
+    std::map<std::string, path> get_paths() { return paths_; };
     bool operator==(targets const &b) const
     {
-        return this->_version == b._version &&
-               std::equal(this->paths.begin(), this->paths.end(),
-                   b.paths.begin(), b.paths.end());
+        return this->version_ == b.version_ &&
+               std::equal(this->paths_.begin(), this->paths_.end(),
+                   b.paths_.begin(), b.paths_.end());
     }
 
 private:
-    int _version;
-    std::string _opaque_backend_state;
-    std::map<std::string, path> paths;
+    int version_;
+    std::string opaque_backend_state_;
+    std::map<std::string, path> paths_;
 };
 
 } // namespace dds::remote_config::protocol
