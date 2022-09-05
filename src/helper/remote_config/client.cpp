@@ -79,7 +79,7 @@ protocol::get_configs_request client::generate_request()
 };
 
 protocol::remote_config_result client::process_response(
-    protocol::get_configs_response response)
+    protocol::get_configs_response &response)
 {
     std::map<std::string, remote_config::protocol::path> paths_on_targets =
         response.get_targets()->get_paths();
@@ -202,9 +202,7 @@ protocol::remote_config_result client::poll()
     if (result == protocol::remote_config_result::error) {
         return protocol::remote_config_result::error;
     }
-
-    protocol::get_configs_response response;
-    auto parsing_result = protocol::parse(response_body, response);
+    auto [parsing_result, response] = protocol::parse(response_body);
     if (parsing_result != protocol::remote_config_parser_result::success) {
         return protocol::remote_config_result::error;
     }

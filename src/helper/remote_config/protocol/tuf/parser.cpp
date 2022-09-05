@@ -285,13 +285,14 @@ remote_config_parser_result parse_targets(
     return remote_config_parser_result::success;
 }
 
-remote_config_parser_result parse(
-    const std::string &body, get_configs_response &output)
+std::pair<remote_config_parser_result, get_configs_response> parse(
+    const std::string &body)
 {
-    remote_config_parser_result result;
     rapidjson::Document serialized_doc;
+    std::pair<remote_config_parser_result, get_configs_response> parser_result;
     if (serialized_doc.Parse(body).HasParseError()) {
-        return remote_config_parser_result::invalid_json;
+        parser_result.first = remote_config_parser_result::invalid_json;
+        return parser_result;
     }
 
     rapidjson::Value::ConstMemberIterator target_files_itr;
@@ -299,48 +300,50 @@ remote_config_parser_result parse(
     rapidjson::Value::ConstMemberIterator targets_itr;
 
     // Lets validate the data and since we are there we get the iterators
-    result = validate_field_is_present(serialized_doc, "target_files",
-        rapidjson::kArrayType, target_files_itr,
+    parser_result.first = validate_field_is_present(serialized_doc,
+        "target_files", rapidjson::kArrayType, target_files_itr,
         remote_config_parser_result::target_files_field_missing,
         remote_config_parser_result::target_files_field_invalid_type);
-    if (result != remote_config_parser_result::success) {
-        return result;
+    if (parser_result.first != remote_config_parser_result::success) {
+        return parser_result;
     }
-    result = validate_field_is_present(serialized_doc, "client_configs",
-        rapidjson::kArrayType, client_configs_itr,
+    parser_result.first = validate_field_is_present(serialized_doc,
+        "client_configs", rapidjson::kArrayType, client_configs_itr,
         remote_config_parser_result::client_config_field_missing,
         remote_config_parser_result::client_config_field_invalid_type);
-    if (result != remote_config_parser_result::success) {
-        return result;
+    if (parser_result.first != remote_config_parser_result::success) {
+        return parser_result;
     }
-    result = validate_field_is_present(serialized_doc, "targets",
+    parser_result.first = validate_field_is_present(serialized_doc, "targets",
         rapidjson::kStringType, targets_itr,
         remote_config_parser_result::targets_field_missing,
         remote_config_parser_result::targets_field_invalid_type);
-    if (result != remote_config_parser_result::success) {
-        return result;
+    if (parser_result.first != remote_config_parser_result::success) {
+        return parser_result;
     }
 
-    result = parse_target_files(target_files_itr, output);
-    if (result != remote_config_parser_result::success) {
-        return result;
+    parser_result.first =
+        parse_target_files(target_files_itr, parser_result.second);
+    if (parser_result.first != remote_config_parser_result::success) {
+        return parser_result;
     }
 
-    result = parse_client_configs(client_configs_itr, output);
-    if (result != remote_config_parser_result::success) {
-        return result;
+    parser_result.first =
+        parse_client_configs(client_configs_itr, parser_result.second);
+    if (parser_result.first != remote_config_parser_result::success) {
+        return parser_result;
     }
 
-    result = parse_targets(targets_itr, output);
-    if (result != remote_config_parser_result::success) {
-        return result;
+    parser_result.first = parse_targets(targets_itr, parser_result.second);
+    if (parser_result.first != remote_config_parser_result::success) {
+        return parser_result;
     }
 
-    return remote_config_parser_result::success;
+    return parser_result;
 }
 
 #define RESULT_AS_STR(entry) #entry,
-constexpr std::array<std::string_view,
+constexpr static std::array<std::string_view,
     (size_t)remote_config_parser_result::num_of_values>
     results_as_str = {PARSER_RESULTS(RESULT_AS_STR)};
 std::string_view remote_config_parser_result_to_str(

@@ -67,9 +67,8 @@ std::string get_example_response()
 TEST(RemoteConfigParser, ItReturnsErrorWhenInvalidBodyIsGiven)
 {
     std::string response("invalid_json");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(response);
 
     EXPECT_EQ(
         remote_config::protocol::remote_config_parser_result::invalid_json,
@@ -79,9 +78,8 @@ TEST(RemoteConfigParser, ItReturnsErrorWhenInvalidBodyIsGiven)
 TEST(RemoteConfigParser, TargetsFieldIsRequired)
 {
     std::string response("{\"target_files\": [], \"client_configs\": [] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   targets_field_missing,
@@ -92,9 +90,8 @@ TEST(RemoteConfigParser, TargetsFieldMustBeString)
 {
     std::string response(
         "{\"targets\": [], \"target_files\": [], \"client_configs\": [] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   targets_field_invalid_type,
@@ -104,9 +101,8 @@ TEST(RemoteConfigParser, TargetsFieldMustBeString)
 TEST(RemoteConfigParser, targetFilesFieldIsRequired)
 {
     std::string response("{\"targets\": \"\", \"client_configs\": [] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   target_files_field_missing,
@@ -117,9 +113,8 @@ TEST(RemoteConfigParser, targetFilesFieldMustBeArray)
 {
     std::string response(
         "{\"targets\": \"\", \"target_files\": \"\", \"client_configs\": [] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   target_files_field_invalid_type,
@@ -129,9 +124,8 @@ TEST(RemoteConfigParser, targetFilesFieldMustBeArray)
 TEST(RemoteConfigParser, clientConfigsFieldIsRequired)
 {
     std::string response("{\"targets\": \"\", \"target_files\": [] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   client_config_field_missing,
@@ -142,9 +136,8 @@ TEST(RemoteConfigParser, clientConfigsFieldMustBeArray)
 {
     std::string response(
         "{\"targets\": \"\", \"target_files\": [], \"client_configs\": \"\" }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   client_config_field_invalid_type,
@@ -154,9 +147,8 @@ TEST(RemoteConfigParser, clientConfigsFieldMustBeArray)
 TEST(RemoteConfigParser, TargetFilesAreParsed)
 {
     std::string response = get_example_response();
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(response);
 
     EXPECT_EQ(
         remote_config::protocol::remote_config_parser_result::success, result);
@@ -190,8 +182,7 @@ TEST(RemoteConfigParser, TargetFilesWithoutPathAreInvalid)
         "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
         "[\"datadog/2/DEBUG/luke.steensen/config\", "
         "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   target_files_path_field_missing,
@@ -208,8 +199,7 @@ TEST(RemoteConfigParser, TargetFilesWithNonStringPathAreInvalid)
         "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
         "[\"datadog/2/DEBUG/luke.steensen/config\", "
         "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   target_files_path_field_invalid_type,
         result);
@@ -225,9 +215,8 @@ TEST(RemoteConfigParser, TargetFilesWithoutRawAreInvalid)
         "\"client_configs\": "
         "[\"datadog/2/DEBUG/luke.steensen/config\", "
         "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   target_files_raw_field_missing,
@@ -244,8 +233,7 @@ TEST(RemoteConfigParser, TargetFilesWithNonNonStringRawAreInvalid)
         "\"client_configs\": "
         "[\"datadog/2/DEBUG/luke.steensen/config\", "
         "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   target_files_raw_field_invalid_type,
@@ -261,9 +249,8 @@ TEST(RemoteConfigParser, TargetFilesMustBeObjects)
         "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
         "[\"datadog/2/DEBUG/luke.steensen/config\", "
         "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   target_files_object_invalid,
@@ -273,9 +260,8 @@ TEST(RemoteConfigParser, TargetFilesMustBeObjects)
 TEST(RemoteConfigParser, ClientConfigsAreParsed)
 {
     std::string response = get_example_response();
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(response);
 
     EXPECT_EQ(
         remote_config::protocol::remote_config_parser_result::success, result);
@@ -296,9 +282,7 @@ TEST(RemoteConfigParser, ClientConfigsMustBeStrings)
         "[[\"invalid\"], "
         "\"employee/DEBUG_DD/2.test1.config/config\"] }");
 
-    remote_config::protocol::get_configs_response gcr;
-
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   client_config_field_invalid_entry,
@@ -316,9 +300,8 @@ TEST(RemoteConfigParser, TargetsnMustBeValidBase64Encoded)
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   targets_field_invalid_base64,
@@ -336,9 +319,8 @@ TEST(RemoteConfigParser, TargetsDecodedMustBeValidJson)
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   targets_field_invalid_json,
@@ -363,9 +345,8 @@ TEST(RemoteConfigParser, SignedFieldOnTargetsMustBeObject)
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   signed_targets_field_invalid,
@@ -385,9 +366,8 @@ TEST(RemoteConfigParser, SignedFieldOnTargetsMustBePresent)
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   signed_targets_field_missing,
@@ -416,9 +396,8 @@ TEST(RemoteConfigParser, _TypeFieldOnSignedTargetsMustBePresent)
          "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}], "
          "\"client_configs\": "
          "[ \"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   type_signed_targets_field_missing,
@@ -447,9 +426,8 @@ TEST(RemoteConfigParser, _TypeFieldOnSignedTargetsMustBeString)
          "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}], "
          "\"client_configs\": "
          "[ \"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   type_signed_targets_field_invalid,
@@ -478,9 +456,8 @@ TEST(RemoteConfigParser, _TypeFieldOnSignedTargetsMustBeEqualToTargets)
          "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}], "
          "\"client_configs\": "
          "[ \"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   type_signed_targets_field_invalid_type,
@@ -526,9 +503,8 @@ TEST(RemoteConfigParser, VersionFieldOnSignedTargetsMustBePresent)
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   version_signed_targets_field_missing,
@@ -574,9 +550,8 @@ TEST(RemoteConfigParser, VersionFieldOnSignedTargetsMustBeNumber)
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   version_signed_targets_field_invalid,
@@ -634,9 +609,8 @@ TEST(RemoteConfigParser, CustomFieldOnSignedTargetsMustBePresent)
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   custom_signed_targets_field_missing,
@@ -694,9 +668,8 @@ TEST(RemoteConfigParser, CustomFieldOnSignedTargetsMustBeObject)
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   custom_signed_targets_field_invalid,
@@ -755,9 +728,8 @@ TEST(RemoteConfigParser,
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   obs_custom_signed_targets_field_missing,
@@ -818,9 +790,8 @@ TEST(RemoteConfigParser,
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   obs_custom_signed_targets_field_invalid,
@@ -843,9 +814,8 @@ TEST(RemoteConfigParser, TargetsFieldOnSignedTargetsMustBeObject)
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   targets_signed_targets_field_invalid,
@@ -868,9 +838,8 @@ TEST(RemoteConfigParser, TargetsFieldOnSignedTargetsMustExists)
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   targets_signed_targets_field_missing,
@@ -897,9 +866,8 @@ TEST(RemoteConfigParser, CustomOnPathMustBePresent)
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   custom_path_targets_field_missing,
@@ -928,9 +896,8 @@ TEST(RemoteConfigParser, CustomOnPathMustBeObject)
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   custom_path_targets_field_invalid,
@@ -957,9 +924,8 @@ TEST(RemoteConfigParser, VCustomOnPathMustBePresent)
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   v_path_targets_field_missing,
@@ -987,9 +953,8 @@ TEST(RemoteConfigParser, VCustomOnPathMustBeNumber)
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   v_path_targets_field_invalid,
@@ -1014,9 +979,8 @@ TEST(RemoteConfigParser, HashesOnPathMustBePresent)
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   hashes_path_targets_field_missing,
@@ -1042,9 +1006,8 @@ TEST(RemoteConfigParser, HashesOnPathMustBeObject)
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   hashes_path_targets_field_invalid,
@@ -1070,9 +1033,8 @@ TEST(RemoteConfigParser, AtLeastOneHashMustBePresent)
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   hashes_path_targets_field_empty,
@@ -1099,9 +1061,8 @@ TEST(RemoteConfigParser, HashesOnPathMustBeString)
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   hash_hashes_path_targets_field_invalid,
@@ -1128,9 +1089,8 @@ TEST(RemoteConfigParser, LengthOnPathMustBePresent)
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   length_path_targets_field_missing,
@@ -1158,9 +1118,8 @@ TEST(RemoteConfigParser, LengthOnPathMustBeString)
          "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
          "[\"datadog/2/DEBUG/luke.steensen/config\", "
          "\"employee/DEBUG_DD/2.test1.config/config\"] }");
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(invalid_response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(invalid_response);
 
     EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
                   length_path_targets_field_invalid,
@@ -1170,9 +1129,8 @@ TEST(RemoteConfigParser, LengthOnPathMustBeString)
 TEST(RemoteConfigParser, TargetsAreParsed)
 {
     std::string response = get_example_response();
-    remote_config::protocol::get_configs_response gcr;
 
-    auto result = remote_config::protocol::parse(response, gcr);
+    auto [result, gcr] = remote_config::protocol::parse(response);
 
     EXPECT_EQ(
         remote_config::protocol::remote_config_parser_result::success, result);

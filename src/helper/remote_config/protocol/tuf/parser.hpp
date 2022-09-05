@@ -63,7 +63,7 @@ enum class remote_config_parser_result : size_t {
 std::string_view remote_config_parser_result_to_str(
     remote_config_parser_result result);
 
-remote_config_parser_result parse(
-    const std::string &body, get_configs_response &output);
+std::pair<remote_config_parser_result, get_configs_response> parse(
+    const std::string &body);
 
 } // namespace dds::remote_config::protocol
