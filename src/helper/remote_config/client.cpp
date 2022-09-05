@@ -15,7 +15,6 @@ namespace dds::remote_config {
 
 std::optional<config_path> config_path_from_path(const std::string &path)
 {
-
     std::regex regex("^(datadog/\\d+|employee)/([^/]+)/([^/]+)/[^/]+$");
 
     std::smatch base_match;
@@ -48,6 +47,7 @@ protocol::get_configs_request client::generate_request()
         auto configs = product.get_configs();
         for (auto &config : configs) {
             std::vector<protocol::cached_target_files_hash> hashes;
+            hashes.reserve(config.get_hashes().size());
             for (auto &[algo, hash_sting] : config.get_hashes()) {
                 protocol::cached_target_files_hash hash(algo, hash_sting);
                 hashes.push_back(hash);
@@ -65,6 +65,7 @@ protocol::get_configs_request client::generate_request()
     protocol::client_state cs(targets_version_, config_states,
         !last_poll_error_.empty(), last_poll_error_, opaque_backend_state_);
     std::vector<std::string> products_str;
+    products_str.reserve(products_.size());
     for (const auto &[product_name, product] : products_) {
         products_str.push_back(product_name);
     }

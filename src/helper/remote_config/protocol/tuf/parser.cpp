@@ -259,6 +259,7 @@ parse_targets_signed(rapidjson::Value::ConstMemberIterator targets_signed_itr)
     }
     std::string obs = opaque_backend_state_itr->value.GetString();
     std::vector<std::pair<std::string, path>> final_paths;
+    final_paths.reserve(paths.size());
     for (auto &[product_str, path] : paths) {
         final_paths.emplace_back(product_str, path.value());
     }
