@@ -21,8 +21,8 @@ public:
     client get_client() { return _client; };
     bool operator==(get_configs_request const &a) const
     {
-        return this->_client == a._client &&
-               this->_cached_target_files == a._cached_target_files;
+        return _client == a._client &&
+               _cached_target_files == a._cached_target_files;
     }
     std::vector<cached_target_files> get_cached_target_files()
     {

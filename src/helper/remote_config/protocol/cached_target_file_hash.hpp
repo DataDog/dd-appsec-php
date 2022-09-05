@@ -18,7 +18,7 @@ public:
     std::string get_hash() { return _hash; };
     bool operator==(cached_target_files_hash const &b) const
     {
-        return this->_algorithm == b._algorithm && this->_hash == b._hash;
+        return _algorithm == b._algorithm && _hash == b._hash;
     }
 
 private:

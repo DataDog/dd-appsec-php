@@ -18,8 +18,7 @@ public:
     std::string get_product() { return _product; };
     bool operator==(config_state const &b) const
     {
-        return this->_id == b._id && this->_version == b._version &&
-               this->_product == b._product;
+        return _id == b._id && _version == b._version && _product == b._product;
     }
 
 private:

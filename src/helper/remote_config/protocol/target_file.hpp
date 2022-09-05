@@ -18,7 +18,7 @@ public:
     std::string get_raw() { return _raw; };
     bool operator==(target_file const &b) const
     {
-        return this->_path == b._path && this->_raw == b._raw;
+        return _path == b._path && _raw == b._raw;
     }
 
 private:

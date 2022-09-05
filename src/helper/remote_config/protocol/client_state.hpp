@@ -26,10 +26,10 @@ public:
     std::string get_backend_client_state() { return _backend_client_state; };
     bool operator==(client_state const &b) const
     {
-        return this->_targets_version == b._targets_version &&
-               this->_config_states == b._config_states &&
-               this->_has_error == b._has_error && this->_error == b._error &&
-               this->_backend_client_state == b._backend_client_state;
+        return _targets_version == b._targets_version &&
+               _config_states == b._config_states &&
+               _has_error == b._has_error && _error == b._error &&
+               _backend_client_state == b._backend_client_state;
     }
 
 private:

@@ -24,10 +24,9 @@ public:
     std::string get_app_version() { return _app_version; };
     bool operator==(client_tracer const &b) const
     {
-        return this->_runtime_id == b._runtime_id &&
-               this->_tracer_version == b._tracer_version &&
-               this->_service == b._service && this->_env == b._env &&
-               this->_app_version == b._app_version;
+        return _runtime_id == b._runtime_id &&
+               _tracer_version == b._tracer_version && _service == b._service &&
+               _env == b._env && _app_version == b._app_version;
     }
 
 private:

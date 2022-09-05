@@ -14,22 +14,20 @@ namespace dds::remote_config::protocol {
 
 struct targets {
 public:
-    targets(int version, std::string opaque_backend_state, std::vector<std::pair<std::string, path>> paths):
-    version_(version), opaque_backend_state_(opaque_backend_state)
+    targets(int version, std::string opaque_backend_state,
+        std::vector<std::pair<std::string, path>> paths)
+        : version_(version), opaque_backend_state_(opaque_backend_state)
     {
-        for (auto pair: paths) {
-            paths_.insert(pair);
-        }
-
+        for (auto pair : paths) { paths_.insert(pair); }
     }
     std::string get_opaque_backend_state() { return opaque_backend_state_; };
     [[nodiscard]] int get_version() const { return version_; };
     std::map<std::string, path> get_paths() { return paths_; };
     bool operator==(targets const &b) const
     {
-        return this->version_ == b.version_ &&
-               std::equal(this->paths_.begin(), this->paths_.end(),
-                   b.paths_.begin(), b.paths_.end());
+        return version_ == b.version_ &&
+               std::equal(paths_.begin(), paths_.end(), b.paths_.begin(),
+                   b.paths_.end());
     }
 
 private:

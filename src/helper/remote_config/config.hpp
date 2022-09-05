@@ -22,18 +22,18 @@ public:
           _version(version), _path(path), _length(length){};
     bool operator==(config const &b) const
     {
-        return this->_product == b._product && this->_id == b._id &&
-               this->_contents == b._contents && this->_hashes == b._hashes &&
-               this->_version == b._version && this->_path == b._path &&
-               this->_length == b._length;
+        return _product == b._product && _id == b._id &&
+               _contents == b._contents && _hashes == b._hashes &&
+               _version == b._version && _path == b._path &&
+               _length == b._length;
     }
-    std::string get_id() { return this->_id; };
-    [[nodiscard]] int get_version() const { return this->_version; };
-    std::string get_product() { return this->_product; };
-    std::string get_contents() { return this->_contents; };
-    std::string get_path() { return this->_path; };
-    [[nodiscard]] int get_length() const { return this->_length; };
-    std::map<std::string, std::string> get_hashes() { return this->_hashes; };
+    std::string get_id() { return _id; };
+    [[nodiscard]] int get_version() const { return _version; };
+    std::string get_product() { return _product; };
+    std::string get_contents() { return _contents; };
+    std::string get_path() { return _path; };
+    [[nodiscard]] int get_length() const { return _length; };
+    std::map<std::string, std::string> get_hashes() { return _hashes; };
 
 private:
     std::string _product;

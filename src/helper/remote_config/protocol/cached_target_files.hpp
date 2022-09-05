@@ -21,8 +21,7 @@ public:
     std::vector<cached_target_files_hash> get_hashes() { return _hashes; };
     bool operator==(cached_target_files const &b) const
     {
-        return this->_path == b._path && this->_length == b._length &&
-               this->_hashes == b._hashes;
+        return _path == b._path && _length == b._length && _hashes == b._hashes;
     }
 
 private:

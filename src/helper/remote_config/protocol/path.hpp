@@ -20,8 +20,8 @@ public:
     [[nodiscard]] int get_length() const { return _length; };
     bool operator==(path const &b) const
     {
-        return this->_custom_v == b._custom_v && this->_hashes == b._hashes &&
-               this->_length == b._length;
+        return _custom_v == b._custom_v && _hashes == b._hashes &&
+               _length == b._length;
     }
 
 private:

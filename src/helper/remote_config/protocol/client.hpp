@@ -25,9 +25,9 @@ public:
     client_state get_client_state() { return _client_state; };
     bool operator==(client const &b) const
     {
-        return this->_id == b._id && this->_products == b._products &&
-               this->_client_tracer == b._client_tracer &&
-               this->_client_state == b._client_state;
+        return _id == b._id && _products == b._products &&
+               _client_tracer == b._client_tracer &&
+               _client_state == b._client_state;
     }
 
 private:

@@ -61,10 +61,10 @@ public:
 
         _configs = to_keep;
     };
-    std::vector<config> get_configs() { return this->_configs; };
+    std::vector<config> get_configs() { return _configs; };
     bool operator==(product const &b) const
     {
-        return this->_name == b._name && this->_configs == b._configs;
+        return _name == b._name && _configs == b._configs;
     }
     std::string get_name() { return _name; };
 
