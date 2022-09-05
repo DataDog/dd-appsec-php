@@ -35,7 +35,7 @@ public:
         std::vector<config> to_update;
         std::vector<config> to_keep;
 
-        for (auto config : configs) {
+        for (auto &config : configs) {
             auto previous_config = std::find_if(configs_.begin(),
                 configs_.end(), [&config](remote_config::config config_) {
                     return config_.get_id() == config.get_id();

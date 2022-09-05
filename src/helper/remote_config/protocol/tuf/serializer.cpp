@@ -37,7 +37,7 @@ void serialize_config_states(rapidjson::Document::AllocatorType &alloc,
 {
     rapidjson::Value config_states_object(rapidjson::kArrayType);
 
-    for (auto config_state : config_states) {
+    for (auto &config_state : config_states) {
         rapidjson::Value config_state_object(rapidjson::kObjectType);
         config_state_object.AddMember("id", config_state.get_id(), alloc);
         config_state_object.AddMember(
@@ -96,7 +96,7 @@ void serialize_cached_target_files_hashes(
 {
     rapidjson::Value cached_target_files_array(rapidjson::kArrayType);
 
-    for (cached_target_files_hash ctfh : cached_target_files_hash_list) {
+    for (const cached_target_files_hash &ctfh : cached_target_files_hash_list) {
         rapidjson::Value cached_target_file_hash_object(rapidjson::kObjectType);
         cached_target_file_hash_object.AddMember(
             "algorithm", ctfh.get_algorithm(), alloc);
@@ -115,7 +115,7 @@ void serialize_cached_target_files(rapidjson::Document::AllocatorType &alloc,
 {
     rapidjson::Value cached_target_files_array(rapidjson::kArrayType);
 
-    for (cached_target_files ctf : cached_target_files_list) {
+    for (const cached_target_files &ctf : cached_target_files_list) {
         rapidjson::Value cached_target_file_object(rapidjson::kObjectType);
         cached_target_file_object.AddMember("path", ctf.get_path(), alloc);
         cached_target_file_object.AddMember("length", ctf.get_length(), alloc);
