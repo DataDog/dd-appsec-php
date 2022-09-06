@@ -15,12 +15,12 @@ class config {
 public:
     //@todo contents should be bytes
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    config(const std::string &product, const std::string &id,
-        const std::string &contents,
-        const std::map<std::string, std::string> &hashes, int version,
-        const std::string &path, int length)
-        : product_(product), id_(id), contents_(contents), hashes_(hashes),
-          version_(version), path_(path), length_(length){};
+    config(std::string &&product, std::string &&id, std::string &&contents,
+        std::map<std::string, std::string> &&hashes, int version,
+        std::string &&path, int length)
+        : product_(std::move(product)), id_(std::move(id)), contents_(contents),
+          hashes_(hashes), version_(version), path_(std::move(path)),
+          length_(length){};
     bool operator==(config const &b) const
     {
         return product_ == b.product_ && id_ == b.id_ &&

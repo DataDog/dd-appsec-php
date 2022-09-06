@@ -73,7 +73,7 @@ protocol::get_configs_request client::generate_request() const
 };
 
 protocol::remote_config_result client::process_response(
-    const protocol::get_configs_response &response)
+    protocol::get_configs_response &&response)
 {
     std::map<std::string, protocol::path> paths_on_targets =
         response.get_targets().get_paths();
@@ -142,10 +142,9 @@ protocol::remote_config_result client::process_response(
             return protocol::remote_config_result::error;
         }
 
-        std::string product = cp->get_product();
-        std::string id = cp->get_id();
         std::string path_c = path;
-        config config_(product, id, raw, hashes, custom_v, path_c, length);
+        config config_(cp->get_product(), cp->get_id(), std::move(raw),
+            std::move(hashes), custom_v, std::move(path_c), length);
         auto configs_itr = configs.find(cp->get_product());
         if (configs_itr ==
             configs.end()) { // Product not in configs yet. Create entry
@@ -161,10 +160,9 @@ protocol::remote_config_result client::process_response(
     for (auto it = std::begin(products_); it != std::end(products_); ++it) {
         auto product_configs = configs.find(it->first);
         if (product_configs != configs.end()) {
-            it->second.assign_configs(product_configs->second);
+            it->second.assign_configs(std::move(product_configs->second));
         } else {
-            std::vector<config> empty;
-            it->second.assign_configs(empty);
+            it->second.assign_configs({});
         }
     }
 
@@ -193,6 +191,7 @@ protocol::remote_config_result client::poll()
     if (result == protocol::remote_config_result::error) {
         return protocol::remote_config_result::error;
     }
+    //@todo improve copies within parse
     auto [parsing_result, response] =
         protocol::parse(std::move(response_body.value()));
     if (parsing_result != protocol::remote_config_parser_result::success) {
@@ -200,7 +199,8 @@ protocol::remote_config_result client::poll()
     }
 
     last_poll_error_ = "";
-    result = process_response(response.value());
+    //@todo improve copies within process_response
+    result = process_response(std::move(response.value()));
 
     return result;
 }

@@ -53,7 +53,7 @@ public:
 private:
     protocol::get_configs_request generate_request() const;
     protocol::remote_config_result process_response(
-        const protocol::get_configs_response &response);
+        protocol::get_configs_response &&response);
 
     const http_api *api_;
     std::string id_;
