@@ -15,29 +15,29 @@ namespace dds::remote_config {
 
 class product_listener_abstract {
 public:
-    virtual void on_update(std::vector<config> configs) = 0;
-    virtual void on_unapply(std::vector<config> configs) = 0;
+    virtual void on_update(const std::vector<config> &configs) = 0;
+    virtual void on_unapply(const std::vector<config> &configs) = 0;
 };
 
 class product_listener : product_listener_abstract {
 public:
-    void on_update(std::vector<config> configs) override{};
-    void on_unapply(std::vector<config> configs) override{};
+    void on_update(const std::vector<config> &configs) override{};
+    void on_unapply(const std::vector<config> &configs) override{};
 };
 
 class product {
 public:
-    explicit product(
-        std::string &name, std::vector<product_listener *> &listeners)
+    explicit product(const std::string &name,
+        const std::vector<product_listener *> &listeners)
         : name_(name), listeners_(listeners){};
-    void assign_configs(std::vector<config> &configs)
+    void assign_configs(const std::vector<config> &configs)
     {
         std::vector<config> to_update;
         std::vector<config> to_keep;
 
         for (auto &config : configs) {
             auto previous_config = std::find_if(configs_.begin(),
-                configs_.end(), [&config](remote_config::config config_) {
+                configs_.end(), [&config](remote_config::config &config_) {
                     return config_.get_id() == config.get_id();
                 });
             if (previous_config == configs_.end()) { // New config
@@ -61,12 +61,12 @@ public:
 
         configs_ = to_keep;
     };
-    std::vector<config> get_configs() const { return configs_; };
+    [[nodiscard]] std::vector<config> get_configs() const { return configs_; };
     bool operator==(product const &b) const
     {
         return name_ == b.name_ && configs_ == b.configs_;
     }
-    std::string get_name() const { return name_; };
+    [[nodiscard]] std::string get_name() const { return name_; };
 
 private:
     std::string name_;

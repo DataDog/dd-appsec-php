@@ -13,7 +13,7 @@ namespace dds::remote_config {
 class api {
 public:
     virtual protocol::remote_config_result get_configs(
-        std::string request, std::string &response_body) = 0;
+        const std::string &request, std::string &response_body) const = 0;
 };
 
 } // namespace dds::remote_config

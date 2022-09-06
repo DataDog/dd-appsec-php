@@ -27,7 +27,7 @@ static const int version = 11;
 class http_api : api {
 public:
     protocol::remote_config_result get_configs(
-        std::string request, std::string &response_body) override
+        const std::string &request, std::string &response_body) const override
     {
         try {
             //@todo deharcode these values

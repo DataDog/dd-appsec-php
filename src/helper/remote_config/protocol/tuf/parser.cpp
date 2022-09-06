@@ -16,7 +16,8 @@ namespace dds::remote_config::protocol {
 remote_config_parser_result validate_field_is_present(
     const rapidjson::Value &parent_field, const char *key, rapidjson::Type type,
     rapidjson::Value::ConstMemberIterator &output_itr,
-    remote_config_parser_result missing, remote_config_parser_result invalid)
+    const remote_config_parser_result &missing,
+    const remote_config_parser_result &invalid)
 {
     output_itr = parent_field.FindMember(key);
 
@@ -34,7 +35,8 @@ remote_config_parser_result validate_field_is_present(
 remote_config_parser_result validate_field_is_present(
     rapidjson::Value::ConstMemberIterator &parent_field, const char *key,
     rapidjson::Type type, rapidjson::Value::ConstMemberIterator &output_itr,
-    remote_config_parser_result missing, remote_config_parser_result invalid)
+    const remote_config_parser_result &missing,
+    const remote_config_parser_result &invalid)
 {
     output_itr = parent_field->value.FindMember(key);
 
@@ -379,7 +381,7 @@ constexpr static std::array<std::string_view,
     (size_t)remote_config_parser_result::num_of_values>
     results_as_str = {PARSER_RESULTS(RESULT_AS_STR)};
 std::string_view remote_config_parser_result_to_str(
-    remote_config_parser_result result)
+    const remote_config_parser_result &result)
 {
     if (result == remote_config_parser_result::num_of_values) {
         return "";

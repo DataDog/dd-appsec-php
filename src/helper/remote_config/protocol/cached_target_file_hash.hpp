@@ -12,10 +12,10 @@ namespace dds::remote_config::protocol {
 class cached_target_files_hash {
 public:
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    cached_target_files_hash(const std::string &algorithm, std::string &hash)
+    cached_target_files_hash(const std::string &algorithm, const std::string &hash)
         : algorithm_(algorithm), hash_(hash){};
-    std::string get_algorithm() const { return algorithm_; };
-    std::string get_hash() const { return hash_; };
+    [[nodiscard]] std::string get_algorithm() const { return algorithm_; };
+    [[nodiscard]] std::string get_hash() const { return hash_; };
     bool operator==(cached_target_files_hash const &b) const
     {
         return algorithm_ == b.algorithm_ && hash_ == b.hash_;

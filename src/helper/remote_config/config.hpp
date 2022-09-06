@@ -15,9 +15,10 @@ class config {
 public:
     //@todo contents should be bytes
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    config(std::string &product, std::string &id, std::string &contents,
-        std::map<std::string, std::string> &hashes, int version,
-        std::string &path, int length)
+    config(const std::string &product, const std::string &id,
+        const std::string &contents,
+        const std::map<std::string, std::string> &hashes, int version,
+        const std::string &path, int length)
         : product_(product), id_(id), contents_(contents), hashes_(hashes),
           version_(version), path_(path), length_(length){};
     bool operator==(config const &b) const
@@ -27,13 +28,16 @@ public:
                version_ == b.version_ && path_ == b.path_ &&
                length_ == b.length_;
     }
-    std::string get_id() const { return id_; };
+    [[nodiscard]] std::string get_id() const { return id_; };
     [[nodiscard]] int get_version() const { return version_; };
-    std::string get_product() const { return product_; };
-    std::string get_contents() const { return contents_; };
-    std::string get_path() const { return path_; };
+    [[nodiscard]] std::string get_product() const { return product_; };
+    [[nodiscard]] std::string get_contents() const { return contents_; };
+    [[nodiscard]] std::string get_path() const { return path_; };
     [[nodiscard]] int get_length() const { return length_; };
-    std::map<std::string, std::string> get_hashes() const { return hashes_; };
+    [[nodiscard]] std::map<std::string, std::string> get_hashes() const
+    {
+        return hashes_;
+    };
 
 private:
     std::string product_;

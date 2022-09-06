@@ -73,7 +73,7 @@ protocol::get_configs_request client::generate_request()
 };
 
 protocol::remote_config_result client::process_response(
-    protocol::get_configs_response &response)
+    const protocol::get_configs_response &response)
 {
     std::map<std::string, protocol::path> paths_on_targets =
         response.get_targets().get_paths();
@@ -116,7 +116,7 @@ protocol::remote_config_result client::process_response(
 
             auto configs_on_product = product->second.get_configs();
             auto config_itr = std::find_if(configs_on_product.begin(),
-                configs_on_product.end(), [&path, &hashes](config c) {
+                configs_on_product.end(), [&path, &hashes](config &c) {
                     return c.get_path() == path && c.get_hashes() == hashes;
                 });
 

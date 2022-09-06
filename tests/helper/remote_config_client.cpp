@@ -44,7 +44,7 @@ public:
         std::cout << "---------------" << std::endl;
     }
 
-    void on_update(std::vector<remote_config::config> configs) override
+    void on_update(const std::vector<remote_config::config> &configs) override
     {
         std::cout << std::endl
                   << "Product update " << std::endl
@@ -52,7 +52,7 @@ public:
 
         for (auto c : configs) { config_to_cout(c); }
     };
-    void on_unapply(std::vector<remote_config::config> configs) override
+    void on_unapply(const std::vector<remote_config::config> &configs) override
     {
         std::cout << std::endl
                   << "Product removing configs " << std::endl
@@ -70,15 +70,16 @@ ACTION_P(set_response_body, response) { arg1.assign(response); }
 class api : public remote_config::http_api {
 public:
     MOCK_METHOD(remote_config::protocol::remote_config_result, get_configs,
-        (std::string request, std::string &response_body), (override));
+        (const std::string &request, std::string &response_body),
+        (const override));
 };
 
 class listener_mock : public remote_config::product_listener {
 public:
-    MOCK_METHOD(void, on_update, (std::vector<remote_config::config> configs),
-        (override));
-    MOCK_METHOD(void, on_unapply, (std::vector<remote_config::config> configs),
-        (override));
+    MOCK_METHOD(void, on_update,
+        (const std::vector<remote_config::config> &configs), (override));
+    MOCK_METHOD(void, on_unapply,
+        (const std::vector<remote_config::config> &configs), (override));
 };
 } // namespace mock
 

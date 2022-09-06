@@ -14,7 +14,7 @@
 namespace dds::remote_config::protocol {
 
 void serialize_client_tracer(rapidjson::Document::AllocatorType &alloc,
-    rapidjson::Value &client_field, client_tracer client_tracer)
+    rapidjson::Value &client_field, const client_tracer &client_tracer)
 {
     rapidjson::Value tracer_object(rapidjson::kObjectType);
 
@@ -37,7 +37,7 @@ void serialize_config_states(rapidjson::Document::AllocatorType &alloc,
 {
     rapidjson::Value config_states_object(rapidjson::kArrayType);
 
-    for (auto &config_state : config_states) {
+    for (const auto &config_state : config_states) {
         rapidjson::Value config_state_object(rapidjson::kObjectType);
         config_state_object.AddMember("id", config_state.get_id(), alloc);
         config_state_object.AddMember(
@@ -51,7 +51,7 @@ void serialize_config_states(rapidjson::Document::AllocatorType &alloc,
 }
 
 void serialize_client_state(rapidjson::Document::AllocatorType &alloc,
-    rapidjson::Value &client_field, client_state client_state)
+    rapidjson::Value &client_field, const client_state &client_state)
 {
     rapidjson::Value client_state_object(rapidjson::kObjectType);
 
@@ -71,7 +71,7 @@ void serialize_client_state(rapidjson::Document::AllocatorType &alloc,
 }
 
 void serialize_client(rapidjson::Document::AllocatorType &alloc,
-    rapidjson::Document &document, client client)
+    rapidjson::Document &document, const client &client)
 {
     rapidjson::Value client_object(rapidjson::kObjectType);
 
@@ -127,7 +127,7 @@ void serialize_cached_target_files(rapidjson::Document::AllocatorType &alloc,
     document.AddMember("cached_target_files", cached_target_files_array, alloc);
 }
 
-std::optional<std::string> serialize(get_configs_request request)
+std::optional<std::string> serialize(const get_configs_request &request)
 {
     rapidjson::Document document;
     rapidjson::Document::AllocatorType &alloc = document.GetAllocator();

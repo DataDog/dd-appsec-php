@@ -19,8 +19,8 @@ class config_path {
 public:
     config_path(std::string &&id, std::string &&product)
         : id_(std::move(id)), product_(std::move(product)){};
-    std::string get_id() const { return id_; };
-    std::string get_product() const { return product_; };
+    [[nodiscard]] std::string get_id() const { return id_; };
+    [[nodiscard]] std::string get_product() const { return product_; };
 
 private:
     std::string product_;
@@ -32,10 +32,12 @@ std::optional<config_path> config_path_from_path(const std::string &path);
 class client {
 public:
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    client(http_api *arg_api, std::string &id, std::string &runtime_id,
+    client(const http_api *arg_api, const std::string &id,
+        const std::string &runtime_id,
         // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-        std::string &tracer_version, std::string &service, std::string &env,
-        std::string &app_version, std::vector<product> &products)
+        const std::string &tracer_version, const std::string &service,
+        const std::string &env, const std::string &app_version,
+        const std::vector<product> &products)
         : api_(arg_api), id_(id), runtime_id_(runtime_id),
           tracer_version_(tracer_version), service_(service), env_(env),
           app_version_(app_version), targets_version_(0)
@@ -51,9 +53,9 @@ public:
 private:
     protocol::get_configs_request generate_request();
     protocol::remote_config_result process_response(
-        protocol::get_configs_response &response);
+        const protocol::get_configs_response &response);
 
-    http_api *api_;
+    const http_api *api_;
     std::string id_;
     std::string runtime_id_;
     std::string tracer_version_;

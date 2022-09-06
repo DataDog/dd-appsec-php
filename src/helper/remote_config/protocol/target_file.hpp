@@ -13,9 +13,10 @@ namespace dds::remote_config::protocol {
 class target_file {
 public:
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    target_file(std::string &path, std::string &raw) : path_(path), raw_(raw){};
-    std::string get_path() const { return path_; };
-    std::string get_raw() const { return raw_; };
+    target_file(const std::string &path, const std::string &raw)
+        : path_(path), raw_(raw){};
+    [[nodiscard]] std::string get_path() const { return path_; };
+    [[nodiscard]] std::string get_raw() const { return raw_; };
     bool operator==(target_file const &b) const
     {
         return path_ == b.path_ && raw_ == b.raw_;

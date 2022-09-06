@@ -16,12 +16,12 @@ namespace dds::remote_config::protocol {
 
 class client {
 public:
-    client(std::string &id, std::vector<std::string> &products,
-        client_tracer &ct, client_state &cs)
+    client(const std::string &id, const std::vector<std::string> &products,
+        const client_tracer &ct, const client_state &cs)
         : id_(id), products_(products), client_tracer_(ct), client_state_(cs){};
     std::string get_id() const { return id_; };
     std::vector<std::string> get_products() const { return products_; };
-    client_tracer get_tracer() const { return client_tracer_; };
+    [[nodiscard]] client_tracer get_tracer() const { return client_tracer_; };
     client_state get_client_state() const { return client_state_; };
     bool operator==(client const &b) const
     {

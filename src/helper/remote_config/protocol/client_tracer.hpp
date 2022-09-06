@@ -12,16 +12,21 @@ namespace dds::remote_config::protocol {
 class client_tracer {
 public:
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    client_tracer(std::string &runtime_id, std::string &tracer_version,
+    client_tracer(const std::string &runtime_id,
+        const std::string &tracer_version,
         // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-        std::string &service, std::string &env, std::string &app_version)
+        const std::string &service, const std::string &env,
+        const std::string &app_version)
         : runtime_id_(runtime_id), tracer_version_(tracer_version),
           service_(service), env_(env), app_version_(app_version){};
-    std::string get_runtime_id() const { return runtime_id_; };
-    std::string get_tracer_version() const { return tracer_version_; };
-    std::string get_service() const { return service_; };
-    std::string get_env() const { return env_; };
-    std::string get_app_version() const { return app_version_; };
+    [[nodiscard]] std::string get_runtime_id() const { return runtime_id_; };
+    [[nodiscard]] std::string get_tracer_version() const
+    {
+        return tracer_version_;
+    };
+    [[nodiscard]] std::string get_service() const { return service_; };
+    [[nodiscard]] std::string get_env() const { return env_; };
+    [[nodiscard]] std::string get_app_version() const { return app_version_; };
     bool operator==(client_tracer const &b) const
     {
         return runtime_id_ == b.runtime_id_ &&
