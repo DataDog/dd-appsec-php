@@ -26,9 +26,11 @@ static const int version = 11;
 
 class http_api : api {
 public:
-    protocol::remote_config_result get_configs(
-        const std::string &request, std::string &response_body) const override
+    std::pair<protocol::remote_config_result, std::optional<std::string>>
+    get_configs(const std::string &request) const override
     {
+        std::pair<protocol::remote_config_result, std::optional<std::string>>
+            result;
         try {
             //@todo deharcode these values
             std::string const host = "localhost";
@@ -75,7 +77,7 @@ public:
             http::read(stream, buffer, res);
 
             // Write the message to output string
-            response_body = boost::beast::buffers_to_string(res.body().data());
+            result.second = boost::beast::buffers_to_string(res.body().data());
 
             // Gracefully close the socket
             beast::error_code ec;
@@ -87,14 +89,14 @@ public:
             if (ec && ec != beast::errc::not_connected) {
                 throw beast::system_error{ec};
             }
-
+            result.first = protocol::remote_config_result::success;
             // If we get here then the connection is closed gracefully
         } catch (std::exception const &e) {
             //@todo log these errors somewhere else
             //            std::cerr << "Error: " << e.what() << std::endl;
-            return protocol::remote_config_result::error;
+            result.first = protocol::remote_config_result::error;
         }
-        return protocol::remote_config_result::success;
+        return result;
     };
 };
 

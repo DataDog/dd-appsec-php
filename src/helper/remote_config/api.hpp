@@ -12,8 +12,9 @@ namespace dds::remote_config {
 
 class api {
 public:
-    virtual protocol::remote_config_result get_configs(
-        const std::string &request, std::string &response_body) const = 0;
+    virtual std::pair<protocol::remote_config_result,
+        std::optional<std::string>>
+    get_configs(const std::string &request) const = 0;
 };
 
 } // namespace dds::remote_config

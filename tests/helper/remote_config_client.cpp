@@ -69,9 +69,9 @@ ACTION_P(set_response_body, response) { arg1.assign(response); }
 
 class api : public remote_config::http_api {
 public:
-    MOCK_METHOD(remote_config::protocol::remote_config_result, get_configs,
-        (const std::string &request, std::string &response_body),
-        (const override));
+    MOCK_METHOD((std::pair<remote_config::protocol::remote_config_result,
+                    std::optional<std::string>>),
+        get_configs, (const std::string &request), (const override));
 };
 
 class listener_mock : public remote_config::product_listener {
@@ -310,11 +310,24 @@ bool validate_request_has_error(
     return true;
 }
 
+std::pair<remote_config::protocol::remote_config_result,
+    std::optional<std::string>>
+get_config_response(
+    remote_config::protocol::remote_config_result result, std::string body)
+{
+    std::pair<remote_config::protocol::remote_config_result,
+        std::optional<std::string>>
+        pair(result, body);
+
+    return pair;
+}
+
 TEST(RemoteConfigClient, ItReturnsErrorIfApiReturnsError)
 {
     mock::api *const mock_api = new mock::api;
     EXPECT_CALL(*mock_api, get_configs)
-        .WillOnce(Return(remote_config::protocol::remote_config_result::error));
+        .WillOnce(Return(get_config_response(
+            remote_config::protocol::remote_config_result::error, "")));
 
     std::vector<dds::remote_config::product> _products(get_products());
     std::string _runtime_id(runtime_id);
@@ -333,11 +346,11 @@ TEST(RemoteConfigClient, ItCallsToApiOnPoll)
     std::string expected_request = generate_request_serialized(false, false);
 
     mock::api *const mock_api = new mock::api;
-    EXPECT_CALL(*mock_api, get_configs(expected_request, _))
+    EXPECT_CALL(*mock_api, get_configs(expected_request))
         .Times(AtLeast(1))
-        .WillOnce(DoAll(
-            mock::set_response_body(generate_example_response(paths)),
-            Return(remote_config::protocol::remote_config_result::success)));
+        .WillOnce(Return(get_config_response(
+            remote_config::protocol::remote_config_result::success,
+            generate_example_response(paths))));
 
     std::vector<dds::remote_config::product> _products(get_products());
     std::string _runtime_id(runtime_id);
@@ -366,8 +379,9 @@ TEST(RemoteConfigClient, ItReturnErrorWhenResponseIsInvalidJson)
 {
     mock::api mock_api;
     EXPECT_CALL(mock_api, get_configs)
-        .WillOnce(DoAll(mock::set_response_body("invalid json here"),
-            Return(remote_config::protocol::remote_config_result::success)));
+        .WillOnce(Return(get_config_response(
+            remote_config::protocol::remote_config_result::success,
+            "invalid json here")));
 
     std::vector<dds::remote_config::product> _products(get_products());
     dds::remote_config::client api_client(&mock_api, id, runtime_id,
@@ -386,9 +400,10 @@ TEST(RemoteConfigClient,
     mock::api mock_api;
     std::string request_sent;
     EXPECT_CALL(mock_api, get_configs)
-        .WillRepeatedly(DoAll(mock::set_response_body(response),
-            testing::SaveArg<0>(&request_sent),
-            Return(remote_config::protocol::remote_config_result::success)));
+        .WillRepeatedly(DoAll(testing::SaveArg<0>(&request_sent),
+            Return(get_config_response(
+                remote_config::protocol::remote_config_result::success,
+                response))));
 
     std::vector<dds::remote_config::product> _products(get_products());
     dds::remote_config::client api_client(&mock_api, id, runtime_id,
@@ -418,9 +433,10 @@ TEST(RemoteConfigClient,
     mock::api mock_api;
     std::string request_sent;
     EXPECT_CALL(mock_api, get_configs)
-        .WillRepeatedly(DoAll(mock::set_response_body(response),
-            testing::SaveArg<0>(&request_sent),
-            Return(remote_config::protocol::remote_config_result::success)));
+        .WillRepeatedly(DoAll(testing::SaveArg<0>(&request_sent),
+            Return(get_config_response(
+                remote_config::protocol::remote_config_result::success,
+                response))));
 
     std::vector<dds::remote_config::product> _products(get_products());
     dds::remote_config::client api_client(&mock_api, id, runtime_id,
@@ -497,9 +513,10 @@ TEST(RemoteConfigClient, ItReturnsErrorWhenClientConfigPathCantBeParsed)
     mock::api mock_api;
     std::string request_sent;
     EXPECT_CALL(mock_api, get_configs)
-        .WillRepeatedly(DoAll(mock::set_response_body(response),
-            testing::SaveArg<0>(&request_sent),
-            Return(remote_config::protocol::remote_config_result::success)));
+        .WillRepeatedly(DoAll(testing::SaveArg<0>(&request_sent),
+            Return(get_config_response(
+                remote_config::protocol::remote_config_result::success,
+                response))));
 
     std::vector<dds::remote_config::product> _products(get_products());
     dds::remote_config::client api_client(&mock_api, id, runtime_id,
@@ -529,9 +546,10 @@ TEST(RemoteConfigClient, ItReturnsErrorIfProductOnPathNotRequested)
     mock::api mock_api;
     std::string request_sent;
     EXPECT_CALL(mock_api, get_configs)
-        .WillRepeatedly(DoAll(mock::set_response_body(response),
-            testing::SaveArg<0>(&request_sent),
-            Return(remote_config::protocol::remote_config_result::success)));
+        .WillRepeatedly(DoAll(testing::SaveArg<0>(&request_sent),
+            Return(get_config_response(
+                remote_config::protocol::remote_config_result::success,
+                response))));
 
     std::vector<remote_config::product_listener *> listeners;
     remote_config::product p(features, listeners);
@@ -563,20 +581,20 @@ TEST(RemoteConfigClient, ItGeneratesClientStateAndCacheFromResponse)
     // First call should not contain state neither cache
     std::string first_request_no_state_no_cache =
         generate_request_serialized(false, false);
-    EXPECT_CALL(*mock_api, get_configs(first_request_no_state_no_cache, _))
+    EXPECT_CALL(*mock_api, get_configs(first_request_no_state_no_cache))
         .Times(1)
-        .WillOnce(DoAll(
-            mock::set_response_body(generate_example_response(paths)),
-            Return(remote_config::protocol::remote_config_result::success)));
+        .WillOnce(Return(get_config_response(
+            remote_config::protocol::remote_config_result::success,
+            generate_example_response(paths))));
 
-    // Second call. This should contain state and cache from previous response
+    // Second call. This should contain state and cache from previous
     std::string second_request_with_state_and_cache =
         generate_request_serialized(true, true);
-    EXPECT_CALL(*mock_api, get_configs(second_request_with_state_and_cache, _))
+    EXPECT_CALL(*mock_api, get_configs(second_request_with_state_and_cache))
         .Times(1)
-        .WillOnce(DoAll(
-            mock::set_response_body(generate_example_response(paths)),
-            Return(remote_config::protocol::remote_config_result::success)));
+        .WillOnce(Return(get_config_response(
+            remote_config::protocol::remote_config_result::success,
+            generate_example_response(paths))));
 
     std::vector<dds::remote_config::product> _products(get_products());
     dds::remote_config::client api_client(mock_api, id, runtime_id,
@@ -598,10 +616,10 @@ TEST(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
 
     std::string response = generate_example_response({first_path});
 
-    EXPECT_CALL(*mock_api, get_configs(_, _))
+    EXPECT_CALL(*mock_api, get_configs(_))
         .Times(1)
-        .WillOnce(DoAll(mock::set_response_body(response),
-            Return(remote_config::protocol::remote_config_result::success)));
+        .WillOnce(Return(get_config_response(
+            remote_config::protocol::remote_config_result::success, response)));
 
     std::string content = test_helpers::raw_from_path(first_path);
     std::map<std::string, std::string> hashes = {
@@ -660,12 +678,14 @@ TEST(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
 
     std::string response02 = generate_example_response({second_path});
 
-    EXPECT_CALL(*mock_api, get_configs(_, _))
+    EXPECT_CALL(*mock_api, get_configs(_))
         .Times(2)
-        .WillOnce(DoAll(mock::set_response_body(response01),
-            Return(remote_config::protocol::remote_config_result::success)))
-        .WillOnce(DoAll(mock::set_response_body(response02),
-            Return(remote_config::protocol::remote_config_result::success)));
+        .WillOnce(Return(get_config_response(
+            remote_config::protocol::remote_config_result::success,
+            response01)))
+        .WillOnce(Return(get_config_response(
+            remote_config::protocol::remote_config_result::success,
+            response02)));
 
     std::string content01 = test_helpers::raw_from_path(first_path);
     std::map<std::string, std::string> hashes01 = {
@@ -743,7 +763,8 @@ TEST(
         "0=\", \"target_files\": [{\"path\": "
         "\"datadog/2/APM_SAMPLING/dynamic_rates/config\", \"raw\": "
         "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"} ], "
-        "\"client_configs\": [\"datadog/2/APM_SAMPLING/dynamic_rates/config\"] "
+        "\"client_configs\": "
+        "[\"datadog/2/APM_SAMPLING/dynamic_rates/config\"] "
         "}");
 
     std::string response02(
@@ -764,15 +785,18 @@ TEST(
         "ICB9Cn0=\", \"target_files\": [{\"path\": "
         "\"datadog/2/APM_SAMPLING/dynamic_rates/config\", \"raw\": "
         "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"} ], "
-        "\"client_configs\": [\"datadog/2/APM_SAMPLING/dynamic_rates/config\"] "
+        "\"client_configs\": "
+        "[\"datadog/2/APM_SAMPLING/dynamic_rates/config\"] "
         "}");
 
-    EXPECT_CALL(*mock_api, get_configs(_, _))
+    EXPECT_CALL(*mock_api, get_configs(_))
         .Times(2)
-        .WillOnce(DoAll(mock::set_response_body(response01),
-            Return(remote_config::protocol::remote_config_result::success)))
-        .WillOnce(DoAll(mock::set_response_body(response02),
-            Return(remote_config::protocol::remote_config_result::success)));
+        .WillOnce(Return(get_config_response(
+            remote_config::protocol::remote_config_result::success,
+            response01)))
+        .WillOnce(Return(get_config_response(
+            remote_config::protocol::remote_config_result::success,
+            response02)));
 
     std::string product_str = "APM_SAMPLING";
     std::string id_product = "dynamic_rates";
@@ -835,11 +859,11 @@ TEST(RemoteConfigClient, FilesThatAreInCacheAreUsedWhenNotInTargetFiles)
     // First call should not contain state neither cache
     std::string first_request_no_state_no_cache =
         generate_request_serialized(false, false);
-    EXPECT_CALL(*mock_api, get_configs(first_request_no_state_no_cache, _))
+    EXPECT_CALL(*mock_api, get_configs(first_request_no_state_no_cache))
         .Times(1)
-        .WillOnce(
-            DoAll(mock::set_response_body(generate_example_response(paths)),
-                Return(remote_config::protocol::remote_config_result::success)))
+        .WillOnce(Return(get_config_response(
+            remote_config::protocol::remote_config_result::success,
+            generate_example_response(paths))))
         .RetiresOnSaturation();
 
     // Second call. Since this call has cache, response comes without
@@ -848,14 +872,14 @@ TEST(RemoteConfigClient, FilesThatAreInCacheAreUsedWhenNotInTargetFiles)
     // target_files came empty on second
     std::string second_request_with_state_and_cache =
         generate_request_serialized(true, true);
-    EXPECT_CALL(*mock_api, get_configs(second_request_with_state_and_cache, _))
+    EXPECT_CALL(*mock_api, get_configs(second_request_with_state_and_cache))
         .Times(2)
-        .WillOnce(DoAll(mock::set_response_body(
-                            generate_example_response(paths, {}, paths)),
-            Return(remote_config::protocol::remote_config_result::success)))
-        .WillOnce(DoAll(mock::set_response_body(
-                            generate_example_response(paths, {}, paths)),
-            Return(remote_config::protocol::remote_config_result::success)));
+        .WillOnce(Return(get_config_response(
+            remote_config::protocol::remote_config_result::success,
+            generate_example_response(paths, {}, paths))))
+        .WillOnce(Return(get_config_response(
+            remote_config::protocol::remote_config_result::success,
+            generate_example_response(paths, {}, paths))));
 
     std::vector<dds::remote_config::product> _products(get_products());
     dds::remote_config::client api_client(mock_api, id, runtime_id,
@@ -878,16 +902,18 @@ TEST(RemoteConfigClient, NotTrackedFilesAreDeletedFromCache)
     mock::api *const mock_api = new mock::api;
 
     std::string request_sent;
-    EXPECT_CALL(*mock_api, get_configs(_, _))
+    EXPECT_CALL(*mock_api, get_configs(_))
         .Times(3)
-        .WillOnce(
-            DoAll(mock::set_response_body(generate_example_response(paths)),
-                Return(remote_config::protocol::remote_config_result::success)))
-        .WillOnce(DoAll(mock::set_response_body(generate_example_response({})),
-            Return(remote_config::protocol::remote_config_result::success)))
+        .WillOnce(Return(get_config_response(
+            remote_config::protocol::remote_config_result::success,
+            generate_example_response(paths))))
+        .WillOnce(Return(get_config_response(
+            remote_config::protocol::remote_config_result::success,
+            generate_example_response({}))))
         .WillOnce(DoAll(testing::SaveArg<0>(&request_sent),
-            mock::set_response_body(generate_example_response({})),
-            Return(remote_config::protocol::remote_config_result::success)));
+            Return(get_config_response(
+                remote_config::protocol::remote_config_result::success,
+                generate_example_response({})))));
 
     std::vector<dds::remote_config::product> _products = {get_products()};
 
@@ -943,8 +969,8 @@ TEST(RemoteConfigClient, TestHashIsDifferentFromTheCache)
         "OiA0MQogICAgICAgICAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICB9LAogIC"
         "AgICAgICAgICAgICAgInZlcnNpb24iOiAyNzQ4NzE1NgogICAgICAgIH0KfQ==\", "
         "\"target_files\": [{\"path\": "
-        "\"employee/FEATURES/2.test1.config/config\", \"raw\": \"some_raw=\"} "
-        "], \"client_configs\": [\"employee/FEATURES/2.test1.config/config\"] "
+        "\"employee/FEATURES/2.test1.config/config\", \"raw\": \"some_raw=\"}"
+        "], \"client_configs\": [\"employee/FEATURES/2.test1.config/config\"]"
         "}";
 
     // This response has a cached file with different hash, it should not be
@@ -976,13 +1002,15 @@ TEST(RemoteConfigClient, TestHashIsDifferentFromTheCache)
         "[\"employee/FEATURES/2.test1.config/config\"] }";
 
     std::string request_sent;
-    EXPECT_CALL(*mock_api, get_configs(_, _))
+    EXPECT_CALL(*mock_api, get_configs(_))
         .Times(3)
-        .WillOnce(DoAll(mock::set_response_body(first_response),
-            Return(remote_config::protocol::remote_config_result::success)))
-        .WillRepeatedly(DoAll(mock::set_response_body(second_response),
-            testing::SaveArg<0>(&request_sent),
-            Return(remote_config::protocol::remote_config_result::success)))
+        .WillOnce(Return(get_config_response(
+            remote_config::protocol::remote_config_result::success,
+            first_response)))
+        .WillRepeatedly(DoAll(testing::SaveArg<0>(&request_sent),
+            Return(get_config_response(
+                remote_config::protocol::remote_config_result::success,
+                second_response))))
         .RetiresOnSaturation();
 
     std::vector<dds::remote_config::product> _products(get_products());
@@ -1033,12 +1061,12 @@ TEST(RemoteConfigClient, TestWhenFileGetsFromCacheItsCachedLenUsed)
         "OiA0MQogICAgICAgICAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICB9LAogIC"
         "AgICAgICAgICAgICAgInZlcnNpb24iOiAyNzQ4NzE1NgogICAgICAgIH0KfQ==\", "
         "\"target_files\": [{\"path\": "
-        "\"employee/FEATURES/2.test1.config/config\", \"raw\": \"some_raw=\"} "
-        "], \"client_configs\": [\"employee/FEATURES/2.test1.config/config\"] "
+        "\"employee/FEATURES/2.test1.config/config\", \"raw\": \"some_raw=\"}"
+        "], \"client_configs\": [\"employee/FEATURES/2.test1.config/config\"]"
         "}";
 
-    // This response has a cached file with different len and version, it should
-    // not be used
+    // This response has a cached file with different len and version, it
+    // should not be used
     std::string second_response =
         "{\"roots\": [], \"targets\": "
         "\"ewogICAgICAgICJzaWduYXR1cmVzIjogWwogICAgICAgICAgICAgICAgewogICAgICAg"
@@ -1066,13 +1094,15 @@ TEST(RemoteConfigClient, TestWhenFileGetsFromCacheItsCachedLenUsed)
         "[\"employee/FEATURES/2.test1.config/config\"] }";
 
     std::string request_sent;
-    EXPECT_CALL(*mock_api, get_configs(_, _))
+    EXPECT_CALL(*mock_api, get_configs(_))
         .Times(3)
-        .WillOnce(DoAll(mock::set_response_body(first_response),
-            Return(remote_config::protocol::remote_config_result::success)))
-        .WillRepeatedly(DoAll(mock::set_response_body(second_response),
-            testing::SaveArg<0>(&request_sent),
-            Return(remote_config::protocol::remote_config_result::success)))
+        .WillOnce(Return(get_config_response(
+            remote_config::protocol::remote_config_result::success,
+            first_response)))
+        .WillRepeatedly(DoAll(testing::SaveArg<0>(&request_sent),
+            Return(get_config_response(
+                remote_config::protocol::remote_config_result::success,
+                second_response))))
         .RetiresOnSaturation();
 
     std::vector<dds::remote_config::product> _products(get_products());

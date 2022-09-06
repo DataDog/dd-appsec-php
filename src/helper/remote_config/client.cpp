@@ -27,7 +27,7 @@ std::optional<config_path> config_path_from_path(const std::string &path)
     return cp;
 }
 
-protocol::get_configs_request client::generate_request()
+protocol::get_configs_request client::generate_request() const
 {
     std::vector<protocol::config_state> config_states;
     std::vector<protocol::cached_target_files> files;
@@ -182,19 +182,18 @@ protocol::remote_config_result client::poll()
 
     auto request = generate_request();
 
-    std::optional<std::string> serialized_request;
-    serialized_request = protocol::serialize(request);
+    std::optional<std::string> serialized_request =
+        protocol::serialize(request);
     if (!serialized_request) {
         return protocol::remote_config_result::error;
     }
 
-    std::string response_body;
-    protocol::remote_config_result result =
-        api_->get_configs(serialized_request.value(), response_body);
+    auto [result, response_body] =
+        api_->get_configs(serialized_request.value());
     if (result == protocol::remote_config_result::error) {
         return protocol::remote_config_result::error;
     }
-    auto [parsing_result, response] = protocol::parse(response_body);
+    auto [parsing_result, response] = protocol::parse(response_body.value());
     if (parsing_result != protocol::remote_config_parser_result::success) {
         return protocol::remote_config_result::error;
     }

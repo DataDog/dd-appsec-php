@@ -51,7 +51,7 @@ public:
     protocol::remote_config_result poll();
 
 private:
-    protocol::get_configs_request generate_request();
+    protocol::get_configs_request generate_request() const;
     protocol::remote_config_result process_response(
         const protocol::get_configs_response &response);
 
