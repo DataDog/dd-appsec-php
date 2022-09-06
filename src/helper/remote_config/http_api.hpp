@@ -27,7 +27,7 @@ static const int version = 11;
 class http_api : api {
 public:
     std::pair<protocol::remote_config_result, std::optional<std::string>>
-    get_configs(const std::string &request) const override
+    get_configs(std::string &&request) const override
     {
         std::pair<protocol::remote_config_result, std::optional<std::string>>
             result;

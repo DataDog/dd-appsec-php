@@ -32,14 +32,12 @@ protocol::get_configs_request client::generate_request() const
     std::vector<protocol::config_state> config_states;
     std::vector<protocol::cached_target_files> files;
 
-    for (auto &[product_name, product] : products_) {
+    for (const auto &[product_name, product] : products_) {
         // State
         auto configs_on_product = product.get_configs();
         for (auto &config : configs_on_product) {
-            std::string c_id(config.get_id());
-            std::string c_product(config.get_product());
             config_states.emplace_back(
-                std::move(c_id), config.get_version(), std::move(c_product));
+                config.get_id(), config.get_version(), config.get_product());
         }
 
         // Cached files
@@ -47,27 +45,29 @@ protocol::get_configs_request client::generate_request() const
         for (auto &config : configs) {
             std::vector<protocol::cached_target_files_hash> hashes;
             hashes.reserve(config.get_hashes().size());
-            for (auto &[algo, hash_sting] : config.get_hashes()) {
+            for (auto const &[algo, hash_sting] : config.get_hashes()) {
                 hashes.emplace_back(algo, hash_sting);
             }
-            std::string path = config.get_path();
-            files.emplace_back(path, config.get_length(), hashes);
+            files.emplace_back(
+                config.get_path(), config.get_length(), std::move(hashes));
         }
     }
 
     protocol::client_tracer ct(
         runtime_id_, tracer_version_, service_, env_, app_version_);
 
-    protocol::client_state cs(targets_version_, config_states,
+    protocol::client_state cs(targets_version_, std::move(config_states),
         !last_poll_error_.empty(), last_poll_error_, opaque_backend_state_);
     std::vector<std::string> products_str;
     products_str.reserve(products_.size());
     for (const auto &[product_name, product] : products_) {
         products_str.push_back(product_name);
     }
-    protocol::client protocol_client(id_, products_str, ct, cs);
+    protocol::client protocol_client(
+        id_, std::move(products_str), std::move(ct), std::move(cs));
 
-    protocol::get_configs_request request(protocol_client, files);
+    protocol::get_configs_request request(
+        std::move(protocol_client), std::move(files));
 
     return request;
 };
@@ -183,17 +183,18 @@ protocol::remote_config_result client::poll()
     auto request = generate_request();
 
     std::optional<std::string> serialized_request =
-        protocol::serialize(request);
+        protocol::serialize(std::move(request));
     if (!serialized_request) {
         return protocol::remote_config_result::error;
     }
 
     auto [result, response_body] =
-        api_->get_configs(serialized_request.value());
+        api_->get_configs(std::move(serialized_request.value()));
     if (result == protocol::remote_config_result::error) {
         return protocol::remote_config_result::error;
     }
-    auto [parsing_result, response] = protocol::parse(response_body.value());
+    auto [parsing_result, response] =
+        protocol::parse(std::move(response_body.value()));
     if (parsing_result != protocol::remote_config_parser_result::success) {
         return protocol::remote_config_result::error;
     }

@@ -71,7 +71,7 @@ class api : public remote_config::http_api {
 public:
     MOCK_METHOD((std::pair<remote_config::protocol::remote_config_result,
                     std::optional<std::string>>),
-        get_configs, (const std::string &request), (const override));
+        get_configs, (std::string && request), (const override));
 };
 
 class listener_mock : public remote_config::product_listener {
@@ -159,11 +159,12 @@ remote_config::protocol::client generate_client(bool generate_state)
         _backend_client_state = "";
     }
     std::string error = "";
-    remote_config::protocol::client_state client_state(
-        _target_version, config_states, false, error, _backend_client_state);
+    remote_config::protocol::client_state client_state(_target_version,
+        std::move(config_states), false, error, _backend_client_state);
 
-    remote_config::protocol::client client(
-        id, products, client_tracer, client_state);
+    auto products_ = products;
+    remote_config::protocol::client client(id, std::move(products_),
+        std::move(client_tracer), std::move(client_state));
 
     return client;
 }
@@ -245,26 +246,22 @@ remote_config::protocol::get_configs_request generate_request(
         std::string hash_value_01 = test_helpers::sha256_from_path(paths[0]);
         remote_config::protocol::cached_target_files_hash hash01(
             hash_key, hash_value_01);
-        std::vector<remote_config::protocol::cached_target_files_hash>
-            hashes01 = {hash01};
         std::string path01 = paths[0];
-        remote_config::protocol::cached_target_files file01(
-            path01, test_helpers::length_from_path(path01), hashes01);
+        remote_config::protocol::cached_target_files file01(std::move(path01),
+            test_helpers::length_from_path(path01), {hash01});
         files.push_back(file01);
 
         // Second cached file
         std::string hash_value_02 = test_helpers::sha256_from_path(paths[1]);
         remote_config::protocol::cached_target_files_hash hash02(
             hash_key, hash_value_02);
-        std::vector<remote_config::protocol::cached_target_files_hash>
-            hashes02 = {hash02};
         std::string path02 = paths[1];
-        remote_config::protocol::cached_target_files file02(
-            path02, test_helpers::length_from_path(path02), hashes02);
+        remote_config::protocol::cached_target_files file02(std::move(path02),
+            test_helpers::length_from_path(path02), {hash02});
         files.push_back(file02);
     }
     remote_config::protocol::get_configs_request request(
-        protocol_client, files);
+        std::move(protocol_client), std::move(files));
 
     return request;
 }
@@ -342,11 +339,10 @@ TEST(RemoteConfigClient, ItReturnsErrorIfApiReturnsError)
 
 TEST(RemoteConfigClient, ItCallsToApiOnPoll)
 {
-    // First poll dont have state
-    std::string expected_request = generate_request_serialized(false, false);
-
     mock::api *const mock_api = new mock::api;
-    EXPECT_CALL(*mock_api, get_configs(expected_request))
+    // First poll dont have state
+    EXPECT_CALL(
+        *mock_api, get_configs(generate_request_serialized(false, false)))
         .Times(AtLeast(1))
         .WillOnce(Return(get_config_response(
             remote_config::protocol::remote_config_result::success,
@@ -579,18 +575,15 @@ TEST(RemoteConfigClient, ItGeneratesClientStateAndCacheFromResponse)
     mock::api *const mock_api = new mock::api;
 
     // First call should not contain state neither cache
-    std::string first_request_no_state_no_cache =
-        generate_request_serialized(false, false);
-    EXPECT_CALL(*mock_api, get_configs(first_request_no_state_no_cache))
+    EXPECT_CALL(
+        *mock_api, get_configs(generate_request_serialized(false, false)))
         .Times(1)
         .WillOnce(Return(get_config_response(
             remote_config::protocol::remote_config_result::success,
             generate_example_response(paths))));
 
     // Second call. This should contain state and cache from previous
-    std::string second_request_with_state_and_cache =
-        generate_request_serialized(true, true);
-    EXPECT_CALL(*mock_api, get_configs(second_request_with_state_and_cache))
+    EXPECT_CALL(*mock_api, get_configs(generate_request_serialized(true, true)))
         .Times(1)
         .WillOnce(Return(get_config_response(
             remote_config::protocol::remote_config_result::success,
@@ -857,9 +850,8 @@ TEST(RemoteConfigClient, FilesThatAreInCacheAreUsedWhenNotInTargetFiles)
     mock::api *const mock_api = new mock::api;
 
     // First call should not contain state neither cache
-    std::string first_request_no_state_no_cache =
-        generate_request_serialized(false, false);
-    EXPECT_CALL(*mock_api, get_configs(first_request_no_state_no_cache))
+    EXPECT_CALL(
+        *mock_api, get_configs(generate_request_serialized(false, false)))
         .Times(1)
         .WillOnce(Return(get_config_response(
             remote_config::protocol::remote_config_result::success,
@@ -870,9 +862,7 @@ TEST(RemoteConfigClient, FilesThatAreInCacheAreUsedWhenNotInTargetFiles)
     // target_files
     // Third call. Cache and state should be keeped even though
     // target_files came empty on second
-    std::string second_request_with_state_and_cache =
-        generate_request_serialized(true, true);
-    EXPECT_CALL(*mock_api, get_configs(second_request_with_state_and_cache))
+    EXPECT_CALL(*mock_api, get_configs(generate_request_serialized(true, true)))
         .Times(2)
         .WillOnce(Return(get_config_response(
             remote_config::protocol::remote_config_result::success,

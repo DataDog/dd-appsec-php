@@ -13,6 +13,6 @@
 
 namespace dds::remote_config::protocol {
 
-std::optional<std::string> serialize(const get_configs_request &request);
+std::optional<std::string> serialize(get_configs_request &&request);
 
 } // namespace dds::remote_config::protocol

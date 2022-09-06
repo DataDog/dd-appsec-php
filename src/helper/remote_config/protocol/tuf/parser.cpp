@@ -314,7 +314,7 @@ std::pair<remote_config_parser_result, std::optional<targets>> parse_targets(
 }
 
 std::pair<remote_config_parser_result, std::optional<get_configs_response>>
-parse(const std::string &body)
+parse(std::string &&body)
 {
     rapidjson::Document serialized_doc;
     std::pair<remote_config_parser_result, std::optional<get_configs_response>>

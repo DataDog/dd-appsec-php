@@ -13,9 +13,9 @@ namespace dds::remote_config::protocol {
 
 class cached_target_files {
 public:
-    cached_target_files(const std::string &path, int length,
-        const std::vector<cached_target_files_hash> &hashes)
-        : path_(path), length_(length), hashes_(hashes){};
+    cached_target_files(std::string &&path, int length,
+        std::vector<cached_target_files_hash> &&hashes)
+        : path_(std::move(path)), length_(length), hashes_(std::move(hashes)){};
     [[nodiscard]] std::string get_path() const { return path_; };
     [[nodiscard]] int get_length() const { return length_; };
     [[nodiscard]] std::vector<cached_target_files_hash> get_hashes() const
