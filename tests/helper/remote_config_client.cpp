@@ -492,7 +492,7 @@ TEST_F(RemoteConfigClient,
 
 TEST(ClientConfig, ItGetGeneratedFromString)
 {
-    std::string apm_sampling = "apm_sampling";
+    std::string apm_sampling = "APM_SAMPLING";
     auto cp = remote_config::config_path_from_path(
         "datadog/2/LIVE_DEBUGGING/9e413cda-647b-335b-adcd-7ce453fc2284/config");
     EXPECT_TRUE(cp);
