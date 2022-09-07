@@ -13,8 +13,8 @@ namespace dds::remote_config::protocol {
 
 class path {
 public:
-    path(int v, const std::map<std::string, std::string> &hashes, int length)
-        : custom_v_(v), hashes_(hashes), length_(length){};
+    path(int v, std::map<std::string, std::string> &&hashes, int length)
+        : custom_v_(v), hashes_(std::move(hashes)), length_(length){};
     [[nodiscard]] int get_custom_v() const { return custom_v_; };
     [[nodiscard]] std::map<std::string, std::string> get_hashes() const
     {

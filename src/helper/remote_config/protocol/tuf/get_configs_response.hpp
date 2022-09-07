@@ -16,9 +16,10 @@ namespace dds::remote_config::protocol {
 
 class get_configs_response {
 public:
-    get_configs_response(const std::vector<std::string> &client_configs,
-        const std::vector<target_file> &target_files, const targets &targets)
-        : client_configs_(client_configs), targets_(targets)
+    get_configs_response(std::vector<std::string> &&client_configs,
+        const std::vector<target_file> &target_files, targets &&targets)
+        : client_configs_(std::move(client_configs)),
+          targets_(std::move(targets))
     {
         for (auto const &target_file : target_files) {
             target_files_.insert(std::pair<std::string, protocol::target_file>(

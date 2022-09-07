@@ -11,8 +11,7 @@ namespace dds::remote_config::protocol {
 
 class config_state {
 public:
-    config_state(
-        const std::string &&id, int version, const std::string &&product)
+    config_state(std::string &&id, int version, std::string &&product)
         : id_(std::move(id)), version_(version), product_(std::move(product)){};
     [[nodiscard]] std::string get_id() const { return id_; };
     [[nodiscard]] int get_version() const { return version_; };

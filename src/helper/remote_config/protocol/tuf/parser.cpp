@@ -91,9 +91,8 @@ parse_target_files(rapidjson::Value::ConstMemberIterator target_files_itr)
                 target_files_raw_field_invalid_type;
             return result;
         }
-        std::string path(path_itr->value.GetString());
-        std::string raw(raw_itr->value.GetString());
-        result.second.emplace_back(path, raw);
+        result.second.emplace_back(
+            path_itr->value.GetString(), raw_itr->value.GetString());
     }
 
     result.first = remote_config_parser_result::success;
@@ -185,8 +184,8 @@ parse_target(rapidjson::Value::ConstMemberIterator target_itr)
     }
 
     std::string target_name(target_itr->name.GetString());
-    path path_object(
-        v_itr->value.GetInt(), hashes_mapped, length_itr->value.GetInt());
+    path path_object(v_itr->value.GetInt(), std::move(hashes_mapped),
+        length_itr->value.GetInt());
     result.second.first = target_name;
     result.second.second = path_object;
     result.first = remote_config_parser_result::success;
@@ -259,13 +258,13 @@ parse_targets_signed(rapidjson::Value::ConstMemberIterator targets_signed_itr)
     if (result.first != remote_config_parser_result::success) {
         return result;
     }
-    std::string obs = opaque_backend_state_itr->value.GetString();
     std::vector<std::pair<std::string, path>> final_paths;
     final_paths.reserve(paths.size());
     for (auto &[product_str, path] : paths) {
         final_paths.emplace_back(product_str, path.value());
     }
-    result.second = targets(version_itr->value.GetInt(), obs, final_paths);
+    result.second = targets(version_itr->value.GetInt(),
+        opaque_backend_state_itr->value.GetString(), final_paths);
     result.first = remote_config_parser_result::success;
 
     return result;
@@ -370,8 +369,8 @@ parse(std::string &&body)
         return parser_result;
     }
 
-    parser_result.second =
-        get_configs_response(client_configs, target_files, targets.value());
+    parser_result.second = get_configs_response(
+        std::move(client_configs), target_files, std::move(targets.value()));
 
     return parser_result;
 }

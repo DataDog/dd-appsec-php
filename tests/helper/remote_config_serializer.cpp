@@ -108,13 +108,8 @@ int targets_version = 123;
 
 remote_config::protocol::client get_client()
 {
-    std::string runtime_id = "some runtime id";
-    std::string tracer_version = "some tracer version";
-    std::string service = "some service";
-    std::string env = "some env";
-    std::string app_version = "some app version";
-    remote_config::protocol::client_tracer client_tracer(
-        runtime_id, tracer_version, service, env, app_version);
+    remote_config::protocol::client_tracer client_tracer("some runtime id",
+        "some tracer version", "some service", "some env", "some app version");
 
     std::vector<remote_config::protocol::config_state> config_states;
 
@@ -124,14 +119,11 @@ remote_config::protocol::client get_client()
         config_state_version, std::move(config_state_product));
     config_states.push_back(cs);
 
-    std::string error = "";
-    std::string backend_client_state = "some backend client state";
     remote_config::protocol::client_state client_s(targets_version,
-        std::move(config_states), false, error, backend_client_state);
+        std::move(config_states), false, "", "some backend client state");
 
-    std::string client_id("some_id");
     remote_config::protocol::client client(
-        client_id, {"ASM_DD"}, std::move(client_tracer), std::move(client_s));
+        "some_id", {"ASM_DD"}, std::move(client_tracer), std::move(client_s));
 
     return client;
 }

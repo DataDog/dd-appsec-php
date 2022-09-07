@@ -162,8 +162,10 @@ public:
         auto service_cpy = service;
         auto env_cpy = env;
         auto app_version_cpy = app_version;
-        remote_config::protocol::client_tracer client_tracer(runtime_id_cpy,
-            tracer_version_cpy, service_cpy, env_cpy, app_version_cpy);
+        remote_config::protocol::client_tracer client_tracer(
+            std::move(runtime_id_cpy), std::move(tracer_version_cpy),
+            std::move(service_cpy), std::move(env_cpy),
+            std::move(app_version_cpy));
 
         std::vector<remote_config::protocol::config_state> config_states;
         int _target_version;
@@ -190,13 +192,13 @@ public:
             _target_version = 0; // Default target version
             _backend_client_state = "";
         }
-        std::string error = "";
         remote_config::protocol::client_state client_state(_target_version,
-            std::move(config_states), false, error, _backend_client_state);
+            std::move(config_states), false, "",
+            std::move(_backend_client_state));
 
         auto products_str_cpy = products_str;
         auto id_cpy = id;
-        remote_config::protocol::client client(id_cpy,
+        remote_config::protocol::client client(std::move(id_cpy),
             std::move(products_str_cpy), std::move(client_tracer),
             std::move(client_state));
 

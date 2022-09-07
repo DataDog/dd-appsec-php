@@ -14,9 +14,10 @@ namespace dds::remote_config::protocol {
 
 class targets {
 public:
-    targets(int version, const std::string &opaque_backend_state,
+    targets(int version, std::string &&opaque_backend_state,
         const std::vector<std::pair<std::string, path>> &paths)
-        : version_(version), opaque_backend_state_(opaque_backend_state)
+        : version_(version),
+          opaque_backend_state_(std::move(opaque_backend_state))
     {
         for (auto const &pair : paths) { paths_.insert(pair); }
     }

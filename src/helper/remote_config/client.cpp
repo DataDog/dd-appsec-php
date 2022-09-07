@@ -56,18 +56,28 @@ std::optional<config_path> config_path_from_path(const std::string &path)
         }
     }
 
-    protocol::client_tracer ct(
-        runtime_id_, tracer_version_, service_, env_, app_version_);
+    auto runtime_id_cpy = runtime_id_;
+    auto tracer_version_cpy = tracer_version_;
+    auto service_cpy = service_;
+    auto env_cpy = env_;
+    auto app_version_cpy = app_version_;
+    protocol::client_tracer ct(std::move(runtime_id_cpy),
+        std::move(tracer_version_cpy), std::move(service_cpy),
+        std::move(env_cpy), std::move(app_version_cpy));
 
+    auto last_poll_error_cpy = last_poll_error_;
+    auto opaque_backend_state_cpy = opaque_backend_state_;
     protocol::client_state cs(targets_version_, std::move(config_states),
-        !last_poll_error_.empty(), last_poll_error_, opaque_backend_state_);
+        !last_poll_error_.empty(), std::move(last_poll_error_cpy),
+        std::move(opaque_backend_state_cpy));
     std::vector<std::string> products_str;
     products_str.reserve(products_.size());
     for (const auto &[product_name, product] : products_) {
         products_str.push_back(product_name);
     }
-    protocol::client protocol_client(
-        id_, std::move(products_str), std::move(ct), std::move(cs));
+    std::string id_cpy = id_;
+    protocol::client protocol_client(std::move(id_cpy), std::move(products_str),
+        std::move(ct), std::move(cs));
 
     protocol::get_configs_request request(
         std::move(protocol_client), std::move(files));
