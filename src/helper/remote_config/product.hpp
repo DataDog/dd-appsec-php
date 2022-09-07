@@ -15,21 +15,21 @@ namespace dds::remote_config {
 
 class product_listener_abstract {
 public:
-    virtual void on_update(std::vector<config> &&configs) = 0;
-    virtual void on_unapply(std::vector<config> &&configs) = 0;
+    virtual void on_update(const std::vector<config> &configs) = 0;
+    virtual void on_unapply(const std::vector<config> &configs) = 0;
 };
 
 class product_listener : product_listener_abstract {
 public:
-    void on_update(std::vector<config> &&configs) override{};
-    void on_unapply(std::vector<config> &&configs) override{};
+    void on_update(const std::vector<config> &configs) override{};
+    void on_unapply(const std::vector<config> &configs) override{};
 };
 
 class product {
 public:
-    explicit product(const std::string &name,
-        const std::vector<product_listener *> &listeners)
-        : name_(name), listeners_(listeners){};
+    explicit product(
+        std::string &&name, std::vector<product_listener *> &&listeners)
+        : name_(std::move(name)), listeners_(std::move(listeners)){};
     void assign_configs(std::vector<config> &&configs)
     {
         std::vector<config> to_update;
@@ -53,13 +53,11 @@ public:
             }
         }
 
-
-        to_keep.insert(to_keep.end(), to_update.begin(), to_update.end());
-
         for (product_listener *listener : listeners_) {
-            listener->on_update(std::move(to_update));
-            listener->on_unapply(std::move(configs_));
+            listener->on_update(to_update);
+            listener->on_unapply(configs_);
         }
+        to_keep.insert(to_keep.end(), to_update.begin(), to_update.end());
 
         configs_ = to_keep;
     };
@@ -68,7 +66,7 @@ public:
     {
         return name_ == b.name_ && configs_ == b.configs_;
     }
-    [[nodiscard]] std::string get_name() const { return name_; };
+    [[nodiscard]] std::string get_name() const { return name_; }
 
 private:
     std::string name_;

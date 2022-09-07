@@ -32,17 +32,15 @@ std::optional<config_path> config_path_from_path(const std::string &path);
 class client {
 public:
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    client(const http_api *arg_api, const std::string &id,
-        const std::string &runtime_id,
+    client(const http_api *arg_api, std::string &&id, std::string &&runtime_id,
         // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-        const std::string &tracer_version, const std::string &service,
-        const std::string &env, const std::string &app_version,
-        const std::vector<product> &products)
+        std::string &&tracer_version, std::string &&service, std::string &&env,
+        std::string &&app_version, const std::vector<product> &products)
         : api_(arg_api), id_(id), runtime_id_(runtime_id),
           tracer_version_(tracer_version), service_(service), env_(env),
           app_version_(app_version), targets_version_(0)
     {
-        for (auto &product : products) {
+        for (auto const &product : products) {
             products_.insert(std::pair<std::string, remote_config::product>(
                 product.get_name(), product));
         }
@@ -51,7 +49,7 @@ public:
     protocol::remote_config_result poll();
 
 private:
-    protocol::get_configs_request generate_request() const;
+    [[nodiscard]] protocol::get_configs_request generate_request() const;
     protocol::remote_config_result process_response(
         protocol::get_configs_response &&response);
 

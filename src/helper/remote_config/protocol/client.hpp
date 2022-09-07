@@ -20,10 +20,16 @@ public:
         client_tracer &&ct, client_state &&cs)
         : id_(id), products_(std::move(products)),
           client_tracer_(std::move(ct)), client_state_(std::move(cs)){};
-    std::string get_id() const { return id_; };
-    std::vector<std::string> get_products() const { return products_; };
+    [[nodiscard]] std::string get_id() const { return id_; };
+    [[nodiscard]] std::vector<std::string> get_products() const
+    {
+        return products_;
+    };
     [[nodiscard]] client_tracer get_tracer() const { return client_tracer_; };
-    client_state get_client_state() const { return client_state_; };
+    [[nodiscard]] client_state get_client_state() const
+    {
+        return client_state_;
+    };
     bool operator==(client const &b) const
     {
         return id_ == b.id_ && products_ == b.products_ &&

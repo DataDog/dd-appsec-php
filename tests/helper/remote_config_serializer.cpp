@@ -143,10 +143,8 @@ get_cached_target_files()
         cached_target_files;
 
     std::vector<remote_config::protocol::cached_target_files_hash> first_hashes;
-    std::string first_hash_algorithm = "first hash algorithm";
-    std::string first_hash_hash = "first hash hash";
     remote_config::protocol::cached_target_files_hash first_hash(
-        first_hash_algorithm, first_hash_hash);
+        "first hash algorithm", "first hash hash");
     first_hashes.push_back(first_hash);
     remote_config::protocol::cached_target_files first(
         "first some path", 1, std::move(first_hashes));
@@ -154,10 +152,8 @@ get_cached_target_files()
 
     std::vector<remote_config::protocol::cached_target_files_hash>
         second_hashes;
-    std::string second_hash_algorithm = "second hash algorithm";
-    std::string second_hash_hash = "second hash hash";
     remote_config::protocol::cached_target_files_hash second_hash(
-        second_hash_algorithm, second_hash_hash);
+        "second hash algorithm", "second hash hash");
     second_hashes.push_back(second_hash);
     remote_config::protocol::cached_target_files second(
         "second some path", 1, std::move(second_hashes));

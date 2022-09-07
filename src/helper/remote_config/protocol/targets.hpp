@@ -18,7 +18,7 @@ public:
         const std::vector<std::pair<std::string, path>> &paths)
         : version_(version), opaque_backend_state_(opaque_backend_state)
     {
-        for (auto &pair : paths) { paths_.insert(pair); }
+        for (auto const &pair : paths) { paths_.insert(pair); }
     }
     [[nodiscard]] std::string get_opaque_backend_state() const
     {

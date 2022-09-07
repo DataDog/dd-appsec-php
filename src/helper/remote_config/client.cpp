@@ -27,7 +27,7 @@ std::optional<config_path> config_path_from_path(const std::string &path)
     return cp;
 }
 
-protocol::get_configs_request client::generate_request() const
+[[nodiscard]] protocol::get_configs_request client::generate_request() const
 {
     std::vector<protocol::config_state> config_states;
     std::vector<protocol::cached_target_files> files;
@@ -46,7 +46,10 @@ protocol::get_configs_request client::generate_request() const
             std::vector<protocol::cached_target_files_hash> hashes;
             hashes.reserve(config.get_hashes().size());
             for (auto const &[algo, hash_sting] : config.get_hashes()) {
-                hashes.emplace_back(algo, hash_sting);
+                auto algo_cpy = algo;
+                auto hash_sting_cpy = hash_sting;
+                hashes.emplace_back(
+                    std::move(algo_cpy), std::move(hash_sting_cpy));
             }
             files.emplace_back(
                 config.get_path(), config.get_length(), std::move(hashes));

@@ -20,7 +20,7 @@ public:
         const std::vector<target_file> &target_files, const targets &targets)
         : client_configs_(client_configs), targets_(targets)
     {
-        for (auto &target_file : target_files) {
+        for (auto const &target_file : target_files) {
             target_files_.insert(std::pair<std::string, protocol::target_file>(
                 target_file.get_path(), target_file));
         }
