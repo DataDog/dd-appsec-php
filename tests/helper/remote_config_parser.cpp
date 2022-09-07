@@ -295,6 +295,26 @@ TEST(RemoteConfigParser, ClientConfigsMustBeStrings)
         result);
 }
 
+TEST(RemoteConfigParser, TargetsMustBeNotEmpty)
+{
+    std::string invalid_response =
+        ("{\"roots\": [], \"targets\": \"\", "
+         "\"target_files\": [{\"path\": "
+         "\"employee/DEBUG_DD/2.test1.config/config\", \"raw\": "
+         "\"UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=\"}, "
+         "{\"path\": \"datadog/2/DEBUG/luke.steensen/config\", \"raw\": "
+         "\"aGVsbG8gdmVjdG9yIQ==\"} ], \"client_configs\": "
+         "[\"datadog/2/DEBUG/luke.steensen/config\", "
+         "\"employee/DEBUG_DD/2.test1.config/config\"] }");
+
+    auto [result, gcr] =
+        remote_config::protocol::parse(std::move(invalid_response));
+
+    EXPECT_EQ(remote_config::protocol::remote_config_parser_result::
+                  targets_field_empty,
+        result);
+}
+
 TEST(RemoteConfigParser, TargetsnMustBeValidBase64Encoded)
 {
     std::string invalid_response =

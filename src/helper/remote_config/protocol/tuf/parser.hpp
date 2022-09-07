@@ -18,6 +18,7 @@ namespace dds::remote_config::protocol {
 #define PARSER_RESULTS(X)                                                      \
     X(success)                                                                 \
     X(invalid_json)                                                            \
+    X(targets_field_empty)                                                     \
     X(targets_field_invalid_base64)                                            \
     X(targets_field_invalid_json)                                              \
     X(targets_field_missing)                                                   \

@@ -114,19 +114,20 @@ protocol::remote_config_result client::process_response(
             path_itr->second.get_hashes();
         int custom_v = path_itr->second.get_custom_v();
 
+        // Is product on the requested ones?
+        auto product = products_.find(cp->get_product());
+        if (product == products_.end()) {
+            // Not found
+            last_poll_error_ = "received config " + path +
+                               " for a product that was not requested";
+            return protocol::remote_config_result::error;
+        }
+
         // Is path on target_files?
         auto path_in_target_files = target_files.find(path);
         std::string raw;
         if (path_in_target_files == target_files.end()) {
             // Check if file in cache
-            auto product = products_.find(cp->get_product());
-            if (product == products_.end()) {
-                // Not found
-                last_poll_error_ = "missing config " + path +
-                                   " in target files and in cache files";
-                return protocol::remote_config_result::error;
-            }
-
             auto configs_on_product = product->second.get_configs();
             auto config_itr = std::find_if(configs_on_product.begin(),
                 configs_on_product.end(), [&path, &hashes](config &c) {
@@ -145,14 +146,6 @@ protocol::remote_config_result client::process_response(
             custom_v = config_itr->get_version();
         } else {
             raw = path_in_target_files->second.get_raw();
-        }
-
-        // Is product on the requested ones?
-        if (products_.find(cp->get_product()) == products_.end()) {
-            // Not found
-            last_poll_error_ = "received config " + path +
-                               " for a product that was not requested";
-            return protocol::remote_config_result::error;
         }
 
         std::string path_c = path;

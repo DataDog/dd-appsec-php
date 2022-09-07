@@ -277,7 +277,7 @@ std::pair<remote_config_parser_result, std::optional<targets>> parse_targets(
     std::pair<remote_config_parser_result, std::optional<targets>> result;
 
     if (targets_encoded_content.empty()) {
-        result.first = remote_config_parser_result::success;
+        result.first = remote_config_parser_result::targets_field_empty;
         return result;
     }
 
