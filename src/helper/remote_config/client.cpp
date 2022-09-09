@@ -88,9 +88,9 @@ std::optional<config_path> config_path_from_path(const std::string &path)
 protocol::remote_config_result client::process_response(
     protocol::get_configs_response &&response)
 {
-    std::map<std::string, protocol::path> paths_on_targets =
+    const std::map<std::string, protocol::path> paths_on_targets =
         response.get_targets().get_paths();
-    std::map<std::string, protocol::target_file> target_files =
+    const std::map<std::string, protocol::target_file> target_files =
         response.get_target_files();
     std::map<std::string, std::vector<config>> configs;
     for (const std::string &path : response.get_client_configs()) {
