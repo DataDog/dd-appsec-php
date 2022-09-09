@@ -15,7 +15,6 @@
 
 #include "base64.h"
 #include "common.hpp"
-#include "remote_config/api.hpp"
 #include "remote_config/client.hpp"
 #include "remote_config/protocol/client.hpp"
 #include "remote_config/protocol/client_state.hpp"
@@ -71,7 +70,7 @@ class api : public remote_config::http_api {
 public:
     MOCK_METHOD((std::pair<remote_config::protocol::remote_config_result,
                     std::optional<std::string>>),
-        get_configs, (std::string && request), (const override));
+        get_configs, (std::string && request), (const));
 };
 
 class listener_mock : public remote_config::product_listener {

@@ -94,8 +94,7 @@ protocol::remote_config_result client::process_response(
         response.get_target_files();
     std::map<std::string, std::vector<config>> configs;
     for (const std::string &path : response.get_client_configs()) {
-        std::optional<config_path> cp;
-        cp = config_path_from_path(path);
+        auto cp = config_path_from_path(path);
         if (!cp) {
             last_poll_error_ = "error parsing path " + path;
             return protocol::remote_config_result::error;
@@ -103,13 +102,12 @@ protocol::remote_config_result client::process_response(
 
         // Is path on targets?
         auto path_itr = paths_on_targets.find(path);
-        int length;
         if (path_itr == paths_on_targets.end()) {
             // Not found
             last_poll_error_ = "missing config " + path + " in targets";
             return protocol::remote_config_result::error;
         }
-        length = path_itr->second.get_length();
+        auto length = path_itr->second.get_length();
         std::map<std::string, std::string> hashes =
             path_itr->second.get_hashes();
         int custom_v = path_itr->second.get_custom_v();

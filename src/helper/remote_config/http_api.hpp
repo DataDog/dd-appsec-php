@@ -5,7 +5,7 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #pragma once
 
-#include "api.hpp"
+#include "protocol/tuf/common.hpp"
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/core.hpp>
@@ -24,10 +24,11 @@ namespace dds::remote_config {
 
 static const int version = 11;
 
-class http_api : api {
+class http_api {
 public:
-    std::pair<protocol::remote_config_result, std::optional<std::string>>
-    get_configs(std::string &&request) const override
+    virtual std::pair<protocol::remote_config_result,
+        std::optional<std::string>>
+    get_configs(std::string &&request) const
     {
         std::pair<protocol::remote_config_result, std::optional<std::string>>
             result;
