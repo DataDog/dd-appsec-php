@@ -177,14 +177,14 @@ protocol::remote_config_result client::poll()
     if (result == protocol::remote_config_result::error) {
         return protocol::remote_config_result::error;
     }
-    //@todo improve copies within parse
-    auto [parsing_result, response] = protocol::parse(response_body.value());
-    if (parsing_result != protocol::remote_config_parser_result::success) {
+
+    try {
+        auto response = protocol::parse(response_body.value());
+        last_poll_error_.clear();
+        return process_response(response);
+    } catch (protocol::parser_exception e) {
         return protocol::remote_config_result::error;
     }
-
-    last_poll_error_.clear();
-    return process_response(response.value());
 }
 
 } // namespace dds::remote_config

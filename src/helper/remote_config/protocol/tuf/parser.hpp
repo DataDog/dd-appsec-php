@@ -13,7 +13,6 @@
 #include "get_configs_response.hpp"
 
 namespace dds::remote_config::protocol {
-
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define PARSER_RESULTS(X)                                                      \
     X(success)                                                                 \
@@ -66,7 +65,19 @@ enum class remote_config_parser_result : size_t {
 std::string_view remote_config_parser_result_to_str(
     const remote_config_parser_result &result);
 
-std::pair<remote_config_parser_result, std::optional<get_configs_response>>
-parse(const std::string &body);
+class parser_exception : public std::exception {
+public:
+    parser_exception(remote_config_parser_result error)
+        : message_(remote_config_parser_result_to_str(error)), error_(error)
+    {}
+    virtual const char *what() { return message_.c_str(); }
+    remote_config_parser_result get_error() { return error_; }
+
+private:
+    std::string message_;
+    remote_config_parser_result error_;
+};
+
+get_configs_response parse(const std::string &body);
 
 } // namespace dds::remote_config::protocol
