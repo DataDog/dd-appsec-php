@@ -22,9 +22,7 @@ std::optional<config_path> config_path_from_path(const std::string &path)
         return std::nullopt;
     }
 
-    config_path cp(base_match[3].str(), base_match[2].str());
-
-    return cp;
+    return config_path{base_match[3].str(), base_match[2].str()};
 }
 
 [[nodiscard]] protocol::get_configs_request client::generate_request() const
@@ -79,10 +77,8 @@ std::optional<config_path> config_path_from_path(const std::string &path)
     protocol::client protocol_client(std::move(id_cpy), std::move(products_str),
         std::move(ct), std::move(cs));
 
-    protocol::get_configs_request request(
+    return protocol::get_configs_request(
         std::move(protocol_client), std::move(files));
-
-    return request;
 };
 
 protocol::remote_config_result client::process_response(
@@ -203,10 +199,7 @@ protocol::remote_config_result client::poll()
     }
 
     last_poll_error_ = "";
-    //@todo improve copies within process_response
-    result = process_response(std::move(response.value()));
-
-    return result;
+    return process_response(std::move(response.value()));
 }
 
 } // namespace dds::remote_config
