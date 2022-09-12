@@ -498,48 +498,69 @@ TEST(ClientConfig, ItGetGeneratedFromString)
     std::string apm_sampling = "APM_SAMPLING";
     auto cp = remote_config::config_path::from_path(
         "datadog/2/LIVE_DEBUGGING/9e413cda-647b-335b-adcd-7ce453fc2284/config");
-    EXPECT_TRUE(cp);
-    EXPECT_EQ("LIVE_DEBUGGING", cp->get_product());
-    EXPECT_EQ("9e413cda-647b-335b-adcd-7ce453fc2284", cp->get_id());
+    EXPECT_EQ("LIVE_DEBUGGING", cp.get_product());
+    EXPECT_EQ("9e413cda-647b-335b-adcd-7ce453fc2284", cp.get_id());
 
     cp = remote_config::config_path::from_path(
         "employee/DEBUG_DD/2.test1.config/config");
-    EXPECT_TRUE(cp);
-    EXPECT_EQ("DEBUG_DD", cp->get_product());
-    EXPECT_EQ("2.test1.config", cp->get_id());
+    EXPECT_EQ("DEBUG_DD", cp.get_product());
+    EXPECT_EQ("2.test1.config", cp.get_id());
 
     cp = remote_config::config_path::from_path(
         "datadog/55/APM_SAMPLING/dynamic_rates/config");
-    EXPECT_TRUE(cp);
-    EXPECT_EQ(apm_sampling, cp->get_product());
-    EXPECT_EQ("dynamic_rates", cp->get_id());
+    EXPECT_EQ(apm_sampling, cp.get_product());
+    EXPECT_EQ("dynamic_rates", cp.get_id());
 }
 
 TEST(ClientConfig, ItDoesNotGetGeneratedFromStringIfNotValidMatch)
 {
     remote_config::protocol::remote_config_result result;
+    bool exception = false;
 
-    auto cp = remote_config::config_path::from_path("");
-    EXPECT_FALSE(cp);
-
-    cp = remote_config::config_path::from_path("invalid");
-    EXPECT_FALSE(cp);
-
-    cp =
+    try {
+        remote_config::config_path::from_path("");
+    } catch (remote_config::invalid_path e) {
+        exception = true;
+    }
+    EXPECT_TRUE(exception);
+    exception = false;
+    try {
+        remote_config::config_path::from_path("invalid");
+    } catch (remote_config::invalid_path e) {
+        exception = true;
+    }
+    EXPECT_TRUE(exception);
+    exception = false;
+    try {
         remote_config::config_path::from_path("datadog/55/APM_SAMPLING/config");
-    EXPECT_FALSE(cp);
-
-    cp = remote_config::config_path::from_path(
-        "datadog/55/APM_SAMPLING//config");
-    EXPECT_FALSE(cp);
-
-    cp = remote_config::config_path::from_path(
-        "datadog/aa/APM_SAMPLING/dynamic_rates/config");
-    EXPECT_FALSE(cp);
-
-    cp = remote_config::config_path::from_path(
-        "something/APM_SAMPLING/dynamic_rates/config");
-    EXPECT_FALSE(cp);
+    } catch (remote_config::invalid_path e) {
+        exception = true;
+    }
+    EXPECT_TRUE(exception);
+    exception = false;
+    try {
+        remote_config::config_path::from_path(
+            "datadog/55/APM_SAMPLING//config");
+    } catch (remote_config::invalid_path e) {
+        exception = true;
+    }
+    EXPECT_TRUE(exception);
+    exception = false;
+    try {
+        remote_config::config_path::from_path(
+            "datadog/aa/APM_SAMPLING/dynamic_rates/config");
+    } catch (remote_config::invalid_path e) {
+        exception = true;
+    }
+    EXPECT_TRUE(exception);
+    exception = false;
+    try {
+        remote_config::config_path::from_path(
+            "something/APM_SAMPLING/dynamic_rates/config");
+    } catch (remote_config::invalid_path e) {
+        exception = true;
+    }
+    EXPECT_TRUE(exception);
 }
 
 TEST_F(RemoteConfigClient, ItReturnsErrorWhenClientConfigPathCantBeParsed)

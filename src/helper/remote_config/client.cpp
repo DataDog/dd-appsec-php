@@ -13,13 +13,13 @@
 
 namespace dds::remote_config {
 
-std::optional<config_path> config_path::from_path(const std::string &path)
+config_path config_path::from_path(const std::string &path)
 {
     static std::regex regex("^(datadog/\\d+|employee)/([^/]+)/([^/]+)/[^/]+$");
 
     std::smatch base_match;
     if (!std::regex_match(path, base_match, regex) || base_match.size() < 4) {
-        return std::nullopt;
+        throw invalid_path();
     }
 
     return config_path{base_match[3].str(), base_match[2].str()};
@@ -73,72 +73,73 @@ protocol::remote_config_result client::process_response(
         response.get_target_files();
     std::map<std::string, std::map<std::string, config>> configs;
     for (const std::string &path : response.get_client_configs()) {
-        auto cp = config_path::from_path(path);
-        if (!cp) {
-            last_poll_error_ = "error parsing path " + path;
-            return protocol::remote_config_result::error;
-        }
+        try {
+            auto cp = config_path::from_path(path);
 
-        // Is path on targets?
-        auto path_itr = paths_on_targets.find(path);
-        if (path_itr == paths_on_targets.end()) {
-            // Not found
-            last_poll_error_ = "missing config " + path + " in targets";
-            return protocol::remote_config_result::error;
-        }
-        auto length = path_itr->second.get_length();
-        std::map<std::string, std::string> hashes =
-            path_itr->second.get_hashes();
-        int custom_v = path_itr->second.get_custom_v();
-
-        // Is product on the requested ones?
-        auto product = products_.find(cp->get_product());
-        if (product == products_.end()) {
-            // Not found
-            last_poll_error_ = "received config " + path +
-                               " for a product that was not requested";
-            return protocol::remote_config_result::error;
-        }
-
-        // Is path on target_files?
-        auto path_in_target_files = target_files.find(path);
-        std::string raw;
-        if (path_in_target_files == target_files.end()) {
-            // Check if file in cache
-            auto configs_on_product = product->second.get_configs();
-            auto config_itr = std::find_if(configs_on_product.begin(),
-                configs_on_product.end(), [&path, &hashes](auto &pair) {
-                    return pair.second.get_path() == path &&
-                           pair.second.get_hashes() == hashes;
-                });
-
-            if (config_itr == configs_on_product.end()) {
+            // Is path on targets?
+            auto path_itr = paths_on_targets.find(path);
+            if (path_itr == paths_on_targets.end()) {
                 // Not found
-                last_poll_error_ = "missing config " + path +
-                                   " in target files and in cache files";
+                last_poll_error_ = "missing config " + path + " in targets";
+                return protocol::remote_config_result::error;
+            }
+            auto length = path_itr->second.get_length();
+            std::map<std::string, std::string> hashes =
+                path_itr->second.get_hashes();
+            int custom_v = path_itr->second.get_custom_v();
+
+            // Is product on the requested ones?
+            auto product = products_.find(cp.get_product());
+            if (product == products_.end()) {
+                // Not found
+                last_poll_error_ = "received config " + path +
+                                   " for a product that was not requested";
                 return protocol::remote_config_result::error;
             }
 
-            raw = config_itr->second.get_contents();
-            length = config_itr->second.get_length();
-            custom_v = config_itr->second.get_version();
-        } else {
-            raw = path_in_target_files->second.get_raw();
-        }
+            // Is path on target_files?
+            auto path_in_target_files = target_files.find(path);
+            std::string raw;
+            if (path_in_target_files == target_files.end()) {
+                // Check if file in cache
+                auto configs_on_product = product->second.get_configs();
+                auto config_itr = std::find_if(configs_on_product.begin(),
+                    configs_on_product.end(), [&path, &hashes](auto &pair) {
+                        return pair.second.get_path() == path &&
+                               pair.second.get_hashes() == hashes;
+                    });
 
-        std::string path_c = path;
-        config config_(cp->get_product(), cp->get_id(), std::move(raw),
-            std::move(hashes), custom_v, std::move(path_c), length);
-        auto configs_itr = configs.find(cp->get_product());
-        if (configs_itr ==
-            configs.end()) { // Product not in configs yet. Create entry
-            std::map<std::string, config> configs_on_product;
-            configs_on_product.emplace(cp->get_id(), config_);
-            configs.insert(
-                std::pair<std::string, std::map<std::string, config>>(
-                    cp->get_product(), configs_on_product));
-        } else { // Product already exists in configs. Add new config
-            configs_itr->second.emplace(cp->get_id(), config_);
+                if (config_itr == configs_on_product.end()) {
+                    // Not found
+                    last_poll_error_ = "missing config " + path +
+                                       " in target files and in cache files";
+                    return protocol::remote_config_result::error;
+                }
+
+                raw = config_itr->second.get_contents();
+                length = config_itr->second.get_length();
+                custom_v = config_itr->second.get_version();
+            } else {
+                raw = path_in_target_files->second.get_raw();
+            }
+
+            std::string path_c = path;
+            config config_(cp.get_product(), cp.get_id(), std::move(raw),
+                std::move(hashes), custom_v, std::move(path_c), length);
+            auto configs_itr = configs.find(cp.get_product());
+            if (configs_itr ==
+                configs.end()) { // Product not in configs yet. Create entry
+                std::map<std::string, config> configs_on_product;
+                configs_on_product.emplace(cp.get_id(), config_);
+                configs.insert(
+                    std::pair<std::string, std::map<std::string, config>>(
+                        cp.get_product(), configs_on_product));
+            } else { // Product already exists in configs. Add new config
+                configs_itr->second.emplace(cp.get_id(), config_);
+            }
+        } catch (invalid_path e) {
+            last_poll_error_ = "error parsing path " + path;
+            return protocol::remote_config_result::error;
         }
     }
 
@@ -166,14 +167,15 @@ protocol::remote_config_result client::poll()
 
     auto request = generate_request();
 
-    std::optional<std::string> serialized_request =
-        protocol::serialize(std::move(request));
-    if (!serialized_request) {
+    std::string serialized_request;
+    try {
+        serialized_request = protocol::serialize(std::move(request));
+    } catch (protocol::serializer_exception e) {
         return protocol::remote_config_result::error;
     }
 
     auto [result, response_body] =
-        api_->get_configs(std::move(serialized_request.value()));
+        api_->get_configs(std::move(serialized_request));
     if (result == protocol::remote_config_result::error) {
         return protocol::remote_config_result::error;
     }
