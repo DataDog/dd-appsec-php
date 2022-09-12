@@ -5,11 +5,9 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 
 #include <algorithm>
-#include <ctime>
 #include <iomanip>
 #include <iostream>
 #include <map>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -20,7 +18,6 @@
 #include "remote_config/protocol/client_state.hpp"
 #include "remote_config/protocol/client_tracer.hpp"
 #include "remote_config/protocol/config_state.hpp"
-#include "remote_config/protocol/tuf/common.hpp"
 #include "remote_config/protocol/tuf/get_configs_request.hpp"
 #include "remote_config/protocol/tuf/serializer.hpp"
 
@@ -70,9 +67,8 @@ ACTION_P(set_response_body, response) { arg1.assign(response); }
 
 class api : public remote_config::http_api {
 public:
-    MOCK_METHOD((std::pair<remote_config::protocol::remote_config_result,
-                    std::optional<std::string>>),
-        get_configs, (std::string && request), (const));
+    MOCK_METHOD((std::pair<bool, std::optional<std::string>>), get_configs,
+        (std::string && request), (const));
 };
 
 class listener_mock : public remote_config::product_listener {
@@ -348,14 +344,10 @@ public:
         return true;
     }
 
-    std::pair<remote_config::protocol::remote_config_result,
-        std::optional<std::string>>
-    get_config_response(
-        remote_config::protocol::remote_config_result result, std::string body)
+    std::pair<bool, std::optional<std::string>> get_config_response(
+        bool result, std::string body)
     {
-        std::pair<remote_config::protocol::remote_config_result,
-            std::optional<std::string>>
-            pair(result, body);
+        std::pair<bool, std::optional<std::string>> pair(result, body);
 
         return pair;
     }
@@ -365,8 +357,7 @@ TEST_F(RemoteConfigClient, ItReturnsErrorIfApiReturnsError)
 {
     mock::api *const mock_api = new mock::api;
     EXPECT_CALL(*mock_api, get_configs)
-        .WillOnce(Return(get_config_response(
-            remote_config::protocol::remote_config_result::error, "")));
+        .WillOnce(Return(get_config_response(false, "")));
 
     dds::remote_config::client api_client(mock_api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
@@ -374,7 +365,7 @@ TEST_F(RemoteConfigClient, ItReturnsErrorIfApiReturnsError)
 
     auto result = api_client.poll();
 
-    EXPECT_EQ(remote_config::protocol::remote_config_result::error, result);
+    EXPECT_EQ(remote_config::remote_config_result::error, result);
     delete mock_api;
 }
 
@@ -385,9 +376,8 @@ TEST_F(RemoteConfigClient, ItCallsToApiOnPoll)
     EXPECT_CALL(
         *mock_api, get_configs(generate_request_serialized(false, false)))
         .Times(AtLeast(1))
-        .WillOnce(Return(get_config_response(
-            remote_config::protocol::remote_config_result::success,
-            generate_example_response(paths))));
+        .WillOnce(Return(
+            get_config_response(true, generate_example_response(paths))));
 
     dds::remote_config::client api_client(mock_api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
@@ -395,7 +385,7 @@ TEST_F(RemoteConfigClient, ItCallsToApiOnPoll)
 
     auto result = api_client.poll();
 
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
     delete mock_api;
 }
 
@@ -407,16 +397,14 @@ TEST_F(RemoteConfigClient, ItReturnErrorWhenApiNotProvided)
 
     auto result = api_client.poll();
 
-    EXPECT_EQ(remote_config::protocol::remote_config_result::error, result);
+    EXPECT_EQ(remote_config::remote_config_result::error, result);
 }
 
 TEST_F(RemoteConfigClient, ItReturnErrorWhenResponseIsInvalidJson)
 {
     mock::api mock_api;
     EXPECT_CALL(mock_api, get_configs)
-        .WillOnce(Return(get_config_response(
-            remote_config::protocol::remote_config_result::success,
-            "invalid json here")));
+        .WillOnce(Return(get_config_response(true, "invalid json here")));
 
     dds::remote_config::client api_client(&mock_api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
@@ -424,7 +412,7 @@ TEST_F(RemoteConfigClient, ItReturnErrorWhenResponseIsInvalidJson)
 
     auto result = api_client.poll();
 
-    EXPECT_EQ(remote_config::protocol::remote_config_result::error, result);
+    EXPECT_EQ(remote_config::remote_config_result::error, result);
 }
 
 TEST_F(RemoteConfigClient,
@@ -436,9 +424,7 @@ TEST_F(RemoteConfigClient,
     std::string request_sent;
     EXPECT_CALL(mock_api, get_configs)
         .WillRepeatedly(DoAll(testing::SaveArg<0>(&request_sent),
-            Return(get_config_response(
-                remote_config::protocol::remote_config_result::success,
-                response))));
+            Return(get_config_response(true, response))));
 
     dds::remote_config::client api_client(&mock_api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
@@ -446,14 +432,12 @@ TEST_F(RemoteConfigClient,
 
     // Validate first request does not contain any error
     auto poll_result = api_client.poll();
-    EXPECT_EQ(
-        remote_config::protocol::remote_config_result::error, poll_result);
+    EXPECT_EQ(remote_config::remote_config_result::error, poll_result);
     EXPECT_TRUE(validate_request_has_error(request_sent, false, ""));
 
     // Validate second request contains error
     poll_result = api_client.poll();
-    EXPECT_EQ(
-        remote_config::protocol::remote_config_result::error, poll_result);
+    EXPECT_EQ(remote_config::remote_config_result::error, poll_result);
     EXPECT_TRUE(validate_request_has_error(request_sent, true,
         "missing config " + paths[0] +
             " in "
@@ -469,9 +453,7 @@ TEST_F(RemoteConfigClient,
     std::string request_sent;
     EXPECT_CALL(mock_api, get_configs)
         .WillRepeatedly(DoAll(testing::SaveArg<0>(&request_sent),
-            Return(get_config_response(
-                remote_config::protocol::remote_config_result::success,
-                response))));
+            Return(get_config_response(true, response))));
 
     dds::remote_config::client api_client(&mock_api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
@@ -479,14 +461,12 @@ TEST_F(RemoteConfigClient,
 
     // Validate first request does not contain any error
     auto poll_result = api_client.poll();
-    EXPECT_EQ(
-        remote_config::protocol::remote_config_result::error, poll_result);
+    EXPECT_EQ(remote_config::remote_config_result::error, poll_result);
     EXPECT_TRUE(validate_request_has_error(request_sent, false, ""));
 
     // Validate second request contains error
     poll_result = api_client.poll();
-    EXPECT_EQ(
-        remote_config::protocol::remote_config_result::error, poll_result);
+    EXPECT_EQ(remote_config::remote_config_result::error, poll_result);
     EXPECT_TRUE(validate_request_has_error(request_sent, true,
         "missing config " + paths[0] +
             " in "
@@ -514,7 +494,7 @@ TEST(ClientConfig, ItGetGeneratedFromString)
 
 TEST(ClientConfig, ItDoesNotGetGeneratedFromStringIfNotValidMatch)
 {
-    remote_config::protocol::remote_config_result result;
+    remote_config::remote_config_result result;
     bool exception = false;
 
     try {
@@ -572,9 +552,7 @@ TEST_F(RemoteConfigClient, ItReturnsErrorWhenClientConfigPathCantBeParsed)
     std::string request_sent;
     EXPECT_CALL(mock_api, get_configs)
         .WillRepeatedly(DoAll(testing::SaveArg<0>(&request_sent),
-            Return(get_config_response(
-                remote_config::protocol::remote_config_result::success,
-                response))));
+            Return(get_config_response(true, response))));
 
     dds::remote_config::client api_client(&mock_api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
@@ -582,14 +560,12 @@ TEST_F(RemoteConfigClient, ItReturnsErrorWhenClientConfigPathCantBeParsed)
 
     // Validate first request does not contain any error
     auto poll_result = api_client.poll();
-    EXPECT_EQ(
-        remote_config::protocol::remote_config_result::error, poll_result);
+    EXPECT_EQ(remote_config::remote_config_result::error, poll_result);
     EXPECT_TRUE(validate_request_has_error(request_sent, false, ""));
 
     // Validate second request contains error
     poll_result = api_client.poll();
-    EXPECT_EQ(
-        remote_config::protocol::remote_config_result::error, poll_result);
+    EXPECT_EQ(remote_config::remote_config_result::error, poll_result);
     EXPECT_TRUE(validate_request_has_error(
         request_sent, true, "error parsing path " + invalid_path));
 }
@@ -605,9 +581,7 @@ TEST_F(RemoteConfigClient, ItReturnsErrorIfProductOnPathNotRequested)
     std::string request_sent;
     EXPECT_CALL(mock_api, get_configs)
         .WillRepeatedly(DoAll(testing::SaveArg<0>(&request_sent),
-            Return(get_config_response(
-                remote_config::protocol::remote_config_result::success,
-                response))));
+            Return(get_config_response(true, response))));
 
     std::vector<remote_config::product_listener *> listeners;
     dds::remote_config::client api_client(&mock_api, std::move(id),
@@ -616,14 +590,12 @@ TEST_F(RemoteConfigClient, ItReturnsErrorIfProductOnPathNotRequested)
 
     // Validate first request does not contain any error
     auto poll_result = api_client.poll();
-    EXPECT_EQ(
-        remote_config::protocol::remote_config_result::error, poll_result);
+    EXPECT_EQ(remote_config::remote_config_result::error, poll_result);
     EXPECT_TRUE(validate_request_has_error(request_sent, false, ""));
 
     // Validate second request contains error
     poll_result = api_client.poll();
-    EXPECT_EQ(
-        remote_config::protocol::remote_config_result::error, poll_result);
+    EXPECT_EQ(remote_config::remote_config_result::error, poll_result);
     EXPECT_TRUE(validate_request_has_error(request_sent, true,
         "received config " + path_of_no_requested_product +
             " for a "
@@ -638,16 +610,14 @@ TEST_F(RemoteConfigClient, ItGeneratesClientStateAndCacheFromResponse)
     EXPECT_CALL(
         *mock_api, get_configs(generate_request_serialized(false, false)))
         .Times(1)
-        .WillOnce(Return(get_config_response(
-            remote_config::protocol::remote_config_result::success,
-            generate_example_response(paths))));
+        .WillOnce(Return(
+            get_config_response(true, generate_example_response(paths))));
 
     // Second call. This should contain state and cache from previous
     EXPECT_CALL(*mock_api, get_configs(generate_request_serialized(true, true)))
         .Times(1)
-        .WillOnce(Return(get_config_response(
-            remote_config::protocol::remote_config_result::success,
-            generate_example_response(paths))));
+        .WillOnce(Return(
+            get_config_response(true, generate_example_response(paths))));
 
     dds::remote_config::client api_client(mock_api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
@@ -655,10 +625,10 @@ TEST_F(RemoteConfigClient, ItGeneratesClientStateAndCacheFromResponse)
 
     auto result = api_client.poll();
 
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
 
     result = api_client.poll();
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
 
     delete mock_api;
 }
@@ -671,8 +641,7 @@ TEST_F(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
 
     EXPECT_CALL(*mock_api, get_configs(_))
         .Times(1)
-        .WillOnce(Return(get_config_response(
-            remote_config::protocol::remote_config_result::success, response)));
+        .WillOnce(Return(get_config_response(true, response)));
 
     std::string content = test_helpers::raw_from_path(first_path);
     std::map<std::string, std::string> hashes = {
@@ -730,7 +699,7 @@ TEST_F(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
 
     auto result = api_client.poll();
 
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
 
     delete mock_api;
 }
@@ -745,12 +714,8 @@ TEST_F(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
 
     EXPECT_CALL(*mock_api, get_configs(_))
         .Times(2)
-        .WillOnce(Return(get_config_response(
-            remote_config::protocol::remote_config_result::success,
-            response01)))
-        .WillOnce(Return(get_config_response(
-            remote_config::protocol::remote_config_result::success,
-            response02)));
+        .WillOnce(Return(get_config_response(true, response01)))
+        .WillOnce(Return(get_config_response(true, response02)));
 
     std::string content01 = test_helpers::raw_from_path(first_path);
     std::map<std::string, std::string> hashes01 = {
@@ -809,10 +774,10 @@ TEST_F(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
         std::move(env), std::move(app_version), {product});
 
     auto result = api_client.poll();
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
 
     result = api_client.poll();
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
 
     delete mock_api;
 }
@@ -865,12 +830,8 @@ TEST_F(
 
     EXPECT_CALL(*mock_api, get_configs(_))
         .Times(2)
-        .WillOnce(Return(get_config_response(
-            remote_config::protocol::remote_config_result::success,
-            response01)))
-        .WillOnce(Return(get_config_response(
-            remote_config::protocol::remote_config_result::success,
-            response02)));
+        .WillOnce(Return(get_config_response(true, response01)))
+        .WillOnce(Return(get_config_response(true, response02)));
 
     std::string product_str = "APM_SAMPLING";
     std::string product_str_01 = product_str;
@@ -930,10 +891,10 @@ TEST_F(
         std::move(env), std::move(app_version), {product});
 
     auto result = api_client.poll();
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
 
     result = api_client.poll();
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
 
     delete mock_api;
 }
@@ -946,9 +907,8 @@ TEST_F(RemoteConfigClient, FilesThatAreInCacheAreUsedWhenNotInTargetFiles)
     EXPECT_CALL(
         *mock_api, get_configs(generate_request_serialized(false, false)))
         .Times(1)
-        .WillOnce(Return(get_config_response(
-            remote_config::protocol::remote_config_result::success,
-            generate_example_response(paths))))
+        .WillOnce(
+            Return(get_config_response(true, generate_example_response(paths))))
         .RetiresOnSaturation();
 
     // Second call. Since this call has cache, response comes without
@@ -958,24 +918,22 @@ TEST_F(RemoteConfigClient, FilesThatAreInCacheAreUsedWhenNotInTargetFiles)
     EXPECT_CALL(*mock_api, get_configs(generate_request_serialized(true, true)))
         .Times(2)
         .WillOnce(Return(get_config_response(
-            remote_config::protocol::remote_config_result::success,
-            generate_example_response(paths, {}, paths))))
+            true, generate_example_response(paths, {}, paths))))
         .WillOnce(Return(get_config_response(
-            remote_config::protocol::remote_config_result::success,
-            generate_example_response(paths, {}, paths))));
+            true, generate_example_response(paths, {}, paths))));
 
     dds::remote_config::client api_client(mock_api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
         std::move(env), std::move(app_version), _products);
 
     auto result = api_client.poll();
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
 
     result = api_client.poll();
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
 
     result = api_client.poll();
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
 
     delete mock_api;
 }
@@ -987,29 +945,25 @@ TEST_F(RemoteConfigClient, NotTrackedFilesAreDeletedFromCache)
     std::string request_sent;
     EXPECT_CALL(*mock_api, get_configs(_))
         .Times(3)
-        .WillOnce(Return(get_config_response(
-            remote_config::protocol::remote_config_result::success,
-            generate_example_response(paths))))
-        .WillOnce(Return(get_config_response(
-            remote_config::protocol::remote_config_result::success,
-            generate_example_response({}))))
+        .WillOnce(
+            Return(get_config_response(true, generate_example_response(paths))))
+        .WillOnce(
+            Return(get_config_response(true, generate_example_response({}))))
         .WillOnce(DoAll(testing::SaveArg<0>(&request_sent),
-            Return(get_config_response(
-                remote_config::protocol::remote_config_result::success,
-                generate_example_response({})))));
+            Return(get_config_response(true, generate_example_response({})))));
 
     dds::remote_config::client api_client(mock_api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
         std::move(env), std::move(app_version), _products);
 
     auto result = api_client.poll();
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
 
     result = api_client.poll();
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
 
     result = api_client.poll();
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
 
     // Lets validate cached_target_files is empty
     rapidjson::Document serialized_doc;
@@ -1086,13 +1040,9 @@ TEST_F(RemoteConfigClient, TestHashIsDifferentFromTheCache)
     std::string request_sent;
     EXPECT_CALL(*mock_api, get_configs(_))
         .Times(3)
-        .WillOnce(Return(get_config_response(
-            remote_config::protocol::remote_config_result::success,
-            first_response)))
+        .WillOnce(Return(get_config_response(true, first_response)))
         .WillRepeatedly(DoAll(testing::SaveArg<0>(&request_sent),
-            Return(get_config_response(
-                remote_config::protocol::remote_config_result::success,
-                second_response))))
+            Return(get_config_response(true, second_response))))
         .RetiresOnSaturation();
 
     dds::remote_config::client api_client(mock_api, std::move(id),
@@ -1100,13 +1050,13 @@ TEST_F(RemoteConfigClient, TestHashIsDifferentFromTheCache)
         std::move(env), std::move(app_version), _products);
 
     auto result = api_client.poll();
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
 
     result = api_client.poll();
-    EXPECT_EQ(remote_config::protocol::remote_config_result::error, result);
+    EXPECT_EQ(remote_config::remote_config_result::error, result);
 
     result = api_client.poll();
-    EXPECT_EQ(remote_config::protocol::remote_config_result::error, result);
+    EXPECT_EQ(remote_config::remote_config_result::error, result);
 
     EXPECT_TRUE(validate_request_has_error(request_sent, true,
         "missing config employee/FEATURES/2.test1.config/config in "
@@ -1178,13 +1128,9 @@ TEST_F(RemoteConfigClient, TestWhenFileGetsFromCacheItsCachedLenUsed)
     std::string request_sent;
     EXPECT_CALL(*mock_api, get_configs(_))
         .Times(3)
-        .WillOnce(Return(get_config_response(
-            remote_config::protocol::remote_config_result::success,
-            first_response)))
+        .WillOnce(Return(get_config_response(true, first_response)))
         .WillRepeatedly(DoAll(testing::SaveArg<0>(&request_sent),
-            Return(get_config_response(
-                remote_config::protocol::remote_config_result::success,
-                second_response))))
+            Return(get_config_response(true, second_response))))
         .RetiresOnSaturation();
 
     dds::remote_config::client api_client(mock_api, std::move(id),
@@ -1192,13 +1138,13 @@ TEST_F(RemoteConfigClient, TestWhenFileGetsFromCacheItsCachedLenUsed)
         std::move(env), std::move(app_version), _products);
 
     auto result = api_client.poll();
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
 
     result = api_client.poll();
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
 
     result = api_client.poll();
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
 
     // Lets validate cached_target_files is empty
     rapidjson::Document serialized_doc;
@@ -1243,13 +1189,13 @@ tracer_version, service, env, app_version, _products);
     std::cout << "First poll" << std::endl;
     auto result = api_client.poll();
 
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
 
     sleep(6);
     std::cout << "Second poll" << std::endl;
     result = api_client.poll();
 
-    EXPECT_EQ(remote_config::protocol::remote_config_result::success, result);
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
 }
 */
 

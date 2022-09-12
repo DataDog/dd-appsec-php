@@ -8,7 +8,6 @@
 #include <rapidjson/document.h>
 #include <string>
 
-#include "common.hpp"
 #include "get_configs_request.hpp"
 
 namespace dds::remote_config::protocol {

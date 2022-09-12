@@ -64,7 +64,7 @@ config_path config_path::from_path(const std::string &path)
         std::move(protocol_client), std::move(files));
 };
 
-protocol::remote_config_result client::process_response(
+remote_config_result client::process_response(
     const protocol::get_configs_response &response)
 {
     const std::map<std::string, protocol::path> paths_on_targets =
@@ -81,7 +81,7 @@ protocol::remote_config_result client::process_response(
             if (path_itr == paths_on_targets.end()) {
                 // Not found
                 last_poll_error_ = "missing config " + path + " in targets";
-                return protocol::remote_config_result::error;
+                return remote_config_result::error;
             }
             auto length = path_itr->second.get_length();
             std::map<std::string, std::string> hashes =
@@ -94,7 +94,7 @@ protocol::remote_config_result client::process_response(
                 // Not found
                 last_poll_error_ = "received config " + path +
                                    " for a product that was not requested";
-                return protocol::remote_config_result::error;
+                return remote_config_result::error;
             }
 
             // Is path on target_files?
@@ -113,7 +113,7 @@ protocol::remote_config_result client::process_response(
                     // Not found
                     last_poll_error_ = "missing config " + path +
                                        " in target files and in cache files";
-                    return protocol::remote_config_result::error;
+                    return remote_config_result::error;
                 }
 
                 raw = config_itr->second.get_contents();
@@ -139,7 +139,7 @@ protocol::remote_config_result client::process_response(
             }
         } catch (invalid_path e) {
             last_poll_error_ = "error parsing path " + path;
-            return protocol::remote_config_result::error;
+            return remote_config_result::error;
         }
     }
 
@@ -156,13 +156,13 @@ protocol::remote_config_result client::process_response(
     targets_version_ = response.get_targets().get_version();
     opaque_backend_state_ = response.get_targets().get_opaque_backend_state();
 
-    return protocol::remote_config_result::success;
+    return remote_config_result::success;
 }
 
-protocol::remote_config_result client::poll()
+remote_config_result client::poll()
 {
     if (api_ == nullptr) {
-        return protocol::remote_config_result::error;
+        return remote_config_result::error;
     }
 
     auto request = generate_request();
@@ -171,13 +171,13 @@ protocol::remote_config_result client::poll()
     try {
         serialized_request = protocol::serialize(std::move(request));
     } catch (protocol::serializer_exception e) {
-        return protocol::remote_config_result::error;
+        return remote_config_result::error;
     }
 
     auto [result, response_body] =
         api_->get_configs(std::move(serialized_request));
-    if (result == protocol::remote_config_result::error) {
-        return protocol::remote_config_result::error;
+    if (!result) {
+        return remote_config_result::error;
     }
 
     try {
@@ -185,7 +185,7 @@ protocol::remote_config_result client::poll()
         last_poll_error_.clear();
         return process_response(response);
     } catch (protocol::parser_exception e) {
-        return protocol::remote_config_result::error;
+        return remote_config_result::error;
     }
 }
 

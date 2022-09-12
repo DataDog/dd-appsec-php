@@ -11,10 +11,15 @@
 #include "http_api.hpp"
 #include "product.hpp"
 #include "protocol/client.hpp"
-#include "protocol/tuf/common.hpp"
+#include "protocol/tuf/get_configs_request.hpp"
 #include "protocol/tuf/get_configs_response.hpp"
 
 namespace dds::remote_config {
+
+enum class remote_config_result {
+    success,
+    error,
+};
 
 class invalid_path : public std::exception {};
 
@@ -48,11 +53,11 @@ public:
         }
     };
 
-    protocol::remote_config_result poll();
+    remote_config_result poll();
 
 private:
     [[nodiscard]] protocol::get_configs_request generate_request() const;
-    protocol::remote_config_result process_response(
+    remote_config_result process_response(
         const protocol::get_configs_response &response);
 
     const http_api *api_;

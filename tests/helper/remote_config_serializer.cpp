@@ -12,7 +12,6 @@
 #include "remote_config/protocol/client_state.hpp"
 #include "remote_config/protocol/client_tracer.hpp"
 #include "remote_config/protocol/config_state.hpp"
-#include "remote_config/protocol/tuf/common.hpp"
 #include "remote_config/protocol/tuf/get_configs_request.hpp"
 #include "remote_config/protocol/tuf/serializer.hpp"
 

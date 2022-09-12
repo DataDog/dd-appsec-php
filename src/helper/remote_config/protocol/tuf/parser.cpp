@@ -221,7 +221,6 @@ targets parse_targets_signed(
 targets parse_targets(rapidjson::Value::ConstMemberIterator targets_itr)
 {
     std::string targets_encoded_content = targets_itr->value.GetString();
-    std::pair<remote_config_parser_result, std::optional<targets>> result;
 
     if (targets_encoded_content.empty()) {
         throw parser_exception(

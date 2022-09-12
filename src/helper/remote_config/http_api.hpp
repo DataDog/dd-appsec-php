@@ -5,7 +5,6 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #pragma once
 
-#include "protocol/tuf/common.hpp"
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/core.hpp>
@@ -26,12 +25,10 @@ static const int version = 11;
 
 class http_api {
 public:
-    virtual std::pair<protocol::remote_config_result,
-        std::optional<std::string>>
-    get_configs(std::string &&request) const
+    virtual std::pair<bool, std::optional<std::string>> get_configs(
+        std::string &&request) const
     {
-        std::pair<protocol::remote_config_result, std::optional<std::string>>
-            result;
+        std::pair<bool, std::optional<std::string>> result;
         try {
             //@todo deharcode these values
             std::string const host = "localhost";
@@ -90,12 +87,12 @@ public:
             if (ec && ec != beast::errc::not_connected) {
                 throw beast::system_error{ec};
             }
-            result.first = protocol::remote_config_result::success;
+            result.first = true;
             // If we get here then the connection is closed gracefully
         } catch (std::exception const &e) {
             //@todo log these errors somewhere else
             //            std::cerr << "Error: " << e.what() << std::endl;
-            result.first = protocol::remote_config_result::error;
+            result.first = false;
         }
         return result;
     };

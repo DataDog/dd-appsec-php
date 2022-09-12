@@ -9,7 +9,6 @@
 #include <rapidjson/document.h>
 #include <string>
 
-#include "common.hpp"
 #include "get_configs_response.hpp"
 
 namespace dds::remote_config::protocol {
