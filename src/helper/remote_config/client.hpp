@@ -11,6 +11,7 @@
 #include "http_api.hpp"
 #include "product.hpp"
 #include "protocol/client.hpp"
+#include "protocol/tuf/common.hpp"
 #include "protocol/tuf/get_configs_response.hpp"
 
 namespace dds::remote_config {
@@ -21,13 +22,12 @@ public:
         : id_(std::move(id)), product_(std::move(product)){};
     [[nodiscard]] std::string get_id() const { return id_; };
     [[nodiscard]] std::string get_product() const { return product_; };
+    static std::optional<config_path> from_path(const std::string &path);
 
 private:
     std::string product_;
     std::string id_;
 };
-
-std::optional<config_path> config_path_from_path(const std::string &path);
 
 class client {
 public:
@@ -51,7 +51,7 @@ public:
 private:
     [[nodiscard]] protocol::get_configs_request generate_request() const;
     protocol::remote_config_result process_response(
-        protocol::get_configs_response &&response);
+        const protocol::get_configs_response &response);
 
     const http_api *api_;
     std::string id_;

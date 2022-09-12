@@ -13,9 +13,9 @@
 
 namespace dds::remote_config {
 
-std::optional<config_path> config_path_from_path(const std::string &path)
+std::optional<config_path> config_path::from_path(const std::string &path)
 {
-    std::regex regex("^(datadog/\\d+|employee)/([^/]+)/([^/]+)/[^/]+$");
+    static std::regex regex("^(datadog/\\d+|employee)/([^/]+)/([^/]+)/[^/]+$");
 
     std::smatch base_match;
     if (!std::regex_match(path, base_match, regex) || base_match.size() < 4) {
@@ -32,49 +32,32 @@ std::optional<config_path> config_path_from_path(const std::string &path)
 
     for (const auto &[product_name, product] : products_) {
         // State
-        auto configs_on_product = product.get_configs();
-        for (auto &config : configs_on_product) {
+        const auto configs_on_product = product.get_configs();
+        for (auto &[id, config] : configs_on_product) {
             config_states.emplace_back(
                 config.get_id(), config.get_version(), config.get_product());
-        }
 
-        // Cached files
-        auto configs = product.get_configs();
-        for (auto &config : configs) {
             std::vector<protocol::cached_target_files_hash> hashes;
             hashes.reserve(config.get_hashes().size());
             for (auto const &[algo, hash_sting] : config.get_hashes()) {
-                auto algo_cpy = algo;
-                auto hash_sting_cpy = hash_sting;
-                hashes.emplace_back(
-                    std::move(algo_cpy), std::move(hash_sting_cpy));
+                hashes.emplace_back(std::string(algo), std::string(hash_sting));
             }
             files.emplace_back(
                 config.get_path(), config.get_length(), std::move(hashes));
         }
     }
 
-    auto runtime_id_cpy = runtime_id_;
-    auto tracer_version_cpy = tracer_version_;
-    auto service_cpy = service_;
-    auto env_cpy = env_;
-    auto app_version_cpy = app_version_;
-    protocol::client_tracer ct(std::move(runtime_id_cpy),
-        std::move(tracer_version_cpy), std::move(service_cpy),
-        std::move(env_cpy), std::move(app_version_cpy));
+    protocol::client_tracer ct(
+        runtime_id_, tracer_version_, service_, env_, app_version_);
 
-    auto last_poll_error_cpy = last_poll_error_;
-    auto opaque_backend_state_cpy = opaque_backend_state_;
-    protocol::client_state cs(targets_version_, std::move(config_states),
-        !last_poll_error_.empty(), std::move(last_poll_error_cpy),
-        std::move(opaque_backend_state_cpy));
+    protocol::client_state cs(targets_version_, config_states,
+        !last_poll_error_.empty(), last_poll_error_, opaque_backend_state_);
     std::vector<std::string> products_str;
     products_str.reserve(products_.size());
     for (const auto &[product_name, product] : products_) {
         products_str.push_back(product_name);
     }
-    std::string id_cpy = id_;
-    protocol::client protocol_client(std::move(id_cpy), std::move(products_str),
+    protocol::client protocol_client(std::string(id_), std::move(products_str),
         std::move(ct), std::move(cs));
 
     return protocol::get_configs_request(
@@ -82,15 +65,15 @@ std::optional<config_path> config_path_from_path(const std::string &path)
 };
 
 protocol::remote_config_result client::process_response(
-    protocol::get_configs_response &&response)
+    const protocol::get_configs_response &response)
 {
     const std::map<std::string, protocol::path> paths_on_targets =
         response.get_targets().get_paths();
     const std::map<std::string, protocol::target_file> target_files =
         response.get_target_files();
-    std::map<std::string, std::vector<config>> configs;
+    std::map<std::string, std::map<std::string, config>> configs;
     for (const std::string &path : response.get_client_configs()) {
-        auto cp = config_path_from_path(path);
+        auto cp = config_path::from_path(path);
         if (!cp) {
             last_poll_error_ = "error parsing path " + path;
             return protocol::remote_config_result::error;
@@ -124,8 +107,9 @@ protocol::remote_config_result client::process_response(
             // Check if file in cache
             auto configs_on_product = product->second.get_configs();
             auto config_itr = std::find_if(configs_on_product.begin(),
-                configs_on_product.end(), [&path, &hashes](config &c) {
-                    return c.get_path() == path && c.get_hashes() == hashes;
+                configs_on_product.end(), [&path, &hashes](auto &pair) {
+                    return pair.second.get_path() == path &&
+                           pair.second.get_hashes() == hashes;
                 });
 
             if (config_itr == configs_on_product.end()) {
@@ -135,9 +119,9 @@ protocol::remote_config_result client::process_response(
                 return protocol::remote_config_result::error;
             }
 
-            raw = config_itr->get_contents();
-            length = config_itr->get_length();
-            custom_v = config_itr->get_version();
+            raw = config_itr->second.get_contents();
+            length = config_itr->second.get_length();
+            custom_v = config_itr->second.get_version();
         } else {
             raw = path_in_target_files->second.get_raw();
         }
@@ -148,11 +132,13 @@ protocol::remote_config_result client::process_response(
         auto configs_itr = configs.find(cp->get_product());
         if (configs_itr ==
             configs.end()) { // Product not in configs yet. Create entry
-            std::vector<config> configs_on_product = {config_};
-            configs.insert(std::pair<std::string, std::vector<config>>(
-                cp->get_product(), configs_on_product));
+            std::map<std::string, config> configs_on_product;
+            configs_on_product.emplace(cp->get_id(), config_);
+            configs.insert(
+                std::pair<std::string, std::map<std::string, config>>(
+                    cp->get_product(), configs_on_product));
         } else { // Product already exists in configs. Add new config
-            configs_itr->second.push_back(config_);
+            configs_itr->second.emplace(cp->get_id(), config_);
         }
     }
 
@@ -160,7 +146,7 @@ protocol::remote_config_result client::process_response(
     for (auto it = std::begin(products_); it != std::end(products_); ++it) {
         auto product_configs = configs.find(it->first);
         if (product_configs != configs.end()) {
-            it->second.assign_configs(std::move(product_configs->second));
+            it->second.assign_configs(product_configs->second);
         } else {
             it->second.assign_configs({});
         }
@@ -192,14 +178,13 @@ protocol::remote_config_result client::poll()
         return protocol::remote_config_result::error;
     }
     //@todo improve copies within parse
-    auto [parsing_result, response] =
-        protocol::parse(std::move(response_body.value()));
+    auto [parsing_result, response] = protocol::parse(response_body.value());
     if (parsing_result != protocol::remote_config_parser_result::success) {
         return protocol::remote_config_result::error;
     }
 
-    last_poll_error_ = "";
-    return process_response(std::move(response.value()));
+    last_poll_error_.clear();
+    return process_response(response.value());
 }
 
 } // namespace dds::remote_config

@@ -8,6 +8,7 @@
 #include "config.hpp"
 #include <algorithm>
 #include <iostream>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -15,14 +16,14 @@ namespace dds::remote_config {
 
 class product_listener_abstract {
 public:
-    virtual void on_update(const std::vector<config> &configs) = 0;
-    virtual void on_unapply(const std::vector<config> &configs) = 0;
+    virtual void on_update(const std::map<std::string, config> &configs) = 0;
+    virtual void on_unapply(const std::map<std::string, config> &configs) = 0;
 };
 
 class product_listener : product_listener_abstract {
 public:
-    void on_update(const std::vector<config> &configs) override{};
-    void on_unapply(const std::vector<config> &configs) override{};
+    void on_update(const std::map<std::string, config> &configs) override{};
+    void on_unapply(const std::map<std::string, config> &configs) override{};
 };
 
 class product {
@@ -30,24 +31,22 @@ public:
     explicit product(
         std::string &&name, std::vector<product_listener *> &&listeners)
         : name_(std::move(name)), listeners_(std::move(listeners)){};
-    void assign_configs(std::vector<config> &&configs)
+    void assign_configs(const std::map<std::string, config> &configs)
     {
-        std::vector<config> to_update;
-        std::vector<config> to_keep;
+        std::map<std::string, config> to_update;
+        std::map<std::string, config> to_keep;
 
         for (auto &config : configs) {
-            auto previous_config = std::find_if(configs_.begin(),
-                configs_.end(), [&config](remote_config::config &config_) {
-                    return config_.get_id() == config.get_id();
-                });
+            auto previous_config = configs_.find(config.first);
             if (previous_config == configs_.end()) { // New config
-                to_update.push_back(std::move(config));
+                to_update.emplace(config.first, config.second);
             } else { // Already existed
-                if (config.get_hashes() ==
-                    previous_config->get_hashes()) { // No changes in config
-                    to_keep.push_back(std::move(config));
+                if (config.second.get_hashes() ==
+                    previous_config->second
+                        .get_hashes()) { // No changes in config
+                    to_keep.emplace(config.first, config.second);
                 } else { // Config updated
-                    to_update.push_back(std::move(config));
+                    to_update.emplace(config.first, config.second);
                 }
                 configs_.erase(previous_config);
             }
@@ -57,11 +56,14 @@ public:
             listener->on_update(to_update);
             listener->on_unapply(configs_);
         }
-        to_keep.insert(to_keep.end(), to_update.begin(), to_update.end());
+        to_keep.merge(to_update);
 
-        configs_ = to_keep;
+        configs_ = std::move(to_keep);
     };
-    [[nodiscard]] std::vector<config> get_configs() const { return configs_; };
+    [[nodiscard]] std::map<std::string, config> get_configs() const
+    {
+        return configs_;
+    };
     bool operator==(product const &b) const
     {
         return name_ == b.name_ && configs_ == b.configs_;
@@ -70,7 +72,7 @@ public:
 
 private:
     std::string name_;
-    std::vector<config> configs_;
+    std::map<std::string, config> configs_;
     std::vector<product_listener *> listeners_;
 };
 

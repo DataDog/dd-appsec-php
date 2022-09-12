@@ -12,9 +12,11 @@ namespace dds::remote_config::protocol {
 class client_tracer {
 public:
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    client_tracer(std::string &&runtime_id, std::string &&tracer_version,
+    client_tracer(const std::string &runtime_id,
+        const std::string &tracer_version,
         // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-        std::string &&service, std::string &&env, std::string &&app_version)
+        const std::string &service, const std::string &env,
+        const std::string &app_version)
         : runtime_id_(std::move(runtime_id)),
           tracer_version_(std::move(tracer_version)),
           service_(std::move(service)), env_(std::move(env)),

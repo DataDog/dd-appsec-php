@@ -67,6 +67,6 @@ std::string_view remote_config_parser_result_to_str(
     const remote_config_parser_result &result);
 
 std::pair<remote_config_parser_result, std::optional<get_configs_response>>
-parse(std::string &&body);
+parse(const std::string &body);
 
 } // namespace dds::remote_config::protocol

@@ -43,21 +43,23 @@ public:
         std::cout << "---------------" << std::endl;
     }
 
-    void on_update(const std::vector<remote_config::config> &configs) override
+    void on_update(
+        const std::map<std::string, remote_config::config> &configs) override
     {
         std::cout << std::endl
                   << "Product update " << std::endl
                   << "==============" << std::endl;
 
-        for (auto c : configs) { config_to_cout(c); }
+        for (auto &[id, c] : configs) { config_to_cout(c); }
     };
-    void on_unapply(const std::vector<remote_config::config> &configs) override
+    void on_unapply(
+        const std::map<std::string, remote_config::config> &configs) override
     {
         std::cout << std::endl
                   << "Product removing configs " << std::endl
                   << "==============" << std::endl;
 
-        for (auto c : configs) { config_to_cout(c); }
+        for (auto &[id, c] : configs) { config_to_cout(c); }
     };
 };
 
@@ -76,9 +78,11 @@ public:
 class listener_mock : public remote_config::product_listener {
 public:
     MOCK_METHOD(void, on_update,
-        (const std::vector<remote_config::config> &configs), (override));
+        ((const std::map<std::string, remote_config::config> &configs)),
+        (override));
     MOCK_METHOD(void, on_unapply,
-        (const std::vector<remote_config::config> &configs), (override));
+        ((const std::map<std::string, remote_config::config> &configs)),
+        (override));
 };
 } // namespace mock
 
@@ -134,12 +138,12 @@ public:
         products_str = {asm_dd, features};
 
         first_product_product = features;
-        first_product_id = "luke.steensen";
-        second_product_product = features;
-        second_product_id = "2.test1.config";
-        first_path = "datadog/2/" + first_product_product + "/" +
+        first_product_id = "2.test1.config";
+        first_path = "employee/" + first_product_product + "/" +
                      first_product_id + "/config";
-        second_path = "employee/" + second_product_product + "/" +
+        second_product_product = features;
+        second_product_id = "luke.steensen";
+        second_path = "datadog/2/" + second_product_product + "/" +
                       second_product_id + "/config";
         paths = {first_path, second_path};
         generate_products();
@@ -185,7 +189,7 @@ public:
             config_states.push_back(cs00);
             config_states.push_back(cs01);
             _target_version = target_version;
-            // This field is extracted from the harcoded resposne
+            // This field is extracted from the harcoded response
             _backend_client_state = backend_client_state;
         } else {
             _target_version = 0; // Default target version
@@ -492,19 +496,19 @@ TEST_F(RemoteConfigClient,
 TEST(ClientConfig, ItGetGeneratedFromString)
 {
     std::string apm_sampling = "APM_SAMPLING";
-    auto cp = remote_config::config_path_from_path(
+    auto cp = remote_config::config_path::from_path(
         "datadog/2/LIVE_DEBUGGING/9e413cda-647b-335b-adcd-7ce453fc2284/config");
     EXPECT_TRUE(cp);
     EXPECT_EQ("LIVE_DEBUGGING", cp->get_product());
     EXPECT_EQ("9e413cda-647b-335b-adcd-7ce453fc2284", cp->get_id());
 
-    cp = remote_config::config_path_from_path(
+    cp = remote_config::config_path::from_path(
         "employee/DEBUG_DD/2.test1.config/config");
     EXPECT_TRUE(cp);
     EXPECT_EQ("DEBUG_DD", cp->get_product());
     EXPECT_EQ("2.test1.config", cp->get_id());
 
-    cp = remote_config::config_path_from_path(
+    cp = remote_config::config_path::from_path(
         "datadog/55/APM_SAMPLING/dynamic_rates/config");
     EXPECT_TRUE(cp);
     EXPECT_EQ(apm_sampling, cp->get_product());
@@ -515,24 +519,25 @@ TEST(ClientConfig, ItDoesNotGetGeneratedFromStringIfNotValidMatch)
 {
     remote_config::protocol::remote_config_result result;
 
-    auto cp = remote_config::config_path_from_path("");
+    auto cp = remote_config::config_path::from_path("");
     EXPECT_FALSE(cp);
 
-    cp = remote_config::config_path_from_path("invalid");
-    EXPECT_FALSE(cp);
-
-    cp = remote_config::config_path_from_path("datadog/55/APM_SAMPLING/config");
+    cp = remote_config::config_path::from_path("invalid");
     EXPECT_FALSE(cp);
 
     cp =
-        remote_config::config_path_from_path("datadog/55/APM_SAMPLING//config");
+        remote_config::config_path::from_path("datadog/55/APM_SAMPLING/config");
     EXPECT_FALSE(cp);
 
-    cp = remote_config::config_path_from_path(
+    cp = remote_config::config_path::from_path(
+        "datadog/55/APM_SAMPLING//config");
+    EXPECT_FALSE(cp);
+
+    cp = remote_config::config_path::from_path(
         "datadog/aa/APM_SAMPLING/dynamic_rates/config");
     EXPECT_FALSE(cp);
 
-    cp = remote_config::config_path_from_path(
+    cp = remote_config::config_path::from_path(
         "something/APM_SAMPLING/dynamic_rates/config");
     EXPECT_FALSE(cp);
 }
@@ -659,22 +664,20 @@ TEST_F(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
         std::move(first_product_id_cpy), std::move(content), std::move(hashes),
         test_helpers::version_from_path(first_path), std::move(first_path_cpy),
         test_helpers::length_from_path(first_path));
+    std::map<std::string, remote_config::config> expected_configs;
+    expected_configs.emplace(expected_config.get_id(), expected_config);
 
     // Product on response
     std::vector<remote_config::config> no_updates;
     mock::listener_mock listener01;
-    EXPECT_CALL(listener01,
-        on_update(
-            std::move(std::vector<remote_config::config>{expected_config})))
-        .Times(1);
-    EXPECT_CALL(listener01, on_unapply(std::vector<remote_config::config>{}))
+    EXPECT_CALL(listener01, on_update(expected_configs)).Times(1);
+    EXPECT_CALL(
+        listener01, on_unapply(std::map<std::string, remote_config::config>{}))
         .Times(1);
     mock::listener_mock listener02;
-    EXPECT_CALL(listener02,
-        on_update(
-            std::move(std::vector<remote_config::config>{expected_config})))
-        .Times(1);
-    EXPECT_CALL(listener02, on_unapply(std::vector<remote_config::config>{}))
+    EXPECT_CALL(listener02, on_update(expected_configs)).Times(1);
+    EXPECT_CALL(
+        listener02, on_unapply(std::map<std::string, remote_config::config>{}))
         .Times(1);
     remote_config::product product(
         std::move(first_product_product), {&listener01, &listener02});
@@ -682,17 +685,17 @@ TEST_F(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
     // Product on response
     mock::listener_mock listener_called_no_configs01;
     EXPECT_CALL(listener_called_no_configs01,
-        on_update(std::vector<remote_config::config>{}))
+        on_update(std::map<std::string, remote_config::config>{}))
         .Times(1);
     EXPECT_CALL(listener_called_no_configs01,
-        on_unapply(std::vector<remote_config::config>{}))
+        on_unapply(std::map<std::string, remote_config::config>{}))
         .Times(1);
     mock::listener_mock listener_called_no_configs02;
     EXPECT_CALL(listener_called_no_configs02,
-        on_update(std::vector<remote_config::config>{}))
+        on_update(std::map<std::string, remote_config::config>{}))
         .Times(1);
     EXPECT_CALL(listener_called_no_configs02,
-        on_unapply(std::vector<remote_config::config>{}))
+        on_unapply(std::map<std::string, remote_config::config>{}))
         .Times(1);
     std::string product_str_not_in_response = "NOT_IN_RESPONSE";
     remote_config::product product_not_in_response(
@@ -741,6 +744,8 @@ TEST_F(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
         test_helpers::version_from_path(first_path), std::move(first_path_cpy),
         test_helpers::length_from_path(first_path));
     std::vector<remote_config::config> no_updates;
+    std::map<std::string, remote_config::config> expected_configs_01;
+    expected_configs_01.emplace(expected_config01.get_id(), expected_config01);
 
     std::string content02 = test_helpers::raw_from_path(second_path);
     std::map<std::string, std::string> hashes02 = {
@@ -755,24 +760,24 @@ TEST_F(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
         test_helpers::version_from_path(second_path),
         std::move(second_path_cpy),
         test_helpers::length_from_path(second_path));
+    std::map<std::string, remote_config::config> expected_configs_02;
+    expected_configs_02.emplace(expected_config02.get_id(), expected_config02);
 
     // Product on response
     mock::listener_mock listener01;
     // Second poll expectations
-    EXPECT_CALL(listener01,
-        on_update(std::vector<remote_config::config>{expected_config02}))
+    EXPECT_CALL(listener01, on_update(expected_configs_02))
         .Times(1)
         .RetiresOnSaturation();
-    EXPECT_CALL(listener01,
-        on_unapply(std::vector<remote_config::config>{expected_config01}))
+    EXPECT_CALL(listener01, on_unapply(expected_configs_01))
         .Times(1)
         .RetiresOnSaturation();
     // First poll expectations
-    EXPECT_CALL(listener01,
-        on_update(std::vector<remote_config::config>{expected_config01}))
+    EXPECT_CALL(listener01, on_update(expected_configs_01))
         .Times(1)
         .RetiresOnSaturation();
-    EXPECT_CALL(listener01, on_unapply(std::vector<remote_config::config>{}))
+    EXPECT_CALL(
+        listener01, on_unapply(std::map<std::string, remote_config::config>{}))
         .Times(1)
         .RetiresOnSaturation();
     remote_config::product product(
@@ -865,8 +870,9 @@ TEST_F(
     remote_config::config expected_config(std::move(product_str_01),
         std::move(id_product_01), std::move(content_01), std::move(hashes_01),
         36740, std::move(path_01), 66399);
-    std::vector<remote_config::config> expected_configs_first_call = {
-        expected_config};
+    std::map<std::string, remote_config::config> expected_configs_first_call;
+    expected_configs_first_call.emplace(
+        expected_config.get_id(), expected_config);
     std::vector<remote_config::config> no_updates;
 
     std::map<std::string, std::string> hashes_02 = {
@@ -874,8 +880,9 @@ TEST_F(
     remote_config::config expected_config_02(std::move(product_str_02),
         std::move(id_product_02), std::move(content_02), std::move(hashes_02),
         36740, std::move(path_02), 66399);
-    std::vector<remote_config::config> expected_configs_second_call = {
-        expected_config_02};
+    std::map<std::string, remote_config::config> expected_configs_second_call;
+    expected_configs_second_call.emplace(
+        expected_config_02.get_id(), expected_config_02);
 
     // Product on response
     mock::listener_mock listener01;
@@ -883,14 +890,16 @@ TEST_F(
     EXPECT_CALL(listener01, on_update(std::move(expected_configs_second_call)))
         .Times(1)
         .RetiresOnSaturation();
-    EXPECT_CALL(listener01, on_unapply(std::vector<remote_config::config>{}))
+    EXPECT_CALL(
+        listener01, on_unapply(std::map<std::string, remote_config::config>{}))
         .Times(1)
         .RetiresOnSaturation();
     // First poll expectations
     EXPECT_CALL(listener01, on_update(std::move(expected_configs_first_call)))
         .Times(1)
         .RetiresOnSaturation();
-    EXPECT_CALL(listener01, on_unapply(std::vector<remote_config::config>{}))
+    EXPECT_CALL(
+        listener01, on_unapply(std::map<std::string, remote_config::config>{}))
         .Times(1)
         .RetiresOnSaturation();
     remote_config::product product(std::move(apm_sampling), {&listener01});
@@ -923,7 +932,7 @@ TEST_F(RemoteConfigClient, FilesThatAreInCacheAreUsedWhenNotInTargetFiles)
 
     // Second call. Since this call has cache, response comes without
     // target_files
-    // Third call. Cache and state should be keeped even though
+    // Third call. Cache and state should be kept even though
     // target_files came empty on second
     EXPECT_CALL(*mock_api, get_configs(generate_request_serialized(true, true)))
         .Times(2)

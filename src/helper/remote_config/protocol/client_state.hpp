@@ -13,9 +13,10 @@ namespace dds::remote_config::protocol {
 
 class client_state {
 public:
-    client_state(int targets_version, std::vector<config_state> &&cs,
+    client_state(int targets_version, const std::vector<config_state> &cs,
         // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-        bool has_error, std::string &&error, std::string &&backend_client_state)
+        bool has_error, const std::string &error,
+        const std::string &backend_client_state)
         : targets_version_(targets_version), config_states_(std::move(cs)),
           has_error_(has_error), error_(std::move(error)),
           backend_client_state_(std::move(backend_client_state)){};

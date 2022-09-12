@@ -11,13 +11,15 @@
 #include "parser.hpp"
 #include <base64.h>
 
+using namespace std::literals;
+
 namespace dds::remote_config::protocol {
 
 remote_config_parser_result validate_field_is_present(
     const rapidjson::Value &parent_field, const char *key, rapidjson::Type type,
     rapidjson::Value::ConstMemberIterator &output_itr,
-    const remote_config_parser_result &missing,
-    const remote_config_parser_result &invalid)
+    const remote_config_parser_result missing,
+    const remote_config_parser_result invalid)
 {
     output_itr = parent_field.FindMember(key);
 
@@ -235,7 +237,7 @@ parse_targets_signed(rapidjson::Value::ConstMemberIterator targets_signed_itr)
     if (result.first != remote_config_parser_result::success) {
         return result;
     }
-    if (strcmp(type_itr->value.GetString(), "targets") != 0) {
+    if ("targets"sv != type_itr->value.GetString()) {
         result.first =
             remote_config_parser_result::type_signed_targets_field_invalid_type;
         return result;
@@ -313,7 +315,7 @@ std::pair<remote_config_parser_result, std::optional<targets>> parse_targets(
 }
 
 std::pair<remote_config_parser_result, std::optional<get_configs_response>>
-parse(std::string &&body)
+parse(const std::string &body)
 {
     rapidjson::Document serialized_doc;
     std::pair<remote_config_parser_result, std::optional<get_configs_response>>

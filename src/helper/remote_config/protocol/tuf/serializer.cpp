@@ -127,7 +127,7 @@ void serialize_cached_target_files(rapidjson::Document::AllocatorType &alloc,
     document.AddMember("cached_target_files", cached_target_files_array, alloc);
 }
 
-std::optional<std::string> serialize(get_configs_request &&request)
+std::optional<std::string> serialize(const get_configs_request &request)
 {
     rapidjson::Document document;
     rapidjson::Document::AllocatorType &alloc = document.GetAllocator();
