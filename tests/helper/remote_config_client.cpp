@@ -337,38 +337,35 @@ public:
 
 TEST_F(RemoteConfigClient, ItReturnsErrorIfApiReturnsError)
 {
-    mock::api *const mock_api = new mock::api;
-    EXPECT_CALL(*mock_api, get_configs)
+    mock::api api;
+    EXPECT_CALL(api, get_configs)
         .WillOnce(Return(get_config_response(false, "")));
 
-    dds::remote_config::client api_client(mock_api, std::move(id),
+    dds::remote_config::client api_client(&api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
         std::move(env), std::move(app_version), _products);
 
     auto result = api_client.poll();
 
     EXPECT_EQ(remote_config::remote_config_result::error, result);
-    delete mock_api;
 }
 
 TEST_F(RemoteConfigClient, ItCallsToApiOnPoll)
 {
-    mock::api *const mock_api = new mock::api;
+    mock::api api;
     // First poll dont have state
-    EXPECT_CALL(
-        *mock_api, get_configs(generate_request_serialized(false, false)))
+    EXPECT_CALL(api, get_configs(generate_request_serialized(false, false)))
         .Times(AtLeast(1))
         .WillOnce(Return(
             get_config_response(true, generate_example_response(paths))));
 
-    dds::remote_config::client api_client(mock_api, std::move(id),
+    dds::remote_config::client api_client(&api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
         std::move(env), std::move(app_version), _products);
 
     auto result = api_client.poll();
 
     EXPECT_EQ(remote_config::remote_config_result::success, result);
-    delete mock_api;
 }
 
 TEST_F(RemoteConfigClient, ItReturnErrorWhenApiNotProvided)
@@ -384,11 +381,11 @@ TEST_F(RemoteConfigClient, ItReturnErrorWhenApiNotProvided)
 
 TEST_F(RemoteConfigClient, ItReturnErrorWhenResponseIsInvalidJson)
 {
-    mock::api mock_api;
-    EXPECT_CALL(mock_api, get_configs)
+    mock::api api;
+    EXPECT_CALL(api, get_configs)
         .WillOnce(Return(get_config_response(true, "invalid json here")));
 
-    dds::remote_config::client api_client(&mock_api, std::move(id),
+    dds::remote_config::client api_client(&api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
         std::move(env), std::move(app_version), _products);
 
@@ -402,13 +399,13 @@ TEST_F(RemoteConfigClient,
 {
     std::string response = generate_example_response(paths, paths, {});
 
-    mock::api mock_api;
+    mock::api api;
     std::string request_sent;
-    EXPECT_CALL(mock_api, get_configs)
+    EXPECT_CALL(api, get_configs)
         .WillRepeatedly(DoAll(testing::SaveArg<0>(&request_sent),
             Return(get_config_response(true, response))));
 
-    dds::remote_config::client api_client(&mock_api, std::move(id),
+    dds::remote_config::client api_client(&api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
         std::move(env), std::move(app_version), _products);
 
@@ -431,13 +428,13 @@ TEST_F(RemoteConfigClient,
 {
     std::string response = generate_example_response(paths, {}, paths);
 
-    mock::api mock_api;
+    mock::api api;
     std::string request_sent;
-    EXPECT_CALL(mock_api, get_configs)
+    EXPECT_CALL(api, get_configs)
         .WillRepeatedly(DoAll(testing::SaveArg<0>(&request_sent),
             Return(get_config_response(true, response))));
 
-    dds::remote_config::client api_client(&mock_api, std::move(id),
+    dds::remote_config::client api_client(&api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
         std::move(env), std::move(app_version), _products);
 
@@ -530,13 +527,13 @@ TEST_F(RemoteConfigClient, ItReturnsErrorWhenClientConfigPathCantBeParsed)
     std::string invalid_path = "invalid/path/dynamic_rates/config";
     std::string response = generate_example_response({invalid_path});
 
-    mock::api mock_api;
+    mock::api api;
     std::string request_sent;
-    EXPECT_CALL(mock_api, get_configs)
+    EXPECT_CALL(api, get_configs)
         .WillRepeatedly(DoAll(testing::SaveArg<0>(&request_sent),
             Return(get_config_response(true, response))));
 
-    dds::remote_config::client api_client(&mock_api, std::move(id),
+    dds::remote_config::client api_client(&api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
         std::move(env), std::move(app_version), _products);
 
@@ -559,14 +556,13 @@ TEST_F(RemoteConfigClient, ItReturnsErrorIfProductOnPathNotRequested)
     std::string response =
         generate_example_response({path_of_no_requested_product});
 
-    mock::api mock_api;
+    mock::api api;
     std::string request_sent;
-    EXPECT_CALL(mock_api, get_configs)
+    EXPECT_CALL(api, get_configs)
         .WillRepeatedly(DoAll(testing::SaveArg<0>(&request_sent),
             Return(get_config_response(true, response))));
 
-    std::vector<remote_config::product_listener *> listeners;
-    dds::remote_config::client api_client(&mock_api, std::move(id),
+    dds::remote_config::client api_client(&api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
         std::move(env), std::move(app_version), {});
 
@@ -586,22 +582,21 @@ TEST_F(RemoteConfigClient, ItReturnsErrorIfProductOnPathNotRequested)
 
 TEST_F(RemoteConfigClient, ItGeneratesClientStateAndCacheFromResponse)
 {
-    mock::api *const mock_api = new mock::api;
+    mock::api api;
 
     // First call should not contain state neither cache
-    EXPECT_CALL(
-        *mock_api, get_configs(generate_request_serialized(false, false)))
+    EXPECT_CALL(api, get_configs(generate_request_serialized(false, false)))
         .Times(1)
         .WillOnce(Return(
             get_config_response(true, generate_example_response(paths))));
 
     // Second call. This should contain state and cache from previous
-    EXPECT_CALL(*mock_api, get_configs(generate_request_serialized(true, true)))
+    EXPECT_CALL(api, get_configs(generate_request_serialized(true, true)))
         .Times(1)
         .WillOnce(Return(
             get_config_response(true, generate_example_response(paths))));
 
-    dds::remote_config::client api_client(mock_api, std::move(id),
+    dds::remote_config::client api_client(&api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
         std::move(env), std::move(app_version), _products);
 
@@ -611,17 +606,15 @@ TEST_F(RemoteConfigClient, ItGeneratesClientStateAndCacheFromResponse)
 
     result = api_client.poll();
     EXPECT_EQ(remote_config::remote_config_result::success, result);
-
-    delete mock_api;
 }
 
 TEST_F(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
 {
-    mock::api *const mock_api = new mock::api;
+    mock::api api;
 
     std::string response = generate_example_response({first_path});
 
-    EXPECT_CALL(*mock_api, get_configs(_))
+    EXPECT_CALL(api, get_configs(_))
         .Times(1)
         .WillOnce(Return(get_config_response(true, response)));
 
@@ -671,7 +664,7 @@ TEST_F(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
         std::move(product_str_not_in_response),
         {&listener_called_no_configs01, &listener_called_no_configs02});
 
-    dds::remote_config::client api_client(mock_api, std::move(id),
+    dds::remote_config::client api_client(&api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
         std::move(env), std::move(app_version),
         {product, product_not_in_response});
@@ -679,19 +672,17 @@ TEST_F(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
     auto result = api_client.poll();
 
     EXPECT_EQ(remote_config::remote_config_result::success, result);
-
-    delete mock_api;
 }
 
 TEST_F(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
 {
-    mock::api *const mock_api = new mock::api;
+    mock::api api;
 
     std::string response01 = generate_example_response({first_path});
 
     std::string response02 = generate_example_response({second_path});
 
-    EXPECT_CALL(*mock_api, get_configs(_))
+    EXPECT_CALL(api, get_configs(_))
         .Times(2)
         .WillOnce(Return(get_config_response(true, response01)))
         .WillOnce(Return(get_config_response(true, response02)));
@@ -740,7 +731,7 @@ TEST_F(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
     remote_config::product product(
         std::move(first_product_product), {&listener01});
 
-    dds::remote_config::client api_client(mock_api, std::move(id),
+    dds::remote_config::client api_client(&api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
         std::move(env), std::move(app_version), {product});
 
@@ -749,14 +740,12 @@ TEST_F(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
 
     result = api_client.poll();
     EXPECT_EQ(remote_config::remote_config_result::success, result);
-
-    delete mock_api;
 }
 
 TEST_F(
     RemoteConfigClient, WhenAConfigGetsUpdatedOnFollowingPollsItCallsToUnUpdate)
 {
-    mock::api *const mock_api = new mock::api;
+    mock::api api;
 
     std::string response01(
         "{\"roots\": [], \"targets\": "
@@ -799,7 +788,7 @@ TEST_F(
         "[\"datadog/2/APM_SAMPLING/dynamic_rates/config\"] "
         "}");
 
-    EXPECT_CALL(*mock_api, get_configs(_))
+    EXPECT_CALL(api, get_configs(_))
         .Times(2)
         .WillOnce(Return(get_config_response(true, response01)))
         .WillOnce(Return(get_config_response(true, response02)));
@@ -854,7 +843,7 @@ TEST_F(
         .RetiresOnSaturation();
     remote_config::product product(std::move(apm_sampling), {&listener01});
 
-    dds::remote_config::client api_client(mock_api, std::move(id),
+    dds::remote_config::client api_client(&api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
         std::move(env), std::move(app_version), {product});
 
@@ -863,17 +852,14 @@ TEST_F(
 
     result = api_client.poll();
     EXPECT_EQ(remote_config::remote_config_result::success, result);
-
-    delete mock_api;
 }
 
 TEST_F(RemoteConfigClient, FilesThatAreInCacheAreUsedWhenNotInTargetFiles)
 {
-    mock::api *const mock_api = new mock::api;
+    mock::api api;
 
     // First call should not contain state neither cache
-    EXPECT_CALL(
-        *mock_api, get_configs(generate_request_serialized(false, false)))
+    EXPECT_CALL(api, get_configs(generate_request_serialized(false, false)))
         .Times(1)
         .WillOnce(
             Return(get_config_response(true, generate_example_response(paths))))
@@ -883,14 +869,14 @@ TEST_F(RemoteConfigClient, FilesThatAreInCacheAreUsedWhenNotInTargetFiles)
     // target_files
     // Third call. Cache and state should be kept even though
     // target_files came empty on second
-    EXPECT_CALL(*mock_api, get_configs(generate_request_serialized(true, true)))
+    EXPECT_CALL(api, get_configs(generate_request_serialized(true, true)))
         .Times(2)
         .WillOnce(Return(get_config_response(
             true, generate_example_response(paths, {}, paths))))
         .WillOnce(Return(get_config_response(
             true, generate_example_response(paths, {}, paths))));
 
-    dds::remote_config::client api_client(mock_api, std::move(id),
+    dds::remote_config::client api_client(&api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
         std::move(env), std::move(app_version), _products);
 
@@ -902,16 +888,14 @@ TEST_F(RemoteConfigClient, FilesThatAreInCacheAreUsedWhenNotInTargetFiles)
 
     result = api_client.poll();
     EXPECT_EQ(remote_config::remote_config_result::success, result);
-
-    delete mock_api;
 }
 
 TEST_F(RemoteConfigClient, NotTrackedFilesAreDeletedFromCache)
 {
-    mock::api *const mock_api = new mock::api;
+    mock::api api;
 
     std::string request_sent;
-    EXPECT_CALL(*mock_api, get_configs(_))
+    EXPECT_CALL(api, get_configs(_))
         .Times(3)
         .WillOnce(
             Return(get_config_response(true, generate_example_response(paths))))
@@ -920,7 +904,7 @@ TEST_F(RemoteConfigClient, NotTrackedFilesAreDeletedFromCache)
         .WillOnce(DoAll(testing::SaveArg<0>(&request_sent),
             Return(get_config_response(true, generate_example_response({})))));
 
-    dds::remote_config::client api_client(mock_api, std::move(id),
+    dds::remote_config::client api_client(&api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
         std::move(env), std::move(app_version), _products);
 
@@ -941,13 +925,11 @@ TEST_F(RemoteConfigClient, NotTrackedFilesAreDeletedFromCache)
     EXPECT_FALSE(output_itr == serialized_doc.MemberEnd());
     EXPECT_TRUE(rapidjson::kArrayType == output_itr->value.GetType());
     EXPECT_EQ(0, output_itr->value.GetArray().Size());
-
-    delete mock_api;
 }
 
 TEST_F(RemoteConfigClient, TestHashIsDifferentFromTheCache)
 {
-    mock::api *const mock_api = new mock::api;
+    mock::api api;
 
     std::string first_response =
         "{\"roots\": [], \"targets\": "
@@ -1006,14 +988,14 @@ TEST_F(RemoteConfigClient, TestHashIsDifferentFromTheCache)
         "[\"employee/FEATURES/2.test1.config/config\"] }";
 
     std::string request_sent;
-    EXPECT_CALL(*mock_api, get_configs(_))
+    EXPECT_CALL(api, get_configs(_))
         .Times(3)
         .WillOnce(Return(get_config_response(true, first_response)))
         .WillRepeatedly(DoAll(testing::SaveArg<0>(&request_sent),
             Return(get_config_response(true, second_response))))
         .RetiresOnSaturation();
 
-    dds::remote_config::client api_client(mock_api, std::move(id),
+    dds::remote_config::client api_client(&api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
         std::move(env), std::move(app_version), _products);
 
@@ -1029,13 +1011,11 @@ TEST_F(RemoteConfigClient, TestHashIsDifferentFromTheCache)
     EXPECT_TRUE(validate_request_has_error(request_sent, true,
         "missing config employee/FEATURES/2.test1.config/config in "
         "target files and in cache files"));
-
-    delete mock_api;
 }
 
 TEST_F(RemoteConfigClient, TestWhenFileGetsFromCacheItsCachedLenUsed)
 {
-    mock::api *const mock_api = new mock::api;
+    mock::api api;
 
     std::string first_response =
         "{\"roots\": [], \"targets\": "
@@ -1094,14 +1074,14 @@ TEST_F(RemoteConfigClient, TestWhenFileGetsFromCacheItsCachedLenUsed)
         "[\"employee/FEATURES/2.test1.config/config\"] }";
 
     std::string request_sent;
-    EXPECT_CALL(*mock_api, get_configs(_))
+    EXPECT_CALL(api, get_configs(_))
         .Times(3)
         .WillOnce(Return(get_config_response(true, first_response)))
         .WillRepeatedly(DoAll(testing::SaveArg<0>(&request_sent),
             Return(get_config_response(true, second_response))))
         .RetiresOnSaturation();
 
-    dds::remote_config::client api_client(mock_api, std::move(id),
+    dds::remote_config::client api_client(&api, std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
         std::move(env), std::move(app_version), _products);
 
@@ -1128,8 +1108,6 @@ TEST_F(RemoteConfigClient, TestWhenFileGetsFromCacheItsCachedLenUsed)
     EXPECT_FALSE(len_itr == files_cached[0].MemberEnd());
     EXPECT_TRUE(rapidjson::kNumberType == len_itr->value.GetType());
     EXPECT_EQ(41, len_itr->value.GetInt());
-
-    delete mock_api;
 }
 
 /*
