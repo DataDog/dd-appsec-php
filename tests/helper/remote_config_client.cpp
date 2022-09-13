@@ -67,6 +67,7 @@ ACTION_P(set_response_body, response) { arg1.assign(response); }
 
 class api : public remote_config::http_api {
 public:
+    api() : http_api("0.0.0.0", "1234"){};
     MOCK_METHOD((std::pair<bool, std::optional<std::string>>), get_configs,
         (std::string && request), (const));
 };
@@ -157,9 +158,7 @@ public:
     remote_config::protocol::client generate_client(bool generate_state)
     {
         remote_config::protocol::client_tracer client_tracer = {
-            runtime_id, tracer_version,
-            service, env,
-            app_version};
+            runtime_id, tracer_version, service, env, app_version};
 
         std::vector<remote_config::protocol::config_state> config_states;
         int _target_version;
@@ -169,13 +168,11 @@ public:
             std::string product00(first_product_product);
             std::string product00_id(first_product_id);
             remote_config::protocol::config_state cs00 = {product00_id,
-                test_helpers::version_from_path(first_path),
-                product00};
+                test_helpers::version_from_path(first_path), product00};
             std::string product01(second_product_product);
             std::string product01_id(second_product_id);
             remote_config::protocol::config_state cs01 = {product01_id,
-                test_helpers::version_from_path(second_path),
-                product01};
+                test_helpers::version_from_path(second_path), product01};
 
             config_states.push_back(cs00);
             config_states.push_back(cs01);
@@ -186,9 +183,8 @@ public:
             _target_version = 0; // Default target version
             _backend_client_state = "";
         }
-        remote_config::protocol::client_state client_state = {_target_version,
-            config_states, false, "",
-            _backend_client_state};
+        remote_config::protocol::client_state client_state = {
+            _target_version, config_states, false, "", _backend_client_state};
 
         auto products_str_cpy = products_str;
         auto id_cpy = id;

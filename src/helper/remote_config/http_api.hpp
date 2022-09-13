@@ -25,14 +25,13 @@ static const int version = 11;
 
 class http_api {
 public:
+    http_api(const std::string &host, const std::string &port)
+        : host_(host), port_(port){};
     virtual std::pair<bool, std::optional<std::string>> get_configs(
         std::string &&request) const
     {
         std::pair<bool, std::optional<std::string>> result;
         try {
-            //@todo deharcode these values
-            std::string const host = "localhost";
-            const char *port = "8126";
             const char *target = "/v0.7/config";
 
             // The io_context is required for all I/O
@@ -43,7 +42,7 @@ public:
             beast::tcp_stream stream(ioc);
 
             // Look up the domain name
-            auto const results = resolver.resolve(host, port);
+            auto const results = resolver.resolve(host_, port_);
 
             // Make the connection on the IP address we get from a lookup
             stream.connect(results);
@@ -53,7 +52,7 @@ public:
             req.method(http::verb::post);
             req.target(target);
             req.version(version);
-            req.set(http::field::host, host);
+            req.set(http::field::host, host_);
             req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
             req.set(
                 http::field::content_length, std::to_string(request.size()));
@@ -96,6 +95,10 @@ public:
         }
         return result;
     };
+
+private:
+    std::string host_;
+    std::string port_;
 };
 
 } // namespace dds::remote_config
