@@ -11,42 +11,22 @@
 
 namespace dds::remote_config {
 
-class config {
-public:
-    //@todo contents should be bytes
-    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    config(std::string &&product, std::string &&id, std::string &&contents,
-        std::map<std::string, std::string> &&hashes, int version,
-        std::string &&path, int length)
-        : product_(std::move(product)), id_(std::move(id)), contents_(contents),
-          hashes_(hashes), version_(version), path_(std::move(path)),
-          length_(length){};
-    bool operator==(config const &b) const
-    {
-        return product_ == b.product_ && id_ == b.id_ &&
-               contents_ == b.contents_ && hashes_ == b.hashes_ &&
-               version_ == b.version_ && path_ == b.path_ &&
-               length_ == b.length_;
-    }
-    [[nodiscard]] std::string get_id() const { return id_; };
-    [[nodiscard]] int get_version() const { return version_; };
-    [[nodiscard]] std::string get_product() const { return product_; };
-    [[nodiscard]] std::string get_contents() const { return contents_; };
-    [[nodiscard]] std::string get_path() const { return path_; };
-    [[nodiscard]] int get_length() const { return length_; };
-    [[nodiscard]] std::map<std::string, std::string> get_hashes() const
-    {
-        return hashes_;
-    };
-
-private:
-    std::string product_;
-    std::string id_;
-    std::string contents_;
-    std::string path_;
-    std::map<std::string, std::string> hashes_;
-    int version_;
-    int length_;
+struct config {
+    std::string product;
+    std::string id;
+    std::string contents;
+    std::string path;
+    std::map<std::string, std::string> hashes;
+    int version;
+    int length;
 };
+
+inline bool operator==(const config &rhs, const config &lhs)
+{
+    return rhs.product == lhs.product && rhs.id == lhs.id &&
+           rhs.contents == lhs.contents && rhs.hashes == lhs.hashes &&
+           rhs.version == lhs.version && rhs.path == lhs.path &&
+           rhs.length == lhs.length;
+}
 
 } // namespace dds::remote_config

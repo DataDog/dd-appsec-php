@@ -23,17 +23,10 @@ enum class remote_config_result {
 
 class invalid_path : public std::exception {};
 
-class config_path {
-public:
-    config_path(std::string &&id, std::string &&product)
-        : id_(std::move(id)), product_(std::move(product)){};
-    [[nodiscard]] std::string get_id() const { return id_; };
-    [[nodiscard]] std::string get_product() const { return product_; };
+struct config_path {
     static config_path from_path(const std::string &path);
-
-private:
-    std::string product_;
-    std::string id_;
+    std::string id;
+    std::string product;
 };
 
 class client {

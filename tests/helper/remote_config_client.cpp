@@ -27,13 +27,13 @@ class cout_listener : public remote_config::product_listener {
 public:
     void config_to_cout(remote_config::config config)
     {
-        std::cout << "path: " << config.get_path() << std::endl;
-        std::cout << "version: " << config.get_version() << std::endl;
-        std::cout << "id: " << config.get_id() << std::endl;
-        std::cout << "length: " << config.get_length() << std::endl;
-        std::cout << "contents: " << config.get_contents() << std::endl;
-        std::cout << "product: " << config.get_product() << std::endl;
-        for (auto hash : config.get_hashes()) {
+        std::cout << "path: " << config.path << std::endl;
+        std::cout << "version: " << config.version << std::endl;
+        std::cout << "id: " << config.id << std::endl;
+        std::cout << "length: " << config.length << std::endl;
+        std::cout << "contents: " << config.contents << std::endl;
+        std::cout << "product: " << config.product << std::endl;
+        for (auto hash : config.hashes) {
             std::cout << "hash: " << hash.first << " - " << hash.second
                       << std::endl;
         }
@@ -460,18 +460,18 @@ TEST(ClientConfig, ItGetGeneratedFromString)
     std::string apm_sampling = "APM_SAMPLING";
     auto cp = remote_config::config_path::from_path(
         "datadog/2/LIVE_DEBUGGING/9e413cda-647b-335b-adcd-7ce453fc2284/config");
-    EXPECT_EQ("LIVE_DEBUGGING", cp.get_product());
-    EXPECT_EQ("9e413cda-647b-335b-adcd-7ce453fc2284", cp.get_id());
+    EXPECT_EQ("LIVE_DEBUGGING", cp.product);
+    EXPECT_EQ("9e413cda-647b-335b-adcd-7ce453fc2284", cp.id);
 
     cp = remote_config::config_path::from_path(
         "employee/DEBUG_DD/2.test1.config/config");
-    EXPECT_EQ("DEBUG_DD", cp.get_product());
-    EXPECT_EQ("2.test1.config", cp.get_id());
+    EXPECT_EQ("DEBUG_DD", cp.product);
+    EXPECT_EQ("2.test1.config", cp.id);
 
     cp = remote_config::config_path::from_path(
         "datadog/55/APM_SAMPLING/dynamic_rates/config");
-    EXPECT_EQ(apm_sampling, cp.get_product());
-    EXPECT_EQ("dynamic_rates", cp.get_id());
+    EXPECT_EQ(apm_sampling, cp.product);
+    EXPECT_EQ("dynamic_rates", cp.id);
 }
 
 TEST(ClientConfig, ItDoesNotGetGeneratedFromStringIfNotValidMatch)
@@ -629,15 +629,12 @@ TEST_F(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
     std::map<std::string, std::string> hashes = {
         std::pair<std::string, std::string>(
             "sha256", test_helpers::sha256_from_path(first_path))};
-    std::string first_product_product_cpy = first_product_product;
-    std::string first_product_id_cpy = first_product_id;
-    std::string first_path_cpy = first_path;
-    remote_config::config expected_config(std::move(first_product_product_cpy),
-        std::move(first_product_id_cpy), std::move(content), std::move(hashes),
-        test_helpers::version_from_path(first_path), std::move(first_path_cpy),
-        test_helpers::length_from_path(first_path));
+    remote_config::config expected_config = {first_product_product,
+        first_product_id, content, first_path, hashes,
+        test_helpers::version_from_path(first_path),
+        test_helpers::length_from_path(first_path)};
     std::map<std::string, remote_config::config> expected_configs;
-    expected_configs.emplace(expected_config.get_id(), expected_config);
+    expected_configs.emplace(expected_config.id, expected_config);
 
     // Product on response
     std::vector<remote_config::config> no_updates;
@@ -703,33 +700,25 @@ TEST_F(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
     std::map<std::string, std::string> hashes01 = {
         std::pair<std::string, std::string>(
             "sha256", test_helpers::sha256_from_path(first_path))};
-    std::string first_product_product_cpy = first_product_product;
-    std::string first_product_id_cpy = first_product_id;
-    std::string first_path_cpy = first_path;
-    remote_config::config expected_config01(
-        std::move(first_product_product_cpy), std::move(first_product_id_cpy),
-        std::move(content01), std::move(hashes01),
-        test_helpers::version_from_path(first_path), std::move(first_path_cpy),
-        test_helpers::length_from_path(first_path));
+    remote_config::config expected_config01 = {first_product_product,
+        first_product_id, content01, first_path, hashes01,
+        test_helpers::version_from_path(first_path),
+        test_helpers::length_from_path(first_path)};
     std::vector<remote_config::config> no_updates;
     std::map<std::string, remote_config::config> expected_configs_01;
-    expected_configs_01.emplace(expected_config01.get_id(), expected_config01);
+    expected_configs_01.emplace(expected_config01.id, expected_config01);
 
     std::string content02 = test_helpers::raw_from_path(second_path);
     std::map<std::string, std::string> hashes02 = {
         std::pair<std::string, std::string>(
             "sha256", test_helpers::sha256_from_path(second_path))};
-    std::string second_product_product_cpy = second_product_product;
-    std::string second_product_id_cpy = second_product_id;
-    std::string second_path_cpy = second_path;
-    remote_config::config expected_config02(
-        std::move(second_product_product_cpy), std::move(second_product_id_cpy),
-        std::move(content02), std::move(hashes02),
+    remote_config::config expected_config02 = {second_product_product,
+        second_product_id, content02, second_path, hashes02,
         test_helpers::version_from_path(second_path),
-        std::move(second_path_cpy),
-        test_helpers::length_from_path(second_path));
+
+        test_helpers::length_from_path(second_path)};
     std::map<std::string, remote_config::config> expected_configs_02;
-    expected_configs_02.emplace(expected_config02.get_id(), expected_config02);
+    expected_configs_02.emplace(expected_config02.id, expected_config02);
 
     // Product on response
     mock::listener_mock listener01;
@@ -831,22 +820,19 @@ TEST_F(
     std::map<std::string, std::string> hashes_01 = {std::pair<std::string,
         std::string>("sha256",
         "07465cece47e4542abc0da040d9ebb42ec97224920d6870651dc3316528609d5")};
-    remote_config::config expected_config(std::move(product_str_01),
-        std::move(id_product_01), std::move(content_01), std::move(hashes_01),
-        36740, std::move(path_01), 66399);
+    remote_config::config expected_config = {product_str_01, id_product_01,
+        content_01, path_01, hashes_01, 36740, 66399};
     std::map<std::string, remote_config::config> expected_configs_first_call;
-    expected_configs_first_call.emplace(
-        expected_config.get_id(), expected_config);
+    expected_configs_first_call.emplace(expected_config.id, expected_config);
     std::vector<remote_config::config> no_updates;
 
     std::map<std::string, std::string> hashes_02 = {
         std::pair<std::string, std::string>("sha256", "another_hash_here")};
-    remote_config::config expected_config_02(std::move(product_str_02),
-        std::move(id_product_02), std::move(content_02), std::move(hashes_02),
-        36740, std::move(path_02), 66399);
+    remote_config::config expected_config_02 = {product_str_02, id_product_02,
+        content_02, path_02, hashes_02, 36740, 66399};
     std::map<std::string, remote_config::config> expected_configs_second_call;
     expected_configs_second_call.emplace(
-        expected_config_02.get_id(), expected_config_02);
+        expected_config_02.id, expected_config_02);
 
     // Product on response
     mock::listener_mock listener01;

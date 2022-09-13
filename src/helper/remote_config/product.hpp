@@ -41,9 +41,8 @@ public:
             if (previous_config == configs_.end()) { // New config
                 to_update.emplace(config.first, config.second);
             } else { // Already existed
-                if (config.second.get_hashes() ==
-                    previous_config->second
-                        .get_hashes()) { // No changes in config
+                if (config.second.hashes ==
+                    previous_config->second.hashes) { // No changes in config
                     to_keep.emplace(config.first, config.second);
                 } else { // Config updated
                     to_update.emplace(config.first, config.second);
