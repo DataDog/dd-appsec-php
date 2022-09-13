@@ -36,7 +36,7 @@ public:
         std::map<std::string, config> to_update;
         std::map<std::string, config> to_keep;
 
-        for (auto &config : configs) {
+        for (const auto &config : configs) {
             auto previous_config = configs_.find(config.first);
             if (previous_config == configs_.end()) { // New config
                 to_update.emplace(config.first, config.second);

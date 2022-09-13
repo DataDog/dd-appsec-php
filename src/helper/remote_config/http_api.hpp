@@ -25,6 +25,7 @@ static const int version = 11;
 
 class http_api {
 public:
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     http_api(const std::string &host, const std::string &port)
         : host_(host), port_(port){};
     virtual std::pair<bool, std::optional<std::string>> get_configs(

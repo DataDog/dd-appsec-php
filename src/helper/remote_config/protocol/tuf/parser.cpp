@@ -15,6 +15,7 @@ using namespace std::literals;
 
 namespace dds::remote_config::protocol {
 
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 bool validate_field_is_present(const rapidjson::Value &parent_field,
     const char *key, rapidjson::Type type,
     rapidjson::Value::ConstMemberIterator &output_itr,
@@ -285,7 +286,7 @@ namespace {
 constexpr std::array<std::string_view,
     (size_t)remote_config_parser_result::num_of_values>
     results_as_str = {PARSER_RESULTS(RESULT_AS_STR)};
-}
+} // anonymous namespace
 std::string_view remote_config_parser_result_to_str(
     const remote_config_parser_result &result)
 {

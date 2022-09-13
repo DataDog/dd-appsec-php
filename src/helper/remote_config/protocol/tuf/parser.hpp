@@ -66,7 +66,7 @@ std::string_view remote_config_parser_result_to_str(
 
 class parser_exception : public std::exception {
 public:
-    parser_exception(remote_config_parser_result error)
+    explicit parser_exception(remote_config_parser_result error)
         : message_(remote_config_parser_result_to_str(error)), error_(error)
     {}
     virtual const char *what() { return message_.c_str(); }

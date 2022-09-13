@@ -33,7 +33,7 @@ config_path config_path::from_path(const std::string &path)
     for (const auto &[product_name, product] : products_) {
         // State
         const auto configs_on_product = product.get_configs();
-        for (auto &[id, config] : configs_on_product) {
+        for (const auto &[id, config] : configs_on_product) {
             config_states.push_back(
                 {config.id, config.version, config.product});
 
@@ -133,7 +133,7 @@ remote_config_result client::process_response(
             } else { // Product already exists in configs. Add new config
                 configs_itr->second.emplace(cp.id, config_);
             }
-        } catch (invalid_path e) {
+        } catch (invalid_path &e) {
             last_poll_error_ = "error parsing path " + path;
             return remote_config_result::error;
         }
@@ -165,8 +165,8 @@ remote_config_result client::poll()
 
     std::string serialized_request;
     try {
-        serialized_request = protocol::serialize(std::move(request));
-    } catch (protocol::serializer_exception e) {
+        serialized_request = protocol::serialize(request);
+    } catch (protocol::serializer_exception &e) {
         return remote_config_result::error;
     }
 
@@ -180,7 +180,7 @@ remote_config_result client::poll()
         auto response = protocol::parse(response_body.value());
         last_poll_error_.clear();
         return process_response(response);
-    } catch (protocol::parser_exception e) {
+    } catch (protocol::parser_exception &e) {
         return remote_config_result::error;
     }
 }
