@@ -14,34 +14,18 @@
 
 namespace dds::remote_config::protocol {
 
-class client {
-public:
-    client(std::string &&id, std::vector<std::string> &&products,
-        client_tracer &&ct, client_state &&cs)
-        : id_(std::move(id)), products_(std::move(products)),
-          client_tracer_(std::move(ct)), client_state_(std::move(cs)){};
-    [[nodiscard]] std::string get_id() const { return id_; };
-    [[nodiscard]] std::vector<std::string> get_products() const
-    {
-        return products_;
-    };
-    [[nodiscard]] client_tracer get_tracer() const { return client_tracer_; };
-    [[nodiscard]] client_state get_client_state() const
-    {
-        return client_state_;
-    };
-    bool operator==(client const &b) const
-    {
-        return id_ == b.id_ && products_ == b.products_ &&
-               client_tracer_ == b.client_tracer_ &&
-               client_state_ == b.client_state_;
-    }
-
-private:
-    std::string id_;
-    std::vector<std::string> products_;
-    client_tracer client_tracer_;
-    client_state client_state_;
+struct client {
+    std::string id;
+    std::vector<std::string> products;
+    protocol::client_tracer client_tracer;
+    protocol::client_state client_state;
 };
+
+inline bool operator==(const client &rhs, const client &lhs)
+{
+    return rhs.id == lhs.id && rhs.products == lhs.products &&
+           rhs.client_tracer == lhs.client_tracer &&
+           rhs.client_state == lhs.client_state;
+}
 
 } // namespace dds::remote_config::protocol

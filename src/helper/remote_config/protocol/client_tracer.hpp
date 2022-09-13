@@ -9,39 +9,20 @@
 
 namespace dds::remote_config::protocol {
 
-class client_tracer {
-public:
-    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    client_tracer(const std::string &runtime_id,
-        const std::string &tracer_version,
-        // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-        const std::string &service, const std::string &env,
-        const std::string &app_version)
-        : runtime_id_(std::move(runtime_id)),
-          tracer_version_(std::move(tracer_version)),
-          service_(std::move(service)), env_(std::move(env)),
-          app_version_(std::move(app_version)){};
-    [[nodiscard]] std::string get_runtime_id() const { return runtime_id_; };
-    [[nodiscard]] std::string get_tracer_version() const
-    {
-        return tracer_version_;
-    };
-    [[nodiscard]] std::string get_service() const { return service_; };
-    [[nodiscard]] std::string get_env() const { return env_; };
-    [[nodiscard]] std::string get_app_version() const { return app_version_; };
-    bool operator==(client_tracer const &b) const
-    {
-        return runtime_id_ == b.runtime_id_ &&
-               tracer_version_ == b.tracer_version_ && service_ == b.service_ &&
-               env_ == b.env_ && app_version_ == b.app_version_;
-    }
-
-private:
-    std::string runtime_id_;
-    std::string tracer_version_;
-    std::string service_;
-    std::string env_;
-    std::string app_version_;
+struct client_tracer {
+    std::string runtime_id;
+    std::string tracer_version;
+    std::string service;
+    std::string env;
+    std::string app_version;
 };
+
+inline bool operator==(const client_tracer &rhs, const client_tracer &lhs)
+{
+    return rhs.runtime_id == lhs.runtime_id &&
+           rhs.tracer_version == lhs.tracer_version &&
+           rhs.service == lhs.service && rhs.env == lhs.env &&
+           rhs.app_version == lhs.app_version;
+}
 
 } // namespace dds::remote_config::protocol

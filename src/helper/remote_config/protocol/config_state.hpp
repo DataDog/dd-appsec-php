@@ -9,22 +9,16 @@
 
 namespace dds::remote_config::protocol {
 
-class config_state {
-public:
-    config_state(std::string &&id, int version, std::string &&product)
-        : id_(std::move(id)), version_(version), product_(std::move(product)){};
-    [[nodiscard]] std::string get_id() const { return id_; };
-    [[nodiscard]] int get_version() const { return version_; };
-    [[nodiscard]] std::string get_product() const { return product_; };
-    bool operator==(config_state const &b) const
-    {
-        return id_ == b.id_ && version_ == b.version_ && product_ == b.product_;
-    }
-
-private:
-    std::string id_;
-    int version_;
-    std::string product_;
+struct config_state {
+    std::string id;
+    int version;
+    std::string product;
 };
+
+inline bool operator==(const config_state &rhs, const config_state &lhs)
+{
+    return rhs.id == lhs.id && rhs.version == lhs.version &&
+           rhs.product == lhs.product;
+}
 
 } // namespace dds::remote_config::protocol

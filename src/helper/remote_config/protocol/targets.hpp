@@ -12,35 +12,17 @@
 
 namespace dds::remote_config::protocol {
 
-class targets {
-public:
-    targets(int version, std::string &&opaque_backend_state,
-        const std::vector<std::pair<std::string, path>> &paths)
-        : version_(version),
-          opaque_backend_state_(std::move(opaque_backend_state))
-    {
-        for (auto const &pair : paths) { paths_.insert(pair); }
-    }
-    [[nodiscard]] std::string get_opaque_backend_state() const
-    {
-        return opaque_backend_state_;
-    };
-    [[nodiscard]] int get_version() const { return version_; };
-    [[nodiscard]] std::map<std::string, path> get_paths() const
-    {
-        return paths_;
-    };
-    bool operator==(targets const &b) const
-    {
-        return version_ == b.version_ &&
-               std::equal(paths_.begin(), paths_.end(), b.paths_.begin(),
-                   b.paths_.end());
-    }
-
-private:
-    int version_;
-    std::string opaque_backend_state_;
-    std::map<std::string, path> paths_;
+struct targets {
+    int version;
+    std::string opaque_backend_state;
+    std::map<std::string, path> paths;
 };
+
+inline bool operator==(const targets &rhs, const targets &lhs)
+{
+    return rhs.version == lhs.version &&
+           rhs.opaque_backend_state == lhs.opaque_backend_state &&
+           std::equal(lhs.paths.begin(), lhs.paths.end(), rhs.paths.begin());
+}
 
 } // namespace dds::remote_config::protocol

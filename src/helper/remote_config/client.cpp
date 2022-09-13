@@ -34,45 +34,43 @@ config_path config_path::from_path(const std::string &path)
         // State
         const auto configs_on_product = product.get_configs();
         for (auto &[id, config] : configs_on_product) {
-            config_states.emplace_back(
-                config.get_id(), config.get_version(), config.get_product());
+            config_states.push_back(
+                {config.get_id(), config.get_version(), config.get_product()});
 
             std::vector<protocol::cached_target_files_hash> hashes;
             hashes.reserve(config.get_hashes().size());
             for (auto const &[algo, hash_sting] : config.get_hashes()) {
-                hashes.emplace_back(std::string(algo), std::string(hash_sting));
+                hashes.push_back({algo, hash_sting});
             }
-            files.emplace_back(
-                config.get_path(), config.get_length(), std::move(hashes));
+            files.push_back(
+                {config.get_path(), config.get_length(), std::move(hashes)});
         }
     }
 
-    protocol::client_tracer ct(
-        runtime_id_, tracer_version_, service_, env_, app_version_);
+    protocol::client_tracer ct = {
+        runtime_id_, tracer_version_, service_, env_, app_version_};
 
-    protocol::client_state cs(targets_version_, config_states,
-        !last_poll_error_.empty(), last_poll_error_, opaque_backend_state_);
+    protocol::client_state cs = {targets_version_, config_states,
+        !last_poll_error_.empty(), last_poll_error_, opaque_backend_state_};
     std::vector<std::string> products_str;
     products_str.reserve(products_.size());
     for (const auto &[product_name, product] : products_) {
         products_str.push_back(product_name);
     }
-    protocol::client protocol_client(std::string(id_), std::move(products_str),
-        std::move(ct), std::move(cs));
+    protocol::client protocol_client = {id_, products_str, ct, cs};
 
-    return protocol::get_configs_request(
-        std::move(protocol_client), std::move(files));
+    return {std::move(protocol_client), std::move(files)};
 };
 
 remote_config_result client::process_response(
     const protocol::get_configs_response &response)
 {
     const std::map<std::string, protocol::path> paths_on_targets =
-        response.get_targets().get_paths();
+        response.targets.paths;
     const std::map<std::string, protocol::target_file> target_files =
-        response.get_target_files();
+        response.target_files;
     std::map<std::string, std::map<std::string, config>> configs;
-    for (const std::string &path : response.get_client_configs()) {
+    for (const std::string &path : response.client_configs) {
         try {
             auto cp = config_path::from_path(path);
 
@@ -83,10 +81,9 @@ remote_config_result client::process_response(
                 last_poll_error_ = "missing config " + path + " in targets";
                 return remote_config_result::error;
             }
-            auto length = path_itr->second.get_length();
-            std::map<std::string, std::string> hashes =
-                path_itr->second.get_hashes();
-            int custom_v = path_itr->second.get_custom_v();
+            auto length = path_itr->second.length;
+            std::map<std::string, std::string> hashes = path_itr->second.hashes;
+            int custom_v = path_itr->second.custom_v;
 
             // Is product on the requested ones?
             auto product = products_.find(cp.get_product());
@@ -120,7 +117,7 @@ remote_config_result client::process_response(
                 length = config_itr->second.get_length();
                 custom_v = config_itr->second.get_version();
             } else {
-                raw = path_in_target_files->second.get_raw();
+                raw = path_in_target_files->second.raw;
             }
 
             std::string path_c = path;
@@ -153,8 +150,8 @@ remote_config_result client::process_response(
         }
     }
 
-    targets_version_ = response.get_targets().get_version();
-    opaque_backend_state_ = response.get_targets().get_opaque_backend_state();
+    targets_version_ = response.targets.version;
+    opaque_backend_state_ = response.targets.opaque_backend_state;
 
     return remote_config_result::success;
 }

@@ -134,23 +134,21 @@ TEST(RemoteConfigParser, TargetFilesAreParsed)
 
     auto gcr = remote_config::protocol::parse(std::move(response));
 
-    EXPECT_EQ(2, gcr.get_target_files().size());
+    EXPECT_EQ(2, gcr.target_files.size());
 
-    auto target_files = gcr.get_target_files();
+    auto target_files = gcr.target_files;
 
     EXPECT_EQ("employee/DEBUG_DD/2.test1.config/config",
         target_files.find("employee/DEBUG_DD/2.test1.config/config")
-            ->second.get_path());
+            ->second.path);
     EXPECT_EQ("UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=",
         target_files.find("employee/DEBUG_DD/2.test1.config/config")
-            ->second.get_raw());
+            ->second.raw);
 
     EXPECT_EQ("datadog/2/DEBUG/luke.steensen/config",
-        target_files.find("datadog/2/DEBUG/luke.steensen/config")
-            ->second.get_path());
+        target_files.find("datadog/2/DEBUG/luke.steensen/config")->second.path);
     EXPECT_EQ("aGVsbG8gdmVjdG9yIQ==",
-        target_files.find("datadog/2/DEBUG/luke.steensen/config")
-            ->second.get_raw());
+        target_files.find("datadog/2/DEBUG/luke.steensen/config")->second.raw);
 }
 
 TEST(RemoteConfigParser, TargetFilesWithoutPathAreInvalid)
@@ -228,9 +226,9 @@ TEST(RemoteConfigParser, ClientConfigsAreParsed)
 
     auto gcr = remote_config::protocol::parse(std::move(response));
 
-    EXPECT_EQ(2, gcr.get_client_configs().size());
+    EXPECT_EQ(2, gcr.client_configs.size());
 
-    auto client_configs = gcr.get_client_configs();
+    auto client_configs = gcr.client_configs;
 
     EXPECT_EQ("datadog/2/DEBUG/luke.steensen/config", client_configs[0]);
     EXPECT_EQ("employee/DEBUG_DD/2.test1.config/config", client_configs[1]);
@@ -1031,44 +1029,43 @@ TEST(RemoteConfigParser, TargetsAreParsed)
 
     auto gcr = remote_config::protocol::parse(std::move(response));
 
-    remote_config::protocol::targets _targets = gcr.get_targets();
+    remote_config::protocol::targets _targets = gcr.targets;
 
-    EXPECT_EQ(27487156, _targets.get_version());
+    EXPECT_EQ(27487156, _targets.version);
 
-    std::map<std::string, remote_config::protocol::path> paths =
-        _targets.get_paths();
+    std::map<std::string, remote_config::protocol::path> paths = _targets.paths;
 
     EXPECT_EQ(3, paths.size());
 
     auto path_itr = paths.find("datadog/2/APM_SAMPLING/dynamic_rates/config");
     auto temp_path = path_itr->second;
-    EXPECT_EQ(36740, temp_path.get_custom_v());
-    EXPECT_EQ(2, temp_path.get_hashes().size());
+    EXPECT_EQ(36740, temp_path.custom_v);
+    EXPECT_EQ(2, temp_path.hashes.size());
     EXPECT_EQ(
         "07465cece47e4542abc0da040d9ebb42ec97224920d6870651dc3316528609d5",
-        temp_path.get_hashes()["sha256"]);
-    EXPECT_EQ("sha512hashhere01", temp_path.get_hashes()["sha512"]);
-    EXPECT_EQ(66399, temp_path.get_length());
+        temp_path.hashes["sha256"]);
+    EXPECT_EQ("sha512hashhere01", temp_path.hashes["sha512"]);
+    EXPECT_EQ(66399, temp_path.length);
 
     path_itr = paths.find("datadog/2/DEBUG/luke.steensen/config");
     temp_path = path_itr->second;
-    EXPECT_EQ(3, temp_path.get_custom_v());
-    EXPECT_EQ(2, temp_path.get_hashes().size());
+    EXPECT_EQ(3, temp_path.custom_v);
+    EXPECT_EQ(2, temp_path.hashes.size());
     EXPECT_EQ(
         "c6a8cd53530b592a5097a3232ce49ca0806fa32473564c3ab386bebaea7d8740",
-        temp_path.get_hashes()["sha256"]);
-    EXPECT_EQ("sha512hashhere02", temp_path.get_hashes()["sha512"]);
-    EXPECT_EQ(13, temp_path.get_length());
+        temp_path.hashes["sha256"]);
+    EXPECT_EQ("sha512hashhere02", temp_path.hashes["sha512"]);
+    EXPECT_EQ(13, temp_path.length);
 
     path_itr = paths.find("employee/DEBUG_DD/2.test1.config/config");
     temp_path = path_itr->second;
-    EXPECT_EQ(1, temp_path.get_custom_v());
-    EXPECT_EQ(2, temp_path.get_hashes().size());
+    EXPECT_EQ(1, temp_path.custom_v);
+    EXPECT_EQ(2, temp_path.hashes.size());
     EXPECT_EQ(
         "47ed825647ad0ec6a789918890565d44c39a5e4bacd35bb34f9df38338912dae",
-        temp_path.get_hashes()["sha256"]);
-    EXPECT_EQ("sha512hashhere03", temp_path.get_hashes()["sha512"]);
-    EXPECT_EQ(41, temp_path.get_length());
+        temp_path.hashes["sha256"]);
+    EXPECT_EQ("sha512hashhere03", temp_path.hashes["sha512"]);
+    EXPECT_EQ(41, temp_path.length);
 }
 
 TEST(RemoteConfigParser, RemoteConfigParserResultCanBeCastToString)

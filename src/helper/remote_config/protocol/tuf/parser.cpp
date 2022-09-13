@@ -53,10 +53,10 @@ bool validate_field_is_present(
     throw parser_exception(invalid);
 }
 
-std::vector<target_file> parse_target_files(
+std::map<std::string, target_file> parse_target_files(
     rapidjson::Value::ConstMemberIterator target_files_itr)
 {
-    std::vector<target_file> result;
+    std::map<std::string, target_file> result;
     for (rapidjson::Value::ConstValueIterator itr =
              target_files_itr->value.Begin();
          itr != target_files_itr->value.End(); ++itr) {
@@ -88,8 +88,8 @@ std::vector<target_file> parse_target_files(
             throw parser_exception(remote_config_parser_result::
                     target_files_raw_field_invalid_type);
         }
-        result.emplace_back(
-            path_itr->value.GetString(), raw_itr->value.GetString());
+        result.insert({path_itr->value.GetString(),
+            {path_itr->value.GetString(), raw_itr->value.GetString()}});
     }
 
     return result;
@@ -159,8 +159,8 @@ std::pair<std::string, path> parse_target(
         remote_config_parser_result::length_path_targets_field_invalid);
 
     std::string target_name(target_itr->name.GetString());
-    path path_object(v_itr->value.GetInt(), std::move(hashes_mapped),
-        length_itr->value.GetInt());
+    path path_object = {
+        v_itr->value.GetInt(), hashes_mapped, length_itr->value.GetInt()};
 
     return {target_name, path_object};
 }
@@ -209,13 +209,12 @@ targets parse_targets_signed(
         rapidjson::kStringType, opaque_backend_state_itr,
         remote_config_parser_result::obs_custom_signed_targets_field_missing,
         remote_config_parser_result::obs_custom_signed_targets_field_invalid);
-    std::vector<std::pair<std::string, path>> final_paths;
-    final_paths.reserve(paths.size());
+    std::map<std::string, path> final_paths;
     for (auto &[path_str, path] : paths) {
-        final_paths.emplace_back(path_str, path);
+        final_paths.emplace(path_str, path);
     }
-    return targets(version_itr->value.GetInt(),
-        opaque_backend_state_itr->value.GetString(), final_paths);
+    return {version_itr->value.GetInt(),
+        opaque_backend_state_itr->value.GetString(), final_paths};
 }
 
 targets parse_targets(rapidjson::Value::ConstMemberIterator targets_itr)
@@ -277,8 +276,8 @@ get_configs_response parse(const std::string &body)
         targets_itr, remote_config_parser_result::targets_field_missing,
         remote_config_parser_result::targets_field_invalid_type);
 
-    return get_configs_response(parse_client_configs(client_configs_itr),
-        parse_target_files(target_files_itr), parse_targets(targets_itr));
+    return {parse_target_files(target_files_itr),
+        parse_client_configs(client_configs_itr), parse_targets(targets_itr)};
 }
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define RESULT_AS_STR(entry) #entry,

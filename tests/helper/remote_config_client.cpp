@@ -156,15 +156,10 @@ public:
 
     remote_config::protocol::client generate_client(bool generate_state)
     {
-        auto runtime_id_cpy = runtime_id;
-        auto tracer_version_cpy = tracer_version;
-        auto service_cpy = service;
-        auto env_cpy = env;
-        auto app_version_cpy = app_version;
-        remote_config::protocol::client_tracer client_tracer(
-            std::move(runtime_id_cpy), std::move(tracer_version_cpy),
-            std::move(service_cpy), std::move(env_cpy),
-            std::move(app_version_cpy));
+        remote_config::protocol::client_tracer client_tracer = {
+            runtime_id, tracer_version,
+            service, env,
+            app_version};
 
         std::vector<remote_config::protocol::config_state> config_states;
         int _target_version;
@@ -173,14 +168,14 @@ public:
             // All these states are extracted from the harcoded request/response
             std::string product00(first_product_product);
             std::string product00_id(first_product_id);
-            remote_config::protocol::config_state cs00(std::move(product00_id),
+            remote_config::protocol::config_state cs00 = {product00_id,
                 test_helpers::version_from_path(first_path),
-                std::move(product00));
+                product00};
             std::string product01(second_product_product);
             std::string product01_id(second_product_id);
-            remote_config::protocol::config_state cs01(std::move(product01_id),
+            remote_config::protocol::config_state cs01 = {product01_id,
                 test_helpers::version_from_path(second_path),
-                std::move(product01));
+                product01};
 
             config_states.push_back(cs00);
             config_states.push_back(cs01);
@@ -191,17 +186,13 @@ public:
             _target_version = 0; // Default target version
             _backend_client_state = "";
         }
-        remote_config::protocol::client_state client_state(_target_version,
-            std::move(config_states), false, "",
-            std::move(_backend_client_state));
+        remote_config::protocol::client_state client_state = {_target_version,
+            config_states, false, "",
+            _backend_client_state};
 
         auto products_str_cpy = products_str;
         auto id_cpy = id;
-        remote_config::protocol::client client(std::move(id_cpy),
-            std::move(products_str_cpy), std::move(client_tracer),
-            std::move(client_state));
-
-        return client;
+        return {id_cpy, products_str_cpy, client_tracer, client_state};
     }
 
     std::string generate_targets(
@@ -280,27 +271,22 @@ public:
         std::vector<remote_config::protocol::cached_target_files> files;
         if (generate_cache) {
             // First cached file
-            remote_config::protocol::cached_target_files_hash hash01(
-                "sha256", test_helpers::sha256_from_path(paths[0]));
+            remote_config::protocol::cached_target_files_hash hash01{
+                "sha256", test_helpers::sha256_from_path(paths[0])};
             std::string path01 = paths[0];
-            remote_config::protocol::cached_target_files file01(
-                std::move(path01), test_helpers::length_from_path(path01),
-                {hash01});
+            remote_config::protocol::cached_target_files file01 = {
+                path01, test_helpers::length_from_path(path01), {hash01}};
             files.push_back(file01);
 
             // Second cached file
-            remote_config::protocol::cached_target_files_hash hash02(
-                "sha256", test_helpers::sha256_from_path(paths[1]));
+            remote_config::protocol::cached_target_files_hash hash02{
+                "sha256", test_helpers::sha256_from_path(paths[1])};
             std::string path02 = paths[1];
-            remote_config::protocol::cached_target_files file02(
-                std::move(path02), test_helpers::length_from_path(path02),
-                {hash02});
+            remote_config::protocol::cached_target_files file02{
+                path02, test_helpers::length_from_path(path02), {hash02}};
             files.push_back(file02);
         }
-        remote_config::protocol::get_configs_request request(
-            std::move(protocol_client), std::move(files));
-
-        return request;
+        return {std::move(protocol_client), std::move(files)};
     }
 
     std::string generate_request_serialized(

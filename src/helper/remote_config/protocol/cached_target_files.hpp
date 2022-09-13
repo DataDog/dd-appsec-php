@@ -11,26 +11,17 @@
 
 namespace dds::remote_config::protocol {
 
-class cached_target_files {
-public:
-    cached_target_files(std::string &&path, int length,
-        std::vector<cached_target_files_hash> &&hashes)
-        : path_(std::move(path)), length_(length), hashes_(std::move(hashes)){};
-    [[nodiscard]] std::string get_path() const { return path_; };
-    [[nodiscard]] int get_length() const { return length_; };
-    [[nodiscard]] std::vector<cached_target_files_hash> get_hashes() const
-    {
-        return hashes_;
-    };
-    bool operator==(cached_target_files const &b) const
-    {
-        return path_ == b.path_ && length_ == b.length_ && hashes_ == b.hashes_;
-    }
-
-private:
-    std::string path_;
-    int length_;
-    std::vector<cached_target_files_hash> hashes_;
+struct cached_target_files {
+    std::string path;
+    int length;
+    std::vector<cached_target_files_hash> hashes;
 };
+
+inline bool operator==(
+    const cached_target_files &rhs, const cached_target_files &lhs)
+{
+    return rhs.path == lhs.path && rhs.length == lhs.length &&
+           rhs.hashes == lhs.hashes;
+}
 
 } // namespace dds::remote_config::protocol

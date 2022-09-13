@@ -11,26 +11,16 @@
 
 namespace dds::remote_config::protocol {
 
-class path {
-public:
-    path(int v, std::map<std::string, std::string> &&hashes, int length)
-        : custom_v_(v), hashes_(std::move(hashes)), length_(length){};
-    [[nodiscard]] int get_custom_v() const { return custom_v_; };
-    [[nodiscard]] std::map<std::string, std::string> get_hashes() const
-    {
-        return hashes_;
-    };
-    [[nodiscard]] int get_length() const { return length_; };
-    bool operator==(path const &b) const
-    {
-        return custom_v_ == b.custom_v_ && hashes_ == b.hashes_ &&
-               length_ == b.length_;
-    }
-
-private:
-    int custom_v_;
-    std::map<std::string, std::string> hashes_;
-    int length_;
+struct path {
+    int custom_v;
+    std::map<std::string, std::string> hashes;
+    int length;
 };
+
+inline bool operator==(const path &rhs, const path &lhs)
+{
+    return rhs.custom_v == lhs.custom_v && rhs.hashes == lhs.hashes &&
+           rhs.length == lhs.length;
+}
 
 } // namespace dds::remote_config::protocol
