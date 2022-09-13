@@ -281,9 +281,11 @@ get_configs_response parse(const std::string &body)
 }
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define RESULT_AS_STR(entry) #entry,
-constexpr static std::array<std::string_view,
+namespace {
+constexpr std::array<std::string_view,
     (size_t)remote_config_parser_result::num_of_values>
     results_as_str = {PARSER_RESULTS(RESULT_AS_STR)};
+}
 std::string_view remote_config_parser_result_to_str(
     const remote_config_parser_result &result)
 {
