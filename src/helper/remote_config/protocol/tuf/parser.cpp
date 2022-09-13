@@ -15,11 +15,12 @@ using namespace std::literals;
 
 namespace dds::remote_config::protocol {
 
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 bool validate_field_is_present(const rapidjson::Value &parent_field,
     const char *key, rapidjson::Type type,
     rapidjson::Value::ConstMemberIterator &output_itr,
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     const remote_config_parser_result missing,
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     const remote_config_parser_result invalid)
 {
     output_itr = parent_field.FindMember(key);
@@ -38,7 +39,9 @@ bool validate_field_is_present(const rapidjson::Value &parent_field,
 bool validate_field_is_present(
     rapidjson::Value::ConstMemberIterator &parent_field, const char *key,
     rapidjson::Type type, rapidjson::Value::ConstMemberIterator &output_itr,
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     const remote_config_parser_result &missing,
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     const remote_config_parser_result &invalid)
 {
     output_itr = parent_field->value.FindMember(key);

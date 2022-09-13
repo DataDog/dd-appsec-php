@@ -12,8 +12,8 @@
 #include <boost/beast/version.hpp>
 #include <cstdlib>
 #include <iostream>
-#include <string>
 #include <optional>
+#include <string>
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
 namespace http = beast::http;   // from <boost/beast/http.hpp>
@@ -27,8 +27,8 @@ static const int version = 11;
 class http_api {
 public:
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    http_api(const std::string &host, const std::string &port)
-        : host_(host), port_(port){};
+    http_api(std::string &&host, std::string &&port)
+        : host_(std::move(host)), port_(std::move(port)){};
     virtual std::pair<bool, std::optional<std::string>> get_configs(
         std::string &&request) const
     {
