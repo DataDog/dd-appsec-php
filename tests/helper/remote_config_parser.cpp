@@ -69,8 +69,8 @@ void assert_parser_error(std::string payload,
 {
     remote_config::protocol::remote_config_parser_result error;
     try {
-        remote_config::protocol::parse(std::move(payload));
-    } catch (remote_config::protocol::parser_exception e) {
+        remote_config::protocol::parse(payload);
+    } catch (remote_config::protocol::parser_exception &e) {
         error = e.get_error();
     }
 
@@ -132,7 +132,7 @@ TEST(RemoteConfigParser, TargetFilesAreParsed)
 {
     std::string response = get_example_response();
 
-    auto gcr = remote_config::protocol::parse(std::move(response));
+    auto gcr = remote_config::protocol::parse(response);
 
     EXPECT_EQ(2, gcr.target_files.size());
 
@@ -224,7 +224,7 @@ TEST(RemoteConfigParser, ClientConfigsAreParsed)
 {
     std::string response = get_example_response();
 
-    auto gcr = remote_config::protocol::parse(std::move(response));
+    auto gcr = remote_config::protocol::parse(response);
 
     EXPECT_EQ(2, gcr.client_configs.size());
 
@@ -1027,7 +1027,7 @@ TEST(RemoteConfigParser, TargetsAreParsed)
 {
     std::string response = get_example_response();
 
-    auto gcr = remote_config::protocol::parse(std::move(response));
+    auto gcr = remote_config::protocol::parse(response);
 
     remote_config::protocol::targets _targets = gcr.targets;
 

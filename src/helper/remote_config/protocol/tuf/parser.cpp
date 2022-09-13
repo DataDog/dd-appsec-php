@@ -280,8 +280,13 @@ get_configs_response parse(const std::string &body)
         targets_itr, remote_config_parser_result::targets_field_missing,
         remote_config_parser_result::targets_field_invalid_type);
 
-    return {parse_target_files(target_files_itr),
-        parse_client_configs(client_configs_itr), parse_targets(targets_itr)};
+    const std::map<std::string, target_file> &target_files =
+        parse_target_files(target_files_itr);
+    const std::vector<std::string> &client_configs =
+        parse_client_configs(client_configs_itr);
+    const targets &targets = parse_targets(targets_itr);
+
+    return {target_files, client_configs, targets};
 }
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define RESULT_AS_STR(entry) #entry,
