@@ -87,6 +87,8 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
 
     // in
     bool should_block;
+    bool enabled;
+    bool disabled;
     {
         dd_imsg imsg = {0};
         dd_result res;
@@ -126,11 +128,23 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
             return res;
         }
         should_block = res == dd_should_block;
+        enabled = res == dd_enabled;
+        disabled = res == dd_disabled;
     }
 
     if (should_block) {
         mlog(dd_log_info, "%.*s succeed and told to block", NAME_L);
         return dd_should_block;
+    }
+
+    if (enabled) {
+        mlog(dd_log_info, "%.*s succeed and is enabled", NAME_L);
+        return dd_enabled;
+    }
+
+    if (disabled) {
+        mlog(dd_log_info, "%.*s succeed and is disabled", NAME_L);
+        return dd_disabled;
     }
 
     mlog(dd_log_debug, "%.*s succeed. Not blocking", NAME_L);

@@ -258,7 +258,7 @@ static int _do_rinit(INIT_FUNC_ARGS)
         return SUCCESS;
     }
 
-    dd_remote_config(conn);
+    DDAPPSEC_G(enabled) = dd_remote_config(conn) == dd_enabled;
 
     if (!DDAPPSEC_G(enabled)) {
         mlog_g(dd_log_debug, "Appsec disabled");
@@ -291,6 +291,13 @@ static PHP_RSHUTDOWN_FUNCTION(ddappsec)
     UNUSED(type);
     UNUSED(module_number);
 
+    if (UNEXPECTED(DDAPPSEC_G(testing))) {
+        dd_tags_rshutdown_testing();
+        return SUCCESS;
+    }
+
+    int result = dd_appsec_rshutdown();
+
     if (!DDAPPSEC_G(enabled)) {
         return SUCCESS;
     }
@@ -299,12 +306,9 @@ static PHP_RSHUTDOWN_FUNCTION(ddappsec)
         return SUCCESS;
     }
 
-    if (UNEXPECTED(DDAPPSEC_G(testing))) {
-        dd_tags_rshutdown_testing();
-        return SUCCESS;
-    }
+    dd_tags_rshutdown();
 
-    return dd_appsec_rshutdown();
+    return result;
 }
 
 int dd_appsec_rshutdown()
@@ -324,7 +328,6 @@ int dd_appsec_rshutdown()
     }
 
     dd_helper_rshutdown();
-    dd_tags_rshutdown();
 
     return SUCCESS;
 }
@@ -478,6 +481,7 @@ static PHP_FUNCTION(datadog_appsec_testing_rshutdown)
 
     mlog(dd_log_debug, "Running rshutdown actions");
     int res = dd_appsec_rshutdown();
+    dd_tags_rshutdown();
     if (res == 0) {
         RETURN_TRUE;
     } else {
