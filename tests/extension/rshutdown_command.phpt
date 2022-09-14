@@ -10,7 +10,7 @@ use function datadog\appsec\testing\{rinit,rshutdown};
 
 include __DIR__ . '/inc/mock_helper.php';
 
-$helper = Helper::createInitedRun([['ok', []],
+$helper = Helper::createInitedRun([REMOTE_CONFIG_ENABLED, REQUEST_INIT_OK,
     ['ok', [], new ArrayObject(), new ArrayObject()]]);
 
 header('Foo:bar');

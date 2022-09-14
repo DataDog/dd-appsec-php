@@ -26,7 +26,7 @@ use function datadog\appsec\testing\rinit;
 
 include __DIR__ . '/inc/mock_helper.php';
 
-$helper = Helper::createInitedRun([['ok', []]]);
+$helper = Helper::createInitedRun([REMOTE_CONFIG_ENABLED, REQUEST_INIT_OK]);
 
 var_dump(rinit());
 
@@ -35,13 +35,13 @@ $c = $helper->get_commands();
 function p($n) {
     global $c;
     echo "$n:\n";
-    var_dump($c[1][1][0][$n]);
+    var_dump($c[2][1][0][$n]);
 }
 p('server.request.body');
 p('server.request.body.filenames');
 p('server.request.body.files_field_names');
 
-var_dump(array_key_exists('server.request.body.raw', $c[1][1][0]));
+var_dump(array_key_exists('server.request.body.raw', $c[2][1][0]));
 
 ?>
 --EXPECT--

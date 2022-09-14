@@ -10,7 +10,7 @@ use function datadog\appsec\testing\{rinit,rshutdown};
 
 include __DIR__ . '/inc/mock_helper.php';
 
-$helper = Helper::createInitedRun([['ok', []]]);
+$helper = Helper::createInitedRun([REMOTE_CONFIG_ENABLED, REQUEST_INIT_OK]);
 
 var_dump($_POST);
 var_dump(rinit());
@@ -18,10 +18,10 @@ var_dump(rinit());
 $c = $helper->get_commands();
 
 echo "server.request.body:\n";
-var_dump($c[1][1][0]['server.request.body']);
+var_dump($c[2][1][0]['server.request.body']);
 
 echo "server.request.body.raw:\n";
-var_dump($c[1][1][0]['server.request.body.raw']);
+var_dump($c[2][1][0]['server.request.body.raw']);
 
 ?>
 --EXPECT--

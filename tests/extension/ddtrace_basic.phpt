@@ -20,7 +20,7 @@ use const datadog\appsec\testing\log_level\DEBUG;
 
 include __DIR__ . '/inc/mock_helper.php';
 
-$helper = Helper::createInitedRun([['ok']], ['continuous' => true]);
+$helper = Helper::createInitedRun([REMOTE_CONFIG_ENABLED, REQUEST_INIT_OK], ['continuous' => true]);
 
 mlog(DEBUG, "Call rinit");
 echo "rinit\n";
@@ -60,7 +60,7 @@ $helper->finished_with_commands();
 --EXPECTF--
 rinit
 bool(true)
-number of commands: 2
+number of commands: 3
 object(DDTrace\SpanData)#%d (5) {
   ["name"]=>
   string(17) "ddtrace_basic.php"

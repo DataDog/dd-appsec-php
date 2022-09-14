@@ -32,6 +32,7 @@ $helper = Helper::createRun([
     ['ok', phpversion('ddappsec'), [],
         ["meta_1" => "value_1", "meta_2" => "value_2"],
         ["metric_1" => 2.0, "metric_2" => 10.0]],
+    REMOTE_CONFIG_ENABLED,
     ['record', ['{"found":"attack"}','{"another":"attack"}']],
     ['record', ['{"yet another":"attack"}']],
 ], ['continuous' => true]);

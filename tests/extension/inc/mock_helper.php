@@ -4,6 +4,10 @@ define('TEMP_DIR', '/tmp');
 define('STDOUT_PATH', TEMP_DIR . "/mock_helper.stdout.log");
 define('STDERR_PATH', TEMP_DIR . "/mock_helper.stderr.log");
 
+
+define("REMOTE_CONFIG_ENABLED", ['enabled', []]);
+define("REQUEST_INIT_OK", ['ok', []]);
+
 class Helper {
     private $descriptors;
     private $process;

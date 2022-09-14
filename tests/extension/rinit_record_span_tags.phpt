@@ -29,6 +29,7 @@ print_r(root_span_get_meta());
 include __DIR__ . '/inc/mock_helper.php';
 
 $helper = Helper::createInitedRun([
+    REMOTE_CONFIG_ENABLED,
     ['record', ['{"found":"attack"}','{"another":"attack"}']],
     ['record', ['{"yet another":"attack"}'], ["rshutdown_tag" => "rshutdown_value"], ["rshutdown_metric" => 2.1]],
 ], ['continuous' => true]);

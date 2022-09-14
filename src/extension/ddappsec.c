@@ -18,6 +18,7 @@
 #include <stdatomic.h>
 
 #include "commands/client_init.h"
+#include "commands/remote_config.h"
 #include "commands/request_init.h"
 #include "commands/request_shutdown.h"
 #include "ddappsec.h"
@@ -227,13 +228,6 @@ static PHP_RINIT_FUNCTION(ddappsec)
     }
 #endif
 
-    if (!DDAPPSEC_G(enabled)) {
-        mlog_g(dd_log_debug, "Appsec disabled");
-        return SUCCESS;
-    }
-
-    DDAPPSEC_G(skip_rshutdown) = false;
-
     if (UNEXPECTED(DDAPPSEC_G(testing))) {
         if (DDAPPSEC_G(testing_abort_rinit)) {
             const char *pt = SG(request_info).path_translated;
@@ -257,14 +251,23 @@ static int _do_rinit(INIT_FUNC_ARGS)
     UNUSED(type);
     UNUSED(module_number);
 
-    dd_tags_rinit();
-
     // connect/client_init
     dd_conn *conn = dd_helper_mgr_acquire_conn(_acquire_conn_cb);
     if (conn == NULL) {
         mlog_g(dd_log_debug, "No connection; skipping rest of RINIT");
         return SUCCESS;
     }
+
+    dd_remote_config(conn);
+
+    if (!DDAPPSEC_G(enabled)) {
+        mlog_g(dd_log_debug, "Appsec disabled");
+        return SUCCESS;
+    }
+
+    DDAPPSEC_G(skip_rshutdown) = false;
+
+    dd_tags_rinit();
 
     // request_init
     int res = dd_request_init(conn);

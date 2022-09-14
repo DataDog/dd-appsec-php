@@ -118,7 +118,9 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
                 NAME_L);
             return dd_error;
         }
-        if (res != dd_success && res != dd_should_block) {
+        //@todo improve this evolving kaos way of checking
+        if (res != dd_success && res != dd_should_block && res != dd_enabled &&
+            res != dd_disabled) {
             mlog(dd_log_warning, "Processing for command %.*s failed: %s",
                 NAME_L, dd_result_to_string(res));
             return res;

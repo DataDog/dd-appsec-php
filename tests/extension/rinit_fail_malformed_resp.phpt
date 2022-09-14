@@ -8,7 +8,7 @@ include __DIR__ . '/inc/mock_helper.php';
 
 // respond correctly to client_init and request_shutdown, but not request_init
 $obj = new ArrayObject();
-$helper = Helper::createInitedRun([[['foo' => 'ok']], ['ok', [], $obj, $obj]]);
+$helper = Helper::createInitedRun([REMOTE_CONFIG_ENABLED, [['foo' => 'ok']], ['ok', [], $obj, $obj]]);
 
 echo "rinit:\n";
 var_dump(rinit());

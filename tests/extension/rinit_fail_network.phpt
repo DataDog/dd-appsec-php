@@ -6,7 +6,7 @@ use function datadog\appsec\testing\{rinit,rshutdown,backoff_status,is_connected
 
 include __DIR__ . '/inc/mock_helper.php';
 
-$helper = Helper::createInitedRun([]); // respond to client_init, but not request_init
+$helper = Helper::createInitedRun([REMOTE_CONFIG_ENABLED]); // respond to client_init and remote_config but not request_init
 
 echo "rinit:\n";
 var_dump(rinit());
