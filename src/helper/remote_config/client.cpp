@@ -15,7 +15,8 @@ namespace dds::remote_config {
 
 config_path config_path::from_path(const std::string &path)
 {
-    static std::regex regex("^(datadog/\\d+|employee)/([^/]+)/([^/]+)/[^/]+$");
+    static const std::regex regex(
+        "^(datadog/\\d+|employee)/([^/]+)/([^/]+)/[^/]+$");
 
     std::smatch base_match;
     if (!std::regex_match(path, base_match, regex) || base_match.size() < 4) {
@@ -170,9 +171,8 @@ remote_config_result client::poll()
         return remote_config_result::error;
     }
 
-    auto [result, response_body] =
-        api_->get_configs(std::move(serialized_request));
-    if (!result) {
+    auto response_body = api_->get_configs(std::move(serialized_request));
+    if (!response_body) {
         return remote_config_result::error;
     }
 

@@ -14,22 +14,23 @@
 
 namespace dds::remote_config {
 
-class product_listener_abstract {
+class product_listener_base {
 public:
+    product_listener_base() = default;
+    product_listener_base(const product_listener_base &) = default;
+    product_listener_base(product_listener_base &&) = default;
+    product_listener_base &operator=(const product_listener_base &) = default;
+    product_listener_base &operator=(product_listener_base &&) = default;
+    virtual ~product_listener_base() = default;
+
     virtual void on_update(const std::map<std::string, config> &configs) = 0;
     virtual void on_unapply(const std::map<std::string, config> &configs) = 0;
-};
-
-class product_listener : product_listener_abstract {
-public:
-    void on_update(const std::map<std::string, config> &configs) override{};
-    void on_unapply(const std::map<std::string, config> &configs) override{};
 };
 
 class product {
 public:
     explicit product(
-        std::string &&name, std::vector<product_listener *> &&listeners)
+        std::string &&name, std::vector<product_listener_base *> &&listeners)
         : name_(std::move(name)), listeners_(std::move(listeners)){};
     void assign_configs(const std::map<std::string, config> &configs)
     {
@@ -51,7 +52,7 @@ public:
             }
         }
 
-        for (product_listener *listener : listeners_) {
+        for (product_listener_base *listener : listeners_) {
             listener->on_update(to_update);
             listener->on_unapply(configs_);
         }
@@ -72,7 +73,7 @@ public:
 private:
     std::string name_;
     std::map<std::string, config> configs_;
-    std::vector<product_listener *> listeners_;
+    std::vector<product_listener_base *> listeners_;
 };
 
 } // namespace dds::remote_config

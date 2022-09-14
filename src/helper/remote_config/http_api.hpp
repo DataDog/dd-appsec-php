@@ -29,10 +29,18 @@ public:
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     http_api(std::string &&host, std::string &&port)
         : host_(std::move(host)), port_(std::move(port)){};
-    virtual std::pair<bool, std::optional<std::string>> get_configs(
-        std::string &&request) const
+
+    http_api(const http_api &) = delete;
+    http_api(http_api &&) = delete;
+
+    http_api &operator=(const http_api &) = delete;
+    http_api &operator=(http_api &&) = delete;
+
+    virtual ~http_api() = default;
+
+    virtual std::optional<std::string> get_configs(std::string &&request) const
     {
-        std::pair<bool, std::optional<std::string>> result;
+        std::optional<std::string> result;
         try {
             const char *target = "/v0.7/config";
 
@@ -76,7 +84,7 @@ public:
             http::read(stream, buffer, res);
 
             // Write the message to output string
-            result.second = boost::beast::buffers_to_string(res.body().data());
+            result = boost::beast::buffers_to_string(res.body().data());
 
             // Gracefully close the socket
             beast::error_code ec;
@@ -88,17 +96,16 @@ public:
             if (ec && ec != beast::errc::not_connected) {
                 throw beast::system_error{ec};
             }
-            result.first = true;
             // If we get here then the connection is closed gracefully
         } catch (std::exception const &e) {
             //@todo log these errors somewhere else
             //            std::cerr << "Error: " << e.what() << std::endl;
-            result.first = false;
+            return std::nullopt;
         }
         return result;
     };
 
-private:
+protected:
     std::string host_;
     std::string port_;
 };

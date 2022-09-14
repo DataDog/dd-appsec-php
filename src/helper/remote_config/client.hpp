@@ -32,13 +32,14 @@ struct config_path {
 class client {
 public:
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    client(const http_api *arg_api, std::string &&id, std::string &&runtime_id,
+    client(std::unique_ptr<http_api> &&arg_api, std::string &&id,
+        std::string &&runtime_id,
         // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
         std::string &&tracer_version, std::string &&service, std::string &&env,
         std::string &&app_version, const std::vector<product> &products)
-        : api_(arg_api), id_(id), runtime_id_(runtime_id),
+        : api_(std::move(arg_api)), id_(id), runtime_id_(runtime_id),
           tracer_version_(tracer_version), service_(service), env_(env),
-          app_version_(app_version), targets_version_(0)
+          app_version_(app_version)
     {
         for (auto const &product : products) {
             products_.insert(std::pair<std::string, remote_config::product>(
@@ -53,7 +54,7 @@ private:
     remote_config_result process_response(
         const protocol::get_configs_response &response);
 
-    const http_api *api_;
+    std::unique_ptr<http_api> api_;
     std::string id_;
     std::string runtime_id_;
     std::string tracer_version_;
@@ -62,7 +63,7 @@ private:
     std::string app_version_;
     std::string last_poll_error_;
     std::string opaque_backend_state_;
-    int targets_version_;
+    int targets_version_{0};
     std::map<std::string, product> products_;
 };
 
