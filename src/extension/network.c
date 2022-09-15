@@ -228,6 +228,12 @@ dd_result dd_conn_recv(dd_conn *nonnull conn, char *nullable *nonnull data,
         return dd_network; // force reconnect, we don't want to read it all
     }
 
+    if (h.size == 0) {
+        mlog(dd_log_warning,
+            "Helper was unable to process message");
+        return dd_error;
+    }
+
     return _recv_message_body(conn->socket, data, data_len, h.size);
 }
 

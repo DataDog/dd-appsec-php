@@ -50,6 +50,12 @@ bool maybe_exec_cmd_M(client &client, network::request &msg)
     return false;
 }
 
+void send_error_response(const network::base_broker &broker)
+{
+    network::error_response err;
+    broker.send(err);
+}
+
 template <typename... Ms>
 // NOLINTNEXTLINE(google-runtime-references)
 bool handle_message(client &client, const network::base_broker &broker,
@@ -63,15 +69,28 @@ bool handle_message(client &client, const network::base_broker &broker,
         SPDLOG_DEBUG("Wait for one these messages: {}", all_names.str());
     }
 
+    bool send_error = false;
     try {
         auto msg = broker.recv(initial_timeout);
         return maybe_exec_cmd_M<Ms...>(client, msg);
     } catch (const client_disconnect &) {
         SPDLOG_INFO("Client has disconnected");
+    } catch (const std::length_error &e) {
+        SPDLOG_WARN("Failed to handle message: {}", e.what());
+        send_error = true;
+    } catch (const bad_cast &e) {
+        SPDLOG_WARN("Failed to handle message: {}", e.what());
+        send_error = true;
+    } catch (const msgpack::unpack_error &e) {
+        SPDLOG_WARN("Failed to unpack message: {}", e.what());
+        send_error = true;
     } catch (const std::exception &e) {
         SPDLOG_WARN("Failed to handle message: {}", e.what());
     }
 
+    if (send_error) { send_error_response(broker); }
+
+    // If we reach this point, there was a problem handling the message
     return false;
 }
 

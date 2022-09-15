@@ -249,6 +249,33 @@ TEST(BrokerTest, RecvRequestInit)
     EXPECT_STREQ(std::string_view(pv[1]).data(), "arachni.com");
 }
 
+TEST(BrokerTest, RecvRequestInitOverLimits)
+{
+    mock::socket *socket = new mock::socket();
+    network::broker broker{std::unique_ptr<mock::socket>(socket)};
+
+    std::stringstream ss;
+    msgpack::packer<std::stringstream> packer(ss);
+    packer.pack_array(2);
+    pack_str(packer, "request_init");
+    packer.pack_array(1);
+    packer.pack_map(257);
+    for (unsigned i = 0; i < 257; i++) {
+        pack_str(packer, std::to_string(i));
+        pack_str(packer, std::to_string(i));
+    }
+    const std::string &expected_data = ss.str();
+
+    network::header_t h{"dds", (uint32_t)expected_data.size()};
+    EXPECT_CALL(*socket, recv(_, _))
+        .WillOnce(DoAll(CopyHeader(&h), Return(sizeof(network::header_t))))
+        .WillOnce(
+            DoAll(CopyString(&expected_data), Return(expected_data.size())));
+
+    EXPECT_THROW(network::request request = broker.recv(std::chrono::milliseconds(100)),
+            msgpack::unpack_error);
+}
+
 TEST(BrokerTest, RecvRequestShutdown)
 {
     mock::socket *socket = new mock::socket();

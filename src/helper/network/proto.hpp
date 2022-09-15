@@ -33,7 +33,8 @@ enum class response_id : unsigned {
     unknown,
     client_init,
     request_init,
-    request_shutdown
+    request_shutdown,
+    error
 };
 
 struct base_request {
@@ -162,6 +163,14 @@ struct request_shutdown {
 
         MSGPACK_DEFINE(verdict, triggers, meta, metrics);
     };
+};
+
+// Response to be used if the incoming message could not be parsed, this
+// response ensures that the extension will not be blocked waiting for a
+// message.
+struct error_response : base_response_generic<error_response> {
+    static constexpr response_id id = response_id::error;
+    MSGPACK_DEFINE();
 };
 
 struct request {
