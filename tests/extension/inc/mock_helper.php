@@ -6,7 +6,13 @@ define('STDERR_PATH', TEMP_DIR . "/mock_helper.stderr.log");
 
 
 define("REMOTE_CONFIG_ENABLED", ['enabled', []]);
+define("REMOTE_CONFIG_DISABLED", ['disabled', []]);
 define("REQUEST_INIT_OK", ['ok', []]);
+
+function shutdown_ok()
+{
+    return ['ok', [], new ArrayObject(), new ArrayObject()];
+}
 
 class Helper {
     private $descriptors;

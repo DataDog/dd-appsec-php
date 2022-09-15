@@ -5,6 +5,6 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #pragma once
 
-#include "../network.h"
+#include "../dddefs.h"
 
 dd_result dd_remote_config(dd_conn *nonnull conn);

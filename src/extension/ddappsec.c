@@ -258,7 +258,13 @@ static int _do_rinit(INIT_FUNC_ARGS)
         return SUCCESS;
     }
 
-    DDAPPSEC_G(enabled) = dd_remote_config(conn) == dd_enabled;
+    int res = dd_remote_config(conn);
+    if (res == dd_network) {
+        mlog_g(dd_log_info, "remote_config failed with dd_network; closing "
+                            "connection to helper");
+        dd_helper_close_conn();
+    }
+    DDAPPSEC_G(enabled) = res == dd_enabled;
 
     if (!DDAPPSEC_G(enabled)) {
         mlog_g(dd_log_debug, "Appsec disabled");
@@ -270,7 +276,7 @@ static int _do_rinit(INIT_FUNC_ARGS)
     dd_tags_rinit();
 
     // request_init
-    int res = dd_request_init(conn);
+    res = dd_request_init(conn);
     if (res == dd_network) {
         mlog_g(dd_log_info, "request_init failed with dd_network; closing "
                             "connection to helper");
@@ -291,16 +297,14 @@ static PHP_RSHUTDOWN_FUNCTION(ddappsec)
     UNUSED(type);
     UNUSED(module_number);
 
+    int result;
+
     if (UNEXPECTED(DDAPPSEC_G(testing))) {
         dd_tags_rshutdown_testing();
         return SUCCESS;
     }
 
-    int result = dd_appsec_rshutdown();
-
-    if (!DDAPPSEC_G(enabled)) {
-        return SUCCESS;
-    }
+    result = dd_appsec_rshutdown();
 
     if (DDAPPSEC_G(skip_rshutdown)) {
         return SUCCESS;
