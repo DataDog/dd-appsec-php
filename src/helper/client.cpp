@@ -50,12 +50,6 @@ bool maybe_exec_cmd_M(client &client, network::request &msg)
     return false;
 }
 
-void send_error_response(const network::base_broker &broker)
-{
-    network::error_response err;
-    broker.send(err);
-}
-
 template <typename... Ms>
 // NOLINTNEXTLINE(google-runtime-references)
 bool handle_message(client &client, const network::base_broker &broker,
@@ -88,7 +82,9 @@ bool handle_message(client &client, const network::base_broker &broker,
         SPDLOG_WARN("Failed to handle message: {}", e.what());
     }
 
-    if (send_error) { send_error_response(broker); }
+    if (send_error) {
+        broker.send(network::error_response());
+    }
 
     // If we reach this point, there was a problem handling the message
     return false;

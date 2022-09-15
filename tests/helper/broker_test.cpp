@@ -272,8 +272,9 @@ TEST(BrokerTest, RecvRequestInitOverLimits)
         .WillOnce(
             DoAll(CopyString(&expected_data), Return(expected_data.size())));
 
-    EXPECT_THROW(network::request request = broker.recv(std::chrono::milliseconds(100)),
-            msgpack::unpack_error);
+    EXPECT_THROW(
+        network::request request = broker.recv(std::chrono::milliseconds(100)),
+        msgpack::unpack_error);
 }
 
 TEST(BrokerTest, RecvRequestShutdown)

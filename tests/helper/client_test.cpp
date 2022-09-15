@@ -386,7 +386,8 @@ TEST(ClientTest, RequestInitUnpackError)
     // Request Init
     {
         network::error_response res;
-        EXPECT_CALL(*broker, recv(_)).WillOnce(Throw(msgpack::unpack_error("map size overflow")));
+        EXPECT_CALL(*broker, recv(_))
+            .WillOnce(Throw(msgpack::unpack_error("map size overflow")));
         EXPECT_CALL(*broker, send(_))
             .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
 

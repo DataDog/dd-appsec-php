@@ -229,8 +229,7 @@ dd_result dd_conn_recv(dd_conn *nonnull conn, char *nullable *nonnull data,
     }
 
     if (h.size == 0) {
-        mlog(dd_log_warning,
-            "Helper was unable to process message");
+        mlog(dd_log_warning, "Helper was unable to process message");
         return dd_error;
     }
 
