@@ -1,5 +1,9 @@
 # Datadog AppSec for PHP Release
 
+### v0.4.1
+#### Fixes
+- ([#120](https://github.com/DataDog/dd-appsec-php/pull/120)) Return error response in helper when incoming message can't be unpacked
+
 ### v0.4.0
 #### Fixes
 - ([#99](https://github.com/DataDog/dd-appsec-php/pull/99)) Fix interned string invalidation on PHP <= 7.2

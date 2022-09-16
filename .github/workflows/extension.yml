@@ -2,10 +2,14 @@ name: Extension
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
+      - dd-appsec-php-*
     tags:
       - "*"
   pull_request:
+    branches:
+      - "**"
     paths-ignore:
       - cmake/helper.cmake
       - src/helper/**
