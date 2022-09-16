@@ -6,6 +6,8 @@ on:
     tags:
       - "*"
   pull_request:
+    branches:
+      - "**"
     paths-ignore:
       - cmake/extension.cmake
       - cmake/run-tests-wrapper.sh
