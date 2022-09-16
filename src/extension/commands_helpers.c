@@ -124,13 +124,11 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
     }
 
     if (should_block) {
-        mlog(dd_log_info, "%.*s succeed and told to block", (int)spec->name_len,
-            spec->name);
+        mlog(dd_log_info, "%.*s succeed and told to block", NAME_L);
         return dd_should_block;
     }
 
-    mlog(dd_log_debug, "%.*s succeed. Not blocking", (int)spec->name_len,
-        spec->name);
+    mlog(dd_log_debug, "%.*s succeed. Not blocking", NAME_L);
     return dd_success;
 }
 

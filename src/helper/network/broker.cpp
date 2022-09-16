@@ -33,7 +33,7 @@ request broker::recv(std::chrono::milliseconds initial_timeout) const
         throw client_disconnect{};
     }
     if (res != sizeof(header_t)) {
-        // The ender probably closed the socket
+        // The sender probably closed the socket
         throw std::length_error(
             "Not enough data for header:" + std::to_string(res) + " bytes");
     }

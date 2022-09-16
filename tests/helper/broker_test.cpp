@@ -259,8 +259,10 @@ TEST(BrokerTest, RecvRequestInitOverLimits)
     packer.pack_array(2);
     pack_str(packer, "request_init");
     packer.pack_array(1);
-    packer.pack_map(257);
-    for (unsigned i = 0; i < 257; i++) {
+
+    auto map_size = network::broker::max_map_size + 1;
+    packer.pack_map(map_size);
+    for (unsigned i = 0; i < map_size; i++) {
         pack_str(packer, std::to_string(i));
         pack_str(packer, std::to_string(i));
     }
