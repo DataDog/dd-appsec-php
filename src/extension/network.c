@@ -228,12 +228,6 @@ dd_result dd_conn_recv(dd_conn *nonnull conn, char *nullable *nonnull data,
         return dd_network; // force reconnect, we don't want to read it all
     }
 
-    // Empty msgpack case - this indicates the error message
-    if (h.size == 1) {
-        mlog(dd_log_warning, "Helper responded with an error message");
-        return dd_error;
-    }
-
     return _recv_message_body(conn->socket, data, data_len, h.size);
 }
 
@@ -411,6 +405,9 @@ dd_result dd_conn_set_timeout(
     struct timeval timeout;
     timeout.tv_sec = time_seconds;
     timeout.tv_usec = time_microseconds;
+
+    mlog(dd_log_debug, "setting timeout to %u.%06u", time_seconds,
+        time_microseconds);
 
     int res =
         setsockopt(conn->socket, SOL_SOCKET, type, &timeout, sizeof(timeout));
