@@ -33,7 +33,7 @@ request broker::recv(std::chrono::milliseconds initial_timeout) const
         throw client_disconnect{};
     }
     if (res != sizeof(header_t)) {
-        // The sender probably closed the socket
+        // The ender probably closed the socket
         throw std::length_error(
             "Not enough data for header:" + std::to_string(res) + " bytes");
     }
@@ -83,10 +83,6 @@ bool broker::send(const base_response &msg) const
     auto res = socket_->send(reinterpret_cast<char *>(&h), sizeof(header_t));
     if (res != sizeof(header_t)) {
         return false;
-    }
-
-    if (buffer.size() == 0) {
-        return 0;
     }
 
     res = socket_->send(buffer.c_str(), buffer.size());

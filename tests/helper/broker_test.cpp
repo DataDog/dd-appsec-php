@@ -582,10 +582,16 @@ TEST(BrokerTest, SendErrorResponse)
     mock::socket *socket = new mock::socket();
     network::broker broker{std::unique_ptr<mock::socket>(socket)};
 
-    EXPECT_CALL(*socket, send(_, _)).WillOnce(Return(0));
+    network::header_t h;
+    EXPECT_CALL(*socket, send(_, _))
+        .WillOnce(DoAll(SaveHeader(&h), Return(sizeof(network::header_t))))
+        .WillOnce(Return(1));
 
     network::error::response response;
-    EXPECT_FALSE(broker.send(response));
+    EXPECT_TRUE(broker.send(response));
+
+    EXPECT_STREQ(h.code, "dds");
+    EXPECT_EQ(h.size, 1);
 }
 
 TEST(BrokerTest, InvalidResponseSize)

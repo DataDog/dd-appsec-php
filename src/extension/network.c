@@ -228,8 +228,9 @@ dd_result dd_conn_recv(dd_conn *nonnull conn, char *nullable *nonnull data,
         return dd_network; // force reconnect, we don't want to read it all
     }
 
-    if (h.size == 0) {
-        mlog(dd_log_warning, "Helper was unable to process message");
+    // Empty msgpack case - this indicates the error message
+    if (h.size == 1) {
+        mlog(dd_log_warning, "Helper responded with an error message");
         return dd_error;
     }
 
