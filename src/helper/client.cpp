@@ -83,7 +83,9 @@ bool handle_message(client &client, const network::base_broker &broker,
     }
 
     if (send_error) {
-        broker.send(network::error_response());
+        if (!broker.send(network::error::response())) {
+            SPDLOG_WARN("Failed to send error response");
+        }
     }
 
     // If we reach this point, there was a problem handling the message

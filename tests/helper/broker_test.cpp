@@ -577,13 +577,21 @@ TEST(BrokerTest, ParsingBodyLimit)
         std::length_error);
 }
 
-TEST(BrokerTest, InvalidResponseSize)
+TEST(BrokerTest, SendErrorResponse)
 {
     mock::socket *socket = new mock::socket();
     network::broker broker{std::unique_ptr<mock::socket>(socket)};
 
-    std::stringstream ss;
-    msgpack::packer<std::stringstream> packer(ss);
+    EXPECT_CALL(*socket, send(_, _)).WillOnce(Return(0));
+
+    network::error::response response;
+    EXPECT_FALSE(broker.send(response));
+}
+
+TEST(BrokerTest, InvalidResponseSize)
+{
+    mock::socket *socket = new mock::socket();
+    network::broker broker{std::unique_ptr<mock::socket>(socket)};
 
     EXPECT_CALL(*socket, send(_, _)).WillOnce(Return(0));
 

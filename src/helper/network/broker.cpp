@@ -85,6 +85,10 @@ bool broker::send(const base_response &msg) const
         return false;
     }
 
+    if (buffer.size() == 0) {
+        return 0;
+    }
+
     res = socket_->send(buffer.c_str(), buffer.size());
     return res == buffer.size();
 }

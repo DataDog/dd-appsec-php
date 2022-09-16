@@ -168,9 +168,11 @@ struct request_shutdown {
 // Response to be used if the incoming message could not be parsed, this
 // response ensures that the extension will not be blocked waiting for a
 // message.
-struct error_response : base_response_generic<error_response> {
-    static constexpr response_id id = response_id::error;
-    MSGPACK_DEFINE();
+struct error {
+    struct response : base_response_generic<response> {
+        static constexpr response_id id = response_id::error;
+        MSGPACK_DEFINE();
+    };
 };
 
 struct request {
