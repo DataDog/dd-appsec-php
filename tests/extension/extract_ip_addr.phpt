@@ -38,13 +38,13 @@ test('client_ip', '2.2.2.2');
 
 test('x_forwarded', 'for="[2001::1]:1111"');
 test('x_forwarded', 'fOr="[2001::1]:1111"');
+test('x_forwarded', 'for="2001:abcf::1"');
 test('x_forwarded', 'for=some_host');
 test('x_forwarded', 'for=127.0.0.1, FOR=1.1.1.1');
 test('x_forwarded', 'for="\"foobar";proto=http,FOR="1.1.1.1"');
 test('x_forwarded', 'for="8.8.8.8:2222",');
 test('x_forwarded', 'for="8.8.8.8'); // quote not closed
 test('x_forwarded', 'far="8.8.8.8",for=4.4.4.4;');
-//\datadog\appsec\testing\stop_for_debugger();
 test('x_forwarded', '   for=127.0.0.1,for= for=,for=;"for = for="" ,; for=8.8.8.8;');
 
 test('x_cluster_client_ip', '2.2.2.2');
@@ -144,6 +144,9 @@ string(7) "2001::1"
 
 x_forwarded: fOr="[2001::1]:1111"
 string(7) "2001::1"
+
+x_forwarded: for="2001:abcf::1"
+string(12) "2001:abcf::1"
 
 x_forwarded: for=some_host
 
