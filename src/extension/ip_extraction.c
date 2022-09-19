@@ -520,20 +520,28 @@ static bool _is_private_v6(const struct in6_addr *nonnull addr)
     static const struct {
         union {
             struct in6_addr base;
-            unsigned __int128 base_i;
+            uint64_t base_i[2];
         };
         union {
             struct in6_addr mask;
-            unsigned __int128 mask_i;
+            uint64_t mask_i[2];
         };
     } priv_ranges[] = {
         {
-            .base.s6_addr = {[15] = 1},
+            .base.s6_addr = {[15] = 1}, // loopback
             .mask.s6_addr = {[0 ... 15] = 0xFF}, // /128
         },
         {
-            .base.s6_addr = {0xFE, 0x80},
+            .base.s6_addr = {0xFE, 0x80}, // link-local
             .mask.s6_addr = {0xFF, 0xC0}, // /10
+        },
+        {
+            .base.s6_addr = {0xFE, 0xC0}, // site-local
+            .mask.s6_addr = {0xFF, 0xC0}, // /10
+        },
+        {
+            .base.s6_addr = {0xFD}, // unique local address
+            .mask.s6_addr = {0xFF}, // /8
         },
         {
             .base.s6_addr = {0xFC},
@@ -542,12 +550,14 @@ static bool _is_private_v6(const struct in6_addr *nonnull addr)
     };
     // clang-format on
 
-    unsigned __int128 addr_i;
-    memcpy(&addr_i, addr->s6_addr, sizeof(addr_i));
+    uint64_t addr_i[2];
+    memcpy(&addr_i[0], addr->s6_addr, sizeof(addr_i));
 
     for (unsigned i = 0; i < ARRAY_SIZE(priv_ranges); i++) {
-        __auto_type range = &priv_ranges[i];
-        if ((addr_i & range->mask_i) == range->base_i) {
+        if ((addr_i[0] & priv_ranges[i].mask_i[0]) ==
+                priv_ranges[i].base_i[0] &&
+            (addr_i[1] & priv_ranges[i].mask_i[1]) ==
+                priv_ranges[i].base_i[1]) {
             return true;
         }
     }
