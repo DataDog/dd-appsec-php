@@ -251,7 +251,7 @@ static bool _parse_x_forwarded_for(
         for (; value < end && *value == ' '; value++) {}
         const char *comma = memchr(value, ',', end - value);
         const char *end_cur = comma ? comma : end;
-        succ = _parse_ip_address(value, end_cur - value, out);
+        succ = _parse_ip_address_maybe_port_pair(value, end_cur - value, out);
         if (succ) {
             succ = !_is_private(out);
         }
@@ -466,7 +466,7 @@ static bool _parse_ip_address_maybe_port_pair(
         return _parse_ip_address(addr + 1, pos_close - (addr + 1), out);
     }
     const char *colon = memchr(addr, ':', addr_len);
-    if (colon) {
+    if (colon && zend_memrchr(addr, ':', addr_len) == colon) {
         return _parse_ip_address(addr, colon - addr, out);
     }
 
