@@ -236,10 +236,10 @@ static zend_string *nullable _ipaddr_to_zstr(const ipaddr *ipaddr)
     return zend_string_init(res, strlen(res), 0);
 }
 
-static bool _parse_ip_address(
-    const char *nonnull _addr, size_t addr_len, ipaddr *nonnull out);
-static bool _parse_ip_address_maybe_port_pair(
-    const char *nonnull addr, size_t addr_len, ipaddr *nonnull out);
+static bool _parse_ip_address(const char *nonnull _addr, size_t addr_len,
+    bool ip_or_error, ipaddr *nonnull out);
+static bool _parse_ip_address_maybe_port_pair(const char *nonnull addr,
+    size_t addr_len, bool ip_or_error, ipaddr *nonnull out);
 
 static bool _parse_x_forwarded_for(
     zend_string *nonnull zvalue, ipaddr *nonnull out)
@@ -251,7 +251,8 @@ static bool _parse_x_forwarded_for(
         for (; value < end && *value == ' '; value++) {}
         const char *comma = memchr(value, ',', end - value);
         const char *end_cur = comma ? comma : end;
-        succ = _parse_ip_address_maybe_port_pair(value, end_cur - value, out);
+        succ = _parse_ip_address_maybe_port_pair(
+            value, end_cur - value, true, out);
         if (succ) {
             succ = !_is_private(out);
         }
@@ -317,7 +318,7 @@ static bool _parse_forwarded(zend_string *nonnull zvalue, ipaddr *nonnull out)
             }
             if (consider_value) {
                 bool succ = _parse_ip_address_maybe_port_pair(
-                    start, token_end - start, out);
+                    start, token_end - start, true, out);
                 if (succ && !_is_private(out)) {
                     return true;
                 }
@@ -331,7 +332,7 @@ static bool _parse_forwarded(zend_string *nonnull zvalue, ipaddr *nonnull out)
                     // ip addresses can't contain quotes, so we don't try to
                     // unescape them
                     bool succ = _parse_ip_address_maybe_port_pair(
-                        start, r - start, out);
+                        start, r - start, true, out);
                     if (succ && !_is_private(out)) {
                         return true;
                     }
@@ -388,7 +389,7 @@ static bool _parse_via(zend_string *nonnull zvalue, ipaddr *nonnull out)
         // we can have a trailing comment, so try find next whitespace
         end_cur = _skip_non_ws(p, end_cur);
 
-        succ = _parse_ip_address_maybe_port_pair(p, end_cur - p, out);
+        succ = _parse_ip_address_maybe_port_pair(p, end_cur - p, false, out);
         if (succ) {
             succ = !_is_private(out);
             if (succ) {
@@ -404,12 +405,12 @@ static bool _parse_via(zend_string *nonnull zvalue, ipaddr *nonnull out)
 
 static bool _parse_plain(zend_string *nonnull zvalue, ipaddr *nonnull out)
 {
-    return _parse_ip_address(ZSTR_VAL(zvalue), ZSTR_LEN(zvalue), out) &&
+    return _parse_ip_address(ZSTR_VAL(zvalue), ZSTR_LEN(zvalue), true, out) &&
            !_is_private(out);
 }
 
-static bool _parse_ip_address(
-    const char *nonnull _addr, size_t addr_len, ipaddr *nonnull out)
+static bool _parse_ip_address(const char *nonnull _addr, size_t addr_len,
+    bool ip_or_error, ipaddr *nonnull out)
 {
     if (addr_len == 0) {
         return false;
@@ -424,7 +425,9 @@ static bool _parse_ip_address(
     if (ret != 1) {
         ret = inet_pton(AF_INET6, addr, &out->v6);
         if (ret != 1) {
-            mlog(dd_log_info, "Not recognized as IP address: \"%s\"", addr);
+            if (ip_or_error) {
+                mlog(dd_log_info, "Not recognized as IP address: \"%s\"", addr);
+            }
             res = false;
             goto err;
         }
@@ -452,8 +455,8 @@ err:
     return res;
 }
 
-static bool _parse_ip_address_maybe_port_pair(
-    const char *nonnull addr, size_t addr_len, ipaddr *nonnull out)
+static bool _parse_ip_address_maybe_port_pair(const char *nonnull addr,
+    size_t addr_len, bool ip_or_error, ipaddr *nonnull out)
 {
     if (addr_len == 0) {
         return false;
@@ -463,14 +466,15 @@ static bool _parse_ip_address_maybe_port_pair(
         if (!pos_close) {
             return false;
         }
-        return _parse_ip_address(addr + 1, pos_close - (addr + 1), out);
+        return _parse_ip_address(
+            addr + 1, pos_close - (addr + 1), ip_or_error, out);
     }
     const char *colon = memchr(addr, ':', addr_len);
     if (colon && zend_memrchr(addr, ':', addr_len) == colon) {
-        return _parse_ip_address(addr, colon - addr, out);
+        return _parse_ip_address(addr, colon - addr, ip_or_error, out);
     }
 
-    return _parse_ip_address(addr, addr_len, out);
+    return _parse_ip_address(addr, addr_len, ip_or_error, out);
 }
 
 #define CT_HTONL(x)                                                            \
