@@ -57,6 +57,7 @@ test('x_cluster_client_ip', '172.16.0.1');
 test('forwarded_for', '::1, 127.0.0.1, 2001::1');
 
 test('forwarded', 'for=8.8.8.8');
+test('forwarded', 'for=2001:abcf:1f::55');
 
 test('via', '1.0 127.0.0.1, HTTP/1.1 [2001::1]:8888');
 test('via', 'HTTP/1.1 [2001::1, HTTP/1.1 [2001::2]');
@@ -196,6 +197,9 @@ string(7) "2001::1"
 
 forwarded: for=8.8.8.8
 string(7) "8.8.8.8"
+
+forwarded: for=2001:abcf:1f::55
+string(16) "2001:abcf:1f::55"
 
 via: 1.0 127.0.0.1, HTTP/1.1 [2001::1]:8888
 string(7) "2001::1"
