@@ -53,17 +53,11 @@ static const char *_log_file;
 
 #define SYSLOG_IDENT "ddog-appsec-php-ext"
 
-typedef enum {
-    logging_init_success = 0,
-    logging_init_error,     // misc error
-    logging_init_try_later, // misc error
-} dd_logging_init;
-
 typedef int (*strerror_r_t)(int errnum, char *buf, size_t buflen);
 static strerror_r_t _libc_strerror_r;
 static void _find_strerror_r(void);
 static void _ensure_init(void);
-static dd_logging_init _do_dd_log_init(void);
+static dd_result _do_dd_log_init(void);
 static void ATTR_FORMAT(2, 3)
     _mlog_php_varargs(dd_log_level_t level, const char *format, ...);
 static int _log_level_to_syslog_pri(dd_log_level_t log_level);
@@ -139,13 +133,13 @@ static void _ensure_init()
     if (!atomic_load_explicit(&_initialized, memory_order_acquire)) {
         TSRM_MUTEX_LOCK(_mutex);
         if (!atomic_load(&_initialized)) {
-            dd_logging_init res = _do_dd_log_init();
-            if (res == logging_init_error) {
+            dd_result res = _do_dd_log_init();
+            if (res == dd_error) {
                 _mlog_php_varargs(
                     dd_log_warning, "Could not initialize logging");
                 _log_strategy = log_use_nothing;
             }
-            if (res != logging_init_try_later) {
+            if (res != dd_try_later) {
                 atomic_store_explicit(
                     &_initialized, true, memory_order_release);
             } else {
@@ -157,7 +151,7 @@ static void _ensure_init()
     }
 }
 
-static dd_logging_init _do_dd_log_init() // guarded by mutex
+static dd_result _do_dd_log_init() // guarded by mutex
 {
     const char *path = ""; // compiler can't tell it's always used initialized
 
@@ -184,10 +178,10 @@ static dd_logging_init _do_dd_log_init() // guarded by mutex
     }
 
     if (_log_strategy != log_use_file || _mlog_fd != -1) {
-        return logging_init_success;
+        return dd_success;
     }
 
-    int at_request = !(!PG(modules_activated) && !PG(during_request_startup));
+    int at_request = PG(modules_activated) || PG(during_request_startup);
 
     // ignores open_basedir
     int mode = O_WRONLY | O_APPEND | O_NOFOLLOW;
@@ -202,15 +196,15 @@ static dd_logging_init _do_dd_log_init() // guarded by mutex
     _mlog_fd = open(path, mode, 0644); // NOLINT
     if (_mlog_fd == -1) {
         if (!at_request && errno == ENOENT) {
-            return logging_init_try_later;
+            return dd_try_later;
         }
         _mlog_php_varargs(dd_log_warning,
             "Error opening log file '%s' (errno %d: %s)", path, errno,
             _strerror(errno));
-        return logging_init_error;
+        return dd_error;
     }
 
-    return logging_init_success;
+    return dd_success;
 }
 
 static int _dd_log_level_from_str(const char *nullable log_level)
