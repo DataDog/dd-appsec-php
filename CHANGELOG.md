@@ -3,6 +3,10 @@
 ### v0.4.1
 #### Fixes
 - ([#120](https://github.com/DataDog/dd-appsec-php/pull/120)) Return error response in helper when incoming message can't be unpacked
+- ([#124](https://github.com/DataDog/dd-appsec-php/pull/124)) Avoid creating a log file during MINIT/MSHUTDOWN
+
+#### Miscellaneous Changes
+- ([#123](https://github.com/DataDog/dd-appsec-php/pull/123)) Enable CI on all relevant branches
 
 ### v0.4.0
 #### Fixes
