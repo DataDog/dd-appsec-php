@@ -29,6 +29,7 @@
 #define DD_TAG_HTTP_RH_CONTENT_TYPE "http.response.headers.content-type"
 #define DD_TAG_HTTP_RH_CONTENT_ENCODING "http.response.headers.content-encoding"
 #define DD_TAG_HTTP_RH_CONTENT_LANGUAGE "http.response.headers.content-language"
+#define DD_TAG_HTTP_CLIENT_IP "http.client_ip"
 #define DD_METRIC_ENABLED "_dd.appsec.enabled"
 #define DD_METRIC_SAMPLING_PRIORITY "_sampling_priority_v1"
 #define DD_SAMPLING_PRIORITY_USER_KEEP 2
@@ -41,6 +42,7 @@ static zend_string *_dd_tag_http_status_code_zstr;
 static zend_string *_dd_tag_http_url_zstr;
 static zend_string *_dd_tag_network_client_ip_zstr;
 static zend_string *_dd_tag_actor_ip_zstr;
+static zend_string *_dd_tag_http_client_ip_zstr;
 static zend_string *_dd_tag_rh_content_length;   // response
 static zend_string *_dd_tag_rh_content_type;     // response
 static zend_string *_dd_tag_rh_content_encoding; // response
@@ -87,6 +89,8 @@ void dd_tags_startup()
         zend_string_init_interned(LSTRARG(DD_TAG_NETWORK_CLIENT_IP), 1);
     _dd_tag_actor_ip_zstr =
         zend_string_init_interned(LSTRARG(DD_TAG_ACTOR_IP), 1);
+    _dd_tag_http_client_ip_zstr =
+        zend_string_init_interned(LSTRARG(DD_TAG_HTTP_CLIENT_IP), 1);
 
     _dd_tag_rh_content_length =
         zend_string_init_interned(LSTRARG(DD_TAG_HTTP_RH_CONTENT_LENGTH), 1);
@@ -493,6 +497,13 @@ static void _dd_http_network_client_ip(zend_array *meta_ht, zval *_server)
 static void _dd_actor_ip(zend_array *meta_ht, zval *_server)
 {
     if (zend_hash_exists(meta_ht, _dd_tag_actor_ip_zstr)) {
+        return;
+    }
+    // When http.client_ip comes from tracer, we use it as actor.ip
+    zval *client_ip = zend_hash_find(meta_ht, _dd_tag_http_client_ip_zstr);
+    if (client_ip != NULL && Z_TYPE_P(client_ip) == IS_STRING) {
+        _add_new_zstr_to_meta(
+            meta_ht, _dd_tag_actor_ip_zstr, Z_STR_P(client_ip), false);
         return;
     }
     zend_string *actor_ip_zstr = dd_ip_extraction_find(_server);
