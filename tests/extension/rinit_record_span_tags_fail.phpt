@@ -11,6 +11,9 @@ datadog.appsec.log_level=debug
 use function datadog\appsec\testing\{rinit,ddtrace_rshutdown,root_span_get_meta};
 
 include __DIR__ . '/inc/mock_helper.php';
+include __DIR__ . '/inc/ddtrace_version.php';
+
+ddtrace_version_at_least('0.79.0');
 
 $helper = Helper::createInitedRun([['record', '[{"found":"attack"}]']], ['continuous' => true]);
 

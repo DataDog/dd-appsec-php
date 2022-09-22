@@ -18,15 +18,13 @@ HTTP_CONTENT_TYPE=text/plain
 HTTP_CONTENT_LENGTH=0
 --GET--
 key=val
---SKIPIF--
-<?php
-include __DIR__ . '/inc/ddtrace_version.php';
-ddtrace_version_at_least('0.79.0');
-?>
 --FILE--
 <?php
 use function datadog\appsec\testing\{rinit,ddtrace_rshutdown,mlog};
 use const datadog\appsec\testing\log_level\DEBUG;
+include __DIR__ . '/inc/ddtrace_version.php';
+
+ddtrace_version_at_least('0.79.0');
 
 include __DIR__ . '/inc/mock_helper.php';
 
