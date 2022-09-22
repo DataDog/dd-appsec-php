@@ -9,7 +9,7 @@ datadog.appsec.log_level=debug
 --SKIPIF--
 <?php
 include __DIR__ . '/inc/ddtrace_version.php';
-ddtrace_version_at_least('0.67.0');
+ddtrace_version_at_least('0.79.0');
 ?>
 --FILE--
 <?php
