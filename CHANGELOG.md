@@ -1,5 +1,10 @@
 # Datadog AppSec for PHP Release
 
+### v0.4.2
+#### Fixes
+- ([#127](https://github.com/DataDog/dd-appsec-php/pull/127)) Handle helper errors gracefully
+- ([#130](https://github.com/DataDog/dd-appsec-php/pull/130)) Reset context on shutdown
+
 ### v0.4.1
 #### Fixes
 - ([#120](https://github.com/DataDog/dd-appsec-php/pull/120)) Return error response in helper when incoming message can't be unpacked
