@@ -216,6 +216,8 @@ via: 8.8.8.8, 1.0 9.9.9.9:8888,
 string(7) "9.9.9.9"
 
 via: 1.0 pseudonym, 1.0 9.9.9.9:8888,
+
+Notice: datadog\appsec\testing\extract_ip_addr(): [ddappsec] Not recognized as IP address: "pseudonym" in %s on line %d
 string(7) "9.9.9.9"
 
 via: 1.0 172.32.255.1 comment
