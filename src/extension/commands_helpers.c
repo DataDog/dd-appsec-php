@@ -96,8 +96,11 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
             res = _imsg_recv(&imsg, conn);
         }
         if (res) {
-            mlog(dd_log_warning, "Error receiving reply for command %.*s: %s",
-                NAME_L, dd_result_to_string(res));
+            if (res != dd_helper_error) {
+                mlog(dd_log_warning,
+                    "Error receiving reply for command %.*s: %s", NAME_L,
+                    dd_result_to_string(res));
+            }
             return res;
         }
 
@@ -124,11 +127,11 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
     }
 
     if (should_block) {
-        mlog(dd_log_info, "request_init succeed and told to block");
+        mlog(dd_log_info, "%.*s succeed and told to block", NAME_L);
         return dd_should_block;
     }
 
-    mlog(dd_log_debug, "request_init succeed. Not blocking");
+    mlog(dd_log_debug, "%.*s succeed. Not blocking", NAME_L);
     return dd_success;
 }
 
@@ -201,6 +204,12 @@ static inline dd_result _dd_imsg_recv(
     }
     if (res) {
         return res;
+    }
+
+    if (imsg->_size == 1) {
+        // The helper process sent an error response, this is a non-fatal
+        // error to indicate the message could not be processed.
+        return dd_helper_error;
     }
 
     mpack_tree_init(&imsg->_tree, imsg->_data, imsg->_size);
