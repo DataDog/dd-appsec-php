@@ -50,6 +50,7 @@ $tags = $commands[0]['payload'][0][0]['meta'];
 $metrics = $commands[0]['payload'][0][0]['metrics'];
 
 echo "tags:\n";
+ksort($tags);
 print_r($tags);
 echo "metrics:\n";
 print_r($metrics);
@@ -62,6 +63,9 @@ root_span_get_meta():
 Array
 (
     [system.pid] => %d
+    [http.url] => https://localhost:8888/foo
+    [http.method] => GET
+    [http.useragent] => my user agent
 )
 rinit
 bool(true)
@@ -72,17 +76,17 @@ bool(true)
 tags:
 Array
 (
-    [system.pid] => %d
-    [rshutdown_tag] => rshutdown_value
-    [_dd.runtime_family] => php
     [_dd.appsec.json] => {"triggers":[{"found":"attack"},{"another":"attack"},{"yet another":"attack"}]}
+    [_dd.runtime_family] => php
     [appsec.event] => true
     [http.method] => GET
-    [http.url] => https://localhost:8888/foo.php
-    [http.useragent] => my user agent
-    [http.status_code] => 200
     [http.request.headers.user-agent] => my user agent
-    [http.response.headers.content-type] => text/html%s
+    [http.response.headers.content-type] => text/html; charset=UTF-8
+    [http.status_code] => 200
+    [http.url] => https://localhost:8888/foo
+    [http.useragent] => my user agent
+    [rshutdown_tag] => rshutdown_value
+    [system.pid] => %d
 )
 metrics:
 Array
