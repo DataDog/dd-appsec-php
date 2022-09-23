@@ -1,5 +1,9 @@
 # Datadog AppSec for PHP Release
 
+### v0.4.3
+#### Fixes
+- ([#132](https://github.com/DataDog/dd-appsec-php/pull/132)) Handle errors on request shutdown
+
 ### v0.4.2
 #### Fixes
 - ([#127](https://github.com/DataDog/dd-appsec-php/pull/127)) Handle helper errors gracefully
