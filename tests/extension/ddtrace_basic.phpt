@@ -2,6 +2,7 @@
 ddtrace integration — basic test
 --ENV--
 DD_TRACE_GENERATE_ROOT_SPAN=0
+DD_AUTOFINISH_SPANS=1
 --SKIPIF--
 <?php
 // on CI, the 5 minute timeout is sometimes exceeded
@@ -40,6 +41,7 @@ var_dump(\DDTrace\root_span());
 
 $trace_id = \DDTrace\trace_id();
 echo 'trace id: ', $trace_id, "\n";
+
 echo "ddtrace_rshutdown\n";
 mlog(DEBUG, "Call ddtrace_rshutdown");
 var_dump(ddtrace_rshutdown());
@@ -93,4 +95,5 @@ Array
 (
     [system.pid] => %s
     [ddappsec] => true
+    [_dd.p.dm] => -1
 )
