@@ -264,7 +264,11 @@ static int _do_rinit(INIT_FUNC_ARGS)
                             "connection to helper");
         dd_helper_close_conn();
     }
-    DDAPPSEC_G(enabled) = res == dd_enabled;
+    int new_status = res == dd_enabled;
+    if (DDAPPSEC_G(enabled) != new_status) { // Lets avoid triggering statuses
+                                             // changes when there are not
+        DDAPPSEC_G(enabled) = new_status;
+    }
 
     if (!DDAPPSEC_G(enabled)) {
         mlog_g(dd_log_debug, "Appsec disabled");
