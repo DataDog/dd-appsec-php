@@ -1,4 +1,5 @@
 <?php
+use function datadog\appsec\testing\{rinit};
 
 define('TEMP_DIR', '/tmp');
 define('STDOUT_PATH', TEMP_DIR . "/mock_helper.stdout.log");
@@ -19,6 +20,7 @@ class Helper {
     private $process;
     private $mock_helper_path;
     private $lock_path;
+    private $die_nicely;
 
     function __construct($opts = array()) {
         $runtime_path = key_exists('runtime_path', $opts) ? $opts['runtime_path'] : ini_get('datadog.appsec.helper_runtime_path');
@@ -26,6 +28,7 @@ class Helper {
         $received_pipe = key_exists('received_pipe', $opts) ? $opts['received_pipe'] : true;
         $this->mock_helper_path = key_exists('mock_helper_path', $opts) ? $opts['mock_helper_path'] : getenv('MOCK_HELPER_BINARY');
         $this->lock_path = $runtime_path . "/ddappsec_" . phpversion('ddappsec') . ".lock";
+        $this->die_nicely = isset($opts['die_nicely']) && $opts['die_nicely'] == true;
         $descriptors = array(
             0 => array("pipe", "r"),
             1 => array("file", STDOUT_PATH, "w+"),
@@ -36,6 +39,14 @@ class Helper {
             $descriptors[] = array('pipe', 'w');
         }
         $this->descriptors = $descriptors;
+    }
+
+    function custom_die($msg)
+    {
+        if (!$this->die_nicely)
+        {
+            die($msg);
+        }
     }
 
     static function listen($path) {
@@ -76,7 +87,8 @@ class Helper {
         $this->command_pipe = end($pipes);
 
         if (!is_resource($this->process)) {
-            die("error starting helper process");
+            $this->custom_die("error starting helper process");
+            return;
         }
         $this->ensure_running();
 
@@ -89,9 +101,11 @@ class Helper {
         }
     }
 
+
     function kill() {
         if (!$this->process) {
-            die("Error: no running daemon");
+            $this->custom_die("Error: no running daemon");
+            return;
         }
 
         $count = 0;
@@ -108,12 +122,14 @@ class Helper {
             $pid=$res['pid'];
             exec('kill -15 ' . $res['pid']); // SIGTERM
             $this->get_output();
-            die("Killed server");
+            $this->custom_die("Killed server");
+            return;
         } else {
             $code = $res['exitcode'];
             if ($code != 0) {
                 $this->get_output();
-                die("Exit code $code on daemon process");
+                $this->custom_die("Exit code $code on daemon process");
+                return;
             }
         }
 
@@ -121,8 +137,10 @@ class Helper {
     }
 
     function get_output() {
-        echo file_get_contents(STDERR_PATH);
-        echo file_get_contents(STDOUT_PATH);
+        if (!$this->die_nicely) {
+            echo file_get_contents(STDERR_PATH);
+            echo file_get_contents(STDOUT_PATH);
+        }
     }
 
     function get_commands() {
@@ -183,7 +201,8 @@ class Helper {
             echo "Error: daemon $pid has already stoped, exitcode: $ret, cmd: $cmd\n";
          echo "Daemon's stdout: ", file_get_contents('/tmp/daemon.stdout.txt'), "\n";
             echo "Daemon's stderr: ", file_get_contents('/tmp/daemon.stderr.txt'), "\n";
-            die;
+            $this->custom_die("");
+            return;
         }
 
     }
@@ -198,13 +217,35 @@ class Helper {
                 echo "Daemon's stdout: ", file_get_contents(STDOUT_PATH), "\n";
                 echo "Daemon's stderr: ", file_get_contents(STDERR_PATH), "\n";
                     fclose($handle);
-                die;
+                $this->custom_die("");
+                return;
             }
             usleep(100000);
         }
         fclose($handle);
     }
 };
+
+function remote_config_set_enable_value(bool $status)
+{
+    $calls = [$status ? REMOTE_CONFIG_ENABLED: REMOTE_CONFIG_DISABLED];
+    if ($status) {
+        $calls[] = REQUEST_INIT_OK;
+    }
+
+    $helper = Helper::createInitedRun($calls, ['die_nicely' => true]);
+    rinit();
+}
+
+function remote_config_set_enabled()
+{
+    remote_config_set_enable_value(true);
+}
+
+function remote_config_set_disabled()
+{
+    remote_config_set_enable_value(false);
+}
 
 // vim: set et sw=4 ts=4:
 ?>
