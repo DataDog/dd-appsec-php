@@ -245,6 +245,20 @@ static dd_result _acquire_conn_cb(dd_conn *nonnull conn)
     return dd_client_init(conn);
 }
 
+void _compute_new_enabled_status(int result)
+{
+    bool new_status = (DDAPPSEC_G(enabled_by_config) == config_not_configured &&
+                          result == dd_enabled) ||
+                      (result != dd_enabled && result != dd_disabled &&
+                          DDAPPSEC_G(enabled_by_config) == config_dd_enabled) ||
+                      (DDAPPSEC_G(enabled_by_config) == config_dd_enabled &&
+                          result == dd_enabled);
+
+    if (DDAPPSEC_G(enabled) != new_status) {
+        DDAPPSEC_G(enabled) = new_status;
+    }
+}
+
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 static int _do_rinit(INIT_FUNC_ARGS)
 {
@@ -264,11 +278,8 @@ static int _do_rinit(INIT_FUNC_ARGS)
                             "connection to helper");
         dd_helper_close_conn();
     }
-    int new_status = res == dd_enabled;
-    if (DDAPPSEC_G(enabled) != new_status) { // Lets avoid triggering statuses
-                                             // changes when there are not
-        DDAPPSEC_G(enabled) = new_status;
-    }
+
+    _compute_new_enabled_status(res);
 
     if (!DDAPPSEC_G(enabled)) {
         mlog_g(dd_log_debug, "Appsec disabled");
@@ -383,8 +394,8 @@ static void _register_ini_entries()
 {
     // clang-format off
     static const dd_ini_setting settings[] = {
-        DD_INI_ENV("enabled", "0", PHP_INI_SYSTEM, _on_update_appsec_enabled),
-        DD_INI_ENV("enabled_on_cli", "0", PHP_INI_SYSTEM, _on_update_appsec_enabled_on_cli),
+        DD_INI_ENV("enabled", "", PHP_INI_SYSTEM, _on_update_appsec_enabled),
+        DD_INI_ENV("enabled_on_cli", "", PHP_INI_SYSTEM, _on_update_appsec_enabled_on_cli),
         DD_INI_ENV_GLOB("block", "0", PHP_INI_SYSTEM, OnUpdateBool, block, zend_ddappsec_globals, ddappsec_globals),
         DD_INI_ENV_GLOB("rules", "", PHP_INI_SYSTEM, OnUpdateString, rules_file, zend_ddappsec_globals, ddappsec_globals),
         DD_INI_ENV_GLOB("waf_timeout", "10000", PHP_INI_SYSTEM, OnUpdateLongGEZero, waf_timeout_us, zend_ddappsec_globals, ddappsec_globals),
@@ -402,6 +413,23 @@ static void _register_ini_entries()
     dd_phpobj_reg_ini_envs(settings);
 }
 
+void _update_enabled_status_from_ini(zend_string *new_value)
+{
+    if (!new_value || ZSTR_LEN(new_value) == 0) {
+        DDAPPSEC_NOCACHE_G(enabled_by_config) = config_not_configured;
+    } else {
+        bool ini_value = (bool)zend_ini_parse_bool(new_value);
+        if (ini_value) {
+            DDAPPSEC_NOCACHE_G(enabled_by_config) = config_dd_enabled;
+        } else {
+            DDAPPSEC_NOCACHE_G(enabled_by_config) = config_disabled;
+        }
+    }
+
+    bool *val = &DDAPPSEC_NOCACHE_G(enabled);
+    *val = DDAPPSEC_NOCACHE_G(enabled_by_config) == config_dd_enabled;
+}
+
 static ZEND_INI_MH(_on_update_appsec_enabled)
 {
     ZEND_INI_MH_UNUSED();
@@ -412,9 +440,7 @@ static ZEND_INI_MH(_on_update_appsec_enabled)
         return SUCCESS;
     }
 
-    bool ini_value = (bool)zend_ini_parse_bool(new_value);
-    bool *val = &DDAPPSEC_NOCACHE_G(enabled);
-    *val = ini_value;
+    _update_enabled_status_from_ini(new_value);
     return SUCCESS;
 }
 static ZEND_INI_MH(_on_update_appsec_enabled_on_cli)
@@ -427,8 +453,7 @@ static ZEND_INI_MH(_on_update_appsec_enabled_on_cli)
         return SUCCESS;
     }
 
-    bool bvalue = (bool)zend_ini_parse_bool(new_value);
-    DDAPPSEC_NOCACHE_G(enabled) = bvalue;
+    _update_enabled_status_from_ini(new_value);
     return SUCCESS;
 }
 
