@@ -9,7 +9,7 @@
 
 namespace dds::remote_config::protocol {
 
-enum class config_state_applied_state : uint {
+enum class config_state_applied_state : int {
     UNKNOWN = 0,
     UNACKNOWLEDGED = 1,
     ACKNOWLEDGED = 2,
@@ -27,7 +27,8 @@ struct config_state {
 inline bool operator==(const config_state &rhs, const config_state &lhs)
 {
     return rhs.id == lhs.id && rhs.version == lhs.version &&
-           rhs.product == lhs.product;
+           rhs.product == lhs.product && rhs.apply_state == lhs.apply_state &&
+           rhs.apply_error == lhs.apply_error;
 }
 
 } // namespace dds::remote_config::protocol

@@ -143,9 +143,10 @@ bool client::process_response(const protocol::get_configs_response &response)
                 raw = path_in_target_files->second.raw;
             }
 
-            const std::string path_c = path;
-            config config_ = {
-                cp.product, cp.id, raw, path_c, hashes, custom_v, length};
+            std::string path_c = path;
+            config config_ = {cp.product, cp.id, raw, path_c, hashes, custom_v,
+                length, protocol::config_state_applied_state::UNACKNOWLEDGED,
+                ""};
             auto configs_itr = configs.find(cp.product);
             if (configs_itr ==
                 configs.end()) { // Product not in configs yet. Create entry

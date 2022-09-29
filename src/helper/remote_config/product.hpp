@@ -23,15 +23,14 @@ public:
     product_listener_base &operator=(product_listener_base &&) = default;
     virtual ~product_listener_base() = default;
 
-    virtual void on_update(const std::map<std::string, config> &configs) = 0;
-    virtual void on_unapply(const std::map<std::string, config> &configs) = 0;
+    virtual void on_update(const config &config) = 0;
+    virtual void on_unapply(const config &config) = 0;
 };
 
 class product {
 public:
-    explicit product(
-        std::string &&name, std::vector<product_listener_base *> &&listeners)
-        : name_(std::move(name)), listeners_(std::move(listeners)){};
+    explicit product(std::string &&name, product_listener_base *listener)
+        : name_(std::move(name)), listener_(listener){};
     void assign_configs(const std::map<std::string, config> &configs)
     {
         std::map<std::string, config> to_update;
@@ -52,10 +51,24 @@ public:
             }
         }
 
-        for (product_listener_base *listener : listeners_) {
-            listener->on_update(to_update);
-            listener->on_unapply(configs_);
+        for (auto &[path, conf] : to_update) {
+            if (listener_) {
+                listener_->on_update(conf);
+                conf.apply_state =
+                    protocol::config_state_applied_state::ACKNOWLEDGED;
+                conf.apply_error = "";
+            }
         }
+
+        for (auto &[path, conf] : configs_) {
+            if (listener_) {
+                listener_->on_unapply(conf);
+                conf.apply_state =
+                    protocol::config_state_applied_state::ACKNOWLEDGED;
+                conf.apply_error = "";
+            }
+        }
+
         to_keep.merge(to_update);
 
         configs_ = std::move(to_keep);
@@ -73,7 +86,7 @@ public:
 private:
     std::string name_;
     std::map<std::string, config> configs_;
-    std::vector<product_listener_base *> listeners_;
+    product_listener_base *listener_;
 };
 
 } // namespace dds::remote_config
