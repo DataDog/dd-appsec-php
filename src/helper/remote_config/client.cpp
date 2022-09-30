@@ -59,8 +59,8 @@ client::ptr client::from_settings(
         // State
         const auto configs_on_product = product.get_configs();
         for (const auto &[id, config] : configs_on_product) {
-            config_states.push_back(
-                {config.id, config.version, config.product});
+            config_states.push_back({config.id, config.version, config.product,
+                config.apply_state, config.apply_error});
 
             std::vector<protocol::cached_target_files_hash> hashes;
             hashes.reserve(config.hashes.size());

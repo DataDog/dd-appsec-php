@@ -15,6 +15,7 @@
 #include "base64.h"
 #include "common.hpp"
 #include "remote_config/client.hpp"
+#include "remote_config/product.hpp"
 #include "remote_config/protocol/client.hpp"
 #include "remote_config/protocol/client_state.hpp"
 #include "remote_config/protocol/client_tracer.hpp"
@@ -53,10 +54,21 @@ public:
     };
 };
 
+class listener_dummy : public remote_config::product_listener_base {
+public:
+    void on_update(const remote_config::config &config) override{};
+    void on_unapply(const remote_config::config &config) override{};
+};
+
 namespace mock {
 
 // The simple custom action
 ACTION_P(set_response_body, response) { arg1.assign(response); }
+
+ACTION(ThrowErrorApplyingConfig)
+{
+    throw remote_config::error_applying_config("some error");
+}
 
 class api : public remote_config::http_api {
 public:
@@ -120,6 +132,7 @@ public:
     std::string second_path;
     std::vector<std::string> paths;
     remote_config::settings settings;
+    dds::listener_dummy dummy_listener;
 
     void SetUp()
     {
@@ -154,7 +167,8 @@ public:
     {
         for (const std::string &p_str : products_str) {
             std::string product_name(p_str);
-            remote_config::product _p(std::move(product_name), NULL);
+            remote_config::product _p(
+                std::move(product_name), &this->dummy_listener);
             _products.push_back(_p);
         }
     }
@@ -172,11 +186,17 @@ public:
             std::string product00(first_product_product);
             std::string product00_id(first_product_id);
             remote_config::protocol::config_state cs00 = {product00_id,
-                test_helpers::version_from_path(first_path), product00};
+                test_helpers::version_from_path(first_path), product00,
+                remote_config::protocol::config_state_applied_state::
+                    ACKNOWLEDGED,
+                ""};
             std::string product01(second_product_product);
             std::string product01_id(second_product_id);
             remote_config::protocol::config_state cs01 = {product01_id,
-                test_helpers::version_from_path(second_path), product01};
+                test_helpers::version_from_path(second_path), product01,
+                remote_config::protocol::config_state_applied_state::
+                    ACKNOWLEDGED,
+                ""};
 
             config_states.push_back(cs00);
             config_states.push_back(cs01);
@@ -1020,6 +1040,140 @@ TEST_F(RemoteConfigClient, TestWhenFileGetsFromCacheItsCachedLenUsed)
     EXPECT_FALSE(len_itr == files_cached[0].MemberEnd());
     EXPECT_TRUE(rapidjson::kNumberType == len_itr->value.GetType());
     EXPECT_EQ(41, len_itr->value.GetInt());
+}
+
+TEST_F(RemoteConfigClient, ProductsWithoutAListenerCantAcknowledgeUpdates)
+{
+    auto api = std::make_unique<mock::api>();
+
+    std::string response01 = generate_example_response({first_path});
+
+    std::string request_sent;
+    EXPECT_CALL(*api, get_configs(_))
+        .Times(2)
+        .WillRepeatedly(
+            DoAll(testing::SaveArg<0>(&request_sent), Return(response01)));
+
+    remote_config::product p(std::string(first_product_product), NULL);
+    std::vector<remote_config::product> products = {p};
+
+    dds::remote_config::client api_client(std::move(api), std::move(id),
+        std::move(runtime_id), std::move(tracer_version), std::move(service),
+        std::move(env), std::move(app_version), products);
+
+    auto result = api_client.poll();
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
+
+    result = api_client.poll();
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
+
+    // Lets validate config_state is unackowledged
+    rapidjson::Document serialized_doc;
+    serialized_doc.Parse(request_sent);
+
+    auto config_states_arr = serialized_doc.FindMember("client")
+                                 ->value.FindMember("state")
+                                 ->value.FindMember("config_states")
+                                 ->value.GetArray();
+
+    EXPECT_EQ(1, config_states_arr.Size());
+    EXPECT_EQ(
+        (int)
+            remote_config::protocol::config_state_applied_state::UNACKNOWLEDGED,
+        config_states_arr[0].FindMember("apply_state")->value.GetInt());
+    EXPECT_EQ("",
+        std::string(
+            config_states_arr[0].FindMember("apply_error")->value.GetString()));
+}
+
+TEST_F(RemoteConfigClient, ProductsWithAListenerAcknowledgeUpdates)
+{
+    auto api = std::make_unique<mock::api>();
+
+    std::string response01 = generate_example_response({first_path});
+
+    std::string request_sent;
+    EXPECT_CALL(*api, get_configs(_))
+        .Times(2)
+        .WillRepeatedly(
+            DoAll(testing::SaveArg<0>(&request_sent), Return(response01)));
+
+    remote_config::product p(
+        std::string(first_product_product), &this->dummy_listener);
+    std::vector<remote_config::product> products = {p};
+
+    dds::remote_config::client api_client(std::move(api), std::move(id),
+        std::move(runtime_id), std::move(tracer_version), std::move(service),
+        std::move(env), std::move(app_version), products);
+
+    auto result = api_client.poll();
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
+
+    result = api_client.poll();
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
+
+    // Lets validate config_state is ackowledged
+    rapidjson::Document serialized_doc;
+    serialized_doc.Parse(request_sent);
+
+    auto config_states_arr = serialized_doc.FindMember("client")
+                                 ->value.FindMember("state")
+                                 ->value.FindMember("config_states")
+                                 ->value.GetArray();
+
+    EXPECT_EQ(1, config_states_arr.Size());
+    EXPECT_EQ(
+        (int)remote_config::protocol::config_state_applied_state::ACKNOWLEDGED,
+        config_states_arr[0].FindMember("apply_state")->value.GetInt());
+    EXPECT_EQ("",
+        std::string(
+            config_states_arr[0].FindMember("apply_error")->value.GetString()));
+}
+
+TEST_F(RemoteConfigClient, WhenAListerCanProccesAnUpdateTheConfigStateGetsError)
+{
+    auto api = std::make_unique<mock::api>();
+
+    std::string response01 = generate_example_response({first_path});
+
+    std::string request_sent;
+    EXPECT_CALL(*api, get_configs(_))
+        .Times(2)
+        .WillRepeatedly(
+            DoAll(testing::SaveArg<0>(&request_sent), Return(response01)));
+
+    mock::listener_mock listener;
+    EXPECT_CALL(listener, on_update(_))
+        .WillRepeatedly(mock::ThrowErrorApplyingConfig());
+
+    remote_config::product p(std::string(first_product_product), &listener);
+    std::vector<remote_config::product> products = {p};
+
+    dds::remote_config::client api_client(std::move(api), std::move(id),
+        std::move(runtime_id), std::move(tracer_version), std::move(service),
+        std::move(env), std::move(app_version), products);
+
+    auto result = api_client.poll();
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
+
+    result = api_client.poll();
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
+
+    // Lets validate config_state is error
+    rapidjson::Document serialized_doc;
+    serialized_doc.Parse(request_sent);
+
+    auto config_states_arr = serialized_doc.FindMember("client")
+                                 ->value.FindMember("state")
+                                 ->value.FindMember("config_states")
+                                 ->value.GetArray();
+
+    EXPECT_EQ(1, config_states_arr.Size());
+    EXPECT_EQ((int)remote_config::protocol::config_state_applied_state::ERROR,
+        config_states_arr[0].FindMember("apply_state")->value.GetInt());
+    EXPECT_EQ("some error",
+        std::string(
+            config_states_arr[0].FindMember("apply_error")->value.GetString()));
 }
 
 /*

@@ -14,6 +14,15 @@
 
 namespace dds::remote_config {
 
+class error_applying_config : public std::exception {
+private:
+    std::string message;
+
+public:
+    error_applying_config(std::string msg) : message(msg) {}
+    std::string what() { return message; }
+};
+
 class product_listener_base {
 public:
     product_listener_base() = default;
@@ -31,11 +40,11 @@ class product {
 public:
     explicit product(std::string &&name, product_listener_base *listener)
         : name_(std::move(name)), listener_(listener){};
+
     void assign_configs(const std::map<std::string, config> &configs)
     {
         std::map<std::string, config> to_update;
         std::map<std::string, config> to_keep;
-
         for (const auto &config : configs) {
             auto previous_config = configs_.find(config.first);
             if (previous_config == configs_.end()) { // New config
@@ -43,7 +52,7 @@ public:
             } else { // Already existed
                 if (config.second.hashes ==
                     previous_config->second.hashes) { // No changes in config
-                    to_keep.emplace(config.first, config.second);
+                    to_keep.emplace(config.first, previous_config->second);
                 } else { // Config updated
                     to_update.emplace(config.first, config.second);
                 }
@@ -51,21 +60,35 @@ public:
             }
         }
 
-        for (auto &[path, conf] : to_update) {
+        std::map<std::string, config>::iterator update_it;
+        for (update_it = to_update.begin(); update_it != to_update.end();
+             update_it++) {
             if (listener_) {
-                listener_->on_update(conf);
-                conf.apply_state =
-                    protocol::config_state_applied_state::ACKNOWLEDGED;
-                conf.apply_error = "";
+                try {
+                    listener_->on_update(update_it->second);
+                    update_it->second.apply_state =
+                        protocol::config_state_applied_state::ACKNOWLEDGED;
+                    update_it->second.apply_error = "";
+                } catch (error_applying_config &e) {
+                    update_it->second.apply_state =
+                        protocol::config_state_applied_state::ERROR;
+                    update_it->second.apply_error = e.what();
+                }
             }
         }
 
         for (auto &[path, conf] : configs_) {
             if (listener_) {
-                listener_->on_unapply(conf);
-                conf.apply_state =
-                    protocol::config_state_applied_state::ACKNOWLEDGED;
-                conf.apply_error = "";
+                try {
+                    listener_->on_unapply(conf);
+                    conf.apply_state =
+                        protocol::config_state_applied_state::ACKNOWLEDGED;
+                    conf.apply_error = "";
+                } catch (error_applying_config &e) {
+                    conf.apply_state =
+                        protocol::config_state_applied_state::ERROR;
+                    conf.apply_error = e.what();
+                }
             }
         }
 
