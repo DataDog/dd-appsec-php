@@ -1042,6 +1042,19 @@ TEST_F(RemoteConfigClient, TestWhenFileGetsFromCacheItsCachedLenUsed)
     EXPECT_EQ(41, len_itr->value.GetInt());
 }
 
+rapidjson::GenericArray<false,
+    rapidjson::GenericValue<rapidjson::UTF8<>>::ValueType>
+get_config_states(std::string &request)
+{
+    rapidjson::Document serialized_doc;
+    serialized_doc.Parse(request);
+
+    return serialized_doc.FindMember("client")
+        ->value.FindMember("state")
+        ->value.FindMember("config_states")
+        ->value.GetArray();
+}
+
 TEST_F(RemoteConfigClient, ProductsWithoutAListenerCantAcknowledgeUpdates)
 {
     auto api = std::make_unique<mock::api>();
@@ -1067,14 +1080,7 @@ TEST_F(RemoteConfigClient, ProductsWithoutAListenerCantAcknowledgeUpdates)
     result = api_client.poll();
     EXPECT_EQ(remote_config::remote_config_result::success, result);
 
-    // Lets validate config_state is unackowledged
-    rapidjson::Document serialized_doc;
-    serialized_doc.Parse(request_sent);
-
-    auto config_states_arr = serialized_doc.FindMember("client")
-                                 ->value.FindMember("state")
-                                 ->value.FindMember("config_states")
-                                 ->value.GetArray();
+    rapidjson::GenericArray config_states_arr = get_config_states(request_sent);
 
     EXPECT_EQ(1, config_states_arr.Size());
     EXPECT_EQ(
@@ -1112,14 +1118,7 @@ TEST_F(RemoteConfigClient, ProductsWithAListenerAcknowledgeUpdates)
     result = api_client.poll();
     EXPECT_EQ(remote_config::remote_config_result::success, result);
 
-    // Lets validate config_state is ackowledged
-    rapidjson::Document serialized_doc;
-    serialized_doc.Parse(request_sent);
-
-    auto config_states_arr = serialized_doc.FindMember("client")
-                                 ->value.FindMember("state")
-                                 ->value.FindMember("config_states")
-                                 ->value.GetArray();
+    rapidjson::GenericArray config_states_arr = get_config_states(request_sent);
 
     EXPECT_EQ(1, config_states_arr.Size());
     EXPECT_EQ(
@@ -1159,14 +1158,7 @@ TEST_F(RemoteConfigClient, WhenAListerCanProccesAnUpdateTheConfigStateGetsError)
     result = api_client.poll();
     EXPECT_EQ(remote_config::remote_config_result::success, result);
 
-    // Lets validate config_state is error
-    rapidjson::Document serialized_doc;
-    serialized_doc.Parse(request_sent);
-
-    auto config_states_arr = serialized_doc.FindMember("client")
-                                 ->value.FindMember("state")
-                                 ->value.FindMember("config_states")
-                                 ->value.GetArray();
+    rapidjson::GenericArray config_states_arr = get_config_states(request_sent);
 
     EXPECT_EQ(1, config_states_arr.Size());
     EXPECT_EQ((int)remote_config::protocol::config_state_applied_state::ERROR,
