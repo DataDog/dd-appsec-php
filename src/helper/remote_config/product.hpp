@@ -19,7 +19,8 @@ private:
     std::string message;
 
 public:
-    error_applying_config(std::string msg) : message(msg) {}
+    explicit error_applying_config(std::string &&msg) : message(std::move(msg))
+    {}
     std::string what() { return message; }
 };
 
@@ -63,7 +64,7 @@ public:
         std::map<std::string, config>::iterator update_it;
         for (update_it = to_update.begin(); update_it != to_update.end();
              update_it++) {
-            if (listener_) {
+            if (listener_ != nullptr) {
                 try {
                     listener_->on_update(update_it->second);
                     update_it->second.apply_state =
@@ -78,7 +79,7 @@ public:
         }
 
         for (auto &[path, conf] : configs_) {
-            if (listener_) {
+            if (listener_ != nullptr) {
                 try {
                     listener_->on_unapply(conf);
                     conf.apply_state =
