@@ -12,15 +12,13 @@
 #include "client_state.hpp"
 #include "client_tracer.hpp"
 
-#define BIT(x) (1 << x)
-
 namespace dds::remote_config::protocol {
 
 enum class capabilities_e : int {
-    RESERVED = BIT(0),
-    ASM_ACTIVATION = BIT(1),
-    ASM_IP_BLOCKING = BIT(2),
-    ASM_DD_RULES = BIT(3)
+    RESERVED = 1 << 0,
+    ASM_ACTIVATION = 1 << 1,
+    ASM_IP_BLOCKING = 1 << 2,
+    ASM_DD_RULES = 1 << 3
 };
 
 struct client {
@@ -30,7 +28,7 @@ struct client {
     protocol::client_state client_state;
     std::byte capabilities;
 
-    void set_capabilities(std::vector<capabilities_e> cs)
+    void set_capabilities(const std::vector<capabilities_e> &cs)
     {
         for (const auto &capability : cs) {
             capabilities |= (std::byte)capability;
