@@ -76,6 +76,9 @@ void serialize_client(rapidjson::Document::AllocatorType &alloc,
 
     client_object.AddMember("id", client.id, alloc);
     client_object.AddMember("is_tracer", true, alloc);
+    //@todo deharcode this. This is for now activating only the one click
+    // activation capability;
+    client_object.AddMember("capabilities", std::string("Ag=="), alloc);
 
     rapidjson::Value products(rapidjson::kArrayType);
     for (const std::string &product_str : client.products) {

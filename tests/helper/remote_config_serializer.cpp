@@ -307,4 +307,30 @@ TEST(RemoteConfigSerializer, RequestCanBeSerializedWithCachedTargetFields)
         "hash", "second hash hash");
 }
 
+TEST(RemoteConfigSerializer, CapabilitiesCanBeSet)
+{
+    auto client = get_client();
+    client.set_capabilities(
+        {remote_config::protocol::capabilities_e::ASM_ACTIVATION});
+
+    remote_config::protocol::get_configs_request request = {
+        client, get_cached_target_files()};
+
+    std::optional<std::string> serialised_string;
+    serialised_string = remote_config::protocol::serialize(std::move(request));
+
+    EXPECT_TRUE(serialised_string);
+
+    // Lets transform the resulting string back to json so we can assert more
+    // easily
+    rapidjson::Document serialized_doc;
+    serialized_doc.Parse(serialised_string.value());
+
+    // Client fields
+    rapidjson::Value::ConstMemberIterator client_itr =
+        find_and_assert_type(serialized_doc, "client", rapidjson::kObjectType);
+
+    assert_it_contains_string(client_itr->value, "capabilities", "Ag==");
+}
+
 } // namespace dds

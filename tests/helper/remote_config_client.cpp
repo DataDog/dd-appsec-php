@@ -1168,6 +1168,37 @@ TEST_F(RemoteConfigClient, WhenAListerCanProccesAnUpdateTheConfigStateGetsError)
             config_states_arr[0].FindMember("apply_error")->value.GetString()));
 }
 
+TEST_F(RemoteConfigClient, OneClickActivationIsSetAsCapability)
+{
+    auto api = std::make_unique<mock::api>();
+
+    std::string response01 = generate_example_response({first_path});
+
+    std::string request_sent;
+    EXPECT_CALL(*api, get_configs(_))
+        .Times(1)
+        .WillRepeatedly(
+            DoAll(testing::SaveArg<0>(&request_sent), Return(response01)));
+
+    remote_config::product p(
+        std::string(first_product_product), &this->dummy_listener);
+    std::vector<remote_config::product> products = {p};
+
+    dds::remote_config::client api_client(std::move(api), std::move(id),
+        std::move(runtime_id), std::move(tracer_version), std::move(service),
+        std::move(env), std::move(app_version), products);
+
+    auto result = api_client.poll();
+    EXPECT_EQ(remote_config::remote_config_result::success, result);
+
+    rapidjson::Document serialized_doc;
+    serialized_doc.Parse(request_sent);
+    auto capabilities =
+        serialized_doc.FindMember("client")->value.FindMember("capabilities");
+
+    EXPECT_EQ("Ag==", std::string(capabilities->value.GetString()));
+}
+
 /*
 TEST_F(RemoteConfigClient, TestAgainstDocker)
 {
