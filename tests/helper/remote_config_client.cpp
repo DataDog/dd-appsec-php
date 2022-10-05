@@ -1050,13 +1050,10 @@ TEST_F(RemoteConfigClient, TestWhenFileGetsFromCacheItsCachedLenUsed)
     EXPECT_EQ(41, len_itr->value.GetInt());
 }
 
-rapidjson::GenericArray<false,
+rapidjson::GenericArray<true,
     rapidjson::GenericValue<rapidjson::UTF8<>>::ValueType>
-get_config_states(std::string &request)
+get_config_states(const rapidjson::Document &serialized_doc)
 {
-    rapidjson::Document serialized_doc;
-    serialized_doc.Parse(request);
-
     return serialized_doc.FindMember("client")
         ->value.FindMember("state")
         ->value.FindMember("config_states")
@@ -1089,8 +1086,10 @@ TEST_F(RemoteConfigClient, ProductsWithoutAListenerCantAcknowledgeUpdates)
     result = api_client.poll();
     EXPECT_EQ(remote_config::remote_config_result::success, result);
 
-    rapidjson::GenericArray config_states_arr = get_config_states(request_sent);
+    rapidjson::Document serialized_doc;
+    serialized_doc.Parse(request_sent);
 
+    auto config_states_arr = get_config_states(serialized_doc);
     EXPECT_EQ(1, config_states_arr.Size());
     EXPECT_EQ(
         (int)
@@ -1128,7 +1127,10 @@ TEST_F(RemoteConfigClient, ProductsWithAListenerAcknowledgeUpdates)
     result = api_client.poll();
     EXPECT_EQ(remote_config::remote_config_result::success, result);
 
-    rapidjson::GenericArray config_states_arr = get_config_states(request_sent);
+    rapidjson::Document serialized_doc;
+    serialized_doc.Parse(request_sent);
+
+    auto config_states_arr = get_config_states(serialized_doc);
 
     EXPECT_EQ(1, config_states_arr.Size());
     EXPECT_EQ(
@@ -1169,7 +1171,10 @@ TEST_F(RemoteConfigClient, WhenAListerCanProccesAnUpdateTheConfigStateGetsError)
     result = api_client.poll();
     EXPECT_EQ(remote_config::remote_config_result::success, result);
 
-    rapidjson::GenericArray config_states_arr = get_config_states(request_sent);
+    rapidjson::Document serialized_doc;
+    serialized_doc.Parse(request_sent);
+
+    auto config_states_arr = get_config_states(serialized_doc);
 
     EXPECT_EQ(1, config_states_arr.Size());
     EXPECT_EQ((int)remote_config::protocol::config_state_applied_state::ERROR,
