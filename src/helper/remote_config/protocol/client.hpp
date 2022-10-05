@@ -14,7 +14,7 @@
 
 namespace dds::remote_config::protocol {
 
-enum class capabilities_e : int {
+enum class capabilities_e : uint8_t {
     RESERVED = 1 << 0,
     ASM_ACTIVATION = 1 << 1,
     ASM_IP_BLOCKING = 1 << 2,
@@ -26,12 +26,12 @@ struct client {
     std::vector<std::string> products;
     protocol::client_tracer client_tracer;
     protocol::client_state client_state;
-    std::byte capabilities;
+    std::uint8_t capabilities{0};
 
     void set_capabilities(const std::vector<capabilities_e> &cs)
     {
         for (const auto &capability : cs) {
-            capabilities |= (std::byte)capability;
+            capabilities |= (uint8_t)capability;
         }
     }
 };

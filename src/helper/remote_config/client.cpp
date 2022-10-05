@@ -82,8 +82,7 @@ client::ptr client::from_settings(
         products_str.push_back(product_name);
     }
     protocol::client protocol_client = {id_, products_str, ct, cs};
-    protocol_client.set_capabilities(
-        {protocol::capabilities_e::ASM_ACTIVATION});
+    protocol_client.set_capabilities(capabilities_);
 
     return {std::move(protocol_client), std::move(files)};
 };

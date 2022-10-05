@@ -132,6 +132,7 @@ public:
     std::string second_path;
     std::vector<std::string> paths;
     remote_config::settings settings;
+    std::vector<remote_config::protocol::capabilities_e> capabilities;
     dds::listener_dummy dummy_listener;
 
     void SetUp()
@@ -160,6 +161,8 @@ public:
         second_path = "datadog/2/" + second_product_product + "/" +
                       second_product_id + "/config";
         paths = {first_path, second_path};
+        capabilities = {
+            remote_config::protocol::capabilities_e::ASM_ACTIVATION};
         generate_products();
     }
 
@@ -212,7 +215,11 @@ public:
 
         auto products_str_cpy = products_str;
         auto id_cpy = id;
-        return {id_cpy, products_str_cpy, client_tracer, client_state};
+        remote_config::protocol::client c = {
+            id_cpy, products_str_cpy, client_tracer, client_state};
+        c.set_capabilities(capabilities);
+
+        return c;
     }
 
     std::string generate_targets(
@@ -632,6 +639,7 @@ TEST_F(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
     std::string product_str_not_in_response = "NOT_IN_RESPONSE";
     remote_config::product product_not_in_response(
         std::move(product_str_not_in_response), &listener_called_no_configs01);
+
 
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
@@ -1072,7 +1080,8 @@ TEST_F(RemoteConfigClient, ProductsWithoutAListenerCantAcknowledgeUpdates)
 
     dds::remote_config::client api_client(std::move(api), std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
-        std::move(env), std::move(app_version), products);
+        std::move(env), std::move(app_version), products,
+        std::move(capabilities));
 
     auto result = api_client.poll();
     EXPECT_EQ(remote_config::remote_config_result::success, result);
@@ -1110,7 +1119,8 @@ TEST_F(RemoteConfigClient, ProductsWithAListenerAcknowledgeUpdates)
 
     dds::remote_config::client api_client(std::move(api), std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
-        std::move(env), std::move(app_version), products);
+        std::move(env), std::move(app_version), products,
+        std::move(capabilities));
 
     auto result = api_client.poll();
     EXPECT_EQ(remote_config::remote_config_result::success, result);
@@ -1150,7 +1160,8 @@ TEST_F(RemoteConfigClient, WhenAListerCanProccesAnUpdateTheConfigStateGetsError)
 
     dds::remote_config::client api_client(std::move(api), std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
-        std::move(env), std::move(app_version), products);
+        std::move(env), std::move(app_version), products,
+        std::move(capabilities));
 
     auto result = api_client.poll();
     EXPECT_EQ(remote_config::remote_config_result::success, result);
@@ -1186,7 +1197,8 @@ TEST_F(RemoteConfigClient, OneClickActivationIsSetAsCapability)
 
     dds::remote_config::client api_client(std::move(api), std::move(id),
         std::move(runtime_id), std::move(tracer_version), std::move(service),
-        std::move(env), std::move(app_version), products);
+        std::move(env), std::move(app_version), products,
+        std::move(capabilities));
 
     auto result = api_client.poll();
     EXPECT_EQ(remote_config::remote_config_result::success, result);
@@ -1196,7 +1208,7 @@ TEST_F(RemoteConfigClient, OneClickActivationIsSetAsCapability)
     auto capabilities =
         serialized_doc.FindMember("client")->value.FindMember("capabilities");
 
-    EXPECT_EQ("Ag==", std::string(capabilities->value.GetString()));
+    EXPECT_EQ(2, capabilities->value.GetArray().Begin()->GetInt());
 }
 
 /*

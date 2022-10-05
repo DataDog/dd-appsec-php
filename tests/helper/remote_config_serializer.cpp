@@ -310,8 +310,10 @@ TEST(RemoteConfigSerializer, RequestCanBeSerializedWithCachedTargetFields)
 TEST(RemoteConfigSerializer, CapabilitiesCanBeSet)
 {
     auto client = get_client();
-    client.set_capabilities(
-        {remote_config::protocol::capabilities_e::ASM_ACTIVATION});
+    client.set_capabilities({remote_config::protocol::capabilities_e::RESERVED,
+        remote_config::protocol::capabilities_e::ASM_ACTIVATION,
+        remote_config::protocol::capabilities_e::ASM_IP_BLOCKING,
+        remote_config::protocol::capabilities_e::ASM_DD_RULES});
 
     remote_config::protocol::get_configs_request request = {
         client, get_cached_target_files()};
@@ -330,7 +332,11 @@ TEST(RemoteConfigSerializer, CapabilitiesCanBeSet)
     rapidjson::Value::ConstMemberIterator client_itr =
         find_and_assert_type(serialized_doc, "client", rapidjson::kObjectType);
 
-    assert_it_contains_string(client_itr->value, "capabilities", "Ag==");
+    rapidjson::Value::ConstMemberIterator capabilities_itr =
+        find_and_assert_type(
+            client_itr->value, "capabilities", rapidjson::kArrayType);
+
+    EXPECT_EQ(15, capabilities_itr->value.Begin()->GetInt());
 }
 
 } // namespace dds
