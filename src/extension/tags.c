@@ -54,6 +54,7 @@ static zend_string *_key_http_user_agent_zstr;
 static zend_string *_key_https_zstr;
 static zend_string *_key_remote_addr_zstr;
 static zend_string *_true_zstr;
+static zend_string *client_ip;
 static HashTable _relevant_headers;
 static THREAD_LOCAL_ON_ZTS bool _appsec_json_frags_inited;
 static THREAD_LOCAL_ON_ZTS zend_llist _appsec_json_frags;
@@ -199,6 +200,10 @@ void dd_tags_rinit()
         zend_llist_init(&_appsec_json_frags, sizeof(zend_string *),
             _zend_string_release_indirect, 0);
     }
+
+    // Lets populate the span so we can query from this moment on
+    client_ip = NULL;
+    _add_ancillary_tags();
 }
 
 void dd_tags_add_appsec_json_frag(zend_string *nonnull zstr)
@@ -493,11 +498,13 @@ static void _dd_http_client_ip(zend_array *meta_ht, zval *_server)
 {
     // If the tracer has set http.client_ip, there is nothing to do here
     // otherwise, this header must be generated here
-    if (zend_hash_exists(meta_ht, _dd_tag_http_client_ip_zstr)) {
+    zval *zv_client_ip = zend_hash_find(meta_ht, _dd_tag_http_client_ip_zstr);
+    if (zv_client_ip && Z_TYPE_P(zv_client_ip) == IS_STRING) {
+        client_ip = Z_STR_P(zv_client_ip);
         return;
     }
 
-    zend_string *client_ip = dd_ip_extraction_find(_server);
+    client_ip = dd_ip_extraction_find(_server);
     if (!client_ip) {
         return;
     }
@@ -623,6 +630,8 @@ static zend_string *nullable _is_relevant_resp_header(
     }
     return NULL;
 }
+
+zend_string *nullable dd_tags_get_ip() { return client_ip; }
 
 void _set_runtime_family()
 {

@@ -15,6 +15,7 @@
 #include "../php_compat.h"
 #include "../request_body.h"
 #include "../string_helpers.h"
+#include "../tags.h"
 #include "request_init.h"
 #include <mpack.h>
 #include <zend_string.h>
@@ -47,7 +48,7 @@ static dd_result _request_pack(
     UNUSED(ctx);
 
     bool send_raw_body = DDAPPSEC_G(testing) && DDAPPSEC_G(testing_raw_body);
-#define REQUEST_INIT_MAP_NUM_ENTRIES 9
+#define REQUEST_INIT_MAP_NUM_ENTRIES 10
     if (send_raw_body) {
         mpack_start_map(w, REQUEST_INIT_MAP_NUM_ENTRIES + 1);
     } else {
@@ -104,6 +105,11 @@ static dd_result _request_pack(
     _pack_path_params(w, request_uri);
 
     // 10.
+    zend_string *nullable ip = dd_tags_get_ip();
+    dd_mpack_write_lstr(w, "server.request.ip");
+    _pack_path_params(w, ip);
+
+    // 11.
     if (send_raw_body) {
         dd_mpack_write_lstr(w, "server.request.body.raw");
         zend_string *nonnull req_body =

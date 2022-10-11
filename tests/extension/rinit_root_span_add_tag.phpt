@@ -61,6 +61,8 @@ Array
     [ddappsec] => true
     [env] => staging
     [http.method] => GET
+    [http.request.headers.content-length] => 0
+    [http.request.headers.content-type] => text/plain
     [http.status_code] => 200
     [http.url] => http://localhost:8888/my/ur%69/
     [system.pid] => %d
