@@ -209,6 +209,8 @@ TEST(BrokerTest, RecvClientInit)
     EXPECT_EQ(command.pid, 20);
     EXPECT_STREQ(command.client_version.c_str(), "one");
     EXPECT_STREQ(command.runtime_version.c_str(), "two");
+    EXPECT_STREQ(command.service.service.c_str(), "api");
+    EXPECT_STREQ(command.service.env.c_str(), "prod");
     EXPECT_EQ(command.engine_settings.rules_file, std::string{"three"});
     EXPECT_EQ(command.engine_settings.waf_timeout_us, 42ul);
     EXPECT_EQ(command.engine_settings.trace_rate_limit, 1729u);

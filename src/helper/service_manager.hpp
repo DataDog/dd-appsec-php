@@ -6,7 +6,6 @@
 #pragma once
 
 #include "engine.hpp"
-#include "engine_pool.hpp"
 #include "exception.hpp"
 #include "network/proto.hpp"
 #include "service.hpp"
@@ -38,6 +37,8 @@ protected:
 
     void cleanup_cache(); // mutex_ must be held when calling this
 
+    // TODO this should be some sort of time-based LRU cache
+    service::ptr last_service_;
     std::mutex mutex_;
     cache_t cache_;
 };

@@ -6,7 +6,6 @@
 #pragma once
 
 #include "engine.hpp"
-#include "engine_pool.hpp"
 #include "exception.hpp"
 #include "std_logging.hpp"
 #include "subscriber/waf.hpp"
@@ -15,7 +14,6 @@
 #include <mutex>
 #include <spdlog/spdlog.h>
 #include <unordered_map>
-
 
 namespace dds {
 

@@ -22,10 +22,11 @@ std::shared_ptr<service> service_manager::create_service(const service::identifi
         }
     }
 
-    cleanup_cache();
-
     auto service_ptr = service::from_settings(id, settings, meta, metrics);
     cache_.emplace(id, std::move(service_ptr));
+    last_service_ = service_ptr;
+
+    cleanup_cache();
 
     return service_ptr;
 }

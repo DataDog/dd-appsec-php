@@ -5,7 +5,6 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #include "common.hpp"
 #include <client.hpp>
-#include <engine_pool.hpp>
 #include <network/broker.hpp>
 #include <rapidjson/document.h>
 #include <tags.hpp>
