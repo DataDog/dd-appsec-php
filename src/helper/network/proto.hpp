@@ -7,6 +7,7 @@
 
 #include "client_settings.hpp"
 #include "msgpack_helpers.hpp"
+#include "service.hpp"
 #include <msgpack.hpp>
 #include <optional>
 #include <type_traits>
@@ -82,7 +83,9 @@ struct client_init {
         unsigned pid{0};
         std::string client_version;
         std::string runtime_version;
-        client_settings settings;
+
+        dds::service::identifier service;
+        client_settings engine_settings;
 
         request() = default;
         request(const request &) = delete;
@@ -91,7 +94,8 @@ struct client_init {
         request &operator=(request &&) = default;
         ~request() override = default;
 
-        MSGPACK_DEFINE(pid, client_version, runtime_version, settings);
+        MSGPACK_DEFINE(pid, client_version, runtime_version,
+            service, engine_settings);
     };
 
     struct response : base_response_generic<response> {

@@ -3,9 +3,23 @@
 //
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
+#pragma once
+
+#include <algorithm>
 #include <utility>
 
 namespace dds {
+
+template <typename T, typename... Args>
+inline constexpr std::size_t hash(T &value, Args... args)
+{
+    using non_const_t = typename std::remove_cv<T>::type;
+    if constexpr (sizeof...(Args) == 0) {
+        return std::hash<non_const_t>{}(value);
+    } else {
+        return std::hash<non_const_t>{}(value) ^ hash<Args...>(args...);
+    }
+}
 
 template <typename T> struct defer {
     explicit defer(T &&r_) : runnable(std::move(r_)) {}

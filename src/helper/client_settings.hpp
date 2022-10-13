@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "utils.hpp"
 #include <cstdint>
 #include <msgpack.hpp>
 #include <ostream>
@@ -63,13 +64,8 @@ struct client_settings {
     struct settings_hash {
         std::size_t operator()(const client_settings &s) const noexcept
         {
-            auto h1 = std::hash<decltype(rules_file)>{}(s.rules_file);
-            auto h2 = std::hash<decltype(waf_timeout_us)>{}(s.waf_timeout_us);
-            auto h3 =
-                std::hash<decltype(trace_rate_limit)>{}(s.trace_rate_limit);
-            auto h4 = std::hash<std::string>{}(s.obfuscator_key_regex);
-            auto h5 = std::hash<std::string>{}(s.obfuscator_value_regex);
-            return h1 ^ h2 ^ h3 ^ h4 ^ h5;
+            return hash(s.rules_file, s.waf_timeout_us, s.trace_rate_limit,
+                    s.obfuscator_key_regex, s.obfuscator_value_regex);
         }
     };
 };

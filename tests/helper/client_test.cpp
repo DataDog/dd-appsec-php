@@ -30,10 +30,10 @@ ACTION_TEMPLATE(SaveResponse, HAS_1_TEMPLATE_PARAMS(typename, T),
 
 TEST(ClientTest, ClientInit)
 {
-    auto epool = std::make_shared<engine_pool>();
+    auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
-    client c(epool, std::unique_ptr<mock::broker>(broker));
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
 
     auto fn = create_sample_rules_ok();
 
@@ -41,7 +41,7 @@ TEST(ClientTest, ClientInit)
     msg.pid = 1729;
     msg.runtime_version = "1.0";
     msg.client_version = "2.0";
-    msg.settings.rules_file = fn;
+    msg.engine_settings.rules_file = fn;
 
     network::request req(std::move(msg));
 
@@ -65,10 +65,10 @@ TEST(ClientTest, ClientInit)
 
 TEST(ClientTest, ClientInitInvalidRules)
 {
-    auto epool = std::make_shared<engine_pool>();
+    auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
-    client c(epool, std::unique_ptr<mock::broker>(broker));
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
 
     auto fn = create_sample_rules_invalid();
 
@@ -76,7 +76,7 @@ TEST(ClientTest, ClientInitInvalidRules)
     msg.pid = 1729;
     msg.runtime_version = "1.0";
     msg.client_version = "2.0";
-    msg.settings.rules_file = fn;
+    msg.engine_settings.rules_file = fn;
 
     network::request req(std::move(msg));
 
@@ -107,10 +107,10 @@ TEST(ClientTest, ClientInitInvalidRules)
 
 TEST(ClientTest, ClientInitResponseFail)
 {
-    auto epool = std::make_shared<engine_pool>();
+    auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
-    client c(epool, std::unique_ptr<mock::broker>(broker));
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
 
     auto fn = create_sample_rules_ok();
 
@@ -118,7 +118,7 @@ TEST(ClientTest, ClientInitResponseFail)
     msg.pid = 1729;
     msg.runtime_version = "1.0";
     msg.client_version = "2.0";
-    msg.settings.rules_file = fn;
+    msg.engine_settings.rules_file = fn;
 
     network::request req(std::move(msg));
     EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
@@ -129,10 +129,10 @@ TEST(ClientTest, ClientInitResponseFail)
 
 TEST(ClientTest, ClientInitMissingRuleFile)
 {
-    auto epool = std::make_shared<engine_pool>();
+    auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
-    client c(epool, std::unique_ptr<mock::broker>(broker));
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
 
     auto fn = "/missing/file";
 
@@ -140,7 +140,7 @@ TEST(ClientTest, ClientInitMissingRuleFile)
     msg.pid = 1729;
     msg.runtime_version = "1.0";
     msg.client_version = "2.0";
-    msg.settings.rules_file = fn;
+    msg.engine_settings.rules_file = fn;
 
     network::request req(std::move(msg));
 
@@ -155,10 +155,10 @@ TEST(ClientTest, ClientInitMissingRuleFile)
 
 TEST(ClientTest, ClientInitInvalidRuleFileFormat)
 {
-    auto epool = std::make_shared<engine_pool>();
+    auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
-    client c(epool, std::unique_ptr<mock::broker>(broker));
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
 
     char tmpl[] = "/tmp/test_ddappsec_XXXXXX";
     int fd = mkstemp(tmpl);
@@ -171,7 +171,7 @@ TEST(ClientTest, ClientInitInvalidRuleFileFormat)
     msg.pid = 1729;
     msg.runtime_version = "1.0";
     msg.client_version = "2.0";
-    msg.settings.rules_file = tmpl;
+    msg.engine_settings.rules_file = tmpl;
 
     network::request req(std::move(msg));
 
@@ -186,10 +186,10 @@ TEST(ClientTest, ClientInitInvalidRuleFileFormat)
 
 TEST(ClientTest, ClientInitAfterClientInit)
 {
-    auto epool = std::make_shared<engine_pool>();
+    auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
-    client c(epool, std::unique_ptr<mock::broker>(broker));
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
 
     auto fn = create_sample_rules_ok();
 
@@ -198,7 +198,7 @@ TEST(ClientTest, ClientInitAfterClientInit)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.settings.rules_file = fn;
+        msg.engine_settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -216,7 +216,7 @@ TEST(ClientTest, ClientInitAfterClientInit)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.settings.rules_file = fn;
+        msg.engine_settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -228,10 +228,10 @@ TEST(ClientTest, ClientInitAfterClientInit)
 
 TEST(ClientTest, ClientInitBrokerThrows)
 {
-    auto epool = std::make_shared<engine_pool>();
+    auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
-    client c(epool, std::unique_ptr<mock::broker>(broker));
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
 
     auto fn = create_sample_rules_ok();
 
@@ -240,7 +240,7 @@ TEST(ClientTest, ClientInitBrokerThrows)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.settings.rules_file = fn;
+        msg.engine_settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -256,7 +256,7 @@ TEST(ClientTest, ClientInitBrokerThrows)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.settings.rules_file = fn;
+        msg.engine_settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -272,7 +272,7 @@ TEST(ClientTest, ClientInitBrokerThrows)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.settings.rules_file = fn;
+        msg.engine_settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -286,10 +286,10 @@ TEST(ClientTest, ClientInitBrokerThrows)
 
 TEST(ClientTest, RequestInitOnClientInit)
 {
-    auto epool = std::make_shared<engine_pool>();
+    auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
-    client c(epool, std::unique_ptr<mock::broker>(broker));
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
 
     auto fn = create_sample_rules_ok();
 
@@ -311,10 +311,10 @@ TEST(ClientTest, RequestInitOnClientInit)
 
 TEST(ClientTest, RequestInit)
 {
-    auto epool = std::make_shared<engine_pool>();
+    auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
-    client c(epool, std::unique_ptr<mock::broker>(broker));
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
 
     // Client Init
     {
@@ -323,7 +323,7 @@ TEST(ClientTest, RequestInit)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.settings.rules_file = fn;
+        msg.engine_settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -358,10 +358,10 @@ TEST(ClientTest, RequestInit)
 
 TEST(ClientTest, RequestInitUnpackError)
 {
-    auto epool = std::make_shared<engine_pool>();
+    auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
-    client c(epool, std::unique_ptr<mock::broker>(broker));
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
 
     // Client Init
     {
@@ -370,7 +370,7 @@ TEST(ClientTest, RequestInitUnpackError)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.settings.rules_file = fn;
+        msg.engine_settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -397,10 +397,10 @@ TEST(ClientTest, RequestInitUnpackError)
 
 TEST(ClientTest, RequestInitNoClientInit)
 {
-    auto epool = std::make_shared<engine_pool>();
+    auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
-    client c(epool, std::unique_ptr<mock::broker>(broker));
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
 
     // Request Init
     {
@@ -420,10 +420,10 @@ TEST(ClientTest, RequestInitNoClientInit)
 
 TEST(ClientTest, RequestInitInvalidData)
 {
-    auto epool = std::make_shared<engine_pool>();
+    auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
-    client c(epool, std::unique_ptr<mock::broker>(broker));
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
 
     // Client Init
     {
@@ -432,7 +432,7 @@ TEST(ClientTest, RequestInitInvalidData)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.settings.rules_file = fn;
+        msg.engine_settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -461,10 +461,10 @@ TEST(ClientTest, RequestInitInvalidData)
 
 TEST(ClientTest, RequestInitBrokerThrows)
 {
-    auto epool = std::make_shared<engine_pool>();
+    auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
-    client c(epool, std::unique_ptr<mock::broker>(broker));
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
 
     // Client Init
     {
@@ -473,7 +473,7 @@ TEST(ClientTest, RequestInitBrokerThrows)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.settings.rules_file = fn;
+        msg.engine_settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -520,10 +520,10 @@ TEST(ClientTest, RequestInitBrokerThrows)
 
 TEST(ClientTest, RequestShutdown)
 {
-    auto epool = std::make_shared<engine_pool>();
+    auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
-    client c(epool, std::unique_ptr<mock::broker>(broker));
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
 
     // Client Init
     {
@@ -532,7 +532,7 @@ TEST(ClientTest, RequestShutdown)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.settings.rules_file = fn;
+        msg.engine_settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -590,10 +590,10 @@ TEST(ClientTest, RequestShutdown)
 
 TEST(ClientTest, RequestShutdownInvalidData)
 {
-    auto epool = std::make_shared<engine_pool>();
+    auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
-    client c(epool, std::unique_ptr<mock::broker>(broker));
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
 
     // Client Init
     {
@@ -602,7 +602,7 @@ TEST(ClientTest, RequestShutdownInvalidData)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.settings.rules_file = fn;
+        msg.engine_settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -651,10 +651,10 @@ TEST(ClientTest, RequestShutdownInvalidData)
 
 TEST(ClientTest, RequestShutdownNoClientInit)
 {
-    auto epool = std::make_shared<engine_pool>();
+    auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
-    client c(epool, std::unique_ptr<mock::broker>(broker));
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
 
     // Request Shutdown
     {
@@ -672,10 +672,10 @@ TEST(ClientTest, RequestShutdownNoClientInit)
 
 TEST(ClientTest, RequestShutdownNoRequestInit)
 {
-    auto epool = std::make_shared<engine_pool>();
+    auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
-    client c(epool, std::unique_ptr<mock::broker>(broker));
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
 
     // Client Init
     {
@@ -684,7 +684,7 @@ TEST(ClientTest, RequestShutdownNoRequestInit)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.settings.rules_file = fn;
+        msg.engine_settings.rules_file = fn;
 
         network::request req(std::move(msg));
 
@@ -717,10 +717,10 @@ TEST(ClientTest, RequestShutdownNoRequestInit)
 
 TEST(ClientTest, RequestShutdownBrokerThrows)
 {
-    auto epool = std::make_shared<engine_pool>();
+    auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
-    client c(epool, std::unique_ptr<mock::broker>(broker));
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
 
     // Client Init
     {
@@ -729,7 +729,7 @@ TEST(ClientTest, RequestShutdownBrokerThrows)
         msg.pid = 1729;
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
-        msg.settings.rules_file = fn;
+        msg.engine_settings.rules_file = fn;
 
         network::request req(std::move(msg));
 

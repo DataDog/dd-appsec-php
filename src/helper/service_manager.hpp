@@ -1,0 +1,45 @@
+// Unless explicitly stated otherwise all files in this repository are
+// dual-licensed under the Apache-2.0 License or BSD-3-Clause License.
+//
+// This product includes software developed at Datadog
+// (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
+#pragma once
+
+#include "engine.hpp"
+#include "engine_pool.hpp"
+#include "exception.hpp"
+#include "network/proto.hpp"
+#include "service.hpp"
+#include "std_logging.hpp"
+#include "subscriber/waf.hpp"
+#include "utils.hpp"
+#include <memory>
+#include <mutex>
+#include <spdlog/spdlog.h>
+#include <unordered_map>
+
+
+namespace dds {
+
+class service_manager
+{
+public:
+    service_manager() = default;
+
+    std::shared_ptr<service> create_service(const service::identifier &id,
+        const client_settings &settings,
+        std::map<std::string_view, std::string> &meta,
+        std::map<std::string_view, double> &metrics);
+
+protected:
+    using cache_t = std::unordered_map<service::identifier,
+        std::weak_ptr<service>,
+        service::identifier::hash>;
+
+    void cleanup_cache(); // mutex_ must be held when calling this
+
+    std::mutex mutex_;
+    cache_t cache_;
+};
+
+} // namespace dds

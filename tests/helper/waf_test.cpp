@@ -7,7 +7,7 @@
 
 #include "client_settings.hpp"
 #include "common.hpp"
-#include <defer.hpp>
+#include <utils.hpp>
 #include <rapidjson/document.h>
 #include <spdlog/details/null_mutex.h>
 #include <spdlog/sinks/base_sink.h>

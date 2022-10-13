@@ -172,10 +172,15 @@ TEST(BrokerTest, RecvClientInit)
     msgpack::packer<std::stringstream> packer(ss);
     packer.pack_array(2);
     pack_str(packer, "client_init");
-    packer.pack_array(4);
+    packer.pack_array(5);
     packer.pack_unsigned_int(20);
     pack_str(packer, "one");
     pack_str(packer, "two");
+    packer.pack_map(2);
+    pack_str(packer, "service");
+    pack_str(packer, "api");
+    pack_str(packer, "env");
+    pack_str(packer, "prod");
     packer.pack_map(5);
     pack_str(packer, "rules_file");
     pack_str(packer, "three");
@@ -204,12 +209,12 @@ TEST(BrokerTest, RecvClientInit)
     EXPECT_EQ(command.pid, 20);
     EXPECT_STREQ(command.client_version.c_str(), "one");
     EXPECT_STREQ(command.runtime_version.c_str(), "two");
-    EXPECT_EQ(command.settings.rules_file, std::string{"three"});
-    EXPECT_EQ(command.settings.waf_timeout_us, 42ul);
-    EXPECT_EQ(command.settings.trace_rate_limit, 1729u);
-    EXPECT_STREQ(command.settings.obfuscator_key_regex.c_str(), "key_regex");
+    EXPECT_EQ(command.engine_settings.rules_file, std::string{"three"});
+    EXPECT_EQ(command.engine_settings.waf_timeout_us, 42ul);
+    EXPECT_EQ(command.engine_settings.trace_rate_limit, 1729u);
+    EXPECT_STREQ(command.engine_settings.obfuscator_key_regex.c_str(), "key_regex");
     EXPECT_STREQ(
-        command.settings.obfuscator_value_regex.c_str(), "value_regex");
+        command.engine_settings.obfuscator_value_regex.c_str(), "value_regex");
 }
 
 TEST(BrokerTest, RecvRequestInit)
