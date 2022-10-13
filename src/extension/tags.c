@@ -491,6 +491,7 @@ static void _dd_http_network_client_ip(zend_array *meta_ht, zval *_server)
 
 static void _dd_http_client_ip(zend_array *meta_ht, zval *_server)
 {
+
     // If the tracer has set http.client_ip, there is nothing to do here
     // otherwise, this header must be generated here
     if (zend_hash_exists(meta_ht, _dd_tag_http_client_ip_zstr)) {

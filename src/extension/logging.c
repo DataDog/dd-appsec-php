@@ -72,8 +72,8 @@ static void _register_testing_objects(void);
 
 // clang-format off
 static const dd_ini_setting ini_settings[] = {
-    DD_INI_ENV("log_level", "warn", PHP_INI_ALL, _on_update_log_level),
-    DD_INI_ENV("log_file", "php_error_reporting", PHP_INI_SYSTEM, _on_update_log_file),
+    DD_APPSEC_INI_ENV("log_level", "warn", PHP_INI_ALL, _on_update_log_level),
+    DD_APPSEC_INI_ENV("log_file", "php_error_reporting", PHP_INI_SYSTEM, _on_update_log_file),
     {0}
 };
 // clang-format on

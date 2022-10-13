@@ -42,14 +42,10 @@ dd_result dd_phpobj_reg_ini(const zend_ini_entry_def *entries)
     return res == FAILURE ? dd_error : dd_success;
 }
 
-#define NAME_PREFIX "datadog.appsec."
-#define NAME_PREFIX_LEN (sizeof(NAME_PREFIX) - 1)
-#define ENV_NAME_PREFIX "DD_APPSEC_"
-#define ENV_NAME_PREFIX_LEN (sizeof(ENV_NAME_PREFIX) - 1)
-
 #define ZEND_INI_MH_PASSTHRU entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage
-static char *nullable _get_env_name_from_ini_name(
-    const char *nullable name, size_t name_len);
+static char *nullable _get_env_name_from_ini_name(const char *nullable name,
+    size_t name_len, const char *nullable env_name_prefix,
+    size_t env_name_prefix_len);
 static zend_string *nullable _fetch_from_env(const char *nullable env_name);
 static ZEND_INI_MH(_on_modify_wrapper);
 struct entry_ex {
@@ -68,14 +64,14 @@ _Static_assert(offsetof(zend_string, val) % _Alignof(struct entry_ex) == 0,
  */
 void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
 {
-    size_t name_len = NAME_PREFIX_LEN + sett->name_suff_len;
-    char *name = safe_pemalloc(name_len, 1, ENV_NAME_PREFIX_LEN + 1, 1);
-    memcpy(name, NAME_PREFIX, NAME_PREFIX_LEN);
-    memcpy(name + NAME_PREFIX_LEN, sett->name_suff, sett->name_suff_len);
+    size_t name_len = sett->name_prefix_len + sett->name_suff_len;
+    char *name = safe_pemalloc(name_len, 1, APPSEC_ENV_NAME_PREFIX_LEN + 1, 1);
+    memcpy(name, sett->name_prefix, sett->name_prefix_len);
+    memcpy(name + sett->name_prefix_len, sett->name_suff, sett->name_suff_len);
     name[name_len] = '\0';
 
-    char *env_name =
-        _get_env_name_from_ini_name(sett->name_suff, sett->name_suff_len);
+    char *env_name = _get_env_name_from_ini_name(sett->name_suff,
+        sett->name_suff_len, sett->env_name_prefix, sett->env_name_prefix_len);
     if (!env_name) {
         return;
     }
@@ -126,20 +122,21 @@ void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
  * This function gets call at minit, watch out with using Zend Memory Manager
  * No emallocs should be used. Instead pemallocs and similars.
  */
-static char *nullable _get_env_name_from_ini_name(
-    const char *nullable name, size_t name_len)
+static char *nullable _get_env_name_from_ini_name(const char *nullable name,
+    size_t name_len, const char *nullable env_name_prefix,
+    size_t env_name_prefix_len)
 {
     if (!name || name_len == 0) {
         return NULL;
     }
 
-    size_t env_name_len = ENV_NAME_PREFIX_LEN + name_len;
+    size_t env_name_len = env_name_prefix_len + name_len;
     char *env_name = emalloc(env_name_len + 1);
-    memcpy(env_name, ENV_NAME_PREFIX, ENV_NAME_PREFIX_LEN);
+    memcpy(env_name, env_name_prefix, env_name_prefix_len);
 
     const char *r = name;
     const char *rend = &name[name_len];
-    char *w = &env_name[ENV_NAME_PREFIX_LEN];
+    char *w = &env_name[env_name_prefix_len];
     for (; r < rend; r++) {
         char c = *r;
         if (c >= 'a' && c <= 'z') {
@@ -194,12 +191,21 @@ dd_result dd_phpobj_load_env_values()
     zend_ini_entry *p;
     ZEND_HASH_FOREACH_PTR(EG(ini_directives), p)
     {
-        if (p->on_modify == _on_modify_wrapper &&
-            ZSTR_LEN(p->name) > NAME_PREFIX_LEN) {
+        if (p->on_modify == _on_modify_wrapper) {
+
+            const char *name_prefix = APPSEC_NAME_PREFIX;
+            size_t name_prefix_len = APPSEC_NAME_PREFIX_LEN;
+
+            if (strncmp(ZSTR_VAL(p->name), APPSEC_NAME_PREFIX,
+                    APPSEC_NAME_PREFIX_LEN)) {
+                name_prefix = TRACE_NAME_PREFIX;
+                name_prefix_len = TRACE_NAME_PREFIX_LEN;
+            }
+
             const char *ini_name = ZSTR_VAL(p->name);
-            char *env_name =
-                _get_env_name_from_ini_name(&ini_name[NAME_PREFIX_LEN],
-                    ZSTR_LEN(p->name) - NAME_PREFIX_LEN);
+            char *env_name = _get_env_name_from_ini_name(
+                &ini_name[name_prefix_len], ZSTR_LEN(p->name) - name_prefix_len,
+                name_prefix, name_prefix_len);
             zend_string *env_def = _fetch_from_env(env_name);
             if (env_def) {
                 _custom_php_zend_ini_alter_master(
