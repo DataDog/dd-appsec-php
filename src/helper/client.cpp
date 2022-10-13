@@ -177,13 +177,11 @@ bool client::handle_command(network::request_init::request &command)
     network::request_init::response response;
     try {
         auto res = context_->publish(std::move(command.data));
-        if (res.value == result::code::record) {
+        if (res && res->valid()) {
             response.verdict = "record";
-            response.triggers = std::move(res.data);
-        } else if (res.value == result::code::block) {
-            response.verdict = "block";
-            response.triggers = std::move(res.data);
-            DD_STDLOG(DD_STDLOG_ATTACK_BLOCKED);
+            response.triggers = std::move(res->data);
+            response.actions = std::move(res->actions);
+            DD_STDLOG(DD_STDLOG_ATTACK_DETECTED);
         } else {
             response.verdict = "ok";
         }
@@ -235,14 +233,11 @@ bool client::handle_command(network::request_shutdown::request &command)
     network::request_shutdown::response response;
     try {
         auto res = context_->publish(std::move(command.data));
-        if (res.value == result::code::record) {
+        if (res && res->valid()) {
             response.verdict = "record";
-            response.triggers = std::move(res.data);
+            response.triggers = std::move(res->data);
+            response.actions = std::move(res->actions);
             DD_STDLOG(DD_STDLOG_ATTACK_DETECTED);
-        } else if (res.value == result::code::block) {
-            response.verdict = "block";
-            response.triggers = std::move(res.data);
-            DD_STDLOG(DD_STDLOG_ATTACK_BLOCKED);
         } else {
             response.verdict = "ok";
         }

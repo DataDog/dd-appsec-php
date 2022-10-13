@@ -10,9 +10,11 @@
 #include "std_logging.hpp"
 #include "subscriber/waf.hpp"
 #include "utils.hpp"
+#include <future>
 #include <memory>
 #include <mutex>
 #include <spdlog/spdlog.h>
+#include <thread>
 #include <unordered_map>
 
 namespace dds {
@@ -45,12 +47,21 @@ public:
         };
     };
 
-    explicit service(identifier id, std::shared_ptr<engine> &engine):
+    service(identifier id, std::shared_ptr<engine> &engine):
       id_(std::move(id)), engine_(std::move(engine)) {
           // The engine should always be valid
           // if (!engine_) throw;
-      }
+    }
 
+    ~service() {
+        running_ = false;
+    }
+
+    service(const service&) = delete;
+    service& operator=(const service&) = delete;
+
+    service(service&&) = delete;
+    service& operator=(service&&) = delete;
 
     static service::ptr from_settings(const identifier &id,
         const dds::client_settings &eng_settings,
@@ -66,6 +77,9 @@ public:
 protected:
     identifier id_;
     std::shared_ptr<engine> engine_;
+
+    std::atomic<bool> running_{true};
+    std::thread handler_;
 };
 
 } // namespace dds 

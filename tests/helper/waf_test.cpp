@@ -7,12 +7,12 @@
 
 #include "client_settings.hpp"
 #include "common.hpp"
-#include <utils.hpp>
 #include <rapidjson/document.h>
 #include <spdlog/details/null_mutex.h>
 #include <spdlog/sinks/base_sink.h>
 #include <subscriber/waf.hpp>
 #include <tags.hpp>
+#include <utils.hpp>
 
 const std::string waf_rule =
     R"({"version":"2.1","metadata":{"rules_version":"1.2.3"},"rules":[{"id":"1","name":"rule1","tags":{"type":"flow1","category":"category1"},"conditions":[{"operator":"match_regex","parameters":{"inputs":[{"address":"arg1","key_path":[]}],"regex":"^string.*"}},{"operator":"match_regex","parameters":{"inputs":[{"address":"arg2","key_path":[]}],"regex":".*"}}],"action":"record"}]})";
@@ -103,7 +103,7 @@ TEST(WafTest, ValidRunGood)
 
     parameter_view pv(p);
     auto res = ctx->call(pv);
-    EXPECT_EQ(res.value, dds::result::code::ok);
+    EXPECT_TRUE(!res);
 
     ctx->get_meta_and_metrics(meta, metrics);
     EXPECT_STREQ(meta[tag::event_rules_version].c_str(), "1.2.3");
@@ -124,15 +124,16 @@ TEST(WafTest, ValidRunMonitor)
 
     parameter_view pv(p);
     auto res = ctx->call(pv);
-    EXPECT_EQ(res.value, dds::result::code::record);
+    EXPECT_TRUE(res);
 
-    for (auto &match : res.data) {
+    for (auto &match : res->data) {
         rapidjson::Document doc;
         doc.Parse(match);
         EXPECT_FALSE(doc.HasParseError());
         EXPECT_TRUE(doc.IsObject());
     }
 
+    EXPECT_TRUE(res->actions.empty());
     ctx->get_meta_and_metrics(meta, metrics);
     EXPECT_STREQ(meta[tag::event_rules_version].c_str(), "1.2.3");
     EXPECT_GT(metrics[tag::waf_duration], 0.0);
@@ -154,11 +155,11 @@ TEST(WafTest, ValidRunMonitorObfuscated)
 
     parameter_view pv(p);
     auto res = ctx->call(pv);
-    EXPECT_EQ(res.value, dds::result::code::record);
+    EXPECT_TRUE(res);
 
-    EXPECT_EQ(res.data.size(), 1);
+    EXPECT_EQ(res->data.size(), 1);
     rapidjson::Document doc;
-    doc.Parse(res.data[0]);
+    doc.Parse(res->data[0]);
     EXPECT_FALSE(doc.HasParseError());
     EXPECT_TRUE(doc.IsObject());
 
@@ -166,6 +167,8 @@ TEST(WafTest, ValidRunMonitorObfuscated)
         "<Redacted>");
     EXPECT_STREQ(doc["rule_matches"][1]["parameters"][0]["value"].GetString(),
         "<Redacted>");
+
+    EXPECT_TRUE(res->actions.empty());
 
     ctx->get_meta_and_metrics(meta, metrics);
     EXPECT_STREQ(meta[tag::event_rules_version].c_str(), "1.2.3");
@@ -191,13 +194,15 @@ TEST(WafTest, ValidRunMonitorObfuscatedFromSettings)
 
     parameter_view pv(p);
     auto res = ctx->call(pv);
-    EXPECT_EQ(res.value, dds::result::code::record);
+    EXPECT_TRUE(res);
 
-    EXPECT_EQ(res.data.size(), 1);
+    EXPECT_EQ(res->data.size(), 1);
     rapidjson::Document doc;
-    doc.Parse(res.data[0]);
+    doc.Parse(res->data[0]);
     EXPECT_FALSE(doc.HasParseError());
     EXPECT_TRUE(doc.IsObject());
+
+    EXPECT_TRUE(res->actions.empty());
 
     EXPECT_STREQ(doc["rule_matches"][0]["parameters"][0]["value"].GetString(),
         "<Redacted>");

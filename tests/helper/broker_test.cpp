@@ -108,11 +108,13 @@ TEST(BrokerTest, SendRequestInit)
 
     std::stringstream ss;
     msgpack::packer<std::stringstream> packer(ss);
-    packer.pack_array(2);
+    packer.pack_array(3);
     pack_str(packer, "record");
     packer.pack_array(2);
     pack_str(packer, "one");
     pack_str(packer, "two");
+    packer.pack_array(1);
+    pack_str(packer, "block");
     const auto &expected_data = ss.str();
 
     network::header_t h;
@@ -125,6 +127,7 @@ TEST(BrokerTest, SendRequestInit)
     network::request_init::response response;
     response.verdict = "record";
     response.triggers = {"one", "two"};
+    response.actions = {"block"};
     EXPECT_TRUE(broker.send(response));
 
     EXPECT_STREQ(h.code, "dds");
@@ -138,11 +141,13 @@ TEST(BrokerTest, SendRequestShutdown)
 
     std::stringstream ss;
     msgpack::packer<std::stringstream> packer(ss);
-    packer.pack_array(4);
-    pack_str(packer, "block");
+    packer.pack_array(5);
+    pack_str(packer, "record");
     packer.pack_array(2);
     pack_str(packer, "one");
     pack_str(packer, "two");
+    packer.pack_array(1);
+    pack_str(packer, "block");
     packer.pack_map(0);
     packer.pack_map(0);
     const auto &expected_data = ss.str();
@@ -155,8 +160,9 @@ TEST(BrokerTest, SendRequestShutdown)
         .WillOnce(DoAll(SaveString(&buffer), Return(expected_data.size())));
 
     network::request_shutdown::response response;
-    response.verdict = "block";
+    response.verdict = "record";
     response.triggers = {"one", "two"};
+    response.actions = {"block"};
     EXPECT_TRUE(broker.send(response));
 
     EXPECT_STREQ(h.code, "dds");

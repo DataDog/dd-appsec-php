@@ -134,8 +134,9 @@ struct request_init {
 
         std::string verdict;
         std::vector<std::string> triggers;
+        std::unordered_set<std::string> actions;
 
-        MSGPACK_DEFINE(verdict, triggers);
+        MSGPACK_DEFINE(verdict, triggers, actions);
     };
 };
 
@@ -161,11 +162,12 @@ struct request_shutdown {
 
         std::string verdict;
         std::vector<std::string> triggers;
+        std::unordered_set<std::string> actions;
 
         std::map<std::string_view, std::string> meta;
         std::map<std::string_view, double> metrics;
 
-        MSGPACK_DEFINE(verdict, triggers, meta, metrics);
+        MSGPACK_DEFINE(verdict, triggers, actions, meta, metrics);
     };
 };
 

@@ -49,7 +49,7 @@ public:
         context &operator=(context &&) = delete;
         ~context() = default;
 
-        result publish(parameter &&param);
+        std::optional<result> publish(parameter &&param);
         // NOLINTNEXTLINE(google-runtime-references)
         void get_meta_and_metrics(std::map<std::string_view, std::string> &meta,
             std::map<std::string_view, double> &metrics);

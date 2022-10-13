@@ -120,7 +120,7 @@ remote_config_result client::process_response(
                 raw = path_in_target_files->second.raw;
             }
 
-            std::string path_c = path;
+            const std::string path_c = path;
             config config_ = {
                 cp.product, cp.id, raw, path_c, hashes, custom_v, length};
             auto configs_itr = configs.find(cp.product);

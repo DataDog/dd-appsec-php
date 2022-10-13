@@ -8,25 +8,27 @@
 #include <ostream>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <vector>
 
 namespace dds {
 
 struct result {
-    enum class code { ok, record, block };
-
     result() = default;
-    explicit result(code c) : value(c) {}
-    result(code c, std::vector<std::string> &&s) : value(c), data(std::move(s))
-    {}
+
+    result(std::vector<std::string> &&data_,
+      std::unordered_set<std::string> &&actions_) :
+        data(std::move(data_)), actions(std::move(actions_)) {}
     result(const result &) = default;
     result(result &&) = default;
     result &operator=(const result &) = default;
     result &operator=(result &&) = default;
     ~result() = default;
 
-    code value{code::ok};
+    bool valid() const { return !data.empty() || !actions.empty(); }
+
     std::vector<std::string> data;
+    std::unordered_set<std::string> actions;
 };
 
 } // namespace dds
