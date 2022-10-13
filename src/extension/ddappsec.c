@@ -369,18 +369,18 @@ static void _register_ini_entries()
 {
     // clang-format off
     static const dd_ini_setting settings[] = {
-        DD_INI_ENV("enabled", "0", PHP_INI_SYSTEM, _on_update_appsec_enabled),
-        DD_INI_ENV("enabled_on_cli", "0", PHP_INI_SYSTEM, _on_update_appsec_enabled_on_cli),
-        DD_INI_ENV_GLOB("block", "0", PHP_INI_SYSTEM, OnUpdateBool, block, zend_ddappsec_globals, ddappsec_globals),
-        DD_INI_ENV_GLOB("rules", "", PHP_INI_SYSTEM, OnUpdateString, rules_file, zend_ddappsec_globals, ddappsec_globals),
-        DD_INI_ENV_GLOB("waf_timeout", "10000", PHP_INI_SYSTEM, OnUpdateLongGEZero, waf_timeout_us, zend_ddappsec_globals, ddappsec_globals),
-        DD_INI_ENV_GLOB("trace_rate_limit", "100", PHP_INI_SYSTEM, _on_update_unsigned, trace_rate_limit, zend_ddappsec_globals, ddappsec_globals),
-        DD_INI_ENV_GLOB("extra_headers", "", PHP_INI_SYSTEM, OnUpdateString, extra_headers, zend_ddappsec_globals, ddappsec_globals),
-        DD_INI_ENV_GLOB("obfuscation_parameter_key_regexp", DEFAULT_OBFUSCATOR_KEY_REGEX, PHP_INI_SYSTEM, OnUpdateString, obfuscator_key_regex, zend_ddappsec_globals, ddappsec_globals),
-        DD_INI_ENV_GLOB("obfuscation_parameter_value_regexp", DEFAULT_OBFUSCATOR_VALUE_REGEX, PHP_INI_SYSTEM, OnUpdateString, obfuscator_value_regex, zend_ddappsec_globals, ddappsec_globals),
-        DD_INI_ENV_GLOB("testing", "0", PHP_INI_SYSTEM, OnUpdateBool, testing, zend_ddappsec_globals, ddappsec_globals),
-        DD_INI_ENV_GLOB("testing_abort_rinit", "0", PHP_INI_SYSTEM, OnUpdateBool, testing_abort_rinit, zend_ddappsec_globals, ddappsec_globals),
-        DD_INI_ENV_GLOB("testing_raw_body", "0", PHP_INI_SYSTEM, OnUpdateBool, testing_raw_body, zend_ddappsec_globals, ddappsec_globals),
+        DD_APPSEC_INI_ENV("enabled", "0", PHP_INI_SYSTEM, _on_update_appsec_enabled),
+        DD_APPSEC_INI_ENV("enabled_on_cli", "0", PHP_INI_SYSTEM, _on_update_appsec_enabled_on_cli),
+        DD_APPSEC_INI_ENV_GLOB("block", "0", PHP_INI_SYSTEM, OnUpdateBool, block, zend_ddappsec_globals, ddappsec_globals),
+        DD_APPSEC_INI_ENV_GLOB("rules", "", PHP_INI_SYSTEM, OnUpdateString, rules_file, zend_ddappsec_globals, ddappsec_globals),
+        DD_APPSEC_INI_ENV_GLOB("waf_timeout", "10000", PHP_INI_SYSTEM, OnUpdateLongGEZero, waf_timeout_us, zend_ddappsec_globals, ddappsec_globals),
+        DD_APPSEC_INI_ENV_GLOB("trace_rate_limit", "100", PHP_INI_SYSTEM, _on_update_unsigned, trace_rate_limit, zend_ddappsec_globals, ddappsec_globals),
+        DD_APPSEC_INI_ENV_GLOB("extra_headers", "", PHP_INI_SYSTEM, OnUpdateString, extra_headers, zend_ddappsec_globals, ddappsec_globals),
+        DD_APPSEC_INI_ENV_GLOB("obfuscation_parameter_key_regexp", DEFAULT_OBFUSCATOR_KEY_REGEX, PHP_INI_SYSTEM, OnUpdateString, obfuscator_key_regex, zend_ddappsec_globals, ddappsec_globals),
+        DD_APPSEC_INI_ENV_GLOB("obfuscation_parameter_value_regexp", DEFAULT_OBFUSCATOR_VALUE_REGEX, PHP_INI_SYSTEM, OnUpdateString, obfuscator_value_regex, zend_ddappsec_globals, ddappsec_globals),
+        DD_APPSEC_INI_ENV_GLOB("testing", "0", PHP_INI_SYSTEM, OnUpdateBool, testing, zend_ddappsec_globals, ddappsec_globals),
+        DD_APPSEC_INI_ENV_GLOB("testing_abort_rinit", "0", PHP_INI_SYSTEM, OnUpdateBool, testing_abort_rinit, zend_ddappsec_globals, ddappsec_globals),
+        DD_APPSEC_INI_ENV_GLOB("testing_raw_body", "0", PHP_INI_SYSTEM, OnUpdateBool, testing_raw_body, zend_ddappsec_globals, ddappsec_globals),
         {0}
     };
     // clang-format on
