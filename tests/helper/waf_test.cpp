@@ -5,7 +5,7 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #include <libddwaf/src/log.hpp>
 
-#include "client_settings.hpp"
+#include "engine_settings.hpp"
 #include "common.hpp"
 #include <rapidjson/document.h>
 #include <spdlog/details/null_mutex.h>
@@ -37,7 +37,7 @@ using log_counter_sink_st = log_counter_sink<spdlog::details::null_mutex>;
 
 TEST(WafTest, InitWithInvalidRules)
 {
-    client_settings cs;
+    engine_settings cs;
     cs.rules_file = create_sample_rules_invalid();
 
     std::map<std::string_view, std::string> meta;
@@ -180,7 +180,7 @@ TEST(WafTest, ValidRunMonitorObfuscatedFromSettings)
     std::map<std::string_view, std::string> meta;
     std::map<std::string_view, double> metrics;
 
-    client_settings cs;
+    engine_settings cs;
     cs.rules_file = create_sample_rules_ok();
     cs.obfuscator_key_regex = "password";
 

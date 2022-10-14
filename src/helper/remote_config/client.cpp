@@ -13,18 +13,27 @@
 
 namespace dds::remote_config {
 
-config_path config_path::from_path(const std::string &path)
-{
-    static const std::regex regex(
-        "^(datadog/\\d+|employee)/([^/]+)/([^/]+)/[^/]+$");
+namespace {
 
-    std::smatch base_match;
-    if (!std::regex_match(path, base_match, regex) || base_match.size() < 4) {
-        throw invalid_path();
+struct config_path {
+    static config_path from_path(const std::string &path)
+    {
+        static const std::regex regex(
+            "^(datadog/\\d+|employee)/([^/]+)/([^/]+)/[^/]+$");
+
+        std::smatch base_match;
+        if (!std::regex_match(path, base_match, regex) || base_match.size() < 4) {
+            throw invalid_path();
+        }
+
+        return config_path{base_match[3].str(), base_match[2].str()};
     }
 
-    return config_path{base_match[3].str(), base_match[2].str()};
-}
+    std::string id;
+    std::string product;
+};
+
+} // namespace
 
 [[nodiscard]] protocol::get_configs_request client::generate_request() const
 {
@@ -47,10 +56,10 @@ config_path config_path::from_path(const std::string &path)
         }
     }
 
-    protocol::client_tracer ct = {
+    const protocol::client_tracer ct{
         runtime_id_, tracer_version_, service_, env_, app_version_};
 
-    protocol::client_state cs = {targets_version_, config_states,
+    const protocol::client_state cs{targets_version_, config_states,
         !last_poll_error_.empty(), last_poll_error_, opaque_backend_state_};
     std::vector<std::string> products_str;
     products_str.reserve(products_.size());

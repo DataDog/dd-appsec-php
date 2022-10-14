@@ -353,7 +353,7 @@ std::vector<std::string_view> instance::get_subscriptions()
     return output;
 }
 
-instance::ptr instance::from_settings(const client_settings &settings,
+instance::ptr instance::from_settings(const engine_settings &settings,
     std::map<std::string_view, std::string> &meta,
     std::map<std::string_view, double> &metrics)
 {

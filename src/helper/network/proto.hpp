@@ -5,8 +5,9 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #pragma once
 
-#include "client_settings.hpp"
+#include "engine_settings.hpp"
 #include "msgpack_helpers.hpp"
+#include "remote_config/settings.hpp"
 #include "service.hpp"
 #include <msgpack.hpp>
 #include <optional>
@@ -85,7 +86,7 @@ struct client_init {
         std::string runtime_version;
 
         dds::service::identifier service;
-        client_settings engine_settings;
+        dds::engine_settings engine_settings;
 
         request() = default;
         request(const request &) = delete;

@@ -64,7 +64,7 @@ public:
 
     listener::ptr get_listener() override;
 
-    static ptr from_settings(const client_settings &settings,
+    static ptr from_settings(const engine_settings &settings,
         std::map<std::string_view, std::string> &meta,
         std::map<std::string_view, double> &metrics);
 

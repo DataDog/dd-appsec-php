@@ -3,7 +3,7 @@
 //
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
-#include "client_settings.hpp"
+#include "engine_settings.hpp"
 #include "common.hpp"
 #include <boost/algorithm/string/predicate.hpp>
 #include <service_manager.hpp>
@@ -15,7 +15,7 @@ namespace dds {
 
 TEST(ServiceManagerTest, DefaultRulesFile)
 {
-    auto path = client_settings::default_rules_file();
+    auto path = engine_settings::default_rules_file();
     EXPECT_TRUE(algo::ends_with(path, "/etc/dd-appsec/recommended.json"));
 }
 

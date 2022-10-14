@@ -5,7 +5,7 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #pragma once
 
-#include "../client_settings.hpp"
+#include "../engine_settings.hpp"
 #include "../parameter.hpp"
 #include "../parameter_view.hpp"
 #include "../result.hpp"

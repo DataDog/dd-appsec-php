@@ -26,7 +26,7 @@ public:
     service_manager() = default;
 
     std::shared_ptr<service> create_service(const service::identifier &id,
-        const client_settings &settings,
+        const engine_settings &settings,
         std::map<std::string_view, std::string> &meta,
         std::map<std::string_view, double> &metrics);
 

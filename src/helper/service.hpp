@@ -64,7 +64,7 @@ public:
     service& operator=(service&&) = delete;
 
     static service::ptr from_settings(const identifier &id,
-        const dds::client_settings &eng_settings,
+        const dds::engine_settings &eng_settings,
         /*remote_config::settings &rc_settings,*/
         std::map<std::string_view, std::string> &meta,
         std::map<std::string_view, double> &metrics);

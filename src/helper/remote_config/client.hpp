@@ -23,12 +23,6 @@ enum class remote_config_result {
 
 class invalid_path : public std::exception {};
 
-struct config_path {
-    static config_path from_path(const std::string &path);
-    std::string id;
-    std::string product;
-};
-
 class client {
 public:
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
@@ -49,7 +43,8 @@ public:
 
     remote_config_result poll();
 
-private:
+protected:
+
     [[nodiscard]] protocol::get_configs_request generate_request() const;
     remote_config_result process_response(
         const protocol::get_configs_response &response);

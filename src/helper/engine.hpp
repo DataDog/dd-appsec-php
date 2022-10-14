@@ -5,7 +5,7 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #pragma once
 
-#include "client_settings.hpp"
+#include "engine_settings.hpp"
 #include "config.hpp"
 #include "parameter.hpp"
 #include "rate_limit.hpp"
@@ -62,7 +62,7 @@ public:
     };
 
     static auto create(
-        uint32_t trace_rate_limit = client_settings::default_trace_rate_limit)
+        uint32_t trace_rate_limit = engine_settings::default_trace_rate_limit)
     {
         return std::shared_ptr<engine>(new engine(trace_rate_limit));
     }
