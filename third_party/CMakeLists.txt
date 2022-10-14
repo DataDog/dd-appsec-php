@@ -17,6 +17,10 @@ if(DD_APPSEC_BUILD_HELPER)
     set_target_properties(msgpack_c PROPERTIES POSITION_INDEPENDENT_CODE 1)
     target_include_directories(msgpack_c PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/msgpack-c/include/)
     target_compile_definitions(msgpack_c INTERFACE MSGPACK_CXX17=ON)
+
+    file(GLOB_RECURSE CPPBASE64_C_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/cpp-base64/base64.cpp)
+    add_library(cpp-base64 STATIC ${CPPBASE64_C_SOURCES})
+    target_include_directories(cpp-base64 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cpp-base64)
 endif()
 
 if(DD_APPSEC_BUILD_EXTENSION)
@@ -80,7 +84,7 @@ FetchContent_MakeAvailable(spdlog)
 include(ExternalProject)
 ExternalProject_Add(event_rules
     GIT_REPOSITORY https://github.com/DataDog/appsec-event-rules.git
-    GIT_TAG 1.3.1
+    GIT_TAG 1.4.0
     GIT_SHALLOW ON
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
