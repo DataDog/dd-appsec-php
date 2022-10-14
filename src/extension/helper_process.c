@@ -74,10 +74,6 @@ static void _register_testing_objects(void);
 
 void dd_helper_startup(void)
 {
-    dd_on_runtime_path_update(
-        NULL, &zai_config_memoized_entries
-                   [DDAPPSEC_CONFIG_DD_APPSEC_HELPER_RUNTIME_PATH]
-                       .decoded_value);
     atomic_store(&_launch_failure_fd_lock, -1);
 #ifdef TESTING
     _register_testing_objects();
@@ -93,7 +89,10 @@ void dd_helper_shutdown(void)
         atomic_store(&_launch_failure_fd_lock, -1);
         close(failure_lock_fd);
     }
+}
 
+void dd_helper_gshutdown()
+{
     pefree(_mgr.socket_path, 1);
     pefree(_mgr.lock_path, 1);
 }
@@ -119,6 +118,10 @@ dd_conn *nullable dd_helper_mgr_acquire_conn(client_init_func nonnull init_func)
     if (_wait_for_next_retry()) {
         return NULL;
     }
+
+    zval runtime_path;
+    ZVAL_STR(&runtime_path, get_DD_APPSEC_HELPER_RUNTIME_PATH());
+    dd_on_runtime_path_update(NULL, &runtime_path);
 
     bool retry = false;
     for (int attempt = 0;; attempt++) {
