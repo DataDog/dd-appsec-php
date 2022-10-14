@@ -81,6 +81,7 @@ static bool _parse_uint64(
 }
 
 #define CUSTOM(...) CUSTOM
+// NOLINTNEXTLINE(bugprone-macro-parentheses)
 #define CALIAS_EXPAND(name) {.ptr = name, .len = sizeof(name) - 1},
 #define CALIASES(...)                                                          \
     ((zai_string_view[]){APPLY_N(CALIAS_EXPAND, ##__VA_ARGS__)})
@@ -119,7 +120,7 @@ static bool _parse_uint(
 
 static char _tolower_ascii(char c)
 {
-    return c >= 'A' && c <= 'Z' ? c - ('A' - 'a') : c;
+    return (char)(c >= 'A' && c <= 'Z' ? c - ('A' - 'a') : c);
 }
 
 static void _copy_tolower(char *restrict dst, const char *restrict src)

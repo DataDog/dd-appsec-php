@@ -213,18 +213,18 @@ static char *_concat_paths(const char *nonnull base, size_t base_len,
     return ret;
 }
 
-bool dd_on_runtime_path_update(
-    zval *nullable old_value, zval *nonnull new_value)
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+bool dd_on_runtime_path_update(zval *nullable old_val, zval *nonnull new_val)
 {
-    UNUSED(old_value);
+    UNUSED(old_val);
 
     pefree(_mgr.socket_path, 1);
-    _mgr.socket_path = _concat_paths(Z_STRVAL_P(new_value),
-        Z_STRLEN_P(new_value), ZEND_STRL(DD_SOCKET_PATH));
+    _mgr.socket_path = _concat_paths(Z_STRVAL_P(new_val),
+        Z_STRLEN_P(new_val), ZEND_STRL(DD_SOCKET_PATH));
 
     pefree(_mgr.lock_path, 1);
     _mgr.lock_path = _concat_paths(
-        Z_STRVAL_P(new_value), Z_STRLEN_P(new_value), ZEND_STRL(DD_LOCK_PATH));
+        Z_STRVAL_P(new_val), Z_STRLEN_P(new_val), ZEND_STRL(DD_LOCK_PATH));
 
     return true;
 }
