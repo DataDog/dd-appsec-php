@@ -55,6 +55,9 @@ extern bool runtime_config_first_init;
     CONFIG(STRING, DD_APPSEC_HELPER_RUNTIME_PATH, "/tmp", .ini_change = dd_on_runtime_path_update)              \
     SYSCFG(STRING, DD_APPSEC_HELPER_LOG_FILE, "/dev/null")                                                      \
     CONFIG(STRING, DD_APPSEC_HELPER_EXTRA_ARGS, "")                                                             \
+    CONFIG(STRING, DD_SERVICE, "", CALIASES("DD_SERVICE_NAME"))                                                 \
+    CONFIG(STRING, DD_ENV, "")                                                                                  \
+    CONFIG(BOOL, DD_TRACE_CLIENT_IP_HEADER_DISABLED, "false")                                                   \
 // clang-format on
 
 #define CALIAS CONFIG

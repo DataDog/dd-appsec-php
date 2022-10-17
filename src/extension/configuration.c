@@ -11,6 +11,8 @@
 #include "helper_process.h"
 #include "ip_extraction.h"
 #include "logging.h"
+#include "php_objects.h"
+#include "zai_string/string.h"
 
 #define DD_TO_DATADOG_INC 5 /* "DD" expanded to "datadog" */
 
@@ -151,6 +153,11 @@ static void dd_ini_env_to_ini_name(
         if (env_name.ptr == strstr(env_name.ptr, "DD_APPSEC_")) {
             ini_name->ptr[sizeof("datadog.appsec") - 1] = '.';
         }
+
+        if (env_name.ptr == strstr(env_name.ptr, "DD_TRACE_")) {
+            ini_name->ptr[sizeof("datadog.trace") - 1] = '.';
+        }
+
     } else {
         ini_name->len = 0;
         assert(false && "Unexpected env var name: missing 'DD_' prefix");
@@ -158,6 +165,10 @@ static void dd_ini_env_to_ini_name(
 
     ini_name->ptr[ini_name->len] = '\0';
 }
+
+#ifdef TESTING
+static void _register_testing_objects(void);
+#endif
 
 bool dd_config_minit(int module_number)
 {
@@ -174,6 +185,10 @@ bool dd_config_minit(int module_number)
     // using the arduous way of accessing the decoded_value directly from
     // zai_config_memoized_entries.
     zai_config_first_time_rinit();
+#ifdef TESTING
+    _register_testing_objects();
+#endif
+
     return true;
 }
 
@@ -183,4 +198,61 @@ void dd_config_first_rinit()
     zai_config_rinit();
 
     runtime_config_first_init = true;
+}
+
+static PHP_FUNCTION(datadog_appsec_testing_zai_config_get_value)
+{
+    zend_string *key;
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "S", &key) == FAILURE) {
+        RETURN_FALSE;
+    }
+
+    unsigned entries = sizeof config_entries / sizeof *config_entries;
+    for (unsigned i = 0; i < entries; i++) {
+        if (strcmp(ZSTR_VAL(key), config_entries[i].name.ptr) == 0) {
+            RETURN_ZVAL(zai_config_get_value(config_entries[i].id),
+                1 /* copy */, 0 /* keep original */);
+        }
+    }
+
+    RETURN_FALSE;
+}
+
+static PHP_FUNCTION(datadog_appsec_testing_zai_config_get_global_value)
+{
+    zend_string *key;
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "S", &key) == FAILURE) {
+        RETURN_FALSE;
+    }
+
+    unsigned entries = sizeof config_entries / sizeof *config_entries;
+    for (unsigned i = 0; i < entries; i++) {
+        if (strcmp(ZSTR_VAL(key), config_entries[i].name.ptr) == 0) {
+            zval *value = &zai_config_memoized_entries[config_entries[i].id]
+                               .decoded_value;
+            RETURN_ZVAL(value, 1 /* copy */, 0 /* keep original */);
+        }
+    }
+
+    RETURN_FALSE;
+}
+
+ZEND_BEGIN_ARG_INFO_EX(set_string_arginfo, 0, 0, 1)
+ZEND_ARG_TYPE_INFO(0, value, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
+// clang-format off
+static const zend_function_entry testing_functions[] = {
+    ZEND_RAW_FENTRY(DD_TESTING_NS "zai_config_get_value", PHP_FN(datadog_appsec_testing_zai_config_get_value), set_string_arginfo, 0)
+    ZEND_RAW_FENTRY(DD_TESTING_NS "zai_config_get_global_value", PHP_FN(datadog_appsec_testing_zai_config_get_global_value), set_string_arginfo, 0)
+    PHP_FE_END
+};
+// clang-format on
+
+static void _register_testing_objects()
+{
+    if (!get_global_DD_APPSEC_TESTING()) {
+        return;
+    }
+    dd_phpobj_reg_funcs(testing_functions);
 }

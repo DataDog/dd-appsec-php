@@ -180,18 +180,18 @@ static PHP_GSHUTDOWN_FUNCTION(ddappsec)
 static PHP_MINIT_FUNCTION(ddappsec)
 {
     UNUSED(type);
-    UNUSED(module_number);
 
     zend_module_entry *mod_ptr = zend_hash_str_find_ptr(&module_registry,
         PHP_DDAPPSEC_EXTNAME, sizeof(PHP_DDAPPSEC_EXTNAME) - 1);
     zend_register_extension(&ddappsec_extension_entry, mod_ptr->handle);
     mod_ptr->handle = NULL;
 
+    dd_phpobj_startup(module_number);
+
     if (!dd_config_minit(module_number)) {
         return FAILURE;
     }
 
-    dd_phpobj_startup(module_number);
     _check_enabled();
     dd_log_startup();
 

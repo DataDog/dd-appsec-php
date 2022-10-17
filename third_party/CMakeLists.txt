@@ -39,6 +39,7 @@ if(DD_APPSEC_BUILD_EXTENSION)
         target_compile_definitions(mpack PUBLIC MPACK_STDIO=0 MPACK_WRITE_TRACKING=1 MPACK_BUFFER_SIZE=131072)
     endif()
 
+    # DDTrace ZAI
     find_program(PHP_CONFIG php-config)
     execute_process(
             COMMAND ${PHP_CONFIG} --includes
@@ -48,30 +49,26 @@ if(DD_APPSEC_BUILD_EXTENSION)
             OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 
+    set(ZAI_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/ddtrace/zend_abstract_interface")
     if("${PHP_CONFIG_INCLUDES_RESULT}" STREQUAL "0")
-        string(REPLACE "-I " "-I" PHP_INCLUDES "${PHP_CONFIG_INCLUDES} -I${CMAKE_CURRENT_SOURCE_DIR}/ddtrace/zend_abstract_interface")
-        string(REPLACE "-I" "-isystem" PHP_INCLUDES "${PHP_INCLUDES}")
+        string(REPLACE "-I " "" PHP_INCLUDES "${PHP_CONFIG_INCLUDES}")
+        string(REPLACE "-I" "" PHP_INCLUDES "${PHP_CONFIG_INCLUDES}")
         string(REPLACE " " ";" PHP_INCLUDES "${PHP_INCLUDES}")
         message(STATUS "Using PHP include flags: ${PHP_INCLUDES}")
     else()
         message(FATAL_ERROR "Error executing ${PHP_CONFIG} --includes: ${PHP_CONFIG_INCLUDES_ERR}")
     endif()
 
-    if(NOT MSVC)
-        set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fPIC")
-        set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELEASE} -fPIC")
-        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fPIC")
-    endif()
-
+    set(ZAI_MODULES json env config)
     add_library(zai_zend_abstract_interface INTERFACE)
+    target_include_directories(zai_zend_abstract_interface INTERFACE ${ZAI_INCLUDES})
     add_subdirectory(ddtrace/zend_abstract_interface/zai_string)
-    add_subdirectory(ddtrace/zend_abstract_interface/json)
-    target_compile_options(zai_json PRIVATE ${PHP_INCLUDES})
-    add_subdirectory(ddtrace/zend_abstract_interface/env)
-    target_compile_options(zai_env PRIVATE ${PHP_INCLUDES})
-    add_subdirectory(ddtrace/zend_abstract_interface/config)
-    target_compile_options(zai_config PRIVATE ${PHP_INCLUDES})
-    target_include_directories(zai_zend_abstract_interface INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/ddtrace/zend_abstract_interface)
+    foreach(module json env config)
+        set(module_name "zai_${module}")
+        add_subdirectory(ddtrace/zend_abstract_interface/${module})
+        set_target_properties(${module_name} PROPERTIES POSITION_INDEPENDENT_CODE 1)
+        target_include_directories(${module_name} PRIVATE ${PHP_INCLUDES} ${ZAI_INCLUDES})
+    endforeach()
 endif()
 
 FetchContent_Declare(
