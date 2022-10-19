@@ -21,14 +21,16 @@ namespace dds::remote_config {
  * after, possibly when creating the subscriber listeners on every request
  */
 struct settings {
+    static constexpr uint32_t default_poll_interval{1000};
+    static constexpr uint64_t default_max_payload_size{4096};
     // Remote config settings
     bool enabled{false};
     bool integrity_check_enabled{true};
     std::string host;
     std::string port;
     std::string url; // optional
-    std::uint32_t initial_poll_interval{1000};
-    std::uint64_t max_payload_size{4096};
+    std::uint32_t initial_poll_interval = default_poll_interval;
+    std::uint64_t max_payload_size = default_max_payload_size;
 
     // these two are specified in RCTE1
     std::string targets_key;
