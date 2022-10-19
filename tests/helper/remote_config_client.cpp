@@ -21,6 +21,8 @@
 #include "remote_config/protocol/config_state.hpp"
 #include "remote_config/protocol/tuf/get_configs_request.hpp"
 #include "remote_config/protocol/tuf/serializer.hpp"
+#include "service_identifier.hpp"
+#include "spdlog/fmt/bundled/core.h"
 
 namespace dds {
 
@@ -94,6 +96,18 @@ int version_from_path(std::string path) { return path.length() + 55; }
 
 int length_from_path(std::string path) { return path.length(); }
 } // namespace test_helpers
+
+class test_client : public remote_config::client {
+public:
+    test_client(std::string id,
+        std::unique_ptr<remote_config::http_api> &&arg_api,
+        const service_identifier &sid,
+        const std::vector<remote_config::product> &products = {}):
+      remote_config::client(std::move(arg_api), sid, products)
+    {
+        id_ = std::move(id);
+    }
+};
 
 class RemoteConfigClient : public ::testing::Test {
 public:
@@ -333,9 +347,8 @@ TEST_F(RemoteConfigClient, ItReturnsErrorIfApiReturnsError)
     auto api = std::make_unique<mock::api>();
     EXPECT_CALL(*api, get_configs).WillOnce(Return(std::nullopt));
 
-    dds::remote_config::client api_client(std::move(api), std::move(id),
-        std::move(runtime_id), std::move(tracer_version), std::move(service),
-        std::move(env), std::move(app_version), _products);
+    service_identifier sid{service, env, tracer_version, app_version, runtime_id};
+    dds::test_client api_client(id, std::move(api), sid, _products);
 
     auto result = api_client.poll();
 
@@ -350,9 +363,8 @@ TEST_F(RemoteConfigClient, ItCallsToApiOnPoll)
         .Times(AtLeast(1))
         .WillOnce(Return(generate_example_response(paths)));
 
-    dds::remote_config::client api_client(std::move(api), std::move(id),
-        std::move(runtime_id), std::move(tracer_version), std::move(service),
-        std::move(env), std::move(app_version), _products);
+    service_identifier sid{service, env, tracer_version, app_version, runtime_id};
+    dds::test_client api_client(id, std::move(api), sid, _products);
 
     auto result = api_client.poll();
 
@@ -361,9 +373,8 @@ TEST_F(RemoteConfigClient, ItCallsToApiOnPoll)
 
 TEST_F(RemoteConfigClient, ItReturnErrorWhenApiNotProvided)
 {
-    dds::remote_config::client api_client(nullptr, std::move(id),
-        std::move(runtime_id), std::move(tracer_version), std::move(service),
-        std::move(env), std::move(app_version), _products);
+    service_identifier sid{service, env, tracer_version, app_version, runtime_id};
+    dds::test_client api_client(id, nullptr, sid, _products);
 
     auto result = api_client.poll();
 
@@ -375,9 +386,8 @@ TEST_F(RemoteConfigClient, ItReturnErrorWhenResponseIsInvalidJson)
     auto api = std::make_unique<mock::api>();
     EXPECT_CALL(*api, get_configs).WillOnce(Return("invalid json here"));
 
-    dds::remote_config::client api_client(std::move(api), std::move(id),
-        std::move(runtime_id), std::move(tracer_version), std::move(service),
-        std::move(env), std::move(app_version), _products);
+    service_identifier sid{service, env, tracer_version, app_version, runtime_id};
+    dds::test_client api_client(id, std::move(api), sid, _products);
 
     auto result = api_client.poll();
 
@@ -395,9 +405,8 @@ TEST_F(RemoteConfigClient,
         .WillRepeatedly(
             DoAll(testing::SaveArg<0>(&request_sent), Return(response)));
 
-    dds::remote_config::client api_client(std::move(api), std::move(id),
-        std::move(runtime_id), std::move(tracer_version), std::move(service),
-        std::move(env), std::move(app_version), _products);
+    service_identifier sid{service, env, tracer_version, app_version, runtime_id};
+    dds::test_client api_client(id, std::move(api), sid, _products);
 
     // Validate first request does not contain any error
     auto poll_result = api_client.poll();
@@ -424,9 +433,8 @@ TEST_F(RemoteConfigClient,
         .WillRepeatedly(
             DoAll(testing::SaveArg<0>(&request_sent), Return(response)));
 
-    dds::remote_config::client api_client(std::move(api), std::move(id),
-        std::move(runtime_id), std::move(tracer_version), std::move(service),
-        std::move(env), std::move(app_version), _products);
+    service_identifier sid{service, env, tracer_version, app_version, runtime_id};
+    dds::test_client api_client(id, std::move(api), sid, _products);
 
     // Validate first request does not contain any error
     auto poll_result = api_client.poll();
@@ -523,9 +531,8 @@ TEST_F(RemoteConfigClient, ItReturnsErrorWhenClientConfigPathCantBeParsed)
         .WillRepeatedly(
             DoAll(testing::SaveArg<0>(&request_sent), Return(response)));
 
-    dds::remote_config::client api_client(std::move(api), std::move(id),
-        std::move(runtime_id), std::move(tracer_version), std::move(service),
-        std::move(env), std::move(app_version), _products);
+    service_identifier sid{service, env, tracer_version, app_version, runtime_id};
+    dds::test_client api_client(id, std::move(api), sid, _products);
 
     // Validate first request does not contain any error
     auto poll_result = api_client.poll();
@@ -552,9 +559,8 @@ TEST_F(RemoteConfigClient, ItReturnsErrorIfProductOnPathNotRequested)
         .WillRepeatedly(
             DoAll(testing::SaveArg<0>(&request_sent), Return(response)));
 
-    dds::remote_config::client api_client(std::move(api), std::move(id),
-        std::move(runtime_id), std::move(tracer_version), std::move(service),
-        std::move(env), std::move(app_version), {});
+    service_identifier sid{service, env, tracer_version, app_version, runtime_id};
+    dds::test_client api_client(id, std::move(api), sid);
 
     // Validate first request does not contain any error
     auto poll_result = api_client.poll();
@@ -584,9 +590,8 @@ TEST_F(RemoteConfigClient, ItGeneratesClientStateAndCacheFromResponse)
         .Times(1)
         .WillOnce(Return(generate_example_response(paths)));
 
-    dds::remote_config::client api_client(std::move(api), std::move(id),
-        std::move(runtime_id), std::move(tracer_version), std::move(service),
-        std::move(env), std::move(app_version), _products);
+    service_identifier sid{service, env, tracer_version, app_version, runtime_id};
+    dds::test_client api_client(id, std::move(api), sid, _products);
 
     auto result = api_client.poll();
 
@@ -650,9 +655,9 @@ TEST_F(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
         std::move(product_str_not_in_response),
         {&listener_called_no_configs01, &listener_called_no_configs02});
 
-    dds::remote_config::client api_client(std::move(api), std::move(id),
-        std::move(runtime_id), std::move(tracer_version), std::move(service),
-        std::move(env), std::move(app_version),
+
+    service_identifier sid{service, env, tracer_version, app_version, runtime_id};
+    dds::test_client api_client(id, std::move(api), sid, 
         {product, product_not_in_response});
 
     auto result = api_client.poll();
@@ -717,9 +722,8 @@ TEST_F(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
     remote_config::product product(
         std::move(first_product_product), {&listener01});
 
-    dds::remote_config::client api_client(std::move(api), std::move(id),
-        std::move(runtime_id), std::move(tracer_version), std::move(service),
-        std::move(env), std::move(app_version), {product});
+    service_identifier sid{service, env, tracer_version, app_version, runtime_id};
+    dds::test_client api_client(id, std::move(api), sid, {product});
 
     auto result = api_client.poll();
     EXPECT_EQ(remote_config::remote_config_result::success, result);
@@ -829,9 +833,8 @@ TEST_F(
         .RetiresOnSaturation();
     remote_config::product product(std::move(apm_sampling), {&listener01});
 
-    dds::remote_config::client api_client(std::move(api), std::move(id),
-        std::move(runtime_id), std::move(tracer_version), std::move(service),
-        std::move(env), std::move(app_version), {product});
+    service_identifier sid{service, env, tracer_version, app_version, runtime_id};
+    dds::test_client api_client(id, std::move(api), sid, {product});
 
     auto result = api_client.poll();
     EXPECT_EQ(remote_config::remote_config_result::success, result);
@@ -859,9 +862,8 @@ TEST_F(RemoteConfigClient, FilesThatAreInCacheAreUsedWhenNotInTargetFiles)
         .WillOnce(Return(generate_example_response(paths, {}, paths)))
         .WillOnce(Return(generate_example_response(paths, {}, paths)));
 
-    dds::remote_config::client api_client(std::move(api), std::move(id),
-        std::move(runtime_id), std::move(tracer_version), std::move(service),
-        std::move(env), std::move(app_version), _products);
+    service_identifier sid{service, env, tracer_version, app_version, runtime_id};
+    dds::test_client api_client(id, std::move(api), sid, _products);
 
     auto result = api_client.poll();
     EXPECT_EQ(remote_config::remote_config_result::success, result);
@@ -885,9 +887,8 @@ TEST_F(RemoteConfigClient, NotTrackedFilesAreDeletedFromCache)
         .WillOnce(DoAll(testing::SaveArg<0>(&request_sent),
             Return(generate_example_response({}))));
 
-    dds::remote_config::client api_client(std::move(api), std::move(id),
-        std::move(runtime_id), std::move(tracer_version), std::move(service),
-        std::move(env), std::move(app_version), _products);
+    service_identifier sid{service, env, tracer_version, app_version, runtime_id};
+    dds::test_client api_client(id, std::move(api), sid, _products);
 
     auto result = api_client.poll();
     EXPECT_EQ(remote_config::remote_config_result::success, result);
@@ -979,9 +980,8 @@ TEST_F(RemoteConfigClient, TestHashIsDifferentFromTheCache)
             DoAll(testing::SaveArg<0>(&request_sent), Return(second_response)))
         .RetiresOnSaturation();
 
-    dds::remote_config::client api_client(std::move(api), std::move(id),
-        std::move(runtime_id), std::move(tracer_version), std::move(service),
-        std::move(env), std::move(app_version), _products);
+    service_identifier sid{service, env, tracer_version, app_version, runtime_id};
+    dds::test_client api_client(id, std::move(api), sid, _products);
 
     auto result = api_client.poll();
     EXPECT_EQ(remote_config::remote_config_result::success, result);
@@ -1067,9 +1067,8 @@ TEST_F(RemoteConfigClient, TestWhenFileGetsFromCacheItsCachedLenUsed)
             DoAll(testing::SaveArg<0>(&request_sent), Return(second_response)))
         .RetiresOnSaturation();
 
-    dds::remote_config::client api_client(std::move(api), std::move(id),
-        std::move(runtime_id), std::move(tracer_version), std::move(service),
-        std::move(env), std::move(app_version), _products);
+    service_identifier sid{service, env, tracer_version, app_version, runtime_id};
+    dds::test_client api_client(id, std::move(api), sid, _products);
 
     auto result = api_client.poll();
     EXPECT_EQ(remote_config::remote_config_result::success, result);
@@ -1115,7 +1114,7 @@ product(asm_dd, listeners);
     oss << std::put_time(&tm, "%d-%m-%Y %H-%M-%S");
     auto current_id = oss.str();
 
-    dds::remote_config::client api_client(std::move(api), current_id,
+    dds::test_client api_client(id, std::move(api), current_id,
 runtime_id, tracer_version, service, env, app_version, _products);
 
     std::cout << "First poll" << std::endl;

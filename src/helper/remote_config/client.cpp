@@ -13,27 +13,26 @@
 
 namespace dds::remote_config {
 
-namespace {
+config_path config_path::from_path(const std::string &path)
+{
+    static const std::regex regex(
+        "^(datadog/\\d+|employee)/([^/]+)/([^/]+)/[^/]+$");
 
-struct config_path {
-    static config_path from_path(const std::string &path)
-    {
-        static const std::regex regex(
-            "^(datadog/\\d+|employee)/([^/]+)/([^/]+)/[^/]+$");
-
-        std::smatch base_match;
-        if (!std::regex_match(path, base_match, regex) || base_match.size() < 4) {
-            throw invalid_path();
-        }
-
-        return config_path{base_match[3].str(), base_match[2].str()};
+    std::smatch base_match;
+    if (!std::regex_match(path, base_match, regex) || base_match.size() < 4) {
+        throw invalid_path();
     }
 
-    std::string id;
-    std::string product;
-};
+    return config_path{base_match[3].str(), base_match[2].str()};
+}
 
-} // namespace
+client::ptr client::from_settings(const service_identifier &sid,
+    const remote_config::settings &settings)
+{
+    if (!settings.enabled) { return {}; }
+    return std::make_unique<client>(
+        std::make_unique<http_api>(settings.host, settings.port), sid);
+}
 
 [[nodiscard]] protocol::get_configs_request client::generate_request() const
 {

@@ -6,12 +6,12 @@
 
 #pragma once
 
+#include "utils.hpp"
 #include <algorithm>
 #include <cstdint>
 #include <msgpack.hpp>
 #include <ostream>
 #include <string>
-#include "utils.hpp"
 
 namespace dds::remote_config {
 
@@ -22,19 +22,20 @@ namespace dds::remote_config {
  */
 struct settings {
     // Remote config settings
-    bool enabled;
-    bool integrity_check_enabled;
-    std::string url;
-    std::uint32_t initial_poll_interval;
-    std::uint64_t max_payload_size;
+    bool enabled{false};
+    bool integrity_check_enabled{true};
+    std::string host;
+    std::string port;
+    std::string url; // optional
+    std::uint32_t initial_poll_interval{1000};
+    std::uint64_t max_payload_size{4096};
 
     // these two are specified in RCTE1
     std::string targets_key;
     std::string targets_key_id;
 
-    MSGPACK_DEFINE_MAP(enabled, integrity_check_enabled, url,
-        initial_poll_interval, max_payload_size, targets_key,
-        targets_key_id);
+    MSGPACK_DEFINE_MAP(enabled, integrity_check_enabled, host, port, url,
+        initial_poll_interval, max_payload_size, targets_key, targets_key_id);
 
     bool operator==(const settings &oth) const noexcept
     {

@@ -28,15 +28,15 @@ TEST(ServiceManagerTest, LoadRulesOK)
     std::map<std::string_view, std::string> meta;
     std::map<std::string_view, double> metrics;
 
-    service::identifier sid{"service", "env"};
+    service_identifier sid{"service", "env", "", "", ""};
     service_manager_exp manager;
     auto fn = create_sample_rules_ok();
-    auto service = manager.create_service(sid, {fn, 42}, meta, metrics);
+    auto service = manager.create_service(sid, {fn, 42}, {}, meta, metrics);
     EXPECT_EQ(manager.get_cache().size(), 1);
     EXPECT_EQ(metrics[tag::event_rules_loaded], 2);
 
     // loading again should take from the cache
-    auto service2 = manager.create_service(sid, {fn, 42}, meta, metrics);
+    auto service2 = manager.create_service(sid, {fn, 42}, {}, meta, metrics);
     EXPECT_EQ(manager.get_cache().size(), 1);
 
     // destroying the services should expire the cache ptr
@@ -52,13 +52,13 @@ TEST(ServiceManagerTest, LoadRulesOK)
     ASSERT_FALSE(weak_ptr.expired());
 
     // loading another service should cleanup the cache
-    service::identifier sid2{"service2", "env"};
-    auto service3 = manager.create_service(sid2, {fn, 42}, meta, metrics);
+    service_identifier sid2{"service2", "env"};
+    auto service3 = manager.create_service(sid2, {fn, 42}, {}, meta, metrics);
     ASSERT_TRUE(weak_ptr.expired());
     EXPECT_EQ(manager.get_cache().size(), 1);
 
     // another service identifier should result in another service
-    auto service4 = manager.create_service(sid, {fn, 42}, meta, metrics);
+    auto service4 = manager.create_service(sid, {fn, 42}, {}, meta, metrics);
     EXPECT_EQ(manager.get_cache().size(), 2);
 }
 
@@ -71,7 +71,8 @@ TEST(ServiceManagerTest, LoadRulesFileNotFound)
     EXPECT_THROW(
         {
             manager.create_service(
-                {"s", "e"}, {"/file/that/does/not/exist", 42}, meta, metrics);
+                {"s", "e"}, {"/file/that/does/not/exist", 42},
+                {}, meta, metrics);
         },
         std::runtime_error);
 }
@@ -83,7 +84,8 @@ TEST(ServiceManagerTest, BadRulesFile)
     service_manager_exp manager;
     EXPECT_THROW(
         {
-            manager.create_service({"s","e"}, {"/dev/null", 42}, meta, metrics);
+            manager.create_service({"s","e"}, {"/dev/null", 42},
+                    {}, meta, metrics);
         },
         dds::parsing_error);
 }

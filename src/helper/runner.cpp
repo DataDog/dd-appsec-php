@@ -88,7 +88,7 @@ void runner::run()
                 break;
             }
 
-            std::shared_ptr<client> c =
+            const std::shared_ptr<client> c =
                 std::make_shared<client>(service_manager_, std::move(socket));
 
             SPDLOG_DEBUG("new client connected");

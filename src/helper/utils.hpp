@@ -6,6 +6,9 @@
 #pragma once
 
 #include <algorithm>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include <utility>
 
 namespace dds {
@@ -30,5 +33,10 @@ template <typename T> struct defer {
     ~defer() { runnable(); }
     T runnable;
 };
+
+inline std::string generate_random_uuid()
+{
+    return boost::uuids::to_string(boost::uuids::random_generator()());
+}
 
 } // namespace dds

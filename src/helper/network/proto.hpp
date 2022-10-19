@@ -8,7 +8,7 @@
 #include "engine_settings.hpp"
 #include "msgpack_helpers.hpp"
 #include "remote_config/settings.hpp"
-#include "service.hpp"
+#include "service_identifier.hpp"
 #include <msgpack.hpp>
 #include <optional>
 #include <type_traits>
@@ -85,8 +85,9 @@ struct client_init {
         std::string client_version;
         std::string runtime_version;
 
-        dds::service::identifier service;
+        dds::service_identifier service;
         dds::engine_settings engine_settings;
+        dds::remote_config::settings rc_settings;
 
         request() = default;
         request(const request &) = delete;

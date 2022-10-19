@@ -8,11 +8,17 @@
 #include <string>
 #include <vector>
 
+#include "../service_identifier.hpp"
 #include "http_api.hpp"
 #include "product.hpp"
 #include "protocol/client.hpp"
 #include "protocol/tuf/get_configs_request.hpp"
 #include "protocol/tuf/get_configs_response.hpp"
+#include "settings.hpp"
+#include "utils.hpp"
+
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 namespace dds::remote_config {
 
@@ -23,23 +29,36 @@ enum class remote_config_result {
 
 class invalid_path : public std::exception {};
 
+struct config_path {
+    static config_path from_path(const std::string &path);
+
+    std::string id;
+    std::string product;
+};
+
 class client {
 public:
+    using ptr = std::unique_ptr<client>;
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    client(std::unique_ptr<http_api> &&arg_api, std::string &&id,
-        std::string &&runtime_id,
-        // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-        std::string &&tracer_version, std::string &&service, std::string &&env,
-        std::string &&app_version, const std::vector<product> &products)
-        : api_(std::move(arg_api)), id_(id), runtime_id_(runtime_id),
-          tracer_version_(tracer_version), service_(service), env_(env),
-          app_version_(app_version)
+    client(std::unique_ptr<http_api> &&arg_api,
+        const service_identifier &sid,
+        const std::vector<product> &products = {})
+        : api_(std::move(arg_api)), id_(dds::generate_random_uuid()),
+          runtime_id_(sid.runtime_id), tracer_version_(sid.tracer_version),
+          service_(sid.service), env_(sid.env), app_version_(sid.app_version)
     {
         for (auto const &product : products) {
             products_.insert(std::pair<std::string, remote_config::product>(
                 product.get_name(), product));
         }
     };
+
+    static client::ptr from_settings(const service_identifier &sid,
+        const remote_config::settings &settings);
+
+    void register_product(const product &p) {
+        products_.insert({p.get_name(), p});
+    }
 
     remote_config_result poll();
 

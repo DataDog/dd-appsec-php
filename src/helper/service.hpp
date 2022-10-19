@@ -7,6 +7,9 @@
 
 #include "engine.hpp"
 #include "exception.hpp"
+#include "remote_config/client.hpp"
+#include "remote_config/settings.hpp"
+#include "service_identifier.hpp"
 #include "std_logging.hpp"
 #include "subscriber/waf.hpp"
 #include "utils.hpp"
@@ -24,38 +27,9 @@ class service
 public:
     using ptr = std::shared_ptr<service>;
 
-    struct identifier {
-        std::string service;
-        std::string env;
-
-        MSGPACK_DEFINE_MAP(service, env);
-
-        bool operator==(const identifier &oth) const noexcept {
-            return service == oth.service && env == oth.env;
-        }
-
-        friend auto &operator<<(std::ostream &os, const identifier &id) {
-            return os << "{service=" << id.service
-                      << ", env=" << id.env
-                      << "}";
-        }
-
-        struct hash {
-            std::size_t operator()(const identifier &id) const noexcept {
-                return dds::hash(id.service, id.env);
-            }
-        };
-    };
-
-    service(identifier id, std::shared_ptr<engine> &engine):
-      id_(std::move(id)), engine_(std::move(engine)) {
-          // The engine should always be valid
-          // if (!engine_) throw;
-    }
-
-    ~service() {
-        running_ = false;
-    }
+    service(service_identifier id, std::shared_ptr<engine> &engine,
+        remote_config::client::ptr &&rc_client);
+    ~service();
 
     service(const service&) = delete;
     service& operator=(const service&) = delete;
@@ -63,9 +37,10 @@ public:
     service(service&&) = delete;
     service& operator=(service&&) = delete;
 
-    static service::ptr from_settings(const identifier &id,
+    static service::ptr from_settings(
+        const service_identifier &id,
         const dds::engine_settings &eng_settings,
-        /*remote_config::settings &rc_settings,*/
+        const remote_config::settings &rc_settings,
         std::map<std::string_view, std::string> &meta,
         std::map<std::string_view, double> &metrics);
 
@@ -75,10 +50,11 @@ public:
     }
 
 protected:
-    identifier id_;
+    service_identifier id_;
     std::shared_ptr<engine> engine_;
+    remote_config::client::ptr rc_client_;
 
-    std::atomic<bool> running_{true};
+    std::atomic<bool> running_{false};
     std::thread handler_;
 };
 

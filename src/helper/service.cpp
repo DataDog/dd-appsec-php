@@ -8,9 +8,40 @@
 
 namespace dds {
 
-service::ptr service::from_settings(const identifier &id,
+service::service(service_identifier id, std::shared_ptr<engine> &engine,
+    remote_config::client::ptr &&rc_client):
+  id_(std::move(id)), engine_(std::move(engine)),
+  rc_client_(std::move(rc_client))
+{
+    // The engine should always be valid
+    // TODO: use a meaninful exception
+    if (!engine_) {
+        throw;
+    }
+
+    if (rc_client_) {
+        running_ = true;
+        handler_ = std::thread([this]() mutable {
+            using namespace std::chrono_literals;
+            while (this->running_) {
+                this->rc_client_->poll();
+                std::this_thread::sleep_for(1s);
+            }
+        });
+    }
+}
+
+service::~service() {
+    if (running_) {
+        running_ = false;
+        handler_.join();
+    }
+}
+
+service::ptr service::from_settings(
+    const service_identifier &id,
     const dds::engine_settings &eng_settings,
-    /*remote_config::settings &rc_settings,*/
+    const remote_config::settings &rc_settings,
     std::map<std::string_view, std::string> &meta,
     std::map<std::string_view, double> &metrics)
 {
@@ -29,7 +60,8 @@ service::ptr service::from_settings(const identifier &id,
         throw;
     }
 
-    return std::make_shared<service>(id, engine_ptr);
+    auto rc_client = remote_config::client::from_settings(id, rc_settings);
+    return std::make_shared<service>(id, engine_ptr, std::move(rc_client));
 }
 
 } // namespace dds
