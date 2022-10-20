@@ -94,7 +94,9 @@ void dd_helper_shutdown(void)
 void dd_helper_gshutdown()
 {
     pefree(_mgr.socket_path, 1);
+    _mgr.socket_path = NULL;
     pefree(_mgr.lock_path, 1);
+    _mgr.lock_path = NULL;
 }
 
 void dd_helper_rshutdown()

@@ -158,17 +158,16 @@ static PHP_GINIT_FUNCTION(ddappsec)
 
 static PHP_GSHUTDOWN_FUNCTION(ddappsec)
 {
+    dd_helper_gshutdown();
     // delay log shutdown until the last possible moment, so that TSRM
     // destructors can run with logging
 #if ZTS
     int prev = atomic_fetch_add(&_thread_count, -1);
     if (prev == 1) {
-        dd_helper_gshutdown();
         dd_log_shutdown();
         zai_config_mshutdown();
     }
 #else
-    dd_helper_gshutdown();
     dd_log_shutdown();
     zai_config_mshutdown();
 #endif
