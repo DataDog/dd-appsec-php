@@ -7,6 +7,7 @@
 
 #include "config.hpp"
 #include "exception.hpp"
+#include "listener.hpp"
 #include <algorithm>
 #include <iostream>
 #include <map>
@@ -14,19 +15,6 @@
 #include <vector>
 
 namespace dds::remote_config {
-
-class product_listener_base {
-public:
-    product_listener_base() = default;
-    product_listener_base(const product_listener_base &) = default;
-    product_listener_base(product_listener_base &&) = default;
-    product_listener_base &operator=(const product_listener_base &) = default;
-    product_listener_base &operator=(product_listener_base &&) = default;
-    virtual ~product_listener_base() = default;
-
-    virtual void on_update(const config &config) = 0;
-    virtual void on_unapply(const config &config) = 0;
-};
 
 class product {
 public:
