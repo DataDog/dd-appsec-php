@@ -110,13 +110,11 @@ static bool _parse_uint(
     const int base = 10;
     long long ini_value = strtoll(value.ptr, &endptr, base);
 
-    // If there is any error parsing, don't set the value.
     if (endptr == value.ptr || *endptr != '\0') {
         return false;
     }
 
     if (ini_value < 0) {
-        // If we have a negative value, assume the rate limit is disabled
         ini_value = 0;
     } else if (ini_value > max) {
         ini_value = max;
@@ -145,9 +143,11 @@ static void dd_ini_env_to_ini_name(
         return;
     }
 
-    if (env_name.ptr == strstr(env_name.ptr, "DD_")) {
-        _copy_tolower(ini_name->ptr + DD_TO_DATADOG_INC, env_name.ptr);
+    if (env_name.ptr[0] == 'D' && env_name.ptr[1] == 'D' &&
+        env_name.ptr[2] == '_') {
         memcpy(ini_name->ptr, "datadog.", sizeof("datadog.") - 1);
+        _copy_tolower(ini_name->ptr + sizeof("datadog.") - 1,
+            env_name.ptr + sizeof("DD_") - 1);
         ini_name->len = env_name.len + DD_TO_DATADOG_INC;
 
         if (env_name.ptr == strstr(env_name.ptr, "DD_APPSEC_")) {
