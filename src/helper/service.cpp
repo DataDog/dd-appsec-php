@@ -9,9 +9,10 @@
 namespace dds {
 
 service::service(service_identifier id, std::shared_ptr<engine> &engine,
-    remote_config::client::ptr &&rc_client):
+    remote_config::client::ptr &&rc_client,
+    const std::chrono::milliseconds &poll_interval):
   id_(std::move(id)), engine_(std::move(engine)),
-  rc_client_(std::move(rc_client))
+  rc_client_(std::move(rc_client)), poll_interval_(poll_interval)
 {
     // The engine should always be valid
     // TODO: use a meaninful exception
@@ -20,12 +21,15 @@ service::service(service_identifier id, std::shared_ptr<engine> &engine,
     }
 
     if (rc_client_) {
+        // TODO: move this thread to an abstraction within remote_config
         running_ = true;
         handler_ = std::thread([this]() mutable {
-            using namespace std::chrono_literals;
             while (this->running_) {
-                this->rc_client_->poll();
-                std::this_thread::sleep_for(1s);
+                if (!this->rc_client_->poll()) {
+                    return;
+                }
+
+                std::this_thread::sleep_for(this->poll_interval_);
             }
         });
     }
@@ -60,8 +64,10 @@ service::ptr service::from_settings(
         throw;
     }
 
+    std::chrono::milliseconds poll_interval{rc_settings.poll_interval};
     auto rc_client = remote_config::client::from_settings(id, rc_settings);
-    return std::make_shared<service>(id, engine_ptr, std::move(rc_client));
+    return std::make_shared<service>(id, engine_ptr, std::move(rc_client),
+            std::chrono::milliseconds{rc_settings.poll_interval});
 }
 
 } // namespace dds

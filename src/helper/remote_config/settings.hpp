@@ -25,48 +25,42 @@ struct settings {
     static constexpr uint64_t default_max_payload_size{4096};
     // Remote config settings
     bool enabled{false};
-    bool integrity_check_enabled{true};
     std::string host;
     std::string port;
-    std::string url; // optional
-    std::uint32_t initial_poll_interval = default_poll_interval;
+    std::uint32_t poll_interval = default_poll_interval;
     std::uint64_t max_payload_size = default_max_payload_size;
 
     // these two are specified in RCTE1
-    std::string targets_key;
-    std::string targets_key_id;
+    // std::string targets_key;
+    // std::string targets_key_id;
+    // bool integrity_check_enabled{false};
 
-    MSGPACK_DEFINE_MAP(enabled, integrity_check_enabled, host, port, url,
-        initial_poll_interval, max_payload_size, targets_key, targets_key_id);
+    MSGPACK_DEFINE_MAP(enabled, host, port, poll_interval, max_payload_size);
 
     bool operator==(const settings &oth) const noexcept
     {
         return enabled == oth.enabled &&
-               integrity_check_enabled == oth.integrity_check_enabled &&
-               url == oth.url &&
-               initial_poll_interval == oth.initial_poll_interval &&
-               max_payload_size == oth.max_payload_size &&
-               targets_key == oth.targets_key &&
-               targets_key_id == oth.targets_key_id;
+               host == oth.host &&
+               port == oth.port &&
+               poll_interval == oth.poll_interval &&
+               max_payload_size == oth.max_payload_size;
     }
 
     friend auto &operator<<(std::ostream &os, const settings &c)
     {
-        return os << "{enabled=" << c.enabled
-                  << ", integrity_check_enabled="
-                  << c.integrity_check_enabled << ", url=" << c.url
-                  << ", initial_poll_interval=" << c.initial_poll_interval
+        return os << "{enabled=" << std::boolalpha << c.enabled
+                  << ", host=" << c.host
+                  << ", port=" << c.port
+                  << ", poll_interval=" << c.poll_interval
                   << ", max_payload_size=" << c.max_payload_size
-                  << ", targets_key=" << c.targets_key
-                  << ", targets_key_id=" << c.targets_key_id << "}";
+                  << "}";
     }
 
     struct settings_hash {
         std::size_t operator()(const settings &s) const noexcept
         {
-            return hash(s.enabled, s.integrity_check_enabled, s.url,
-                s.initial_poll_interval, s.max_payload_size, s.targets_key,
-                s.targets_key_id);
+            return hash(s.enabled, s.host, s.port,
+                        s.poll_interval, s.max_payload_size);
         }
     };
 };

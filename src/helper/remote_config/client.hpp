@@ -5,8 +5,10 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #pragma once
 
+#include <atomic>
 #include <string>
 #include <vector>
+#include <thread>
 
 #include "../service_identifier.hpp"
 #include "http_api.hpp"
@@ -17,15 +19,7 @@
 #include "settings.hpp"
 #include "utils.hpp"
 
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
-
 namespace dds::remote_config {
-
-enum class remote_config_result {
-    success,
-    error,
-};
 
 class invalid_path : public std::exception {};
 
@@ -40,44 +34,31 @@ class client {
 public:
     using ptr = std::unique_ptr<client>;
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    client(std::unique_ptr<http_api> &&arg_api,
-        const service_identifier &sid,
-        const std::vector<product> &products = {})
-        : api_(std::move(arg_api)), id_(dds::generate_random_uuid()),
-          runtime_id_(sid.runtime_id), tracer_version_(sid.tracer_version),
-          service_(sid.service), env_(sid.env), app_version_(sid.app_version)
-    {
-        for (auto const &product : products) {
-            products_.insert(std::pair<std::string, remote_config::product>(
-                product.get_name(), product));
-        }
-    };
+    client(std::unique_ptr<http_api> &&arg_api, const service_identifier &sid,
+        const remote_config::settings &settings,
+        const std::vector<product> &products = {});
 
     static client::ptr from_settings(const service_identifier &sid,
         const remote_config::settings &settings);
 
-    void register_product(const product &p) {
-        products_.insert({p.get_name(), p});
-    }
-
-    remote_config_result poll();
+    bool poll();
 
 protected:
-
     [[nodiscard]] protocol::get_configs_request generate_request() const;
-    remote_config_result process_response(
-        const protocol::get_configs_response &response);
+    bool process_response(const protocol::get_configs_response &response);
 
     std::unique_ptr<http_api> api_;
+
     std::string id_;
-    std::string runtime_id_;
-    std::string tracer_version_;
-    std::string service_;
-    std::string env_;
-    std::string app_version_;
+    const service_identifier sid_;
+    const remote_config::settings settings_;
+
+    // remote config state
     std::string last_poll_error_;
     std::string opaque_backend_state_;
     int targets_version_{0};
+
+    // supported products
     std::map<std::string, product> products_;
 };
 

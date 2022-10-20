@@ -17,8 +17,9 @@
 #include <memory>
 #include <mutex>
 #include <spdlog/spdlog.h>
-#include <thread>
 #include <unordered_map>
+
+using namespace std::chrono_literals;
 
 namespace dds {
 
@@ -28,7 +29,8 @@ public:
     using ptr = std::shared_ptr<service>;
 
     service(service_identifier id, std::shared_ptr<engine> &engine,
-        remote_config::client::ptr &&rc_client);
+        remote_config::client::ptr &&rc_client,
+        const std::chrono::milliseconds &poll_interval = 1s);
     ~service();
 
     service(const service&) = delete;
@@ -54,6 +56,7 @@ protected:
     std::shared_ptr<engine> engine_;
     remote_config::client::ptr rc_client_;
 
+    std::chrono::milliseconds poll_interval_;
     std::atomic<bool> running_{false};
     std::thread handler_;
 };

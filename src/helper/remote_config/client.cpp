@@ -8,6 +8,8 @@
 #include "protocol/tuf/parser.hpp"
 #include "protocol/tuf/serializer.hpp"
 #include <algorithm>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include <map>
 #include <regex>
 
@@ -26,12 +28,24 @@ config_path config_path::from_path(const std::string &path)
     return config_path{base_match[3].str(), base_match[2].str()};
 }
 
+client::client(std::unique_ptr<http_api> &&arg_api,
+  const service_identifier &sid, const remote_config::settings &settings,
+  const std::vector<product> &products):
+    api_(std::move(arg_api)), id_(dds::generate_random_uuid()),
+    sid_(sid), settings_(settings)
+{
+    for (auto const &product : products) {
+        products_.insert(std::pair<std::string, remote_config::product>(
+            product.get_name(), product));
+    }
+}
+
 client::ptr client::from_settings(const service_identifier &sid,
     const remote_config::settings &settings)
 {
     if (!settings.enabled) { return {}; }
     return std::make_unique<client>(
-        std::make_unique<http_api>(settings.host, settings.port), sid);
+        std::make_unique<http_api>(settings.host, settings.port), sid, settings);
 }
 
 [[nodiscard]] protocol::get_configs_request client::generate_request() const
@@ -55,8 +69,8 @@ client::ptr client::from_settings(const service_identifier &sid,
         }
     }
 
-    const protocol::client_tracer ct{
-        runtime_id_, tracer_version_, service_, env_, app_version_};
+    const protocol::client_tracer ct{sid_.runtime_id, sid_.tracer_version,
+        sid_.service, sid_.env, sid_.app_version};
 
     const protocol::client_state cs{targets_version_, config_states,
         !last_poll_error_.empty(), last_poll_error_, opaque_backend_state_};
@@ -70,7 +84,7 @@ client::ptr client::from_settings(const service_identifier &sid,
     return {std::move(protocol_client), std::move(files)};
 };
 
-remote_config_result client::process_response(
+bool client::process_response(
     const protocol::get_configs_response &response)
 {
     const std::map<std::string, protocol::path> paths_on_targets =
@@ -87,7 +101,7 @@ remote_config_result client::process_response(
             if (path_itr == paths_on_targets.end()) {
                 // Not found
                 last_poll_error_ = "missing config " + path + " in targets";
-                return remote_config_result::error;
+                return false;
             }
             auto length = path_itr->second.length;
             std::map<std::string, std::string> hashes = path_itr->second.hashes;
@@ -99,7 +113,7 @@ remote_config_result client::process_response(
                 // Not found
                 last_poll_error_ = "received config " + path +
                                    " for a product that was not requested";
-                return remote_config_result::error;
+                return false;
             }
 
             // Is path on target_files?
@@ -118,7 +132,7 @@ remote_config_result client::process_response(
                     // Not found
                     last_poll_error_ = "missing config " + path +
                                        " in target files and in cache files";
-                    return remote_config_result::error;
+                    return false;
                 }
 
                 raw = config_itr->second.contents;
@@ -144,7 +158,7 @@ remote_config_result client::process_response(
             }
         } catch (invalid_path &e) {
             last_poll_error_ = "error parsing path " + path;
-            return remote_config_result::error;
+            return false;
         }
     }
 
@@ -161,13 +175,13 @@ remote_config_result client::process_response(
     targets_version_ = response.targets.version;
     opaque_backend_state_ = response.targets.opaque_backend_state;
 
-    return remote_config_result::success;
+    return true;
 }
 
-remote_config_result client::poll()
+bool client::poll()
 {
     if (api_ == nullptr) {
-        return remote_config_result::error;
+        return false;
     }
 
     auto request = generate_request();
@@ -176,12 +190,12 @@ remote_config_result client::poll()
     try {
         serialized_request = protocol::serialize(request);
     } catch (protocol::serializer_exception &e) {
-        return remote_config_result::error;
+        return false;
     }
 
     auto response_body = api_->get_configs(std::move(serialized_request));
     if (!response_body) {
-        return remote_config_result::error;
+        return false;
     }
 
     try {
@@ -189,7 +203,7 @@ remote_config_result client::poll()
         last_poll_error_.clear();
         return process_response(response);
     } catch (protocol::parser_exception &e) {
-        return remote_config_result::error;
+        return false;
     }
 }
 
