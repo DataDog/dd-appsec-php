@@ -30,7 +30,6 @@ ZEND_BEGIN_MODULE_GLOBALS(ddappsec)
     unsigned trace_rate_limit;
     const char *nonnull obfuscator_key_regex;
     const char *nonnull obfuscator_value_regex;
-    const char *nonnull client_ip_header;
 ZEND_END_MODULE_GLOBALS(ddappsec)
 // clang-format on
 

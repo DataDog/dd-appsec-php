@@ -33,29 +33,28 @@ static zend_string *nonnull _x_forwarded_for_key, *nonnull _x_real_ip_key,
     *nonnull _forwarded_key, *nonnull _via_key, *nonnull _true_client_ip_key,
     *nonnull _remote_addr_key;
 
-static THREAD_LOCAL_ON_ZTS zend_string *nullable _ipheader;
+static THREAD_LOCAL_ON_ZTS zend_string *nullable _client_ip_header;
 
 typedef bool (*extract_func_t)(zend_string *nonnull value, ipaddr *nonnull out);
 
-static ZEND_INI_MH(_on_update_ipheader);
+static ZEND_INI_MH(_on_update_client_ip_header);
 
 // clang-format off
 static const dd_ini_setting ini_settings[] = {
-    DD_APPSEC_INI_ENV("ipheader", "", PHP_INI_SYSTEM, _on_update_ipheader),
-    DD_TRACE_INI_ENV_GLOB("client_ip_header", "", PHP_INI_SYSTEM, OnUpdateString, client_ip_header, zend_ddappsec_globals, ddappsec_globals),
+    DD_TRACE_INI_ENV("client_ip_header", "", PHP_INI_SYSTEM, _on_update_client_ip_header),
     {0}
 };
 // clang-format on
 
-static ZEND_INI_MH(_on_update_ipheader)
+static ZEND_INI_MH(_on_update_client_ip_header)
 {
     ZEND_INI_MH_UNUSED();
-    if (_ipheader) {
-        zend_string_release(_ipheader);
+    if (_client_ip_header) {
+        zend_string_release(_client_ip_header);
     }
 
     if (!new_value || !ZSTR_VAL(new_value)[0]) {
-        _ipheader = NULL;
+        _client_ip_header = NULL;
         return SUCCESS;
     }
 
@@ -77,7 +76,7 @@ static ZEND_INI_MH(_on_update_ipheader)
     }
     *out = '\0';
 
-    _ipheader = normalized_value;
+    _client_ip_header = normalized_value;
 
     return SUCCESS;
 }
@@ -122,8 +121,8 @@ zend_string *nullable dd_ip_extraction_find(zval *nonnull server)
 {
     zend_string *res;
 
-    if (_ipheader) {
-        zend_string *value = _fetch_arr_str(server, _ipheader);
+    if (_client_ip_header) {
+        zend_string *value = _fetch_arr_str(server, _client_ip_header);
         if (!value) {
             return NULL;
         }
