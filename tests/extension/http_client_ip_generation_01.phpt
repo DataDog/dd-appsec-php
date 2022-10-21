@@ -6,7 +6,6 @@ datadog.appsec.log_file=/tmp/php_appsec_test.log
 datadog.appsec.log_level=debug
 --ENV--
 HTTP_X_FORWARDED_FOR=7.7.7.7
-DD_TRACE_CLIENT_IP_HEADER_DISABLED=false
 --FILE--
 <?php
 use function datadog\appsec\testing\{rinit,ddtrace_rshutdown,rshutdown,mlog};

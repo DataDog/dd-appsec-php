@@ -42,7 +42,7 @@ static ZEND_INI_MH(_on_update_ipheader);
 // clang-format off
 static const dd_ini_setting ini_settings[] = {
     DD_APPSEC_INI_ENV("ipheader", "", PHP_INI_SYSTEM, _on_update_ipheader),
-    DD_TRACE_INI_ENV_GLOB("client_ip_header_disabled", "0", PHP_INI_SYSTEM, OnUpdateBool, client_ip_header_disabled, zend_ddappsec_globals, ddappsec_globals),
+    DD_TRACE_INI_ENV_GLOB("client_ip_header", "", PHP_INI_SYSTEM, OnUpdateString, client_ip_header, zend_ddappsec_globals, ddappsec_globals),
     {0}
 };
 // clang-format on
@@ -121,10 +121,6 @@ static bool _parse_via(zend_string *nonnull zvalue, ipaddr *nonnull out);
 zend_string *nullable dd_ip_extraction_find(zval *nonnull server)
 {
     zend_string *res;
-
-    if (DDAPPSEC_G(client_ip_header_disabled)) {
-        return NULL;
-    }
 
     if (_ipheader) {
         zend_string *value = _fetch_arr_str(server, _ipheader);
