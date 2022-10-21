@@ -107,7 +107,9 @@ dds::result format_waf_result(ddwaf_result &res)
     dds::result output;
     for (unsigned i = 0; i < res.actions.size; i++) {
         char *value = res.actions.array[i];
-        if (value == nullptr) { continue; }
+        if (value == nullptr) {
+            continue;
+        }
         output.actions.emplace(value);
     }
 

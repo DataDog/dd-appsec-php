@@ -19,26 +19,26 @@ struct service_identifier {
 
     MSGPACK_DEFINE_MAP(service, env);
 
-    bool operator==(const service_identifier &oth) const noexcept {
+    bool operator==(const service_identifier &oth) const noexcept
+    {
         return service == oth.service && env == oth.env &&
                tracer_version == oth.tracer_version &&
-               app_version == oth.app_version &&
-               runtime_id == oth.runtime_id;
+               app_version == oth.app_version && runtime_id == oth.runtime_id;
     }
 
-    friend auto &operator<<(std::ostream &os, const service_identifier &id) {
-        return os << "{service=" << id.service
-                  << ", env=" << id.env
+    friend auto &operator<<(std::ostream &os, const service_identifier &id)
+    {
+        return os << "{service=" << id.service << ", env=" << id.env
                   << ", tracer_version=" << id.tracer_version
                   << ", app_version=" << id.app_version
-                  << ", runtime_id=" << id.runtime_id
-                  << "}";
+                  << ", runtime_id=" << id.runtime_id << "}";
     }
 
     struct hash {
-        std::size_t operator()(const service_identifier &id) const noexcept {
+        std::size_t operator()(const service_identifier &id) const noexcept
+        {
             return dds::hash(id.service, id.env, id.tracer_version,
-                    id.app_version, id.runtime_id);
+                id.app_version, id.runtime_id);
         }
     };
 };

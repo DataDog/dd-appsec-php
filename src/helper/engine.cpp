@@ -59,7 +59,9 @@ std::optional<result> engine::context::publish(parameter &&param)
         }
         try {
             auto call_res = it->second->call(data);
-            if (!call_res) { continue; }
+            if (!call_res) {
+                continue;
+            }
 
             // Merge results
             for (auto &data : call_res->data) {

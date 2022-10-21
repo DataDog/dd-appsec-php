@@ -22,7 +22,8 @@ class client {
 public:
     client(std::shared_ptr<service_manager> service_manager,
         network::base_broker::ptr &&broker)
-        : service_manager_(std::move(service_manager)), broker_(std::move(broker))
+        : service_manager_(std::move(service_manager)),
+          broker_(std::move(broker))
     {}
 
     client(std::shared_ptr<service_manager> service_manager,

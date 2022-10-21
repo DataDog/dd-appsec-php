@@ -5,8 +5,8 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #include <libddwaf/src/log.hpp>
 
-#include "engine_settings.hpp"
 #include "common.hpp"
+#include "engine_settings.hpp"
 #include <rapidjson/document.h>
 #include <spdlog/details/null_mutex.h>
 #include <spdlog/sinks/base_sink.h>

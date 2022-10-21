@@ -7,8 +7,8 @@
 
 #include <atomic>
 #include <string>
-#include <vector>
 #include <thread>
+#include <vector>
 
 #include "../service_identifier.hpp"
 #include "http_api.hpp"
@@ -34,14 +34,20 @@ class client {
 public:
     using ptr = std::unique_ptr<client>;
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    client(std::unique_ptr<http_api> &&arg_api, const service_identifier &sid,
-        const remote_config::settings &settings,
+    client(std::unique_ptr<http_api> &&arg_api, service_identifier sid,
+        remote_config::settings settings,
         const std::vector<product> &products = {});
+    virtual ~client() = default;
 
-    static client::ptr from_settings(const service_identifier &sid,
-        const remote_config::settings &settings);
+    client(const client &) = delete;
+    client(client &&) = default;
+    client &operator=(const client &) = delete;
+    client &operator=(client &&) = delete;
 
-    bool poll();
+    static client::ptr from_settings(
+        const service_identifier &sid, const remote_config::settings &settings);
+
+    virtual bool poll();
 
 protected:
     [[nodiscard]] protocol::get_configs_request generate_request() const;

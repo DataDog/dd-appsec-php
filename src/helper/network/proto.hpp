@@ -96,8 +96,8 @@ struct client_init {
         request &operator=(request &&) = default;
         ~request() override = default;
 
-        MSGPACK_DEFINE(pid, client_version, runtime_version,
-            service, engine_settings);
+        MSGPACK_DEFINE(
+            pid, client_version, runtime_version, service, engine_settings);
     };
 
     struct response : base_response_generic<response> {

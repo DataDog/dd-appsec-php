@@ -3,8 +3,8 @@
 //
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
-#include "engine_settings.hpp"
 #include "common.hpp"
+#include "engine_settings.hpp"
 #include <boost/algorithm/string/predicate.hpp>
 #include <service_manager.hpp>
 #include <tags.hpp>
@@ -70,9 +70,8 @@ TEST(ServiceManagerTest, LoadRulesFileNotFound)
     service_manager_exp manager;
     EXPECT_THROW(
         {
-            manager.create_service(
-                {"s", "e"}, {"/file/that/does/not/exist", 42},
-                {}, meta, metrics);
+            manager.create_service({"s", "e"},
+                {"/file/that/does/not/exist", 42}, {}, meta, metrics);
         },
         std::runtime_error);
 }
@@ -84,8 +83,8 @@ TEST(ServiceManagerTest, BadRulesFile)
     service_manager_exp manager;
     EXPECT_THROW(
         {
-            manager.create_service({"s","e"}, {"/dev/null", 42},
-                    {}, meta, metrics);
+            manager.create_service(
+                {"s", "e"}, {"/dev/null", 42}, {}, meta, metrics);
         },
         dds::parsing_error);
 }

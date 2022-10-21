@@ -17,16 +17,13 @@
 #include <spdlog/spdlog.h>
 #include <unordered_map>
 
-
 namespace dds {
 
-class service_manager
-{
+class service_manager {
 public:
     service_manager() = default;
 
-    std::shared_ptr<service> create_service(
-        const service_identifier &id,
+    std::shared_ptr<service> create_service(const service_identifier &id,
         const engine_settings &settings,
         const remote_config::settings &rc_settings,
         std::map<std::string_view, std::string> &meta,
@@ -34,8 +31,7 @@ public:
 
 protected:
     using cache_t = std::unordered_map<service_identifier,
-        std::weak_ptr<service>,
-        service_identifier::hash>;
+        std::weak_ptr<service>, service_identifier::hash>;
 
     void cleanup_cache(); // mutex_ must be held when calling this
 

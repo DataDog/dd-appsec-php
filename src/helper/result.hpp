@@ -17,8 +17,9 @@ struct result {
     result() = default;
 
     result(std::vector<std::string> &&data_,
-      std::unordered_set<std::string> &&actions_) :
-        data(std::move(data_)), actions(std::move(actions_)) {}
+        std::unordered_set<std::string> &&actions_)
+        : data(std::move(data_)), actions(std::move(actions_))
+    {}
     result(const result &) = default;
     result(result &&) = default;
     result &operator=(const result &) = default;

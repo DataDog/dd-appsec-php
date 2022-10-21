@@ -37,7 +37,7 @@ TEST(ResultTest, MoveConstructor)
 TEST(ResultTest, MoveAssignment)
 {
     result res{{"this was a moved result"}, {"block", "record"}};
-    result new_res{{},{}};
+    result new_res{{}, {}};
 
     new_res = std::move(res);
     EXPECT_TRUE(new_res.valid());

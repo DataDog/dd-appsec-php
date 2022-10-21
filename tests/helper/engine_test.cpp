@@ -89,8 +89,7 @@ TEST(EngineTest, MultipleSubscriptors)
     EXPECT_CALL(*recorder, call(_))
         .WillRepeatedly(Return(result{{}, {"record"}}));
     mock::listener::ptr ignorer = mock::listener::ptr(new mock::listener());
-    EXPECT_CALL(*ignorer, call(_))
-        .WillRepeatedly(Return(std::nullopt));
+    EXPECT_CALL(*ignorer, call(_)).WillRepeatedly(Return(std::nullopt));
 
     mock::subscriber::ptr sub1 = mock::subscriber::ptr(new mock::subscriber());
     EXPECT_CALL(*sub1, get_subscriptions())

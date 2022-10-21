@@ -19,12 +19,11 @@
 #include <spdlog/spdlog.h>
 #include <unordered_map>
 
-using namespace std::chrono_literals;
-
 namespace dds {
 
-class service
-{
+using namespace std::chrono_literals;
+
+class service {
 public:
     using ptr = std::shared_ptr<service>;
 
@@ -33,25 +32,27 @@ public:
         const std::chrono::milliseconds &poll_interval = 1s);
     ~service();
 
-    service(const service&) = delete;
-    service& operator=(const service&) = delete;
+    service(const service &) = delete;
+    service &operator=(const service &) = delete;
 
-    service(service&&) = delete;
-    service& operator=(service&&) = delete;
+    service(service &&) = delete;
+    service &operator=(service &&) = delete;
 
-    static service::ptr from_settings(
-        const service_identifier &id,
+    static service::ptr from_settings(const service_identifier &id,
         const dds::engine_settings &eng_settings,
         const remote_config::settings &rc_settings,
         std::map<std::string_view, std::string> &meta,
         std::map<std::string_view, double> &metrics);
 
-    [[nodiscard]] std::shared_ptr<engine> get_engine() const {
+    [[nodiscard]] std::shared_ptr<engine> get_engine() const
+    {
         // TODO make access atomic?
         return engine_;
     }
 
 protected:
+    void run();
+
     service_identifier id_;
     std::shared_ptr<engine> engine_;
     remote_config::client::ptr rc_client_;
@@ -61,4 +62,4 @@ protected:
     std::thread handler_;
 };
 
-} // namespace dds 
+} // namespace dds

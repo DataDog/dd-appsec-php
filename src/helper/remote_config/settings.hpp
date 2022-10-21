@@ -39,9 +39,7 @@ struct settings {
 
     bool operator==(const settings &oth) const noexcept
     {
-        return enabled == oth.enabled &&
-               host == oth.host &&
-               port == oth.port &&
+        return enabled == oth.enabled && host == oth.host && port == oth.port &&
                poll_interval == oth.poll_interval &&
                max_payload_size == oth.max_payload_size;
     }
@@ -49,18 +47,16 @@ struct settings {
     friend auto &operator<<(std::ostream &os, const settings &c)
     {
         return os << "{enabled=" << std::boolalpha << c.enabled
-                  << ", host=" << c.host
-                  << ", port=" << c.port
+                  << ", host=" << c.host << ", port=" << c.port
                   << ", poll_interval=" << c.poll_interval
-                  << ", max_payload_size=" << c.max_payload_size
-                  << "}";
+                  << ", max_payload_size=" << c.max_payload_size << "}";
     }
 
     struct settings_hash {
         std::size_t operator()(const settings &s) const noexcept
         {
-            return hash(s.enabled, s.host, s.port,
-                        s.poll_interval, s.max_payload_size);
+            return hash(
+                s.enabled, s.host, s.port, s.poll_interval, s.max_payload_size);
         }
     };
 };

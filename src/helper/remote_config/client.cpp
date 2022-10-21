@@ -28,11 +28,10 @@ config_path config_path::from_path(const std::string &path)
     return config_path{base_match[3].str(), base_match[2].str()};
 }
 
-client::client(std::unique_ptr<http_api> &&arg_api,
-  const service_identifier &sid, const remote_config::settings &settings,
-  const std::vector<product> &products):
-    api_(std::move(arg_api)), id_(dds::generate_random_uuid()),
-    sid_(sid), settings_(settings)
+client::client(std::unique_ptr<http_api> &&arg_api, service_identifier sid,
+    remote_config::settings settings, const std::vector<product> &products)
+    : api_(std::move(arg_api)), id_(dds::generate_random_uuid()),
+      sid_(std::move(sid)), settings_(std::move(settings))
 {
     for (auto const &product : products) {
         products_.insert(std::pair<std::string, remote_config::product>(
@@ -40,12 +39,15 @@ client::client(std::unique_ptr<http_api> &&arg_api,
     }
 }
 
-client::ptr client::from_settings(const service_identifier &sid,
-    const remote_config::settings &settings)
+client::ptr client::from_settings(
+    const service_identifier &sid, const remote_config::settings &settings)
 {
-    if (!settings.enabled) { return {}; }
+    if (!settings.enabled) {
+        return {};
+    }
     return std::make_unique<client>(
-        std::make_unique<http_api>(settings.host, settings.port), sid, settings);
+        std::make_unique<http_api>(settings.host, settings.port), sid,
+        settings);
 }
 
 [[nodiscard]] protocol::get_configs_request client::generate_request() const
@@ -84,8 +86,7 @@ client::ptr client::from_settings(const service_identifier &sid,
     return {std::move(protocol_client), std::move(files)};
 };
 
-bool client::process_response(
-    const protocol::get_configs_response &response)
+bool client::process_response(const protocol::get_configs_response &response)
 {
     const std::map<std::string, protocol::path> paths_on_targets =
         response.targets.paths;

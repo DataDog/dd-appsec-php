@@ -65,7 +65,7 @@ struct engine_settings {
         std::size_t operator()(const engine_settings &s) const noexcept
         {
             return hash(s.rules_file, s.waf_timeout_us, s.trace_rate_limit,
-                    s.obfuscator_key_regex, s.obfuscator_value_regex);
+                s.obfuscator_key_regex, s.obfuscator_value_regex);
         }
     };
 };

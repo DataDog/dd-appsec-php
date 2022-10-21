@@ -5,8 +5,8 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #pragma once
 
-#include "engine_settings.hpp"
 #include "config.hpp"
+#include "engine_settings.hpp"
 #include "parameter.hpp"
 #include "rate_limit.hpp"
 #include "result.hpp"

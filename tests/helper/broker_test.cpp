@@ -220,7 +220,8 @@ TEST(BrokerTest, RecvClientInit)
     EXPECT_EQ(command.engine_settings.rules_file, std::string{"three"});
     EXPECT_EQ(command.engine_settings.waf_timeout_us, 42ul);
     EXPECT_EQ(command.engine_settings.trace_rate_limit, 1729u);
-    EXPECT_STREQ(command.engine_settings.obfuscator_key_regex.c_str(), "key_regex");
+    EXPECT_STREQ(
+        command.engine_settings.obfuscator_key_regex.c_str(), "key_regex");
     EXPECT_STREQ(
         command.engine_settings.obfuscator_value_regex.c_str(), "value_regex");
 }
