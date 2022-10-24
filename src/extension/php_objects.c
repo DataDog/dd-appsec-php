@@ -65,7 +65,7 @@ _Static_assert(offsetof(zend_string, val) % _Alignof(struct entry_ex) == 0,
 void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
 {
     size_t name_len = sett->name_prefix_len + sett->name_suff_len;
-    char *name = safe_pemalloc(name_len, 1, APPSEC_ENV_NAME_PREFIX_LEN + 1, 1);
+    char *name = safe_pemalloc(name_len, 1, sett->env_name_prefix_len + 1, 1);
     memcpy(name, sett->name_prefix, sett->name_prefix_len);
     memcpy(name + sett->name_prefix_len, sett->name_suff, sett->name_suff_len);
     name[name_len] = '\0';
