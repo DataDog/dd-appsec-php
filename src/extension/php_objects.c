@@ -197,7 +197,7 @@ dd_result dd_phpobj_load_env_values()
             size_t name_prefix_len = APPSEC_NAME_PREFIX_LEN;
 
             if (strncmp(ZSTR_VAL(p->name), APPSEC_NAME_PREFIX,
-                    APPSEC_NAME_PREFIX_LEN)) {
+                    APPSEC_NAME_PREFIX_LEN) != 0) {
                 name_prefix = TRACE_NAME_PREFIX;
                 name_prefix_len = TRACE_NAME_PREFIX_LEN;
             }
