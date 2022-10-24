@@ -15,7 +15,6 @@
 #include "utils.hpp"
 #include <future>
 #include <memory>
-#include <mutex>
 #include <spdlog/spdlog.h>
 #include <unordered_map>
 
@@ -27,7 +26,7 @@ class service {
 public:
     using ptr = std::shared_ptr<service>;
 
-    service(service_identifier id, std::shared_ptr<engine> &engine,
+    service(service_identifier id, std::shared_ptr<engine> engine,
         remote_config::client::ptr &&rc_client,
         const std::chrono::milliseconds &poll_interval = 1s);
     ~service();
@@ -50,15 +49,18 @@ public:
         return engine_;
     }
 
+    [[nodiscard]] bool running() const { return handler_.joinable(); }
+
 protected:
-    void run();
+    void run(std::future<bool> &&exit_signal);
 
     service_identifier id_;
     std::shared_ptr<engine> engine_;
     remote_config::client::ptr rc_client_;
 
     std::chrono::milliseconds poll_interval_;
-    std::atomic<bool> running_{false};
+
+    std::promise<bool> exit_;
     std::thread handler_;
 };
 

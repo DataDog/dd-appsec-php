@@ -8,29 +8,26 @@
 
 namespace dds {
 
-service::service(service_identifier id, std::shared_ptr<engine> &engine,
+service::service(service_identifier id, std::shared_ptr<engine> engine,
     remote_config::client::ptr &&rc_client,
     const std::chrono::milliseconds &poll_interval)
     : id_(std::move(id)), engine_(std::move(engine)),
       rc_client_(std::move(rc_client)), poll_interval_(poll_interval)
 {
     // The engine should always be valid
-    // TODO: use a meaninful exception
     if (!engine_) {
-        throw;
+        throw std::runtime_error("invalid engine");
     }
 
     if (rc_client_) {
-        // TODO: move this thread to an abstraction within remote_config
-        running_ = true;
-        handler_ = std::thread(&service::run, this);
+        handler_ = std::thread(&service::run, this, exit_.get_future());
     }
 }
 
 service::~service()
 {
-    if (running_) {
-        running_ = false;
+    if (handler_.joinable()) {
+        exit_.set_value(true);
         handler_.join();
     }
 }
@@ -62,14 +59,20 @@ service::ptr service::from_settings(const service_identifier &id,
         std::chrono::milliseconds{rc_settings.poll_interval});
 }
 
-void service::run()
+void service::run(std::future<bool> &&exit_signal)
 {
-    while (running_) {
-        if (!rc_client_->poll()) {
-            return;
+    auto before = std::chrono::steady_clock::now() - poll_interval_;
+    std::future_status fs = exit_signal.wait_for(0s);
+    while (fs == std::future_status::timeout) {
+        auto now = std::chrono::steady_clock::now();
+        if ((now - before) >= poll_interval_) {
+            if (!rc_client_->poll()) {
+                return;
+            }
+            before = now;
         }
 
-        std::this_thread::sleep_for(poll_interval_);
+        fs = exit_signal.wait_for(poll_interval_);
     }
 }
 } // namespace dds

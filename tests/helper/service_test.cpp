@@ -6,6 +6,7 @@
 #include "common.hpp"
 #include <remote_config/client.hpp>
 #include <service.hpp>
+#include <stdexcept>
 
 namespace dds {
 
@@ -20,19 +21,48 @@ public:
 };
 } // namespace mock
 
-TEST(ServiceTest, DefaultService)
+ACTION_P(SignalCall, promise) { promise->set_value(true); }
+
+TEST(ServiceTest, ValidateRCThread)
 {
     service_identifier sid{
         "service", "env", "tracer_version", "app_version", "runtime_id"};
     std::shared_ptr<engine> engine{engine::create()};
 
+    std::promise<bool> call_promise;
+    auto call_future = call_promise.get_future();
+
     auto client = std::make_unique<mock::client>(sid);
-    EXPECT_CALL(*client, poll).WillOnce(Return(true));
+    EXPECT_CALL(*client, poll)
+        .WillOnce(DoAll(SignalCall(&call_promise), Return(true)));
 
     service svc{sid, engine, std::move(client), 1s};
 
-    // wait a little bit
-    std::this_thread::sleep_for(20ms);
+    // wait a little bit - this might end up being flaky
+    call_future.wait_for(1s);
+}
+
+TEST(ServiceTest, NullEngine)
+{
+    service_identifier sid{
+        "service", "env", "tracer_version", "app_version", "runtime_id"};
+    std::shared_ptr<engine> engine;
+
+    auto client = std::make_unique<mock::client>(sid);
+    EXPECT_CALL(*client, poll).Times(0);
+    EXPECT_THROW(auto s = service(sid, engine, std::move(client), 1s),
+        std::runtime_error);
+}
+
+TEST(ServiceTest, NullRCClient)
+{
+    service_identifier sid{
+        "service", "env", "tracer_version", "app_version", "runtime_id"};
+    std::shared_ptr<engine> engine{engine::create()};
+
+    // A null client doesn't make a difference as remote config is optional
+    service svc{sid, engine, nullptr};
+    EXPECT_EQ(engine.get(), svc.get_engine().get());
 }
 
 } // namespace dds
