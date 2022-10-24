@@ -586,6 +586,8 @@ static void _dd_request_headers(zend_array *meta_ht, zval *_server)
         zval ip_headers_zv;
         ZVAL_STR(&ip_headers_zv, ip_headers.s);
         zend_hash_add(meta_ht, _dd_multiple_ip_headers, &ip_headers_zv);
+    } else {
+        smart_str_free(&ip_headers);
     }
 }
 
