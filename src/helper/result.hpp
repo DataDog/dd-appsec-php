@@ -5,6 +5,8 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #pragma once
 
+#include <algorithm>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -27,6 +29,21 @@ struct result {
     ~result() = default;
 
     bool valid() const { return !data.empty() || !actions.empty(); }
+
+    // Convenience method
+    void merge(std::optional<result> &&oth)
+    {
+        if (oth) {
+            merge(*oth);
+        }
+    }
+
+    void merge(result &oth)
+    {
+        data.insert(data.end(), std::make_move_iterator(oth.data.begin()),
+            std::make_move_iterator(oth.data.end()));
+        actions.merge(oth.actions);
+    }
 
     std::vector<std::string> data;
     std::unordered_set<std::string> actions;

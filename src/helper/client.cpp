@@ -106,12 +106,13 @@ bool handle_message(client &client, const network::base_broker &broker,
 bool client::handle_command(const network::client_init::request &command)
 {
     SPDLOG_DEBUG("Got client_id with pid={}, client_version={}, "
-                 "runtime_version={}, service={}, settings={}",
+                 "runtime_version={}, service={}, engine_settings={}, "
+                 "remote_config_settings={}",
         command.pid, command.client_version, command.runtime_version,
-        command.service, command.engine_settings);
+        command.service, command.engine_settings, command.rc_settings);
 
     auto service_id = command.service;
-    auto &&settings = command.engine_settings;
+    auto &&eng_settings = command.engine_settings;
     DD_STDLOG(DD_STDLOG_STARTUP);
 
     std::map<std::string_view, std::string> meta;
@@ -121,17 +122,17 @@ bool client::handle_command(const network::client_init::request &command)
     bool has_errors = false;
     try {
         service_ = service_manager_->create_service(
-            service_id, settings, command.rc_settings, meta, metrics);
+            service_id, eng_settings, command.rc_settings, meta, metrics);
     } catch (std::system_error &e) {
         // TODO: logging should happen at WAF impl
-        DD_STDLOG(
-            DD_STDLOG_RULES_FILE_NOT_FOUND, settings.rules_file_or_default());
+        DD_STDLOG(DD_STDLOG_RULES_FILE_NOT_FOUND,
+            eng_settings.rules_file_or_default());
         errors.emplace_back(e.what());
         has_errors = true;
     } catch (std::exception &e) {
         // TODO: logging should happen at WAF impl
         DD_STDLOG(DD_STDLOG_RULES_FILE_INVALID,
-            settings.rules_file_or_default(), e.what());
+            eng_settings.rules_file_or_default(), e.what());
         errors.emplace_back(e.what());
         has_errors = true;
     }

@@ -61,9 +61,11 @@ service::ptr service::from_settings(const service_identifier &id,
 
 void service::run(std::future<bool> &&exit_signal)
 {
-    auto before = std::chrono::steady_clock::now() - poll_interval_;
+    std::chrono::time_point<std::chrono::steady_clock> before{0s};
     std::future_status fs = exit_signal.wait_for(0s);
     while (fs == std::future_status::timeout) {
+        // If the thread is interrupted somehow, make sure to check that
+        // the polling interval has actually elapsed.
         auto now = std::chrono::steady_clock::now();
         if ((now - before) >= poll_interval_) {
             if (!rc_client_->poll()) {

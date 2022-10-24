@@ -58,17 +58,7 @@ std::optional<result> engine::context::publish(parameter &&param)
             it = listeners_.emplace(sub, sub->get_listener()).first;
         }
         try {
-            auto call_res = it->second->call(data);
-            if (!call_res) {
-                continue;
-            }
-
-            // Merge results
-            for (auto &data : call_res->data) {
-                res.data.emplace_back(std::move(data));
-            }
-
-            res.actions.merge(call_res->actions);
+            res.merge(it->second->call(data));
         } catch (std::exception &e) {
             SPDLOG_ERROR("subscriber failed: {}", e.what());
         }
