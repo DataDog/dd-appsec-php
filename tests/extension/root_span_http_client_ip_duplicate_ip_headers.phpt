@@ -41,5 +41,5 @@ string(9) "for="foo""
 string(12) "HTTP/1.1 GWA"
 string(8) "7.7.7.11"
 string(7) "7.7.7.7"
-string(112) "x-forwarded,x-cluster-client-ip,forwarded,x-forwarded-for,true-client-ip,x-client-ip,x-real-ip,forwarded-for,via"
+string(100) "x-forwarded-for,x-real-ip,x-forwarded,x-cluster-client-ip,forwarded-for,forwarded,via,true-client-ip"
 bool(false)

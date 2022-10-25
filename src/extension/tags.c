@@ -57,10 +57,8 @@ static zend_string *_key_https_zstr;
 static zend_string *_key_remote_addr_zstr;
 static zend_string *_true_zstr;
 static HashTable _relevant_headers;
-static HashTable _relevant_ip_headers;
 static THREAD_LOCAL_ON_ZTS bool _appsec_json_frags_inited;
 static THREAD_LOCAL_ON_ZTS zend_llist _appsec_json_frags;
-static int multiple_headers_detected;
 
 static void _init_relevant_headers(void);
 static zend_string *_concat_json_fragments(void);
@@ -127,25 +125,21 @@ void dd_tags_startup()
 static void _init_relevant_headers()
 {
     zend_hash_init(&_relevant_headers, 32, NULL, NULL, 1);
-    zend_hash_init(&_relevant_ip_headers, 32, NULL, NULL, 1);
     zval nullzv;
     ZVAL_NULL(&nullzv);
 #define ADD_RELEVANT_HEADER(str)                                               \
     zend_hash_str_add_new(&_relevant_headers, str "", sizeof(str) - 1, &nullzv);
-#define ADD_RELEVANT_IP_HEADER(str)                                            \
-    zend_hash_str_add_new(                                                     \
-        &_relevant_ip_headers, str "", sizeof(str) - 1, &nullzv);
 
-    ADD_RELEVANT_IP_HEADER("x-forwarded-for");
-    ADD_RELEVANT_IP_HEADER("x-client-ip");
-    ADD_RELEVANT_IP_HEADER("x-real-ip");
-    ADD_RELEVANT_IP_HEADER("client-ip");
-    ADD_RELEVANT_IP_HEADER("x-forwarded");
-    ADD_RELEVANT_IP_HEADER("x-cluster-client-ip");
-    ADD_RELEVANT_IP_HEADER("forwarded-for");
-    ADD_RELEVANT_IP_HEADER("forwarded");
-    ADD_RELEVANT_IP_HEADER("true-client-ip");
-    ADD_RELEVANT_IP_HEADER("via");
+    ADD_RELEVANT_HEADER("x-forwarded-for");
+    ADD_RELEVANT_HEADER("x-client-ip");
+    ADD_RELEVANT_HEADER("x-real-ip");
+    ADD_RELEVANT_HEADER("client-ip");
+    ADD_RELEVANT_HEADER("x-forwarded");
+    ADD_RELEVANT_HEADER("x-cluster-client-ip");
+    ADD_RELEVANT_HEADER("forwarded-for");
+    ADD_RELEVANT_HEADER("forwarded");
+    ADD_RELEVANT_HEADER("true-client-ip");
+    ADD_RELEVANT_HEADER("via");
     ADD_RELEVANT_HEADER("content-length");
     ADD_RELEVANT_HEADER("content-type");
     ADD_RELEVANT_HEADER("content-encoding");
@@ -192,8 +186,6 @@ void dd_tags_shutdown()
 {
     zend_hash_destroy(&_relevant_headers);
     _relevant_headers = (HashTable){0};
-    zend_hash_destroy(&_relevant_ip_headers);
-    _relevant_ip_headers = (HashTable){0};
 }
 
 void dd_tags_rinit()
@@ -368,7 +360,6 @@ static void _add_all_tags_to_meta(zval *nonnull meta)
     _dd_http_user_agent(meta_ht, _server);
     _dd_http_status_code(meta_ht);
     _dd_http_network_client_ip(meta_ht, _server);
-    multiple_headers_detected = 0;
     _dd_request_headers(meta_ht, _server);
     _dd_http_client_ip(meta_ht, _server);
     _dd_response_headers(meta_ht);
@@ -502,20 +493,58 @@ static void _dd_http_network_client_ip(zend_array *meta_ht, zval *_server)
         meta_ht, _dd_tag_network_client_ip_zstr, remote_addr_zstr, true);
 }
 
-static void _dd_http_client_ip(zend_array *meta_ht, zval *_server)
+static void _extract_dd_multiple_ip_headers(
+    zend_array *meta_ht, zval *nullable duplicated_headers)
 {
-    if (multiple_headers_detected > 1 ||
-        zend_hash_exists(meta_ht, _dd_tag_http_client_ip_zstr)) {
+    if (!duplicated_headers || Z_TYPE_P(duplicated_headers) != IS_ARRAY) {
         return;
     }
 
-    zend_string *client_ip = dd_ip_extraction_find(_server);
-    if (!client_ip) {
+    HashTable *relevant_ip_headers_arr = Z_ARRVAL_P(duplicated_headers);
+    uint32_t relevant_ip_headers_arr_size =
+        relevant_ip_headers_arr
+            ? zend_hash_num_elements(relevant_ip_headers_arr)
+            : 0;
+    if (relevant_ip_headers_arr_size < 2) {
         return;
+    }
+
+    smart_str ip_headers = {0};
+    smart_str_alloc(&ip_headers, 0, 0);
+    zval *val;
+    zend_ulong index;
+    ZEND_HASH_FOREACH_NUM_KEY_VAL(Z_ARRVAL_P(duplicated_headers), index, val)
+    {
+        smart_str_appendl(&ip_headers, Z_STRVAL_P(val), Z_STRLEN_P(val));
+        if (index < relevant_ip_headers_arr_size - 1) {
+            smart_str_appendc(&ip_headers, ',');
+        }
+    }
+    ZEND_HASH_FOREACH_END();
+
+    _add_new_zstr_to_meta(
+        meta_ht, _dd_multiple_ip_headers, ip_headers.s, false);
+}
+
+static void _dd_http_client_ip(zend_array *meta_ht, zval *_server)
+{
+    if (zend_hash_exists(meta_ht, _dd_tag_http_client_ip_zstr)) {
+        return;
+    }
+
+    zval duplicated_ip_headers;
+    array_init(&duplicated_ip_headers);
+    zend_string *client_ip =
+        dd_ip_extraction_find(_server, &duplicated_ip_headers);
+    if (!client_ip) {
+        _extract_dd_multiple_ip_headers(meta_ht, &duplicated_ip_headers);
+        goto exit;
     }
 
     _add_new_zstr_to_meta(
         meta_ht, _dd_tag_http_client_ip_zstr, client_ip, false);
+exit:
+    zend_array_destroy(Z_ARR(duplicated_ip_headers));
 }
 
 static void _dd_request_headers(zend_array *meta_ht, zval *_server)
@@ -523,9 +552,6 @@ static void _dd_request_headers(zend_array *meta_ht, zval *_server)
     // Pack headers
     zend_string *key;
     zval *val;
-    size_t final_len = 0;
-    smart_str ip_headers = {0};
-    smart_str_alloc(&ip_headers, final_len, 0);
     ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(_server), key, val)
     {
         if (!key) {
@@ -554,24 +580,13 @@ static void _dd_request_headers(zend_array *meta_ht, zval *_server)
         memcpy(tag_p, ZSTR_VAL(key) + LSTRLEN("HTTP_"), header_name_len);
         tag_p[header_name_len] = '\0';
         dd_string_normalize_header(tag_p, header_name_len);
-        bool relevant_header =
-            zend_hash_str_exists(&_relevant_headers, tag_p, header_name_len);
-        bool relevant_ip_header =
-            zend_hash_str_exists(&_relevant_ip_headers, tag_p, header_name_len);
-        if (!relevant_header && !relevant_ip_header) {
+        if (!zend_hash_str_exists(&_relevant_headers, tag_p, header_name_len)) {
             zend_string_efree(tag_name);
             continue;
         }
 
         Z_TRY_ADDREF_P(val);
         bool added = zend_hash_add(meta_ht, tag_name, val) != NULL;
-        if (relevant_ip_header) {
-            if (multiple_headers_detected > 0) {
-                smart_str_appendc(&ip_headers, ',');
-            }
-            multiple_headers_detected++;
-            smart_str_appendl(&ip_headers, tag_p, header_name_len);
-        }
         if (added) {
             mlog(dd_log_debug, "Adding request header tag '%s' -> '%s",
                 ZSTR_VAL(tag_name), ZSTR_VAL(Z_STR_P(val)));
@@ -581,14 +596,6 @@ static void _dd_request_headers(zend_array *meta_ht, zval *_server)
         zend_string_release(tag_name);
     }
     ZEND_HASH_FOREACH_END();
-
-    if (multiple_headers_detected > 1) {
-        zval ip_headers_zv;
-        ZVAL_STR(&ip_headers_zv, ip_headers.s);
-        zend_hash_add(meta_ht, _dd_multiple_ip_headers, &ip_headers_zv);
-    } else {
-        smart_str_free(&ip_headers);
-    }
 }
 
 static zend_string *nullable _is_relevant_resp_header(

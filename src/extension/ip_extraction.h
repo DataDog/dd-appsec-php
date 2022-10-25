@@ -14,4 +14,5 @@ void dd_ip_extraction_startup(void);
 // Since the headers looked at can in principle be forged, it's very much
 // recommended that a datadog.appsec.ipheader is set to a header that the server
 // guarantees cannot be forged
-zend_string *nullable dd_ip_extraction_find(zval *nonnull server);
+zend_string *nullable dd_ip_extraction_find(
+    zval *nonnull server, zval *nullable duplicated_headers);
