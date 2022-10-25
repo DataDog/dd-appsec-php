@@ -193,19 +193,21 @@ dd_result dd_phpobj_load_env_values()
     {
         if (p->on_modify == _on_modify_wrapper) {
 
-            const char *name_prefix = APPSEC_NAME_PREFIX;
             size_t name_prefix_len = APPSEC_NAME_PREFIX_LEN;
+            const char *env_name_prefix = APPSEC_ENV_NAME_PREFIX;
+            size_t env_name_prefix_len = APPSEC_ENV_NAME_PREFIX_LEN;
 
             if (strncmp(ZSTR_VAL(p->name), APPSEC_NAME_PREFIX,
                     APPSEC_NAME_PREFIX_LEN) != 0) {
-                name_prefix = TRACE_NAME_PREFIX;
                 name_prefix_len = TRACE_NAME_PREFIX_LEN;
+                env_name_prefix = TRACE_ENV_NAME_PREFIX;
+                env_name_prefix_len = TRACE_ENV_NAME_PREFIX_LEN;
             }
 
             const char *ini_name = ZSTR_VAL(p->name);
             char *env_name = _get_env_name_from_ini_name(
                 &ini_name[name_prefix_len], ZSTR_LEN(p->name) - name_prefix_len,
-                name_prefix, name_prefix_len);
+                env_name_prefix, env_name_prefix_len);
             zend_string *env_def = _fetch_from_env(env_name);
             if (env_def) {
                 _custom_php_zend_ini_alter_master(
