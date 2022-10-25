@@ -76,7 +76,7 @@ jobs:
       - name: Install clang-{tidy,format}
         run: |
           sudo .github/workflows/scripts/llvm.sh 13
-          sudo apt-get install -y clang-tidy-13 clang-format-13
+          sudo apt-get install -y clang-tidy-13 clang-format-13 libboost-system-dev
       - name: Generate Build Scripts
         run: |
             mkdir build
@@ -88,7 +88,8 @@ jobs:
             -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address -fsanitize=leak" \
             -DCMAKE_MODULE_LINKER_FLAGS="-fsanitize=address -fsanitize=leak" \
             -DCLANG_TIDY=/usr/bin/clang-tidy-13 \
-            -DCLANG_FORMAT=/usr/bin/clang-format-13
+            -DCLANG_FORMAT=/usr/bin/clang-format-13 \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       - name: Build
         run: make -j $(nproc) ddappsec-helper ddappsec_helper_test
         working-directory: ${{ github.workspace }}/build

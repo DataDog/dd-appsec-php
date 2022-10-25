@@ -53,7 +53,13 @@ extern bool runtime_config_first_init;
     CONFIG(STRING, DD_SERVICE, "", CALIASES("DD_SERVICE_NAME"))                                                 \
     CONFIG(STRING, DD_ENV, "")                                                                                  \
     CONFIG(BOOL, DD_TRACE_CLIENT_IP_HEADER_DISABLED, "false")                                                   \
-    CONFIG(CUSTOM(STRING), DD_TRACE_CLIENT_IP_HEADER, "", .parser = dd_parse_client_ip_header_config)
+    CONFIG(CUSTOM(STRING), DD_TRACE_CLIENT_IP_HEADER, "", .parser = dd_parse_client_ip_header_config)           \
+    CONFIG(BOOL, DD_REMOTE_CONFIG_ENABLED, "false")                                                             \
+    CONFIG(CUSTOM(uint32_t), DD_REMOTE_CONFIG_POLL_INTERVAL, "1000", .parser = _parse_uint32)                   \
+    CONFIG(CUSTOM(uint64_t), DD_REMOTE_CONFIG_MAX_PAYLOAD_SIZE, "4096", .parser = _parse_uint64)                \
+    CONFIG(STRING, DD_AGENT_HOST, "")                                                                           \
+    CONFIG(INT, DD_TRACE_AGENT_PORT, "8126")                                                                    \
+>>>>>>> 14fc2f6 (Service oriented clients (#137))
 // clang-format on
 
 #define CALIAS CONFIG
