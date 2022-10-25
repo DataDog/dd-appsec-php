@@ -1,7 +1,7 @@
 --TEST--
 Extract client IP address (ip ini set)
 --INI--
-datadog.trace.ipheader=foo-Bar
+datadog.trace.client_ip_header=foo-Bar
 datadog.appsec.log_level=info
 --FILE--
 <?php

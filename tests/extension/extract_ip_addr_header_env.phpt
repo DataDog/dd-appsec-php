@@ -1,7 +1,7 @@
 --TEST--
 Extract client IP address (ip env set)
 --ENV--
-DD_TRACE_IPHEADER=foo-Bar
+DD_TRACE_CLIENT_IP_HEADER=foo-Bar
 --INI--
 datadog.appsec.log_level=info
 --FILE--
