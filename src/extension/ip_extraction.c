@@ -41,7 +41,7 @@ static ZEND_INI_MH(_on_update_client_ip_header);
 
 // clang-format off
 static const dd_ini_setting ini_settings[] = {
-    DD_TRACE_INI_ENV("client_ip_header", "", PHP_INI_SYSTEM, _on_update_client_ip_header),
+    DD_TRACE_INI_ENV("ipheader", "", PHP_INI_SYSTEM, _on_update_client_ip_header),
     {0}
 };
 // clang-format on
