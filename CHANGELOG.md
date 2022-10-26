@@ -1,5 +1,9 @@
 # Datadog AppSec for PHP Release
 
+### v0.4.4
+#### Additions
+- ([#141](https://github.com/DataDog/dd-appsec-php/pull/141)) Generate ip and duplicate ip headers on appsec
+
 ### v0.4.3
 #### Fixes
 - ([#132](https://github.com/DataDog/dd-appsec-php/pull/132)) Handle errors on request shutdown
