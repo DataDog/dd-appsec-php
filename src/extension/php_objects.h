@@ -1,8 +1,8 @@
 // Unless explicitly stated otherwise all files in this repository are
 // dual-licensed under the Apache-2.0 License or BSD-3-Clause License.
 //
-// This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2021 Datadog, Inc.
+// This product includes software developed at Datadog
+// (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #pragma once
 
 #include "dddefs.h"
@@ -12,6 +12,16 @@
 
 #define DD_APPSEC_NS "datadog\\appsec\\"
 #define DD_TESTING_NS "datadog\\appsec\\testing\\"
+
+#define APPSEC_NAME_PREFIX "datadog.appsec."
+#define APPSEC_NAME_PREFIX_LEN (sizeof(APPSEC_NAME_PREFIX) - 1)
+#define APPSEC_ENV_NAME_PREFIX "DD_APPSEC_"
+#define APPSEC_ENV_NAME_PREFIX_LEN (sizeof(APPSEC_ENV_NAME_PREFIX) - 1)
+
+#define TRACE_NAME_PREFIX "datadog.trace."
+#define TRACE_NAME_PREFIX_LEN (sizeof(TRACE_NAME_PREFIX) - 1)
+#define TRACE_ENV_NAME_PREFIX "DD_TRACE_"
+#define TRACE_ENV_NAME_PREFIX_LEN (sizeof(TRACE_ENV_NAME_PREFIX) - 1)
 
 typedef struct _dd_ini_setting {
     const char *name_suff; // the part after 'ddappsec'
@@ -26,26 +36,70 @@ typedef struct _dd_ini_setting {
     // or a pointer to int representing the tsrm offset
     void *global_variable;
     size_t field_offset;
+    const char *name_prefix;
+    uint16_t name_prefix_len;
+    const char *env_name_prefix;
+    uint16_t env_name_prefix_len;
 } dd_ini_setting;
 
-#define DD_INI_ENV(name_suff, default_value, modifiable, on_modify)            \
+#define DD_INI_ENV(name_suff, default_value, modifiable, on_modify,            \
+    name_prefix, name_prefix_len, env_name, env_name_len)                      \
     ((dd_ini_setting){(name_suff), (default_value), sizeof(name_suff "") - 1,  \
-        sizeof(default_value "") - 1, (modifiable), (on_modify), NULL, 0})
+        sizeof(default_value "") - 1, (modifiable), (on_modify), NULL, 0,      \
+        name_prefix, name_prefix_len, env_name, env_name_len})
+
+#define DD_APPSEC_INI_ENV(name_suff, default_value, modifiable, on_modify)     \
+    DD_INI_ENV(name_suff, default_value, modifiable, on_modify,                \
+        APPSEC_NAME_PREFIX, APPSEC_NAME_PREFIX_LEN, APPSEC_ENV_NAME_PREFIX,    \
+        APPSEC_ENV_NAME_PREFIX_LEN)
+
+#define DD_TRACE_INI_ENV(name_suff, default_value, modifiable, on_modify)      \
+    DD_INI_ENV(name_suff, default_value, modifiable, on_modify,                \
+        TRACE_NAME_PREFIX, TRACE_NAME_PREFIX_LEN, TRACE_ENV_NAME_PREFIX,       \
+        TRACE_ENV_NAME_PREFIX_LEN)
 
 #ifdef ZTS
 #    define DD_INI_ENV_GLOB(name_suff, default_value, modifiable, on_modify,   \
-        field_name, glob_type, glob_name)                                      \
+        field_name, glob_type, glob_name, name_prefix, name_prefix_len,        \
+        env_name, env_name_len)                                                \
         ((dd_ini_setting){(name_suff), (default_value),                        \
             sizeof(name_suff "") - 1, sizeof(default_value "") - 1,            \
             (modifiable), (on_modify), &(glob_name##_id),                      \
-            offsetof(glob_type, field_name)})
+            offsetof(glob_type, field_name), name_prefix, name_prefix_len,     \
+            env_name, env_name_len})
+#    define DD_APPSEC_INI_ENV_GLOB(name_suff, default_value, modifiable,       \
+        on_modify, field_name, glob_type, glob_name)                           \
+        DD_INI_ENV_GLOB(name_suff, default_value, modifiable, on_modify,       \
+            field_name, glob_type, glob_name, APPSEC_NAME_PREFIX,              \
+            APPSEC_NAME_PREFIX_LEN, APPSEC_ENV_NAME_PREFIX,                    \
+            APPSEC_ENV_NAME_PREFIX_LEN)
+#    define DD_TRACE_INI_ENV_GLOB(name_suff, default_value, modifiable,        \
+        on_modify, field_name, glob_type, glob_name)                           \
+        DD_INI_ENV_GLOB(name_suff, default_value, modifiable, on_modify,       \
+            field_name, glob_type, glob_name, TRACE_NAME_PREFIX,               \
+            TRACE_NAME_PREFIX_LEN, TRACE_ENV_NAME_PREFIX,                      \
+            TRACE_ENV_NAME_PREFIX_LEN)
 #else
 #    define DD_INI_ENV_GLOB(name_suff, default_value, modifiable, on_modify,   \
-        field_name, glob_type, glob_name)                                      \
+        field_name, glob_type, glob_name, name_prefix, name_prefix_len,        \
+        env_name, env_name_len)                                                \
         ((dd_ini_setting){(name_suff), (default_value),                        \
             sizeof(name_suff "") - 1, sizeof(default_value "") - 1,            \
             modifiable, (on_modify), &(glob_name),                             \
-            offsetof(glob_type, field_name)})
+            offsetof(glob_type, field_name), name_prefix, name_prefix_len,     \
+            env_name, env_name_len})
+#    define DD_APPSEC_INI_ENV_GLOB(name_suff, default_value, modifiable,       \
+        on_modify, field_name, glob_type, glob_name)                           \
+        DD_INI_ENV_GLOB(name_suff, default_value, modifiable, on_modify,       \
+            field_name, glob_type, glob_name, APPSEC_NAME_PREFIX,              \
+            APPSEC_NAME_PREFIX_LEN, APPSEC_ENV_NAME_PREFIX,                    \
+            APPSEC_ENV_NAME_PREFIX_LEN)
+#    define DD_TRACE_INI_ENV_GLOB(name_suff, default_value, modifiable,        \
+        on_modify, field_name, glob_type, glob_name)                           \
+        DD_INI_ENV_GLOB(name_suff, default_value, modifiable, on_modify,       \
+            field_name, glob_type, glob_name, TRACE_NAME_PREFIX,               \
+            TRACE_NAME_PREFIX_LEN, TRACE_ENV_NAME_PREFIX,                      \
+            TRACE_ENV_NAME_PREFIX_LEN)
 #endif
 
 void dd_phpobj_startup(int module_number);
@@ -55,11 +109,8 @@ void dd_phpobj_reg_ini_env(const dd_ini_setting *sett);
 dd_result dd_phpobj_load_env_values(void);
 static inline void dd_phpobj_reg_ini_envs(const dd_ini_setting *setts)
 {
-    for (__auto_type s = setts; s->name_suff; s++) {
-        dd_phpobj_reg_ini_env(s);
-    }
+    for (__auto_type s = setts; s->name_suff; s++) { dd_phpobj_reg_ini_env(s); }
 }
 void dd_phpobj_reg_long_const(
     const char *name, size_t name_len, zend_long value, int flags);
 void dd_phpobj_shutdown(void);
-
