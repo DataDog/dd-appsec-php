@@ -17,6 +17,7 @@ static int _module_number;
 static zend_llist _function_entry_arrays;
 
 static void _unregister_functions(void *zfe_arr_vp);
+bool dd_phpobj_is_ini_registered(zend_string *name);
 
 void dd_phpobj_startup(int module_number)
 {
@@ -69,6 +70,27 @@ void dd_phpobj_reg_ini_env(const dd_ini_setting *sett)
     memcpy(name, sett->name_prefix, sett->name_prefix_len);
     memcpy(name + sett->name_prefix_len, sett->name_suff, sett->name_suff_len);
     name[name_len] = '\0';
+
+    if (sett->avoid_registering_twice) {
+        zend_string *name_zs = zend_string_init(name, name_len, 0);
+        bool already_registered = dd_phpobj_is_ini_registered(name_zs);
+        zend_string_free(name_zs);
+        if (already_registered) {
+            mlog(dd_log_warning,
+                "The following setting %s could not be registered due to "
+                "incompatible versions of ddappsec and ddtrace. This usually "
+                "happens due to an unsupported or deprecated installation "
+                "method. Both extensions will continue to work as expected, "
+                "however the setting will not be taken into consideration. "
+                "Please have a look at the documentation for more details on "
+                "the currently supported installation methods: "
+                "https://docs.datadoghq.com/security_platform/"
+                "application_security/getting_started/php/"
+                "?tab=dockercli#get-started",
+                name);
+            return;
+        }
+    }
 
     char *env_name = _get_env_name_from_ini_name(sett->name_suff,
         sett->name_suff_len, sett->env_name_prefix, sett->env_name_prefix_len);
@@ -293,6 +315,11 @@ void dd_phpobj_shutdown()
 {
     zend_llist_destroy(&_function_entry_arrays);
     zend_unregister_ini_entries(_module_number);
+}
+
+bool dd_phpobj_is_ini_registered(zend_string *name)
+{
+    return zend_hash_find_ptr(EG(ini_directives), name) != NULL;
 }
 
 static void _unregister_functions(void *zfe_arr_vp)
