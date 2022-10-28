@@ -138,7 +138,6 @@ static void _init_relevant_headers()
         &_relevant_ip_headers, str "", sizeof(str) - 1, &nullzv);
 
     ADD_RELEVANT_IP_HEADER("x-forwarded-for");
-    ADD_RELEVANT_IP_HEADER("x-client-ip");
     ADD_RELEVANT_IP_HEADER("x-real-ip");
     ADD_RELEVANT_IP_HEADER("client-ip");
     ADD_RELEVANT_IP_HEADER("x-forwarded");
