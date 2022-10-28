@@ -14,9 +14,9 @@ HTTP_TRUE_CLIENT_IP=7.7.7.11
 REMOTE_ADDR=7.7.7.12
 --FILE--
 <?php
-use function datadog\appsec\testing\add_ancillary_tags;
+use function datadog\appsec\testing\add_all_ancillary_tags;
 $arrs = array();
-add_ancillary_tags($arrs);
+add_all_ancillary_tags($arrs);
 var_dump($arrs['http.request.headers.x-forwarded-for']);
 var_dump($arrs['http.request.headers.x-real-ip']);
 var_dump($arrs['http.request.headers.x-forwarded']);

@@ -36,7 +36,7 @@ key=val
 --FILE--
 <?php
 
-use function datadog\appsec\testing\add_ancillary_tags;
+use function datadog\appsec\testing\add_all_ancillary_tags;
 
 header('Content-type: application/json');
 header('Content-encoding: foobar');
@@ -50,7 +50,7 @@ flush();
 $_SERVER = array();
 
 $arr = array();
-add_ancillary_tags($arr);
+add_all_ancillary_tags($arr);
 ksort($arr);
 print_r($arr);
 

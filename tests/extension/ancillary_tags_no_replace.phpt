@@ -14,7 +14,7 @@ key=val
 --FILE--
 <?php
 
-use function datadog\appsec\testing\add_ancillary_tags;
+use function datadog\appsec\testing\add_all_ancillary_tags;
 
 header('Content-type: application/json');
 http_response_code(404);
@@ -32,7 +32,7 @@ $arr = array(
     'network.client.ip' => '2.2.2.2',
     'http.client_ip' => '5.5.5.5'
 );
-add_ancillary_tags($arr);
+add_all_ancillary_tags($arr);
 ksort($arr);
 print_r($arr);
 
