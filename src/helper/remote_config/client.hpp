@@ -34,21 +34,11 @@ class client {
 public:
     using ptr = std::unique_ptr<client>;
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    client(std::unique_ptr<http_api> &&arg_api, std::string &&id,
-        std::string &&runtime_id,
-        // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-        std::string &&tracer_version, std::string &&service, std::string &&env,
-        std::string &&app_version, const std::vector<product> &products,
-        std::vector<protocol::capabilities_e> &&capabilities)
-        : api_(std::move(arg_api)), id_(id), runtime_id_(runtime_id),
-          tracer_version_(tracer_version), service_(service), env_(env),
-          app_version_(app_version), capabilities_(std::move(capabilities))
-    {
-        for (auto const &product : products) {
-            products_.insert(std::pair<std::string, remote_config::product>(
-                product.get_name(), product));
-        }
-    };
+    client(std::unique_ptr<http_api> &&arg_api, service_identifier sid,
+        remote_config::settings settings,
+        const std::vector<product> &products = {},
+        std::vector<protocol::capabilities_e> &&capabilities = {});
+    virtual ~client() = default;
 
     client(const client &) = delete;
     client(client &&) = default;
@@ -77,6 +67,7 @@ protected:
 
     // supported products
     std::map<std::string, product> products_;
+
     std::vector<protocol::capabilities_e> capabilities_;
 };
 

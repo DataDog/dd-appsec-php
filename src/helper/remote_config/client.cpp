@@ -29,9 +29,10 @@ config_path config_path::from_path(const std::string &path)
 }
 
 client::client(std::unique_ptr<http_api> &&arg_api, service_identifier sid,
-    remote_config::settings settings, const std::vector<product> &products)
+    remote_config::settings settings, const std::vector<product> &products,
+std::vector<protocol::capabilities_e> &&capabilities)
     : api_(std::move(arg_api)), id_(dds::generate_random_uuid()),
-      sid_(std::move(sid)), settings_(std::move(settings))
+      sid_(std::move(sid)), settings_(std::move(settings)), capabilities_(std::move(capabilities))
 {
     for (auto const &product : products) {
         products_.insert(std::pair<std::string, remote_config::product>(
@@ -59,8 +60,8 @@ client::ptr client::from_settings(
         // State
         const auto configs_on_product = product.get_configs();
         for (const auto &[id, config] : configs_on_product) {
-            config_states.push_back({config.id, config.version, config.product,
-                config.apply_state, config.apply_error});
+            config_states.push_back(
+                {config.id, config.version, config.product});
 
             std::vector<protocol::cached_target_files_hash> hashes;
             hashes.reserve(config.hashes.size());
@@ -144,10 +145,9 @@ bool client::process_response(const protocol::get_configs_response &response)
                 raw = path_in_target_files->second.raw;
             }
 
-            std::string path_c = path;
-            config config_ = {cp.product, cp.id, raw, path_c, hashes, custom_v,
-                length, protocol::config_state_applied_state::UNACKNOWLEDGED,
-                ""};
+            const std::string path_c = path;
+            config config_ = {
+                cp.product, cp.id, raw, path_c, hashes, custom_v, length};
             auto configs_itr = configs.find(cp.product);
             if (configs_itr ==
                 configs.end()) { // Product not in configs yet. Create entry
