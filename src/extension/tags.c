@@ -133,8 +133,9 @@ static void _init_relevant_headers()
     ZVAL_NULL(&nullzv);
 #define ADD_RELEVANT_HEADER(str)                                               \
     zend_hash_str_add_new(&_relevant_headers, str "", sizeof(str) - 1, &nullzv);
-#define ADD_RELEVANT_IP_HEADER(str)                                               \
-    zend_hash_str_add_new(&_relevant_ip_headers, str "", sizeof(str) - 1, &nullzv);
+#define ADD_RELEVANT_IP_HEADER(str)                                            \
+    zend_hash_str_add_new(                                                     \
+        &_relevant_ip_headers, str "", sizeof(str) - 1, &nullzv);
 
     ADD_RELEVANT_IP_HEADER("x-forwarded-for");
     ADD_RELEVANT_IP_HEADER("x-client-ip");
@@ -206,7 +207,6 @@ void dd_tags_shutdown()
 
     zend_hash_destroy(&_relevant_ip_headers);
     _relevant_ip_headers = (HashTable){0};
-
 }
 
 void dd_tags_rinit()
@@ -356,8 +356,8 @@ static void _dd_http_user_agent(zend_array *meta_ht, zval *_server);
 static void _dd_http_status_code(zend_array *meta_ht);
 static void _dd_http_network_client_ip(zend_array *meta_ht, zval *_server);
 static void _dd_http_client_ip(zend_array *meta_ht, zval *_server);
-static void _dd_request_headers(zend_array *meta_ht, zval *_server,
-    HashTable *relevant_headers);
+static void _dd_request_headers(
+    zend_array *meta_ht, zval *_server, HashTable *relevant_headers);
 static void _dd_response_headers(zend_array *meta_ht);
 
 static void _add_basic_ancillary_tags()
@@ -380,7 +380,6 @@ static bool _add_all_ancillary_tags()
     _add_all_tags_to_meta(meta);
     return true;
 }
-
 
 static void _add_basic_tags_to_meta(zval *nonnull meta)
 {
@@ -597,8 +596,8 @@ exit:
     zend_array_destroy(Z_ARR(duplicated_ip_headers));
 }
 
-static void _dd_request_headers(zend_array *meta_ht, zval *_server,
-    HashTable *relevant_headers)
+static void _dd_request_headers(
+    zend_array *meta_ht, zval *_server, HashTable *relevant_headers)
 {
     // Pack headers
     zend_string *key;
