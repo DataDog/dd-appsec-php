@@ -58,7 +58,6 @@ print_r($arr);
 --EXPECTF--
 Array
 (
-    [_dd.multiple-ip-headers] => x-forwarded-for,x-real-ip,x-forwarded,x-cluster-client-ip,forwarded-for,forwarded,via,true-client-ip
     [http.method] => GET
     [http.request.headers.accept] => */*
     [http.request.headers.accept-encoding] => gzip
@@ -66,19 +65,10 @@ Array
     [http.request.headers.content-encoding] => utf-8
     [http.request.headers.content-length] => 0
     [http.request.headers.content-type] => text/plain
-    [http.request.headers.forwarded] => for="foo"
-    [http.request.headers.forwarded-for] => 7.7.7.10,10.0.0.1
     [http.request.headers.host] => myhost:8888
     [http.request.headers.my-header] => my header value
     [http.request.headers.my-other-header] => my other header value
-    [http.request.headers.true-client-ip] => 7.7.7.11
     [http.request.headers.user-agent] => my user agent
-    [http.request.headers.via] => HTTP/1.1 GWA
-    [http.request.headers.x-client-ip] => 7.7.7.7
-    [http.request.headers.x-cluster-client-ip] => 7.7.7.9
-    [http.request.headers.x-forwarded] => for="foo"
-    [http.request.headers.x-forwarded-for] => 7.7.7.7,10.0.0.1
-    [http.request.headers.x-real-ip] => 7.7.7.8
     [http.response.headers.content-encoding] => foobar
     [http.response.headers.content-language] => pt_PT
     [http.response.headers.content-length] => 42

@@ -217,8 +217,10 @@ zend_string *nullable dd_ip_extraction_find(
         if (output_duplicated_headers &&
             Z_TYPE_P(output_duplicated_headers) == IS_ARRAY) {
             for (int i = 0; i < found_headers; i++) {
-                add_next_index_str(
-                    output_duplicated_headers, ip_headers[i].node->name);
+                add_assoc_str_ex(output_duplicated_headers,
+                    ZSTR_VAL(ip_headers[i].node->name),
+                    ZSTR_LEN(ip_headers[i].node->name),
+                    ip_headers[i].header_value);
             }
         }
 

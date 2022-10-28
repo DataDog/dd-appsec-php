@@ -13,10 +13,10 @@ DD_TRACE_CLIENT_IP_HEADER=foo-Bar
 --FILE--
 <?php
 
-use function datadog\appsec\testing\add_ancillary_tags;
+use function datadog\appsec\testing\add_ip_tags;
 
 $arr = array();
-add_ancillary_tags($arr);
+add_ip_tags($arr);
 var_dump($arr['http.client_ip']);
 var_dump(isset($arr['_dd.multiple-ip-headers']));
 ?>
