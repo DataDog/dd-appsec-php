@@ -57,13 +57,15 @@ static zend_string *_key_https_zstr;
 static zend_string *_key_remote_addr_zstr;
 static zend_string *_true_zstr;
 static HashTable _relevant_headers;
+static HashTable _relevant_ip_headers;
 static THREAD_LOCAL_ON_ZTS bool _appsec_json_frags_inited;
 static THREAD_LOCAL_ON_ZTS zend_llist _appsec_json_frags;
 
 static void _init_relevant_headers(void);
 static zend_string *_concat_json_fragments(void);
 static void _zend_string_release_indirect(void *s);
-static bool _add_ancillary_tags(void);
+static void _add_basic_ancillary_tags(void);
+static bool _add_all_ancillary_tags(void);
 void _set_runtime_family(void);
 static bool _set_appsec_enabled(zval *metrics_zv);
 static void _set_sampling_priority(zval *metrics_zv);
@@ -125,10 +127,25 @@ void dd_tags_startup()
 static void _init_relevant_headers()
 {
     zend_hash_init(&_relevant_headers, 32, NULL, NULL, 1);
+    zend_hash_init(&_relevant_ip_headers, 32, NULL, NULL, 1);
+
     zval nullzv;
     ZVAL_NULL(&nullzv);
 #define ADD_RELEVANT_HEADER(str)                                               \
     zend_hash_str_add_new(&_relevant_headers, str "", sizeof(str) - 1, &nullzv);
+#define ADD_RELEVANT_IP_HEADER(str)                                            \
+    zend_hash_str_add_new(                                                     \
+        &_relevant_ip_headers, str "", sizeof(str) - 1, &nullzv);
+
+    ADD_RELEVANT_IP_HEADER("x-forwarded-for");
+    ADD_RELEVANT_IP_HEADER("x-real-ip");
+    ADD_RELEVANT_IP_HEADER("client-ip");
+    ADD_RELEVANT_IP_HEADER("x-forwarded");
+    ADD_RELEVANT_IP_HEADER("x-cluster-client-ip");
+    ADD_RELEVANT_IP_HEADER("forwarded-for");
+    ADD_RELEVANT_IP_HEADER("forwarded");
+    ADD_RELEVANT_IP_HEADER("true-client-ip");
+    ADD_RELEVANT_IP_HEADER("via");
 
     ADD_RELEVANT_HEADER("x-forwarded-for");
     ADD_RELEVANT_HEADER("x-client-ip");
@@ -186,6 +203,9 @@ void dd_tags_shutdown()
 {
     zend_hash_destroy(&_relevant_headers);
     _relevant_headers = (HashTable){0};
+
+    zend_hash_destroy(&_relevant_ip_headers);
+    _relevant_ip_headers = (HashTable){0};
 }
 
 void dd_tags_rinit()
@@ -226,6 +246,7 @@ void dd_tags_rshutdown()
     _set_runtime_family();
 
     if (zend_llist_count(&_appsec_json_frags) == 0) {
+        _add_basic_ancillary_tags();
         return;
     }
 
@@ -253,7 +274,7 @@ void dd_tags_rshutdown()
     }
 
     // Add tags with request/response information
-    if (!_add_ancillary_tags()) {
+    if (!_add_all_ancillary_tags()) {
         return;
     }
 
@@ -326,6 +347,7 @@ static zend_string *_concat_json_fragments()
     return tag_value;
 }
 
+static void _add_basic_tags_to_meta(zval *nonnull meta);
 static void _add_all_tags_to_meta(zval *nonnull meta);
 static void _dd_http_method(zend_array *meta_ht);
 static void _dd_http_url(zend_array *meta_ht, zval *_server);
@@ -333,10 +355,21 @@ static void _dd_http_user_agent(zend_array *meta_ht, zval *_server);
 static void _dd_http_status_code(zend_array *meta_ht);
 static void _dd_http_network_client_ip(zend_array *meta_ht, zval *_server);
 static void _dd_http_client_ip(zend_array *meta_ht, zval *_server);
-static void _dd_request_headers(zend_array *meta_ht, zval *_server);
+static void _dd_request_headers(
+    zend_array *meta_ht, zval *_server, HashTable *relevant_headers);
 static void _dd_response_headers(zend_array *meta_ht);
 
-static bool _add_ancillary_tags()
+static void _add_basic_ancillary_tags()
+{
+    zval *nullable meta = dd_trace_root_span_get_meta();
+    if (!meta) {
+        return;
+    }
+
+    _add_basic_tags_to_meta(meta);
+}
+
+static bool _add_all_ancillary_tags()
 {
     zval *nullable meta = dd_trace_root_span_get_meta();
     if (!meta) {
@@ -346,6 +379,21 @@ static bool _add_ancillary_tags()
     _add_all_tags_to_meta(meta);
     return true;
 }
+
+static void _add_basic_tags_to_meta(zval *nonnull meta)
+{
+    zend_array *meta_ht = Z_ARRVAL_P(meta);
+    zval *_server =
+        dd_php_get_autoglobal(TRACK_VARS_SERVER, LSTRARG("_SERVER"));
+    if (!_server) {
+        mlog(dd_log_info, "No SERVER autoglobal available");
+        return;
+    }
+
+    _dd_http_client_ip(meta_ht, _server);
+    _dd_request_headers(meta_ht, _server, &_relevant_ip_headers);
+}
+
 static void _add_all_tags_to_meta(zval *nonnull meta)
 {
     zend_array *meta_ht = Z_ARRVAL_P(meta);
@@ -360,7 +408,7 @@ static void _add_all_tags_to_meta(zval *nonnull meta)
     _dd_http_user_agent(meta_ht, _server);
     _dd_http_status_code(meta_ht);
     _dd_http_network_client_ip(meta_ht, _server);
-    _dd_request_headers(meta_ht, _server);
+    _dd_request_headers(meta_ht, _server, &_relevant_headers);
     _dd_http_client_ip(meta_ht, _server);
     _dd_response_headers(meta_ht);
 }
@@ -547,7 +595,8 @@ exit:
     zend_array_destroy(Z_ARR(duplicated_ip_headers));
 }
 
-static void _dd_request_headers(zend_array *meta_ht, zval *_server)
+static void _dd_request_headers(
+    zend_array *meta_ht, zval *_server, HashTable *relevant_headers)
 {
     // Pack headers
     zend_string *key;
@@ -580,7 +629,7 @@ static void _dd_request_headers(zend_array *meta_ht, zval *_server)
         memcpy(tag_p, ZSTR_VAL(key) + LSTRLEN("HTTP_"), header_name_len);
         tag_p[header_name_len] = '\0';
         dd_string_normalize_header(tag_p, header_name_len);
-        if (!zend_hash_str_exists(&_relevant_headers, tag_p, header_name_len)) {
+        if (!zend_hash_str_exists(relevant_headers, tag_p, header_name_len)) {
             zend_string_efree(tag_name);
             continue;
         }
@@ -691,7 +740,7 @@ static void _set_sampling_priority(zval *metrics_zv)
         Z_ARRVAL_P(metrics_zv), _dd_metric_sampling_prio_zstr, &zv);
 }
 
-static PHP_FUNCTION(datadog_appsec_testing_add_ancillary_tags)
+static PHP_FUNCTION(datadog_appsec_testing_add_all_ancillary_tags)
 {
     UNUSED(return_value);
     zval *arr;
@@ -701,13 +750,24 @@ static PHP_FUNCTION(datadog_appsec_testing_add_ancillary_tags)
     _add_all_tags_to_meta(arr);
 }
 
+static PHP_FUNCTION(datadog_appsec_testing_add_basic_ancillary_tags)
+{
+    UNUSED(return_value);
+    zval *arr;
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "a/", &arr) == FAILURE) {
+        return;
+    }
+    _add_basic_tags_to_meta(arr);
+}
+
 // clang-format off
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(add_ancillary_tags, 0, 1, IS_VOID, 0)
     ZEND_ARG_TYPE_INFO(1, "dest", IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
 static const zend_function_entry functions[] = {
-    ZEND_RAW_FENTRY(DD_TESTING_NS "add_ancillary_tags", PHP_FN(datadog_appsec_testing_add_ancillary_tags), add_ancillary_tags, 0)
+    ZEND_RAW_FENTRY(DD_TESTING_NS "add_all_ancillary_tags", PHP_FN(datadog_appsec_testing_add_all_ancillary_tags), add_ancillary_tags, 0)
+    ZEND_RAW_FENTRY(DD_TESTING_NS "add_basic_ancillary_tags", PHP_FN(datadog_appsec_testing_add_basic_ancillary_tags), add_ancillary_tags, 0)
     PHP_FE_END
 };
 // clang-format on
