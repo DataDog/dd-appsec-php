@@ -32,6 +32,7 @@
 #define DD_TAG_HTTP_CLIENT_IP "http.client_ip"
 #define DD_METRIC_ENABLED "_dd.appsec.enabled"
 #define DD_METRIC_SAMPLING_PRIORITY "_sampling_priority_v1"
+#define DD_MULTIPLE_IP_HEADERS "_dd.multiple-ip-headers"
 #define DD_SAMPLING_PRIORITY_USER_KEEP 2
 
 static zend_string *_dd_tag_data_zstr;
@@ -48,6 +49,7 @@ static zend_string *_dd_tag_rh_content_encoding; // response
 static zend_string *_dd_tag_rh_content_language; // response
 static zend_string *_dd_metric_enabled;
 static zend_string *_dd_metric_sampling_prio_zstr;
+static zend_string *_dd_multiple_ip_headers;
 static zend_string *_key_request_uri_zstr;
 static zend_string *_key_http_host_zstr;
 static zend_string *_key_server_name_zstr;
@@ -102,7 +104,8 @@ void dd_tags_startup()
         zend_string_init_interned(LSTRARG(DD_METRIC_ENABLED), 1);
     _dd_metric_sampling_prio_zstr =
         zend_string_init_interned(LSTRARG(DD_METRIC_SAMPLING_PRIORITY), 1);
-
+    _dd_multiple_ip_headers =
+        zend_string_init_interned(LSTRARG(DD_MULTIPLE_IP_HEADERS), 1);
     _key_request_uri_zstr =
         zend_string_init_interned(LSTRARG("REQUEST_URI"), 1);
     _key_http_host_zstr = zend_string_init_interned(LSTRARG("HTTP_HOST"), 1);
@@ -464,21 +467,58 @@ static void _dd_http_network_client_ip(zend_array *meta_ht, zval *_server)
         meta_ht, _dd_tag_network_client_ip_zstr, remote_addr_zstr, true);
 }
 
+static void _extract_dd_multiple_ip_headers(
+    zend_array *meta_ht, zval *nullable duplicated_headers)
+{
+    if (!duplicated_headers || Z_TYPE_P(duplicated_headers) != IS_ARRAY) {
+        return;
+    }
+
+    HashTable *relevant_ip_headers_arr = Z_ARRVAL_P(duplicated_headers);
+    uint32_t relevant_ip_headers_arr_size =
+        relevant_ip_headers_arr
+            ? zend_hash_num_elements(relevant_ip_headers_arr)
+            : 0;
+    if (relevant_ip_headers_arr_size < 2) {
+        return;
+    }
+
+    smart_str ip_headers = {0};
+    smart_str_alloc(&ip_headers, 0, 0);
+    zval *val;
+    zend_ulong index;
+    ZEND_HASH_FOREACH_NUM_KEY_VAL(Z_ARRVAL_P(duplicated_headers), index, val)
+    {
+        smart_str_appendl(&ip_headers, Z_STRVAL_P(val), Z_STRLEN_P(val));
+        if (index < relevant_ip_headers_arr_size - 1) {
+            smart_str_appendc(&ip_headers, ',');
+        }
+    }
+    ZEND_HASH_FOREACH_END();
+
+    _add_new_zstr_to_meta(
+        meta_ht, _dd_multiple_ip_headers, ip_headers.s, false);
+}
+
 static void _dd_http_client_ip(zend_array *meta_ht, zval *_server)
 {
-    // If the tracer has set http.client_ip, there is nothing to do here
-    // otherwise, this header must be generated here
     if (zend_hash_exists(meta_ht, _dd_tag_http_client_ip_zstr)) {
         return;
     }
 
-    zend_string *client_ip = dd_ip_extraction_find(_server);
+    zval duplicated_ip_headers;
+    array_init(&duplicated_ip_headers);
+    zend_string *client_ip =
+        dd_ip_extraction_find(_server, &duplicated_ip_headers);
     if (!client_ip) {
-        return;
+        _extract_dd_multiple_ip_headers(meta_ht, &duplicated_ip_headers);
+        goto exit;
     }
 
     _add_new_zstr_to_meta(
         meta_ht, _dd_tag_http_client_ip_zstr, client_ip, false);
+exit:
+    zend_array_destroy(Z_ARR(duplicated_ip_headers));
 }
 
 static void _dd_request_headers(zend_array *meta_ht, zval *_server)

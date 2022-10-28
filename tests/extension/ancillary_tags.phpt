@@ -58,7 +58,7 @@ print_r($arr);
 --EXPECTF--
 Array
 (
-    [http.client_ip] => 7.7.7.7
+    [_dd.multiple-ip-headers] => x-forwarded-for,x-real-ip,x-forwarded,x-cluster-client-ip,forwarded-for,forwarded,via,true-client-ip
     [http.method] => GET
     [http.request.headers.accept] => */*
     [http.request.headers.accept-encoding] => gzip
