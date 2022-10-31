@@ -569,6 +569,7 @@ static void _extract_dd_multiple_ip_headers(
         }
     }
     ZEND_HASH_FOREACH_END();
+    smart_str_0(&ip_headers);
 
     _add_new_zstr_to_meta(
         meta_ht, _dd_multiple_ip_headers, ip_headers.s, false);
