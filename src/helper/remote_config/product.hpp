@@ -39,7 +39,7 @@ public:
 
 class product {
 public:
-    explicit product(std::string &&name, product_listener_base *listener)
+    product(std::string &&name, product_listener_base *listener)
         : name_(std::move(name)), listener_(listener){};
 
     void assign_configs(const std::map<std::string, config> &configs)
@@ -64,8 +64,11 @@ public:
         std::map<std::string, config>::iterator update_it;
         for (update_it = to_update.begin(); update_it != to_update.end();
              update_it++) {
+            update_it->second.apply_state =
+                protocol::config_state_applied_state::UNACKNOWLEDGED;
             if (listener_ != nullptr) {
                 try {
+
                     listener_->on_update(update_it->second);
                     update_it->second.apply_state =
                         protocol::config_state_applied_state::ACKNOWLEDGED;

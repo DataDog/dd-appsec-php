@@ -6,6 +6,7 @@
 #pragma once
 
 #include "protocol/config_state.hpp"
+#include <iostream>
 #include <map>
 #include <string>
 #include <vector>
@@ -22,6 +23,20 @@ struct config {
     int length;
     protocol::config_state_applied_state apply_state;
     std::string apply_error;
+
+    friend auto &operator<<(std::ostream &os,const dds::remote_config::config &c)
+    {
+        os << "Product: " << c.product << std::endl;
+        os << "id: " << c.id << std::endl;
+        os << "contents: " << c.contents << std::endl;
+        os << "path: " << c.path << std::endl;
+//        os << "hashes: " << c.hashes << std::endl;
+        os << "version: " << c.version << std::endl;
+        os << "length: " << c.length << std::endl;
+        os << "apply_state: " << (int)c.apply_state << std::endl;
+        os << "apply_error: " << c.apply_error << std::endl;
+        return os;
+    }
 };
 
 inline bool operator==(const config &rhs, const config &lhs)
