@@ -30,9 +30,10 @@ config_path config_path::from_path(const std::string &path)
 
 client::client(std::unique_ptr<http_api> &&arg_api, service_identifier sid,
     remote_config::settings settings, const std::vector<product> &products,
-std::vector<protocol::capabilities_e> &&capabilities)
+    std::vector<protocol::capabilities_e> &&capabilities)
     : api_(std::move(arg_api)), id_(dds::generate_random_uuid()),
-      sid_(std::move(sid)), settings_(std::move(settings)), capabilities_(std::move(capabilities))
+      sid_(std::move(sid)), settings_(std::move(settings)),
+      capabilities_(std::move(capabilities))
 {
     for (auto const &product : products) {
         products_.insert(std::pair<std::string, remote_config::product>(
@@ -46,8 +47,8 @@ client::ptr client::from_settings(
     if (!settings.enabled) {
         return {};
     }
-    return std::make_unique<client>(
-        std::make_unique<http_api>(settings.host, std::to_string(settings.port)),
+    return std::make_unique<client>(std::make_unique<http_api>(settings.host,
+                                        std::to_string(settings.port)),
         sid, settings);
 }
 
@@ -60,8 +61,8 @@ client::ptr client::from_settings(
         // State
         const auto configs_on_product = product.get_configs();
         for (const auto &[id, config] : configs_on_product) {
-            config_states.push_back(
-                {config.id, config.version, config.product});
+            config_states.push_back({config.id, config.version, config.product,
+                config.apply_state, config.apply_error});
 
             std::vector<protocol::cached_target_files_hash> hashes;
             hashes.reserve(config.hashes.size());
