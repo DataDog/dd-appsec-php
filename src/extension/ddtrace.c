@@ -190,10 +190,12 @@ static zval *nullable _root_span_get_prop(zend_string *propname)
     ZVAL_STR(&fci.function_name, _ddtrace_root_span_fname);
 
     int res = zend_call_function(&fci, &fci_cache);
-    if (res != SUCCESS) {
+    // PHP 8.2 silently fails, so we need to check if there's an exception
+    // after the function call and suppress it.
+    zend_object *exc = EG(exception);
+    if (res != SUCCESS || exc) {
         mlog(DDAPPSEC_G(testing) ? dd_log_debug : dd_log_warning,
             "Call to \\ddtrace\\root_span failed");
-        zend_object *exc = EG(exception);
         if (exc) {
             mlog(dd_log_debug, "Ignoring raised exception");
             zval zv;
