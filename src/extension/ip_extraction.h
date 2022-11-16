@@ -7,6 +7,7 @@
 #pragma once
 
 #include "attributes.h"
+#include "zai_string/string.h"
 #include <php.h>
 
 void dd_ip_extraction_startup(void);
@@ -16,3 +17,5 @@ void dd_ip_extraction_startup(void);
 // guarantees cannot be forged
 zend_string *nullable dd_ip_extraction_find(
     zval *nonnull server, zval *nullable duplicated_headers);
+bool dd_parse_client_ip_header_config(
+    zai_string_view value, zval *nonnull decoded_value, bool persistent);

@@ -135,19 +135,26 @@ int _dd_request_headers(zval *_server, relevant_ip_header *found_ip_headers)
     return found;
 }
 
-static zend_string *dd_get_ipheader(zend_string *value)
+bool dd_parse_client_ip_header_config(
+    zai_string_view value, zval *nonnull decoded_value, bool persistent)
 {
-    if (!value || !ZSTR_VAL(value)[0]) {
-        return NULL;
+    if (!value.ptr[0]) {
+        if (persistent) {
+            ZVAL_EMPTY_PSTRING(decoded_value);
+        } else {
+            ZVAL_EMPTY_STRING(decoded_value);
+        }
+        return true;
     }
 
-    size_t key_len = LSTRLEN("HTTP_") + ZSTR_LEN(value);
-    zend_string *normalized_value = zend_string_alloc(key_len, 0);
-    char *out = ZSTR_VAL(normalized_value);
+    size_t key_len = LSTRLEN("HTTP_") + value.len;
+
+    ZVAL_STR(decoded_value, zend_string_alloc(key_len, persistent));
+    char *out = Z_STRVAL_P(decoded_value);
     memcpy(out, ZEND_STRL("HTTP_"));
     out += LSTRLEN("HTTP_");
-    const char *end = ZSTR_VAL(value) + ZSTR_LEN(value);
-    for (const char *p = ZSTR_VAL(value); p != end; p++) {
+    const char *end = value.ptr + value.len;
+    for (const char *p = value.ptr; p != end; p++) {
         char c = *p;
         if (c >= 'a' && c <= 'z') {
             c = (char)(c - 'a' + 'A');
@@ -158,17 +165,16 @@ static zend_string *dd_get_ipheader(zend_string *value)
     }
     *out = '\0';
 
-    return normalized_value;
+    return true;
 }
 
 zend_string *nullable dd_ip_extraction_find(
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     zval *nonnull server, zval *nullable output_duplicated_headers)
 {
-    zend_string *ipheader = dd_get_ipheader(get_DD_TRACE_CLIENT_IP_HEADER());
+    zend_string *ipheader = get_global_DD_TRACE_CLIENT_IP_HEADER();
     if (ipheader && ZSTR_LEN(ipheader) > 0) {
         zend_string *value = _fetch_arr_str(server, ipheader);
-        zend_string_release(ipheader);
         if (!value) {
             return NULL;
         }
