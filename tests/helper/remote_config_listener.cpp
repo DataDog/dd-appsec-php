@@ -6,17 +6,21 @@
 
 #include "base64.h"
 #include "common.hpp"
-#include "remote_config/listener.hpp"
+#include "remote_config/asm_features_listener.hpp"
 #include "remote_config/product.hpp"
 
 namespace dds {
 
-remote_config::config get_config(const std::string &non_encoded_content)
+remote_config::config get_config(const std::string &content, bool encode = true)
 {
-    std::string encoded_content = base64_encode(non_encoded_content);
+    std::string encoded_content = content;
+    if (encode) {
+        encoded_content = base64_encode(content);
+    }
+
     return {"some product", "some id", encoded_content, "some path", {}, 123,
         321,
-        remote_config::protocol::config_state_applied_state::UNACKNOWLEDGED,
+        remote_config::protocol::config_state::applied_state::UNACKNOWLEDGED,
         ""};
 }
 
@@ -67,5 +71,122 @@ TEST(RemoteConfigAsmFeaturesListener,
     }
 
     EXPECT_FALSE(listener.is_active());
+}
+
+TEST(RemoteConfigAsmFeaturesListener,
+    ListenerThrowsAnErrorWhenContentOfConfigAreNotValidBase64)
+{
+    remote_config::asm_features_listener listener;
+    std::string invalid_content = "&&&";
+    std::string error_message = "";
+    std::string expected_error_message =
+        "Invalid config base64 encoded contents:";
+    remote_config::config non_base_64_content_config =
+        get_config(invalid_content, false);
+
+    try {
+        listener.on_update(non_base_64_content_config);
+    } catch (remote_config::error_applying_config &error) {
+        error_message = error.what();
+    }
+
+    EXPECT_FALSE(listener.is_active());
+    EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
+                     expected_error_message));
+}
+
+TEST(RemoteConfigAsmFeaturesListener,
+    ListenerThrowsAnErrorWhenContentIsNotValidJson)
+{
+    std::string error_message = "";
+    std::string expected_error_message = "Invalid config json contents";
+    remote_config::asm_features_listener listener;
+    std::string invalid_content = "invalidJsonContent";
+    remote_config::config config = get_config(invalid_content);
+
+    try {
+        listener.on_update(config);
+    } catch (remote_config::error_applying_config &error) {
+        error_message = error.what();
+    }
+
+    EXPECT_FALSE(listener.is_active());
+    EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
+                     expected_error_message));
+}
+
+TEST(RemoteConfigAsmFeaturesListener, ListenerThrowsAnErrorWhenAsmKeyMissing)
+{
+    std::string error_message = "";
+    std::string expected_error_message =
+        "Invalid config json encoded contents: asm key missing or invalid";
+    remote_config::asm_features_listener listener;
+    remote_config::config asm_key_missing = get_config("{}");
+
+    try {
+        listener.on_update(asm_key_missing);
+    } catch (remote_config::error_applying_config &error) {
+        error_message = error.what();
+    }
+
+    EXPECT_FALSE(listener.is_active());
+    EXPECT_EQ(0, error_message.compare(expected_error_message));
+}
+
+TEST(RemoteConfigAsmFeaturesListener, ListenerThrowsAnErrorWhenAsmIsNotValid)
+{
+    std::string error_message = "";
+    std::string expected_error_message =
+        "Invalid config json encoded contents: asm key missing or invalid";
+    remote_config::asm_features_listener listener;
+    remote_config::config invalid_asm_key = get_config("{ \"asm\": 123}");
+
+    try {
+        listener.on_update(invalid_asm_key);
+    } catch (remote_config::error_applying_config &error) {
+        error_message = error.what();
+    }
+
+    EXPECT_FALSE(listener.is_active());
+    EXPECT_EQ(0, error_message.compare(expected_error_message));
+}
+
+TEST(
+    RemoteConfigAsmFeaturesListener, ListenerThrowsAnErrorWhenEnabledKeyMissing)
+{
+    std::string error_message = "";
+    std::string expected_error_message =
+        "Invalid config json encoded contents: enabled key missing";
+    remote_config::asm_features_listener listener;
+    remote_config::config enabled_key_missing = get_config("{ \"asm\": {}}");
+
+    try {
+        listener.on_update(enabled_key_missing);
+    } catch (remote_config::error_applying_config &error) {
+        error_message = error.what();
+    }
+
+    EXPECT_FALSE(listener.is_active());
+    EXPECT_EQ(0, error_message.compare(expected_error_message));
+}
+
+TEST(RemoteConfigAsmFeaturesListener,
+    ListenerThrowsAnErrorWhenEnabledKeyIsInvalid)
+{
+    std::string error_message = "";
+    std::string expected_error_message =
+        "Invalid config json encoded contents: enabled key missing";
+    remote_config::asm_features_listener listener;
+    remote_config::config enabled_key_invalid =
+        get_config("{ \"asm\": { \"enabled\": 123}}");
+
+    try {
+        listener.on_update(enabled_key_invalid);
+    } catch (remote_config::error_applying_config &error) {
+        error_message = error.what();
+    }
+
+    EXPECT_FALSE(listener.is_active());
+    EXPECT_EQ(0, error_message.compare(expected_error_message));
 }
 } // namespace dds

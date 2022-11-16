@@ -29,7 +29,7 @@ public:
 remote_config::config get_config(std::string id)
 {
     return {"some product", id, "some contents", "some path", {}, 123, 321,
-        remote_config::protocol::config_state_applied_state::UNACKNOWLEDGED,
+        remote_config::protocol::config_state::applied_state::UNACKNOWLEDGED,
         ""};
 }
 
@@ -38,14 +38,14 @@ remote_config::config get_config() { return get_config("some id"); }
 remote_config::config unacknowledged(remote_config::config c)
 {
     c.apply_state =
-        remote_config::protocol::config_state_applied_state::UNACKNOWLEDGED;
+        remote_config::protocol::config_state::applied_state::UNACKNOWLEDGED;
     return c;
 }
 
 remote_config::config acknowledged(remote_config::config c)
 {
     c.apply_state =
-        remote_config::protocol::config_state_applied_state::ACKNOWLEDGED;
+        remote_config::protocol::config_state::applied_state::ACKNOWLEDGED;
     return c;
 }
 
@@ -90,7 +90,7 @@ TEST(
 
     product.assign_configs({{"config name", config}});
 
-    EXPECT_EQ(remote_config::protocol::config_state_applied_state::ACKNOWLEDGED,
+    EXPECT_EQ(remote_config::protocol::config_state::applied_state::ACKNOWLEDGED,
         product.get_configs().find("config name")->second.apply_state);
 }
 
@@ -170,7 +170,7 @@ TEST(RemoteConfigProduct, WhenAListenerFailsUpdatingAConfigItsStateGetsError)
     product.assign_configs({{"config name", config}});
 
     EXPECT_EQ(1, product.get_configs().size());
-    EXPECT_EQ(remote_config::protocol::config_state_applied_state::ERROR,
+    EXPECT_EQ(remote_config::protocol::config_state::applied_state::ERROR,
         product.get_configs().find("config name")->second.apply_state);
     EXPECT_EQ("some error",
         product.get_configs().find("config name")->second.apply_error);
