@@ -19,19 +19,13 @@ extern bool runtime_config_first_init;
 #define DD_CFG_STR(str) #str
 #define DD_CFG_EXPSTR(str) DD_CFG_STR(str)
 
+// clang-format off
 #define DEFAULT_OBFUSCATOR_KEY_REGEX                                           \
-    "(?i)(?:p(?:ass)?w(?:or)?d|pass(?:_?phrase)?|secret|(?:api_?|private_?|"   \
-    "public_?)key)|token|consumer_?(?:id|key|secret)|sign(?:ed|ature)|bearer|" \
-    "authorization"
+    "(?i)(?:p(?:ass)?w(?:or)?d|pass(?:_?phrase)?|secret|(?:api_?|private_?|public_?)key)|token|consumer_?(?:id|key|secret)|sign(?:ed|ature)|bearer|authorization"
 
 #define DEFAULT_OBFUSCATOR_VALUE_REGEX                                         \
-    "(?i)(?:p(?:ass)?w(?:or)?d|pass(?:_?phrase)?|secret|(?:api_?|private_?|"   \
-    "public_?|access_?|secret_?)key(?:_?id)?|token|consumer_?(?:id|key|"       \
-    "secret)|sign(?:ed|ature)?|auth(?:entication|orization)?)(?:\\s*=[^;]|"    \
-    "\"\\s*:\\s*\"[^\"]+\")|bearer\\s+[a-z0-9\\._\\-]+|token:[a-z0-9]{13}|gh[" \
-    "opsu]_[0-9a-zA-Z]{36}|ey[I-L][\\w=-]+\\.ey[I-L][\\w=-]+(?:\\.[\\w.+\\/"   \
-    "=-]+)?|[\\-]{5}BEGIN[a-z\\s]+PRIVATE\\sKEY[\\-]{5}[^\\-]+[\\-]{5}END[a-"  \
-    "z\\s]+PRIVATE\\sKEY|ssh-rsa\\s*[a-z0-9\\/\\.+]{100,}"
+    "(?i)(?:p(?:ass)?w(?:or)?d|pass(?:_?phrase)?|secret|(?:api_?|private_?|public_?|access_?|secret_?)key(?:_?id)?|token|consumer_?(?:id|key|secret)|sign(?:ed|ature)?|auth(?:entication|orization)?)(?:\\s*=[^;]|\"\\s*:\\s*\"[^\"]+\")|bearer\\s+[a-z0-9\\._\\-]+|token:[a-z0-9]{13}|gh[opsu]_[0-9a-zA-Z]{36}|ey[I-L][\\w=-]+\\.ey[I-L][\\w=-]+(?:\\.[\\w.+\\/=-]+)?|[\\-]{5}BEGIN[a-z\\s]+PRIVATE\\sKEY[\\-]{5}[^\\-]+[\\-]{5}END[a-z\\s]+PRIVATE\\sKEY|ssh-rsa\\s*[a-z0-9\\/\\.+]{100,}"
+// clang-format on
 
 #define DD_BASE(path) "/opt/datadog-php/"
 
