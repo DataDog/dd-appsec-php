@@ -172,7 +172,7 @@ zend_string *nullable dd_ip_extraction_find(
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     zval *nonnull server, zval *nullable output_duplicated_headers)
 {
-    zend_string *ipheader = get_global_DD_TRACE_CLIENT_IP_HEADER();
+    zend_string *ipheader = get_DD_TRACE_CLIENT_IP_HEADER();
     if (ipheader && ZSTR_LEN(ipheader) > 0) {
         zend_string *value = _fetch_arr_str(server, ipheader);
         if (!value) {

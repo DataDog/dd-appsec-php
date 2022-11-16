@@ -53,7 +53,7 @@ extern bool runtime_config_first_init;
     CONFIG(STRING, DD_SERVICE, "", CALIASES("DD_SERVICE_NAME"))                                                 \
     CONFIG(STRING, DD_ENV, "")                                                                                  \
     CONFIG(BOOL, DD_TRACE_CLIENT_IP_HEADER_DISABLED, "false")                                                   \
-    SYSCFG(CUSTOM(STRING), DD_TRACE_CLIENT_IP_HEADER, "", .parser = dd_parse_client_ip_header_config)
+    CONFIG(CUSTOM(STRING), DD_TRACE_CLIENT_IP_HEADER, "", .parser = dd_parse_client_ip_header_config)
 // clang-format on
 
 #define CALIAS CONFIG
