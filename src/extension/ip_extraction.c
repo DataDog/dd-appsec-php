@@ -141,7 +141,7 @@ static zend_string *dd_get_ipheader(zend_string *value)
         return NULL;
     }
 
-    size_t key_len = (sizeof("HTTP_") - 1) + ZSTR_LEN(value);
+    size_t key_len = LSTRLEN("HTTP_") + ZSTR_LEN(value);
     zend_string *normalized_value = zend_string_alloc(key_len, 0);
     char *out = ZSTR_VAL(normalized_value);
     memcpy(out, ZEND_STRL("HTTP_"));
