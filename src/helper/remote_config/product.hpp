@@ -68,7 +68,6 @@ public:
                 protocol::config_state_applied_state::UNACKNOWLEDGED;
             if (listener_ != nullptr) {
                 try {
-
                     listener_->on_update(update_it->second);
                     update_it->second.apply_state =
                         protocol::config_state_applied_state::ACKNOWLEDGED;
