@@ -21,16 +21,17 @@ struct config {
     std::map<std::string, std::string> hashes;
     int version;
     int length;
-    protocol::config_state_applied_state apply_state;
+    protocol::config_state::applied_state apply_state;
     std::string apply_error;
 
-    friend auto &operator<<(std::ostream &os,const dds::remote_config::config &c)
+    friend auto &operator<<(
+        std::ostream &os, const dds::remote_config::config &c)
     {
         os << "Product: " << c.product << std::endl;
         os << "id: " << c.id << std::endl;
         os << "contents: " << c.contents << std::endl;
         os << "path: " << c.path << std::endl;
-//        os << "hashes: " << c.hashes << std::endl;
+        //        os << "hashes: " << c.hashes << std::endl;
         os << "version: " << c.version << std::endl;
         os << "length: " << c.length << std::endl;
         os << "apply_state: " << (int)c.apply_state << std::endl;

@@ -9,18 +9,16 @@
 
 namespace dds::remote_config::protocol {
 
-enum class config_state_applied_state : int {
-    UNKNOWN = 0,
-    UNACKNOWLEDGED = 1,
-    ACKNOWLEDGED = 2,
-    ERROR = 3
-};
-
 struct config_state {
     std::string id;
     int version;
     std::string product;
-    config_state_applied_state apply_state;
+    enum class applied_state : int {
+        UNKNOWN = 0,
+        UNACKNOWLEDGED = 1,
+        ACKNOWLEDGED = 2,
+        ERROR = 3
+    } apply_state;
     std::string apply_error;
 };
 

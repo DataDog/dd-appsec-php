@@ -193,14 +193,14 @@ public:
             std::string product00_id(first_product_id);
             remote_config::protocol::config_state cs00 = {product00_id,
                 test_helpers::version_from_path(first_path), product00,
-                remote_config::protocol::config_state_applied_state::
+                remote_config::protocol::config_state::applied_state::
                     ACKNOWLEDGED,
                 ""};
             std::string product01(second_product_product);
             std::string product01_id(second_product_id);
             remote_config::protocol::config_state cs01 = {product01_id,
                 test_helpers::version_from_path(second_path), product01,
-                remote_config::protocol::config_state_applied_state::
+                remote_config::protocol::config_state::applied_state::
                     ACKNOWLEDGED,
                 ""};
 
@@ -631,7 +631,7 @@ TEST_F(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
         first_product_id, content, first_path, hashes,
         test_helpers::version_from_path(first_path),
         test_helpers::length_from_path(first_path),
-        remote_config::protocol::config_state_applied_state::UNACKNOWLEDGED,
+        remote_config::protocol::config_state::applied_state::UNACKNOWLEDGED,
         ""};
 
     // Product on response
@@ -678,12 +678,12 @@ TEST_F(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
         first_product_id, content01, first_path, hashes01,
         test_helpers::version_from_path(first_path),
         test_helpers::length_from_path(first_path),
-        remote_config::protocol::config_state_applied_state::UNACKNOWLEDGED,
+        remote_config::protocol::config_state::applied_state::UNACKNOWLEDGED,
         ""};
 
     remote_config::config expected_config01_at_unapply = expected_config01;
     expected_config01_at_unapply.apply_state =
-        remote_config::protocol::config_state_applied_state::ACKNOWLEDGED;
+        remote_config::protocol::config_state::applied_state::ACKNOWLEDGED;
 
     std::string content02 = test_helpers::raw_from_path(second_path);
     std::map<std::string, std::string> hashes02 = {
@@ -693,7 +693,7 @@ TEST_F(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
         second_product_id, content02, second_path, hashes02,
         test_helpers::version_from_path(second_path),
         test_helpers::length_from_path(second_path),
-        remote_config::protocol::config_state_applied_state::UNACKNOWLEDGED,
+        remote_config::protocol::config_state::applied_state::UNACKNOWLEDGED,
         ""};
 
     // Product on response
@@ -790,14 +790,14 @@ TEST_F(
         "07465cece47e4542abc0da040d9ebb42ec97224920d6870651dc3316528609d5")};
     remote_config::config expected_config = {product_str_01, id_product_01,
         content_01, path_01, hashes_01, 36740, 66399,
-        remote_config::protocol::config_state_applied_state::UNACKNOWLEDGED,
+        remote_config::protocol::config_state::applied_state::UNACKNOWLEDGED,
         ""};
 
     std::map<std::string, std::string> hashes_02 = {
         std::pair<std::string, std::string>("sha256", "another_hash_here")};
     remote_config::config expected_config_02 = {product_str_02, id_product_02,
         content_02, path_02, hashes_02, 36740, 66399,
-        remote_config::protocol::config_state_applied_state::UNACKNOWLEDGED,
+        remote_config::protocol::config_state::applied_state::UNACKNOWLEDGED,
         ""};
 
     // Product on response
@@ -1102,7 +1102,7 @@ TEST_F(RemoteConfigClient, ProductsWithoutAListenerCantAcknowledgeUpdates)
     EXPECT_EQ(1, config_states_arr.Size());
     EXPECT_EQ(
         (int)
-            remote_config::protocol::config_state_applied_state::UNACKNOWLEDGED,
+            remote_config::protocol::config_state::applied_state::UNACKNOWLEDGED,
         config_states_arr[0].FindMember("apply_state")->value.GetInt());
     EXPECT_EQ("",
         std::string(
@@ -1140,7 +1140,7 @@ TEST_F(RemoteConfigClient, ProductsWithAListenerAcknowledgeUpdates)
 
     EXPECT_EQ(1, config_states_arr.Size());
     EXPECT_EQ(
-        (int)remote_config::protocol::config_state_applied_state::ACKNOWLEDGED,
+        (int)remote_config::protocol::config_state::applied_state::ACKNOWLEDGED,
         config_states_arr[0].FindMember("apply_state")->value.GetInt());
     EXPECT_EQ("",
         std::string(
@@ -1180,7 +1180,7 @@ TEST_F(RemoteConfigClient, WhenAListerCanProccesAnUpdateTheConfigStateGetsError)
     auto config_states_arr = get_config_states(serialized_doc);
 
     EXPECT_EQ(1, config_states_arr.Size());
-    EXPECT_EQ((int)remote_config::protocol::config_state_applied_state::ERROR,
+    EXPECT_EQ((int)remote_config::protocol::config_state::applied_state::ERROR,
         config_states_arr[0].FindMember("apply_state")->value.GetInt());
     EXPECT_EQ("some error",
         std::string(

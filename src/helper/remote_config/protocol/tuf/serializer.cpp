@@ -9,6 +9,7 @@
 
 #include "../../../json_helper.hpp"
 #include "../cached_target_files.hpp"
+#include "exception.hpp"
 #include "serializer.hpp"
 
 namespace dds::remote_config::protocol {

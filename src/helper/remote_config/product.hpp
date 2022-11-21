@@ -6,6 +6,7 @@
 #pragma once
 
 #include "config.hpp"
+#include "exception.hpp"
 #include <algorithm>
 #include <iostream>
 #include <map>
@@ -13,16 +14,6 @@
 #include <vector>
 
 namespace dds::remote_config {
-
-class error_applying_config : public std::exception {
-private:
-    std::string message;
-
-public:
-    explicit error_applying_config(std::string &&msg) : message(std::move(msg))
-    {}
-    std::string what() { return message; }
-};
 
 class product_listener_base {
 public:
@@ -42,10 +33,50 @@ public:
     product(std::string &&name, product_listener_base *listener)
         : name_(std::move(name)), listener_(listener){};
 
+    void update_configs(std::map<std::string, config> &to_update)
+    {
+        for (auto &[name, config] : to_update) {
+            config.apply_state =
+                protocol::config_state::applied_state::UNACKNOWLEDGED;
+            if (listener_ == nullptr) {
+                continue;
+            }
+            try {
+                listener_->on_update(config);
+                config.apply_state =
+                    protocol::config_state::applied_state::ACKNOWLEDGED;
+                config.apply_error = "";
+            } catch (error_applying_config &e) {
+                config.apply_state =
+                    protocol::config_state::applied_state::ERROR;
+                config.apply_error = e.what();
+            }
+        }
+    }
+
+    void unapply_configs(std::map<std::string, config> &to_unapply)
+    {
+        for (auto &[path, conf] : to_unapply) {
+            if (listener_ == nullptr) {
+                continue;
+            }
+            try {
+                listener_->on_unapply(conf);
+                conf.apply_state =
+                    protocol::config_state::applied_state::ACKNOWLEDGED;
+                conf.apply_error = "";
+            } catch (error_applying_config &e) {
+                conf.apply_state = protocol::config_state::applied_state::ERROR;
+                conf.apply_error = e.what();
+            }
+        }
+    }
+
     void assign_configs(const std::map<std::string, config> &configs)
     {
         std::map<std::string, config> to_update;
         std::map<std::string, config> to_keep;
+        // determine what each config given is
         for (const auto &config : configs) {
             auto previous_config = configs_.find(config.first);
             if (previous_config == configs_.end()) { // New config
@@ -61,42 +92,9 @@ public:
             }
         }
 
-        std::map<std::string, config>::iterator update_it;
-        for (update_it = to_update.begin(); update_it != to_update.end();
-             update_it++) {
-            update_it->second.apply_state =
-                protocol::config_state_applied_state::UNACKNOWLEDGED;
-            if (listener_ != nullptr) {
-                try {
-                    listener_->on_update(update_it->second);
-                    update_it->second.apply_state =
-                        protocol::config_state_applied_state::ACKNOWLEDGED;
-                    update_it->second.apply_error = "";
-                } catch (error_applying_config &e) {
-                    update_it->second.apply_state =
-                        protocol::config_state_applied_state::ERROR;
-                    update_it->second.apply_error = e.what();
-                }
-            }
-        }
-
-        for (auto &[path, conf] : configs_) {
-            if (listener_ != nullptr) {
-                try {
-                    listener_->on_unapply(conf);
-                    conf.apply_state =
-                        protocol::config_state_applied_state::ACKNOWLEDGED;
-                    conf.apply_error = "";
-                } catch (error_applying_config &e) {
-                    conf.apply_state =
-                        protocol::config_state_applied_state::ERROR;
-                    conf.apply_error = e.what();
-                }
-            }
-        }
-
+        update_configs(to_update);
+        unapply_configs(configs_);
         to_keep.merge(to_update);
-
         configs_ = std::move(to_keep);
     };
     [[nodiscard]] const std::map<std::string, config> &get_configs() const

@@ -21,8 +21,6 @@
 
 namespace dds::remote_config {
 
-class invalid_path : public std::exception {};
-
 struct config_path {
     static config_path from_path(const std::string &path);
 

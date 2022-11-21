@@ -114,18 +114,18 @@ remote_config::protocol::client get_client()
 
     remote_config::protocol::config_state cs_unknown = {
         "unknown config_state id", 11, "unknown config_state product",
-        remote_config::protocol::config_state_applied_state::UNKNOWN, ""};
+        remote_config::protocol::config_state::applied_state::UNKNOWN, ""};
     remote_config::protocol::config_state cs_unacknowledged = {
         "unacknowledged config_state id", 22,
         "unacknowledged config_state product",
-        remote_config::protocol::config_state_applied_state::UNACKNOWLEDGED,
+        remote_config::protocol::config_state::applied_state::UNACKNOWLEDGED,
         ""};
     remote_config::protocol::config_state cs_acknowledged = {
         "acknowledged config_state id", 33, "acknowledged config_state product",
-        remote_config::protocol::config_state_applied_state::ACKNOWLEDGED, ""};
+        remote_config::protocol::config_state::applied_state::ACKNOWLEDGED, ""};
     remote_config::protocol::config_state cs_error = {"error config_state id",
         44, "error config_state product",
-        remote_config::protocol::config_state_applied_state::ERROR,
+        remote_config::protocol::config_state::applied_state::ERROR,
         "error description"};
     config_states.push_back(cs_unknown);
     config_states.push_back(cs_unacknowledged);
