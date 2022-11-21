@@ -41,7 +41,7 @@ void serialize_config_states(rapidjson::Document::AllocatorType &alloc,
         config_state_object.AddMember("version", config_state.version, alloc);
         config_state_object.AddMember("product", config_state.product, alloc);
         config_state_object.AddMember(
-            "apply_state", (int)config_state.apply_state, alloc);
+            "apply_state", static_cast<int>(config_state.apply_state), alloc);
         config_state_object.AddMember(
             "apply_error", config_state.apply_error, alloc);
         config_states_object.PushBack(config_state_object, alloc);
