@@ -31,7 +31,7 @@ struct client {
     void set_capabilities(const std::vector<capabilities_e> &cs)
     {
         for (const auto &capability : cs) {
-            capabilities |= (uint8_t)capability;
+            capabilities |= static_cast<uint8_t>(capability);
         }
     }
 };
