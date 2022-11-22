@@ -26,7 +26,7 @@ public:
     {}
     listener_mock(std::shared_ptr<remote_config::remote_config_service>
             remote_config_service)
-        : product_listener_base(remote_config_service)
+        : product_listener_base(std::move(remote_config_service))
     {}
     MOCK_METHOD(
         void, on_update, ((const remote_config::config &config)), (override));

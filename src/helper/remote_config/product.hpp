@@ -19,9 +19,9 @@ namespace dds::remote_config {
 
 class product {
 public:
-    product(std::string &&name,
-        const std::shared_ptr<product_listener_base> &listener)
-        : name_(std::move(name)), listener_(listener){};
+    product(std::string &&name, std::shared_ptr<product_listener_base> listener)
+        : name_(std::move(name)), listener_(std::move(listener))
+    {}
 
     void assign_configs(const std::map<std::string, config> &configs);
     [[nodiscard]] const std::map<std::string, config> &get_configs() const

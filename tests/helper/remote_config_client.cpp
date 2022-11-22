@@ -57,8 +57,8 @@ public:
 class listener_dummy : public remote_config::product_listener_base {
 public:
     listener_dummy(std::shared_ptr<remote_config::remote_config_service>
-            remote_config_service)
-        : product_listener_base(remote_config_service){};
+            &&remote_config_service)
+        : product_listener_base(std::move(remote_config_service)){};
     void on_update(const remote_config::config &config) override{};
     void on_unapply(const remote_config::config &config) override{};
 };
@@ -87,8 +87,8 @@ public:
               std::make_shared<remote_config::remote_config_service>())
     {}
     listener_mock(std::shared_ptr<remote_config::remote_config_service>
-            remote_config_service)
-        : product_listener_base(remote_config_service){};
+            &&remote_config_service)
+        : product_listener_base(std::move(remote_config_service)){};
     MOCK_METHOD(
         void, on_update, ((const remote_config::config &config)), (override));
     MOCK_METHOD(
@@ -178,8 +178,8 @@ public:
             remote_config::protocol::capabilities_e::ASM_ACTIVATION};
         auto remote_config_service =
             std::make_shared<remote_config::remote_config_service>();
-        dummy_listener =
-            std::make_shared<dds::listener_dummy>(remote_config_service);
+        dummy_listener = std::make_shared<dds::listener_dummy>(
+            std::move(remote_config_service));
         generate_products();
     }
 

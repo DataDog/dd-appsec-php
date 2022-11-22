@@ -14,9 +14,9 @@ namespace dds::remote_config {
 class product_listener_base {
 public:
     explicit product_listener_base(
-        const std::shared_ptr<remote_config::remote_config_service>
-            &remote_config_service)
-        : _remote_config_service(remote_config_service)
+        std::shared_ptr<remote_config::remote_config_service>
+            remote_config_service)
+        : _remote_config_service(std::move(remote_config_service))
     {}
     product_listener_base(const product_listener_base &) = default;
     product_listener_base(product_listener_base &&) = default;
