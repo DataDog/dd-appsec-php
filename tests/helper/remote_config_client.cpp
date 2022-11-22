@@ -56,6 +56,9 @@ public:
 
 class listener_dummy : public remote_config::product_listener_base {
 public:
+    listener_dummy(std::shared_ptr<remote_config::remote_config_service>
+            remote_config_service)
+        : product_listener_base(remote_config_service){};
     void on_update(const remote_config::config &config) override{};
     void on_unapply(const remote_config::config &config) override{};
 };
@@ -79,6 +82,13 @@ public:
 
 class listener_mock : public remote_config::product_listener_base {
 public:
+    listener_mock()
+        : product_listener_base(
+              std::make_shared<remote_config::remote_config_service>())
+    {}
+    listener_mock(std::shared_ptr<remote_config::remote_config_service>
+            remote_config_service)
+        : product_listener_base(remote_config_service){};
     MOCK_METHOD(
         void, on_update, ((const remote_config::config &config)), (override));
     MOCK_METHOD(
@@ -136,7 +146,7 @@ public:
     std::vector<std::string> paths;
     remote_config::settings settings;
     std::vector<remote_config::protocol::capabilities_e> capabilities;
-    dds::listener_dummy dummy_listener;
+    std::shared_ptr<dds::listener_dummy> dummy_listener;
 
     void SetUp()
     {
@@ -166,6 +176,10 @@ public:
         paths = {first_path, second_path};
         capabilities = {
             remote_config::protocol::capabilities_e::ASM_ACTIVATION};
+        auto remote_config_service =
+            std::make_shared<remote_config::remote_config_service>();
+        dummy_listener =
+            std::make_shared<dds::listener_dummy>(remote_config_service);
         generate_products();
     }
 
@@ -174,7 +188,7 @@ public:
         for (const std::string &p_str : products_str) {
             std::string product_name(p_str);
             remote_config::product _p(
-                std::move(product_name), &this->dummy_listener);
+                std::move(product_name), this->dummy_listener);
             _products.push_back(_p);
         }
     }
@@ -635,19 +649,19 @@ TEST_F(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
         ""};
 
     // Product on response
-    mock::listener_mock listener01;
-    EXPECT_CALL(listener01, on_update(expected_config)).Times(1);
-    EXPECT_CALL(listener01, on_unapply(_)).Times(0);
+    auto listener01 = std::make_shared<mock::listener_mock>();
+    EXPECT_CALL(*listener01, on_update(expected_config)).Times(1);
+    EXPECT_CALL(*listener01, on_unapply(_)).Times(0);
     remote_config::product product(
-        std::move(first_product_product), &listener01);
+        std::move(first_product_product), listener01);
 
     // Product on response
-    mock::listener_mock listener_called_no_configs01;
-    EXPECT_CALL(listener_called_no_configs01, on_update(_)).Times(0);
-    EXPECT_CALL(listener_called_no_configs01, on_unapply(_)).Times(0);
+    auto listener_called_no_configs01 = std::make_shared<mock::listener_mock>();
+    EXPECT_CALL(*listener_called_no_configs01, on_update(_)).Times(0);
+    EXPECT_CALL(*listener_called_no_configs01, on_unapply(_)).Times(0);
     std::string product_str_not_in_response = "NOT_IN_RESPONSE";
     remote_config::product product_not_in_response(
-        std::move(product_str_not_in_response), &listener_called_no_configs01);
+        std::move(product_str_not_in_response), listener_called_no_configs01);
 
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
@@ -697,21 +711,21 @@ TEST_F(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
         ""};
 
     // Product on response
-    mock::listener_mock listener01;
+    auto listener01 = std::make_shared<mock::listener_mock>();
     // First poll expectations
-    EXPECT_CALL(listener01, on_update(expected_config01))
+    EXPECT_CALL(*listener01, on_update(expected_config01))
         .Times(1)
         .RetiresOnSaturation();
-    EXPECT_CALL(listener01, on_unapply(_)).Times(0);
+    EXPECT_CALL(*listener01, on_unapply(_)).Times(0);
     // Second poll expectations
-    EXPECT_CALL(listener01, on_update(expected_config02))
+    EXPECT_CALL(*listener01, on_update(expected_config02))
         .Times(1)
         .RetiresOnSaturation();
-    EXPECT_CALL(listener01, on_unapply(expected_config01_at_unapply))
+    EXPECT_CALL(*listener01, on_unapply(expected_config01_at_unapply))
         .Times(1)
         .RetiresOnSaturation();
     remote_config::product product(
-        std::move(first_product_product), &listener01);
+        std::move(first_product_product), listener01);
 
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
@@ -801,18 +815,18 @@ TEST_F(
         ""};
 
     // Product on response
-    mock::listener_mock listener01;
+    auto listener01 = std::make_shared<mock::listener_mock>();
     // Second poll expectations
-    EXPECT_CALL(listener01, on_update(expected_config_02))
+    EXPECT_CALL(*listener01, on_update(expected_config_02))
         .Times(1)
         .RetiresOnSaturation();
-    EXPECT_CALL(listener01, on_unapply(_)).Times(0);
+    EXPECT_CALL(*listener01, on_unapply(_)).Times(0);
     // First poll expectations
-    EXPECT_CALL(listener01, on_update(expected_config))
+    EXPECT_CALL(*listener01, on_update(expected_config))
         .Times(1)
         .RetiresOnSaturation();
-    EXPECT_CALL(listener01, on_unapply(_)).Times(0);
-    remote_config::product product(std::move(apm_sampling), &listener01);
+    EXPECT_CALL(*listener01, on_unapply(_)).Times(0);
+    remote_config::product product(std::move(apm_sampling), listener01);
 
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
@@ -1121,7 +1135,7 @@ TEST_F(RemoteConfigClient, ProductsWithAListenerAcknowledgeUpdates)
             DoAll(testing::SaveArg<0>(&request_sent), Return(response01)));
 
     remote_config::product p(
-        std::string(first_product_product), &this->dummy_listener);
+        std::string(first_product_product), this->dummy_listener);
     std::vector<remote_config::product> products = {p};
 
     service_identifier sid{
@@ -1158,11 +1172,11 @@ TEST_F(RemoteConfigClient, WhenAListerCanProccesAnUpdateTheConfigStateGetsError)
         .WillRepeatedly(
             DoAll(testing::SaveArg<0>(&request_sent), Return(response01)));
 
-    mock::listener_mock listener;
-    EXPECT_CALL(listener, on_update(_))
+    auto listener = std::make_shared<mock::listener_mock>();
+    EXPECT_CALL(*listener, on_update(_))
         .WillRepeatedly(mock::ThrowErrorApplyingConfig());
 
-    remote_config::product p(std::string(first_product_product), &listener);
+    remote_config::product p(std::string(first_product_product), listener);
     std::vector<remote_config::product> products = {p};
 
     service_identifier sid{
@@ -1199,7 +1213,7 @@ TEST_F(RemoteConfigClient, OneClickActivationIsSetAsCapability)
             DoAll(testing::SaveArg<0>(&request_sent), Return(response01)));
 
     remote_config::product p(
-        std::string(first_product_product), &this->dummy_listener);
+        std::string(first_product_product), this->dummy_listener);
     std::vector<remote_config::product> products = {p};
 
     service_identifier sid{

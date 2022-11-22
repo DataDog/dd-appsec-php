@@ -41,14 +41,18 @@ remote_config::config get_disabled_config()
 
 TEST(RemoteConfigAsmFeaturesListener, ByDefaultListenerIsNotActive)
 {
-    remote_config::asm_features_listener listener;
+    auto remote_config_service =
+        std::make_shared<remote_config::remote_config_service>();
+    remote_config::asm_features_listener listener(remote_config_service);
 
-    EXPECT_FALSE(listener.is_active());
+    EXPECT_FALSE(remote_config_service->is_asm_enabled());
 }
 
 TEST(RemoteConfigAsmFeaturesListener, ListenerGetActiveWhenConfigSaysSoOnUpdate)
 {
-    remote_config::asm_features_listener listener;
+    auto remote_config_service =
+        std::make_shared<remote_config::remote_config_service>();
+    remote_config::asm_features_listener listener(remote_config_service);
 
     try {
         listener.on_update(get_enabled_config());
@@ -56,13 +60,15 @@ TEST(RemoteConfigAsmFeaturesListener, ListenerGetActiveWhenConfigSaysSoOnUpdate)
         std::cout << error.what() << std::endl;
     }
 
-    EXPECT_TRUE(listener.is_active());
+    EXPECT_TRUE(remote_config_service->is_asm_enabled());
 }
 
 TEST(RemoteConfigAsmFeaturesListener,
     ListenerGetDeactivedWhenConfigSaysSoOnUpdate)
 {
-    remote_config::asm_features_listener listener;
+    auto remote_config_service =
+        std::make_shared<remote_config::remote_config_service>();
+    remote_config::asm_features_listener listener(remote_config_service);
 
     try {
         listener.on_update(get_disabled_config());
@@ -70,13 +76,15 @@ TEST(RemoteConfigAsmFeaturesListener,
         std::cout << error.what() << std::endl;
     }
 
-    EXPECT_FALSE(listener.is_active());
+    EXPECT_FALSE(remote_config_service->is_asm_enabled());
 }
 
 TEST(RemoteConfigAsmFeaturesListener,
     ListenerThrowsAnErrorWhenContentOfConfigAreNotValidBase64)
 {
-    remote_config::asm_features_listener listener;
+    auto remote_config_service =
+        std::make_shared<remote_config::remote_config_service>();
+    remote_config::asm_features_listener listener(remote_config_service);
     std::string invalid_content = "&&&";
     std::string error_message = "";
     std::string expected_error_message =
@@ -90,7 +98,7 @@ TEST(RemoteConfigAsmFeaturesListener,
         error_message = error.what();
     }
 
-    EXPECT_FALSE(listener.is_active());
+    EXPECT_FALSE(remote_config_service->is_asm_enabled());
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }
@@ -100,7 +108,9 @@ TEST(RemoteConfigAsmFeaturesListener,
 {
     std::string error_message = "";
     std::string expected_error_message = "Invalid config json contents";
-    remote_config::asm_features_listener listener;
+    auto remote_config_service =
+        std::make_shared<remote_config::remote_config_service>();
+    remote_config::asm_features_listener listener(remote_config_service);
     std::string invalid_content = "invalidJsonContent";
     remote_config::config config = get_config(invalid_content);
 
@@ -110,7 +120,7 @@ TEST(RemoteConfigAsmFeaturesListener,
         error_message = error.what();
     }
 
-    EXPECT_FALSE(listener.is_active());
+    EXPECT_FALSE(remote_config_service->is_asm_enabled());
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }
@@ -120,7 +130,9 @@ TEST(RemoteConfigAsmFeaturesListener, ListenerThrowsAnErrorWhenAsmKeyMissing)
     std::string error_message = "";
     std::string expected_error_message =
         "Invalid config json encoded contents: asm key missing or invalid";
-    remote_config::asm_features_listener listener;
+    auto remote_config_service =
+        std::make_shared<remote_config::remote_config_service>();
+    remote_config::asm_features_listener listener(remote_config_service);
     remote_config::config asm_key_missing = get_config("{}");
 
     try {
@@ -129,7 +141,7 @@ TEST(RemoteConfigAsmFeaturesListener, ListenerThrowsAnErrorWhenAsmKeyMissing)
         error_message = error.what();
     }
 
-    EXPECT_FALSE(listener.is_active());
+    EXPECT_FALSE(remote_config_service->is_asm_enabled());
     EXPECT_EQ(0, error_message.compare(expected_error_message));
 }
 
@@ -138,7 +150,9 @@ TEST(RemoteConfigAsmFeaturesListener, ListenerThrowsAnErrorWhenAsmIsNotValid)
     std::string error_message = "";
     std::string expected_error_message =
         "Invalid config json encoded contents: asm key missing or invalid";
-    remote_config::asm_features_listener listener;
+    auto remote_config_service =
+        std::make_shared<remote_config::remote_config_service>();
+    remote_config::asm_features_listener listener(remote_config_service);
     remote_config::config invalid_asm_key = get_config("{ \"asm\": 123}");
 
     try {
@@ -147,7 +161,7 @@ TEST(RemoteConfigAsmFeaturesListener, ListenerThrowsAnErrorWhenAsmIsNotValid)
         error_message = error.what();
     }
 
-    EXPECT_FALSE(listener.is_active());
+    EXPECT_FALSE(remote_config_service->is_asm_enabled());
     EXPECT_EQ(0, error_message.compare(expected_error_message));
 }
 
@@ -157,7 +171,9 @@ TEST(
     std::string error_message = "";
     std::string expected_error_message =
         "Invalid config json encoded contents: enabled key missing";
-    remote_config::asm_features_listener listener;
+    auto remote_config_service =
+        std::make_shared<remote_config::remote_config_service>();
+    remote_config::asm_features_listener listener(remote_config_service);
     remote_config::config enabled_key_missing = get_config("{ \"asm\": {}}");
 
     try {
@@ -166,7 +182,7 @@ TEST(
         error_message = error.what();
     }
 
-    EXPECT_FALSE(listener.is_active());
+    EXPECT_FALSE(remote_config_service->is_asm_enabled());
     EXPECT_EQ(0, error_message.compare(expected_error_message));
 }
 
@@ -176,7 +192,9 @@ TEST(RemoteConfigAsmFeaturesListener,
     std::string error_message = "";
     std::string expected_error_message =
         "Invalid config json encoded contents: enabled key missing";
-    remote_config::asm_features_listener listener;
+    auto remote_config_service =
+        std::make_shared<remote_config::remote_config_service>();
+    remote_config::asm_features_listener listener(remote_config_service);
     remote_config::config enabled_key_invalid =
         get_config("{ \"asm\": { \"enabled\": 123}}");
 
@@ -186,7 +204,7 @@ TEST(RemoteConfigAsmFeaturesListener,
         error_message = error.what();
     }
 
-    EXPECT_FALSE(listener.is_active());
+    EXPECT_FALSE(remote_config_service->is_asm_enabled());
     EXPECT_EQ(0, error_message.compare(expected_error_message));
 }
 } // namespace dds

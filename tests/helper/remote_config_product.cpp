@@ -6,6 +6,7 @@
 
 #include "common.hpp"
 #include "remote_config/config.hpp"
+#include "remote_config/listener.hpp"
 #include "remote_config/product.hpp"
 
 namespace dds {
@@ -15,10 +16,18 @@ namespace mock {
 ACTION(ThrowErrorApplyingConfig)
 {
     throw remote_config::error_applying_config("some error");
-}
+};
 
 class listener_mock : public remote_config::product_listener_base {
 public:
+    listener_mock()
+        : product_listener_base(
+              std::make_shared<remote_config::remote_config_service>())
+    {}
+    listener_mock(std::shared_ptr<remote_config::remote_config_service>
+            remote_config_service)
+        : product_listener_base(remote_config_service)
+    {}
     MOCK_METHOD(
         void, on_update, ((const remote_config::config &config)), (override));
     MOCK_METHOD(
@@ -82,27 +91,28 @@ TEST(RemoteConfigProduct, ConfigsAreSaved)
 TEST(
     RemoteConfigProduct, WhenAConfigIsSavedTheProductListenerIsCalledToOnUpdate)
 {
-    mock::listener_mock listener;
+    auto listener = std::make_shared<mock::listener_mock>();
     remote_config::config config = get_config();
-    EXPECT_CALL(listener, on_update(config)).Times(1);
-    EXPECT_CALL(listener, on_unapply(_)).Times(0);
-    remote_config::product product("some name", &listener);
+    EXPECT_CALL(*listener, on_update(config)).Times(1);
+    EXPECT_CALL(*listener, on_unapply(_)).Times(0);
+    remote_config::product product("some name", listener);
 
     product.assign_configs({{"config name", config}});
 
-    EXPECT_EQ(remote_config::protocol::config_state::applied_state::ACKNOWLEDGED,
+    EXPECT_EQ(
+        remote_config::protocol::config_state::applied_state::ACKNOWLEDGED,
         product.get_configs().find("config name")->second.apply_state);
 }
 
 TEST(RemoteConfigProduct,
     WhenAConfigIsRemovedTheProductListenerIsCalledToUnApply)
 {
-    mock::listener_mock listener;
+    auto listener = std::make_shared<mock::listener_mock>();
     remote_config::config config = get_config();
 
-    EXPECT_CALL(listener, on_update(unacknowledged(config))).Times(1);
-    EXPECT_CALL(listener, on_unapply(acknowledged(config))).Times(1);
-    remote_config::product product("some name", &listener);
+    EXPECT_CALL(*listener, on_update(unacknowledged(config))).Times(1);
+    EXPECT_CALL(*listener, on_unapply(acknowledged(config))).Times(1);
+    remote_config::product product("some name", listener);
 
     product.assign_configs({{"config name", unacknowledged(config)}});
     product.assign_configs({});
@@ -112,11 +122,11 @@ TEST(RemoteConfigProduct,
 
 TEST(RemoteConfigProduct, WhenAConfigDoesNotChangeItsListenerShouldNotBeCalled)
 {
-    mock::listener_mock listener;
+    auto listener = std::make_shared<mock::listener_mock>();
     remote_config::config config = get_config();
 
-    EXPECT_CALL(listener, on_update(unacknowledged(config))).Times(1);
-    remote_config::product product("some name", &listener);
+    EXPECT_CALL(*listener, on_update(unacknowledged(config))).Times(1);
+    remote_config::product product("some name", listener);
 
     product.assign_configs({{"config name", unacknowledged(config)}});
     product.assign_configs({{"config name", acknowledged(config)}});
@@ -126,16 +136,17 @@ TEST(RemoteConfigProduct, WhenAConfigDoesNotChangeItsListenerShouldNotBeCalled)
 
 TEST(RemoteConfigProduct, WhenAConfigChangeItsHashItsListenerUpdateIsCalled)
 {
-    mock::listener_mock listener;
+    auto listener = std::make_shared<mock::listener_mock>();
     remote_config::config config = get_config();
     remote_config::config same_config_different_hash = get_config();
     same_config_different_hash.hashes.emplace("hash key", "hash value");
 
-    EXPECT_CALL(listener, on_update(unacknowledged(config))).Times(1);
-    EXPECT_CALL(listener, on_update(unacknowledged(same_config_different_hash)))
+    EXPECT_CALL(*listener, on_update(unacknowledged(config))).Times(1);
+    EXPECT_CALL(
+        *listener, on_update(unacknowledged(same_config_different_hash)))
         .Times(1);
-    EXPECT_CALL(listener, on_unapply(_)).Times(0);
-    remote_config::product product("some name", &listener);
+    EXPECT_CALL(*listener, on_unapply(_)).Times(0);
+    remote_config::product product("some name", listener);
 
     product.assign_configs({{"config name", config}});
     product.assign_configs({{"config name", same_config_different_hash}});
@@ -145,12 +156,12 @@ TEST(RemoteConfigProduct, WhenAConfigChangeItsHashItsListenerUpdateIsCalled)
 
 TEST(RemoteConfigProduct, SameConfigWithDifferentNameItsTreatedAsNewConfig)
 {
-    mock::listener_mock listener;
+    auto listener = std::make_shared<mock::listener_mock>();
     remote_config::config config = get_config();
 
-    EXPECT_CALL(listener, on_update(unacknowledged(config))).Times(2);
-    EXPECT_CALL(listener, on_unapply(acknowledged(config))).Times(1);
-    remote_config::product product("some name", &listener);
+    EXPECT_CALL(*listener, on_update(unacknowledged(config))).Times(2);
+    EXPECT_CALL(*listener, on_unapply(acknowledged(config))).Times(1);
+    remote_config::product product("some name", listener);
 
     product.assign_configs({{"config name 01", config}});
     product.assign_configs({{"config name 02", config}});
@@ -160,12 +171,12 @@ TEST(RemoteConfigProduct, SameConfigWithDifferentNameItsTreatedAsNewConfig)
 
 TEST(RemoteConfigProduct, WhenAListenerFailsUpdatingAConfigItsStateGetsError)
 {
-    mock::listener_mock listener;
+    auto listener = std::make_shared<mock::listener_mock>();
     remote_config::config config = get_config();
 
-    EXPECT_CALL(listener, on_update(_))
+    EXPECT_CALL(*listener, on_update(_))
         .WillRepeatedly(mock::ThrowErrorApplyingConfig());
-    remote_config::product product("some name", &listener);
+    remote_config::product product("some name", listener);
 
     product.assign_configs({{"config name", config}});
 

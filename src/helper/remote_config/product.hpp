@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -18,7 +19,7 @@ namespace dds::remote_config {
 
 class product {
 public:
-    product(std::string &&name, product_listener_base *listener)
+    product(std::string &&name, std::shared_ptr<product_listener_base> listener)
         : name_(std::move(name)), listener_(listener){};
 
     void assign_configs(const std::map<std::string, config> &configs);
@@ -40,7 +41,7 @@ protected:
 
     std::string name_;
     std::map<std::string, config> configs_;
-    product_listener_base *listener_;
+    std::shared_ptr<product_listener_base> listener_;
 };
 
 } // namespace dds::remote_config

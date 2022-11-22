@@ -5,13 +5,18 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #pragma once
 
+#include <memory>
 #include "config.hpp"
+#include "remote_config_service.hpp"
 
 namespace dds::remote_config {
 
 class product_listener_base {
 public:
-    product_listener_base() = default;
+    product_listener_base(std::shared_ptr<remote_config::remote_config_service>
+            remote_config_service)
+        : _remote_config_service(remote_config_service)
+    {}
     product_listener_base(const product_listener_base &) = default;
     product_listener_base(product_listener_base &&) = default;
     product_listener_base &operator=(const product_listener_base &) = default;
@@ -20,6 +25,10 @@ public:
 
     virtual void on_update(const config &config) = 0;
     virtual void on_unapply(const config &config) = 0;
+
+protected:
+    std::shared_ptr<remote_config::remote_config_service>
+        _remote_config_service;
 };
 
 } // namespace dds::remote_config

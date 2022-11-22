@@ -17,7 +17,9 @@ namespace dds::remote_config {
 
 class asm_features_listener : public product_listener_base {
 public:
-    asm_features_listener() = default;
+    asm_features_listener(std::shared_ptr<remote_config::remote_config_service>
+            remote_config_service)
+        : product_listener_base(remote_config_service){};
     void on_update(const config &config) override
     {
         std::string base64_decoded;
@@ -50,18 +52,17 @@ public:
                 "Invalid config json encoded contents: enabled key missing");
         }
 
-        active = strcmp("true", enabled_itr->value.GetString()) == 0;
+        if (strcmp("true", enabled_itr->value.GetString()) == 0) {
+            _remote_config_service->enable_asm();
+        } else {
+            _remote_config_service->disable_asm();
+        }
     }
 
     void on_unapply(const config & /*config*/) override
     {
-        active = false;
+        _remote_config_service->disable_asm();
     }
-
-    [[nodiscard]] bool is_active() const { return active; }
-
-private:
-    bool active = false;
 };
 
 } // namespace dds::remote_config
