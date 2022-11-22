@@ -5,16 +5,17 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #pragma once
 
-#include <memory>
 #include "config.hpp"
 #include "remote_config_service.hpp"
+#include <memory>
 
 namespace dds::remote_config {
 
 class product_listener_base {
 public:
-    product_listener_base(std::shared_ptr<remote_config::remote_config_service>
-            remote_config_service)
+    explicit product_listener_base(
+        const std::shared_ptr<remote_config::remote_config_service>
+            &remote_config_service)
         : _remote_config_service(remote_config_service)
     {}
     product_listener_base(const product_listener_base &) = default;

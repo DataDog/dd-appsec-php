@@ -6,10 +6,7 @@
 #pragma once
 
 #include "protocol/config_state.hpp"
-#include <iostream>
-#include <map>
-#include <string>
-#include <vector>
+#include <atomic>
 
 namespace dds::remote_config {
 
@@ -19,7 +16,7 @@ struct remote_config_service {
     bool is_asm_enabled() { return asm_enabled; }
 
 protected:
-    bool asm_enabled = {false};
+    std::atomic<bool> asm_enabled = {false};
 };
 
 } // namespace dds::remote_config
