@@ -5,13 +5,18 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #pragma once
 
+#include <string>
+
 namespace dds::remote_config {
 
 class error_applying_config : public std::exception {
 public:
     explicit error_applying_config(std::string &&msg) : message(std::move(msg))
     {}
-    [[nodiscard]] const char *what() const noexcept override { return message.c_str(); }
+    [[nodiscard]] const char *what() const noexcept override
+    {
+        return message.c_str();
+    }
 
 private:
     std::string message;
