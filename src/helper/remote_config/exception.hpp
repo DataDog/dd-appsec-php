@@ -18,7 +18,7 @@ public:
         return message.c_str();
     }
 
-private:
+protected:
     std::string message;
 };
 

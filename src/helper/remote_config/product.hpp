@@ -11,6 +11,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace dds::remote_config {
@@ -33,7 +34,7 @@ public:
     product(std::string &&name, product_listener_base *listener)
         : name_(std::move(name)), listener_(listener){};
 
-    void update_configs(std::map<std::string, config> &to_update)
+    void update_configs(std::unordered_map<std::string, config> &to_update)
     {
         for (auto &[name, config] : to_update) {
             config.apply_state =
@@ -74,20 +75,23 @@ public:
 
     void assign_configs(const std::map<std::string, config> &configs)
     {
-        std::map<std::string, config> to_update;
-        std::map<std::string, config> to_keep;
+        std::unordered_map<std::string, config> to_update;
+        std::unordered_map<std::string, config> to_keep;
         // determine what each config given is
-        for (const auto &config : configs) {
-            auto previous_config = configs_.find(config.first);
+        for (const auto &[name, config] : configs) {
+            auto previous_config = configs_.find(name);
             if (previous_config == configs_.end()) { // New config
-                to_update.emplace(config.first, config.second);
+                to_update.emplace(name, config);
             } else { // Already existed
-                if (config.second.hashes ==
+                if (config.hashes ==
                     previous_config->second.hashes) { // No changes in config
-                    to_keep.emplace(config.first, previous_config->second);
+                    to_keep.emplace(name, previous_config->second);
                 } else { // Config updated
-                    to_update.emplace(config.first, config.second);
+                    to_update.emplace(name, config);
                 }
+                // configs_ at the end of this loop will contain only configs
+                // which have to be unapply. This one has been classified as
+                // something else and therefore, it has to be removed
                 configs_.erase(previous_config);
             }
         }
@@ -95,7 +99,11 @@ public:
         update_configs(to_update);
         unapply_configs(configs_);
         to_keep.merge(to_update);
-        configs_ = std::move(to_keep);
+
+        // Save new state of configs
+        std::map<std::string, config> to_keep_ordered_map(
+            to_keep.begin(), to_keep.end());
+        configs_ = std::move(to_keep_ordered_map);
     };
     [[nodiscard]] const std::map<std::string, config> &get_configs() const
     {
@@ -107,7 +115,7 @@ public:
     }
     [[nodiscard]] const std::string &get_name() const { return name_; }
 
-private:
+protected:
     std::string name_;
     std::map<std::string, config> configs_;
     product_listener_base *listener_;
