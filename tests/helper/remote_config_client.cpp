@@ -7,9 +7,9 @@
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
-#include <map>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "base64.h"
@@ -638,7 +638,7 @@ TEST_F(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
     EXPECT_CALL(*api, get_configs(_)).Times(1).WillOnce(Return(response));
 
     std::string content = test_helpers::raw_from_path(first_path);
-    std::map<std::string, std::string> hashes = {
+    std::unordered_map<std::string, std::string> hashes = {
         std::pair<std::string, std::string>(
             "sha256", test_helpers::sha256_from_path(first_path))};
     remote_config::config expected_config = {first_product_product,
@@ -685,7 +685,7 @@ TEST_F(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
         .WillOnce(Return(response02));
 
     std::string content01 = test_helpers::raw_from_path(first_path);
-    std::map<std::string, std::string> hashes01 = {
+    std::unordered_map<std::string, std::string> hashes01 = {
         std::pair<std::string, std::string>(
             "sha256", test_helpers::sha256_from_path(first_path))};
     remote_config::config expected_config01 = {first_product_product,
@@ -700,7 +700,7 @@ TEST_F(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
         remote_config::protocol::config_state::applied_state::ACKNOWLEDGED;
 
     std::string content02 = test_helpers::raw_from_path(second_path);
-    std::map<std::string, std::string> hashes02 = {
+    std::unordered_map<std::string, std::string> hashes02 = {
         std::pair<std::string, std::string>(
             "sha256", test_helpers::sha256_from_path(second_path))};
     remote_config::config expected_config02 = {first_product_product,
@@ -799,15 +799,15 @@ TEST_F(
         "UmVtb3RlIGNvbmZpZ3VyYXRpb24gaXMgc3VwZXIgc3VwZXIgY29vbAo=";
     std::string content_01 = content;
     std::string content_02 = content;
-    std::map<std::string, std::string> hashes_01 = {std::pair<std::string,
-        std::string>("sha256",
+    std::unordered_map<std::string, std::string> hashes_01 = {std::pair<
+        std::string, std::string>("sha256",
         "07465cece47e4542abc0da040d9ebb42ec97224920d6870651dc3316528609d5")};
     remote_config::config expected_config = {product_str_01, id_product_01,
         content_01, path_01, hashes_01, 36740, 66399,
         remote_config::protocol::config_state::applied_state::UNACKNOWLEDGED,
         ""};
 
-    std::map<std::string, std::string> hashes_02 = {
+    std::unordered_map<std::string, std::string> hashes_02 = {
         std::pair<std::string, std::string>("sha256", "another_hash_here")};
     remote_config::config expected_config_02 = {product_str_02, id_product_02,
         content_02, path_02, hashes_02, 36740, 66399,
