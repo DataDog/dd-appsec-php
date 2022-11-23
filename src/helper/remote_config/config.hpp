@@ -7,7 +7,7 @@
 
 #include "protocol/config_state.hpp"
 #include <iostream>
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <vector>
 
@@ -18,7 +18,7 @@ struct config {
     std::string id;
     std::string contents;
     std::string path;
-    std::map<std::string, std::string> hashes;
+    std::unordered_map<std::string, std::string> hashes;
     int version;
     int length;
     protocol::config_state::applied_state apply_state;
