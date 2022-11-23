@@ -59,7 +59,6 @@ extern bool runtime_config_first_init;
     CONFIG(CUSTOM(uint64_t), DD_REMOTE_CONFIG_MAX_PAYLOAD_SIZE, "4096", .parser = _parse_uint64)                \
     CONFIG(STRING, DD_AGENT_HOST, "")                                                                           \
     CONFIG(INT, DD_TRACE_AGENT_PORT, "8126")                                                                    \
->>>>>>> 14fc2f6 (Service oriented clients (#137))
 // clang-format on
 
 #define CALIAS CONFIG
