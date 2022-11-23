@@ -167,12 +167,12 @@ bool client::process_response(const protocol::get_configs_response &response)
     }
 
     // Since there have not been errors, we can now update product configs
-    for (auto it = std::begin(products_); it != std::end(products_); ++it) {
-        auto product_configs = configs.find(it->first);
+    for (auto &[name, product] : products_) {
+        const auto product_configs = configs.find(name);
         if (product_configs != configs.end()) {
-            it->second.assign_configs(product_configs->second);
+            product.assign_configs(product_configs->second);
         } else {
-            it->second.assign_configs({});
+            product.assign_configs({});
         }
     }
 

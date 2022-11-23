@@ -1100,9 +1100,8 @@ TEST_F(RemoteConfigClient, ProductsWithoutAListenerCantAcknowledgeUpdates)
 
     auto config_states_arr = get_config_states(serialized_doc);
     EXPECT_EQ(1, config_states_arr.Size());
-    EXPECT_EQ(
-        (int)
-            remote_config::protocol::config_state::applied_state::UNACKNOWLEDGED,
+    EXPECT_EQ((int)remote_config::protocol::config_state::applied_state::
+                  UNACKNOWLEDGED,
         config_states_arr[0].FindMember("apply_state")->value.GetInt());
     EXPECT_EQ("",
         std::string(
