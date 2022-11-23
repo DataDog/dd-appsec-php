@@ -77,7 +77,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt-get install software-properties-common
-          sudo add-apt-repository ppa:ondrej/php
+          sudo add-apt-repository "deb http://ppa.launchpad.net/ondrej/php/ubuntu $(lsb_release -cs) main main/debug"
           sudo apt-get update
       - name: Install required packages
         if: matrix.cfg.os == 'ubuntu-latest'
