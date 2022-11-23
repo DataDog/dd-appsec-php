@@ -23,6 +23,7 @@ on:
 jobs:
   extension-test:
     strategy:
+      fail-fast: false
       matrix:
         cfg:
           - os: 'ubuntu-latest'
