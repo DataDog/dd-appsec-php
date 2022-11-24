@@ -8,12 +8,14 @@
 #include <iomanip>
 #include <iostream>
 #include <optional>
+#include <rapidjson/prettywriter.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include "base64.h"
 #include "common.hpp"
+#include "json_helper.hpp"
 #include "remote_config/client.hpp"
 #include "remote_config/product.hpp"
 #include "remote_config/protocol/client.hpp"
@@ -388,20 +390,69 @@ TEST_F(RemoteConfigClient, ItReturnsErrorIfApiReturnsError)
     EXPECT_FALSE(api_client.poll());
 }
 
+std::string sort_arrays(std::string json)
+{
+    rapidjson::Document doc;
+    doc.Parse(json);
+
+    // Sorting products
+    auto products = doc.FindMember("client")
+                        ->value.FindMember("products")
+                        ->value.GetArray();
+    std::sort(products.begin(), products.end(),
+        [](const rapidjson::Value &lhs, const rapidjson::Value &rhs) {
+            return strcmp(lhs.GetString(), rhs.GetString()) < 0;
+        });
+
+    // Sorting config_states
+    auto config_states = doc.FindMember("client")
+                             ->value.FindMember("state")
+                             ->value.FindMember("config_states")
+                             ->value.GetArray();
+    std::sort(config_states.begin(), config_states.end(),
+        [](const rapidjson::Value &lhs, const rapidjson::Value &rhs) {
+            auto first = lhs.FindMember("id")->value.GetString();
+            auto second = rhs.FindMember("id")->value.GetString();
+            return strcmp(first, second) < 0;
+        });
+
+    // Sorting cached_target_files
+    auto cached_target_files =
+        doc.FindMember("cached_target_files")->value.GetArray();
+    std::sort(cached_target_files.begin(), cached_target_files.end(),
+        [](const rapidjson::Value &lhs, const rapidjson::Value &rhs) {
+            auto first = lhs.FindMember("path")->value.GetString();
+            auto second = rhs.FindMember("path")->value.GetString();
+            return strcmp(first, second) < 0;
+        });
+
+    // Generate string
+    dds::string_buffer buffer;
+    rapidjson::Writer<decltype(buffer)> writer(buffer);
+    if (!doc.Accept(writer)) {
+        return json;
+    }
+
+    return buffer.get_string_ref();
+}
+
 TEST_F(RemoteConfigClient, ItCallsToApiOnPoll)
 {
     auto api = std::make_unique<mock::api>();
-    // First poll dont have state
-    EXPECT_CALL(*api, get_configs(generate_request_serialized(false, false)))
+    std::string request_sent = "";
+    EXPECT_CALL(*api, get_configs(_))
         .Times(AtLeast(1))
-        .WillOnce(Return(generate_example_response(paths)));
+        .WillOnce(DoAll(testing::SaveArg<0>(&request_sent),
+            Return(generate_example_response(paths))));
 
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
-    dds::test_client api_client(
-        id, std::move(api), sid, settings, _products, std::move(capabilities));
+    dds::test_client api_client(id, std::move(api), sid, settings, _products,
+        std::move(std::vector(capabilities)));
 
     EXPECT_TRUE(api_client.poll());
+    EXPECT_EQ(sort_arrays(generate_request_serialized(false, false)),
+        sort_arrays(request_sent));
 }
 
 TEST_F(RemoteConfigClient, ItReturnErrorWhenApiNotProvided)
@@ -610,23 +661,30 @@ TEST_F(RemoteConfigClient, ItGeneratesClientStateAndCacheFromResponse)
 {
     auto api = std::make_unique<mock::api>();
 
-    // First call should not contain state neither cache
-    EXPECT_CALL(*api, get_configs(generate_request_serialized(false, false)))
-        .Times(1)
-        .WillOnce(Return(generate_example_response(paths)));
+    std::string first_request = "";
+    std::string second_request = "";
 
-    // Second call. This should contain state and cache from previous
-    EXPECT_CALL(*api, get_configs(generate_request_serialized(true, true)))
-        .Times(1)
-        .WillOnce(Return(generate_example_response(paths)));
+    EXPECT_CALL(*api, get_configs(_))
+        .Times(2)
+        .WillOnce(DoAll(testing::SaveArg<0>(&first_request),
+            Return(generate_example_response(paths))))
+        .WillOnce(DoAll(testing::SaveArg<0>(&second_request),
+            Return(generate_example_response(paths))))
+        .RetiresOnSaturation();
 
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
-    dds::test_client api_client(
-        id, std::move(api), sid, settings, _products, std::move(capabilities));
+    dds::test_client api_client(id, std::move(api), sid, settings, _products,
+        std::move(std::vector(capabilities)));
 
     EXPECT_TRUE(api_client.poll());
     EXPECT_TRUE(api_client.poll());
+    // First call should not contain state neither cache
+    EXPECT_EQ(sort_arrays(generate_request_serialized(false, false)),
+        sort_arrays(first_request));
+    // Second call. This should contain state and cache from previous
+    EXPECT_EQ(sort_arrays(generate_request_serialized(true, true)),
+        sort_arrays(second_request));
 }
 
 TEST_F(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
@@ -840,29 +898,40 @@ TEST_F(RemoteConfigClient, FilesThatAreInCacheAreUsedWhenNotInTargetFiles)
 {
     auto api = std::make_unique<mock::api>();
 
-    // First call should not contain state neither cache
-    EXPECT_CALL(*api, get_configs(generate_request_serialized(false, false)))
-        .Times(1)
-        .WillOnce(Return(generate_example_response(paths)))
-        .RetiresOnSaturation();
+    std::string first_request = "";
+    std::string second_request = "";
+    std::string third_request = "";
 
-    // Second call. Since this call has cache, response comes without
-    // target_files
-    // Third call. Cache and state should be kept even though
-    // target_files came empty on second
-    EXPECT_CALL(*api, get_configs(generate_request_serialized(true, true)))
-        .Times(2)
-        .WillOnce(Return(generate_example_response(paths, {}, paths)))
-        .WillOnce(Return(generate_example_response(paths, {}, paths)));
+    EXPECT_CALL(*api, get_configs(_))
+        .Times(3)
+        .WillOnce(DoAll(testing::SaveArg<0>(&first_request),
+            Return(generate_example_response(paths))))
+        .WillOnce(DoAll(testing::SaveArg<0>(&second_request),
+            Return(generate_example_response(paths, {}, paths))))
+        .WillOnce(DoAll(testing::SaveArg<0>(&third_request),
+            Return(generate_example_response(paths, {}, paths))))
+        .RetiresOnSaturation();
 
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
-    dds::test_client api_client(
-        id, std::move(api), sid, settings, _products, std::move(capabilities));
+    dds::test_client api_client(id, std::move(api), sid, settings, _products,
+        std::move(std::vector(capabilities)));
 
     EXPECT_TRUE(api_client.poll());
     EXPECT_TRUE(api_client.poll());
     EXPECT_TRUE(api_client.poll());
+
+    // First call should not contain state neither cache
+    EXPECT_EQ(sort_arrays(generate_request_serialized(false, false)),
+        sort_arrays(first_request));
+    // Second call. Since this call has cache, response comes without
+    // target_files
+    EXPECT_EQ(sort_arrays(generate_request_serialized(true, true)),
+        sort_arrays(second_request));
+    // Third call. Cache and state should be kept even though
+    // target_files came empty on second
+    EXPECT_EQ(sort_arrays(generate_request_serialized(true, true)),
+        sort_arrays(third_request));
 }
 
 TEST_F(RemoteConfigClient, NotTrackedFilesAreDeletedFromCache)
