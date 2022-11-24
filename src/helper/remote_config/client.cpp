@@ -25,12 +25,14 @@ config_path config_path::from_path(const std::string &path)
     return config_path{base_match[3].str(), base_match[2].str()};
 }
 
-client::client(std::unique_ptr<http_api> &&arg_api, service_identifier sid,
-    remote_config::settings settings, const std::vector<product> &products,
+client::client(std::unique_ptr<http_api> &&arg_api,
+    std::unique_ptr<protocol::json_encoder> &&encoder,
+    service_identifier sid, remote_config::settings settings,
+    const std::vector<product> &products,
     std::vector<protocol::capabilities_e> &&capabilities)
-    : api_(std::move(arg_api)), id_(dds::generate_random_uuid()),
-      sid_(std::move(sid)), settings_(std::move(settings)),
-      capabilities_(std::move(capabilities))
+    : api_(std::move(arg_api)), encoder_(std::move(encoder)),
+      id_(dds::generate_random_uuid()), sid_(std::move(sid)),
+      settings_(std::move(settings)), capabilities_(std::move(capabilities))
 {
     for (auto const &product : products) {
         products_.insert(std::pair<std::string, remote_config::product>(
@@ -46,7 +48,7 @@ client::ptr client::from_settings(
     }
     return std::make_unique<client>(std::make_unique<http_api>(settings.host,
                                         std::to_string(settings.port)),
-        sid, settings);
+        std::make_unique<protocol::json_encoder>(), sid, settings);
 }
 
 [[nodiscard]] protocol::get_configs_request client::generate_request() const
@@ -183,7 +185,7 @@ bool client::process_response(const protocol::get_configs_response &response)
 
 bool client::poll()
 {
-    if (api_ == nullptr) {
+    if (api_ == nullptr || encoder_ == nullptr) {
         return false;
     }
 
@@ -191,7 +193,9 @@ bool client::poll()
 
     std::string serialized_request;
     try {
-        serialized_request = protocol::serialize(request);
+        serialized_request = encoder_->encode(request);
+        std::cout << "Request serialized is: " << serialized_request
+                  << std::endl;
     } catch (protocol::serializer_exception &e) {
         return false;
     }
@@ -202,7 +206,7 @@ bool client::poll()
     }
 
     try {
-        auto response = protocol::parse(response_body.value());
+        auto response = encoder_->decode(response_body.value());
         last_poll_error_.clear();
         return process_response(response);
     } catch (protocol::parser_exception &e) {

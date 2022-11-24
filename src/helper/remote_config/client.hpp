@@ -16,6 +16,7 @@
 #include "protocol/client.hpp"
 #include "protocol/tuf/get_configs_request.hpp"
 #include "protocol/tuf/get_configs_response.hpp"
+#include "protocol/tuf/json_encoder.hpp"
 #include "settings.hpp"
 #include "utils.hpp"
 
@@ -32,7 +33,8 @@ class client {
 public:
     using ptr = std::unique_ptr<client>;
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    client(std::unique_ptr<http_api> &&arg_api, service_identifier sid,
+    client(std::unique_ptr<http_api> &&arg_api,
+        std::unique_ptr<protocol::json_encoder> &&encoder, service_identifier sid,
         remote_config::settings settings,
         const std::vector<product> &products = {},
         std::vector<protocol::capabilities_e> &&capabilities = {});
@@ -53,6 +55,7 @@ protected:
     bool process_response(const protocol::get_configs_response &response);
 
     std::unique_ptr<http_api> api_;
+    std::unique_ptr<protocol::json_encoder> encoder_;
 
     std::string id_;
     const service_identifier sid_;
@@ -64,7 +67,7 @@ protected:
     int targets_version_{0};
 
     // supported products
-    std::unordered_map<std::string, product> products_;
+    std::map<std::string, product> products_;
 
     std::vector<protocol::capabilities_e> capabilities_;
 };

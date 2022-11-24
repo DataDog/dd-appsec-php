@@ -14,7 +14,7 @@ namespace mock {
 class client : public remote_config::client {
 public:
     client(const service_identifier &sid)
-        : remote_config::client(nullptr, sid, {})
+        : remote_config::client(nullptr, nullptr, sid, {})
     {}
     ~client() = default;
     MOCK_METHOD0(poll, bool());
