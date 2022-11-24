@@ -7,31 +7,21 @@
 
 #include "config.hpp"
 #include "exception.hpp"
+#include "listener.hpp"
 #include <algorithm>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
 namespace dds::remote_config {
 
-class product_listener_base {
-public:
-    product_listener_base() = default;
-    product_listener_base(const product_listener_base &) = default;
-    product_listener_base(product_listener_base &&) = default;
-    product_listener_base &operator=(const product_listener_base &) = default;
-    product_listener_base &operator=(product_listener_base &&) = default;
-    virtual ~product_listener_base() = default;
-
-    virtual void on_update(const config &config) = 0;
-    virtual void on_unapply(const config &config) = 0;
-};
-
 class product {
 public:
-    product(std::string &&name, product_listener_base *listener)
-        : name_(std::move(name)), listener_(listener){};
+    product(std::string &&name, std::shared_ptr<product_listener_base> listener)
+        : name_(std::move(name)), listener_(std::move(listener))
+    {}
 
     void assign_configs(const std::map<std::string, config> &configs);
     [[nodiscard]] const std::map<std::string, config> &get_configs() const
@@ -52,7 +42,7 @@ protected:
 
     std::string name_;
     std::map<std::string, config> configs_;
-    product_listener_base *listener_;
+    std::shared_ptr<product_listener_base> listener_;
 };
 
 } // namespace dds::remote_config
