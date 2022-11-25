@@ -11,7 +11,7 @@ namespace dds {
 
 service::service(service_identifier id, std::shared_ptr<engine> engine,
     remote_config::client::ptr &&rc_client,
-    std::shared_ptr<remote_config::service> rc_service,
+    std::shared_ptr<service_config> rc_service,
     const std::chrono::milliseconds &poll_interval)
     : id_(std::move(id)), engine_(std::move(engine)),
       rc_service_(std::move(rc_service)), rc_client_(std::move(rc_client)),
@@ -58,8 +58,8 @@ service::ptr service::from_settings(const service_identifier &id,
 
     std::chrono::milliseconds poll_interval{rc_settings.poll_interval};
 
-    //Create remote configs stuff
-    auto rc_service = std::make_shared<remote_config::service>();
+    // Create remote configs stuff
+    auto rc_service = std::make_shared<service_config>();
     auto listener =
         std::make_shared<remote_config::asm_features_listener>(rc_service);
     std::vector<remote_config::product> products = {{"ASM_FEATURES", listener}};
@@ -67,7 +67,8 @@ service::ptr service::from_settings(const service_identifier &id,
         id, rc_settings, std::move(products));
 
     return std::make_shared<service>(id, engine_ptr, std::move(rc_client),
-        std::move(rc_service), std::chrono::milliseconds{rc_settings.poll_interval});
+        std::move(rc_service),
+        std::chrono::milliseconds{rc_settings.poll_interval});
 }
 
 void service::run(std::future<bool> &&exit_signal)

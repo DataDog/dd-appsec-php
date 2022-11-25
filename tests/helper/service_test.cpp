@@ -36,8 +36,8 @@ TEST(ServiceTest, ValidateRCThread)
     EXPECT_CALL(*client, poll)
         .WillOnce(DoAll(SignalCall(&call_promise), Return(true)));
 
-    service svc{sid, engine, std::move(client),
-        std::make_shared<remote_config::service>(), 1s};
+    service svc{
+        sid, engine, std::move(client), std::make_shared<service_config>(), 1s};
 
     // wait a little bit - this might end up being flaky
     call_future.wait_for(1s);
@@ -51,9 +51,8 @@ TEST(ServiceTest, NullEngine)
 
     auto client = std::make_unique<mock::client>(sid);
     EXPECT_CALL(*client, poll).Times(0);
-    EXPECT_THROW(
-        auto s = service(sid, engine, std::move(client),
-            std::make_shared<remote_config::service>(), 1s),
+    EXPECT_THROW(auto s = service(sid, engine, std::move(client),
+                     std::make_shared<service_config>(), 1s),
         std::runtime_error);
 }
 
@@ -64,8 +63,7 @@ TEST(ServiceTest, NullRCClient)
     std::shared_ptr<engine> engine{engine::create()};
 
     // A null client doesn't make a difference as remote config is optional
-    service svc{sid, engine, nullptr,
-        std::make_shared<remote_config::service>()};
+    service svc{sid, engine, nullptr, std::make_shared<service_config>()};
     EXPECT_EQ(engine.get(), svc.get_engine().get());
 }
 
