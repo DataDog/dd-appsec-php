@@ -42,7 +42,7 @@ remote_config::config get_disabled_config()
 TEST(RemoteConfigAsmFeaturesListener, ByDefaultListenerIsNotActive)
 {
     auto remote_config_service =
-        std::make_shared<remote_config::remote_config_service>();
+        std::make_shared<remote_config::service>();
     remote_config::asm_features_listener listener(remote_config_service);
 
     EXPECT_FALSE(remote_config_service->is_asm_enabled());
@@ -51,7 +51,7 @@ TEST(RemoteConfigAsmFeaturesListener, ByDefaultListenerIsNotActive)
 TEST(RemoteConfigAsmFeaturesListener, ListenerGetActiveWhenConfigSaysSoOnUpdate)
 {
     auto remote_config_service =
-        std::make_shared<remote_config::remote_config_service>();
+        std::make_shared<remote_config::service>();
     remote_config::asm_features_listener listener(remote_config_service);
 
     try {
@@ -67,7 +67,7 @@ TEST(RemoteConfigAsmFeaturesListener,
     ListenerGetDeactivedWhenConfigSaysSoOnUpdate)
 {
     auto remote_config_service =
-        std::make_shared<remote_config::remote_config_service>();
+        std::make_shared<remote_config::service>();
     remote_config::asm_features_listener listener(remote_config_service);
 
     try {
@@ -83,7 +83,7 @@ TEST(RemoteConfigAsmFeaturesListener,
     ListenerThrowsAnErrorWhenContentOfConfigAreNotValidBase64)
 {
     auto remote_config_service =
-        std::make_shared<remote_config::remote_config_service>();
+        std::make_shared<remote_config::service>();
     remote_config::asm_features_listener listener(remote_config_service);
     std::string invalid_content = "&&&";
     std::string error_message = "";
@@ -109,7 +109,7 @@ TEST(RemoteConfigAsmFeaturesListener,
     std::string error_message = "";
     std::string expected_error_message = "Invalid config json contents";
     auto remote_config_service =
-        std::make_shared<remote_config::remote_config_service>();
+        std::make_shared<remote_config::service>();
     remote_config::asm_features_listener listener(remote_config_service);
     std::string invalid_content = "invalidJsonContent";
     remote_config::config config = get_config(invalid_content);
@@ -131,7 +131,7 @@ TEST(RemoteConfigAsmFeaturesListener, ListenerThrowsAnErrorWhenAsmKeyMissing)
     std::string expected_error_message =
         "Invalid config json encoded contents: asm key missing or invalid";
     auto remote_config_service =
-        std::make_shared<remote_config::remote_config_service>();
+        std::make_shared<remote_config::service>();
     remote_config::asm_features_listener listener(remote_config_service);
     remote_config::config asm_key_missing = get_config("{}");
 
@@ -151,7 +151,7 @@ TEST(RemoteConfigAsmFeaturesListener, ListenerThrowsAnErrorWhenAsmIsNotValid)
     std::string expected_error_message =
         "Invalid config json encoded contents: asm key missing or invalid";
     auto remote_config_service =
-        std::make_shared<remote_config::remote_config_service>();
+        std::make_shared<remote_config::service>();
     remote_config::asm_features_listener listener(remote_config_service);
     remote_config::config invalid_asm_key = get_config("{ \"asm\": 123}");
 
@@ -172,7 +172,7 @@ TEST(
     std::string expected_error_message =
         "Invalid config json encoded contents: enabled key missing";
     auto remote_config_service =
-        std::make_shared<remote_config::remote_config_service>();
+        std::make_shared<remote_config::service>();
     remote_config::asm_features_listener listener(remote_config_service);
     remote_config::config enabled_key_missing = get_config("{ \"asm\": {}}");
 
@@ -193,7 +193,7 @@ TEST(RemoteConfigAsmFeaturesListener,
     std::string expected_error_message =
         "Invalid config json encoded contents: enabled key missing";
     auto remote_config_service =
-        std::make_shared<remote_config::remote_config_service>();
+        std::make_shared<remote_config::service>();
     remote_config::asm_features_listener listener(remote_config_service);
     remote_config::config enabled_key_invalid =
         get_config("{ \"asm\": { \"enabled\": 123}}");

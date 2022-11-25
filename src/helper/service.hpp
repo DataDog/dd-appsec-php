@@ -28,6 +28,7 @@ public:
 
     service(service_identifier id, std::shared_ptr<engine> engine,
         remote_config::client::ptr &&rc_client,
+        std::shared_ptr<remote_config::service> rc_service,
         const std::chrono::milliseconds &poll_interval = 1s);
     ~service();
 
@@ -57,6 +58,7 @@ protected:
     service_identifier id_;
     std::shared_ptr<engine> engine_;
     remote_config::client::ptr rc_client_;
+    std::shared_ptr<remote_config::service> rc_service_;
 
     std::chrono::milliseconds poll_interval_;
 

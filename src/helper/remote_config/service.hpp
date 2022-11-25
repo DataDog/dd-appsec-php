@@ -10,7 +10,7 @@
 
 namespace dds::remote_config {
 
-struct remote_config_service {
+struct service {
     void enable_asm() { asm_enabled = true; }
     void disable_asm() { asm_enabled = false; }
     bool is_asm_enabled() { return asm_enabled; }

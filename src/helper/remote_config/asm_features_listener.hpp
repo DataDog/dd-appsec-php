@@ -13,7 +13,7 @@ namespace dds::remote_config {
 class asm_features_listener : public product_listener_base {
 public:
     explicit asm_features_listener(
-        std::shared_ptr<remote_config::remote_config_service>
+        std::shared_ptr<remote_config::service>
             remote_config_service)
         : product_listener_base(std::move(remote_config_service)){};
     void on_update(const config &config) override;

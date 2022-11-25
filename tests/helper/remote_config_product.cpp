@@ -22,9 +22,9 @@ class listener_mock : public remote_config::product_listener_base {
 public:
     listener_mock()
         : product_listener_base(
-              std::make_shared<remote_config::remote_config_service>())
+              std::make_shared<remote_config::service>())
     {}
-    listener_mock(std::shared_ptr<remote_config::remote_config_service>
+    listener_mock(std::shared_ptr<remote_config::service>
             remote_config_service)
         : product_listener_base(std::move(remote_config_service))
     {}
