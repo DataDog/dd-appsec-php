@@ -11,10 +11,10 @@ namespace dds {
 
 service::service(service_identifier id, std::shared_ptr<engine> engine,
     remote_config::client::ptr &&rc_client,
-    std::shared_ptr<service_config> rc_service,
+    std::shared_ptr<service_config> service_config,
     const std::chrono::milliseconds &poll_interval)
     : id_(std::move(id)), engine_(std::move(engine)),
-      rc_service_(std::move(rc_service)), rc_client_(std::move(rc_client)),
+      service_config_(std::move(service_config)), rc_client_(std::move(rc_client)),
       poll_interval_(poll_interval)
 {
     // The engine should always be valid
@@ -59,15 +59,15 @@ service::ptr service::from_settings(const service_identifier &id,
     std::chrono::milliseconds poll_interval{rc_settings.poll_interval};
 
     // Create remote configs stuff
-    auto rc_service = std::make_shared<service_config>();
+    auto service_config = std::make_shared<dds::service_config>();
     auto listener =
-        std::make_shared<remote_config::asm_features_listener>(rc_service);
+        std::make_shared<remote_config::asm_features_listener>(service_config);
     std::vector<remote_config::product> products = {{"ASM_FEATURES", listener}};
     auto rc_client = remote_config::client::from_settings(
         id, rc_settings, std::move(products));
 
     return std::make_shared<service>(id, engine_ptr, std::move(rc_client),
-        std::move(rc_service),
+        std::move(service_config),
         std::chrono::milliseconds{rc_settings.poll_interval});
 }
 
