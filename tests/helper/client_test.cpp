@@ -790,4 +790,116 @@ TEST(ClientTest, RequestShutdownBrokerThrows)
     }
 }
 
+TEST(ClientTest, ConfigSync)
+{
+    auto smanager = std::make_shared<service_manager>();
+    auto broker = new mock::broker();
+
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
+
+    // Client Init
+    {
+        auto fn = create_sample_rules_ok();
+        network::client_init::request msg;
+        msg.pid = 1729;
+        msg.runtime_version = "1.0";
+        msg.client_version = "2.0";
+        msg.engine_settings.rules_file = fn;
+
+        network::request req(std::move(msg));
+
+        network::client_init::response res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_client_init());
+        EXPECT_STREQ(res.status.c_str(), "ok");
+    }
+
+    // Config sync
+    {
+        network::config_sync::request msg;
+        msg.data = parameter::map();
+
+        network::request req(std::move(msg));
+
+        network::config_sync::response res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        EXPECT_EQ(network::config_sync::response::id, res.id);
+    }
+}
+
+TEST(ClientTest, ConfigSyncNoClientInit)
+{
+    auto smanager = std::make_shared<service_manager>();
+    auto broker = new mock::broker();
+
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
+
+    // Config Sync
+    {
+        network::config_sync::request msg;
+        msg.data = parameter::map();
+
+        network::request req(std::move(msg));
+
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker, send(_)).WillOnce(Return(true));
+
+        EXPECT_FALSE(c.run_request());
+    }
+}
+
+TEST(ClientTest, ConfigSyncReturnsConfigFeaturesWhenAsmEnabled)
+{
+    auto smanager = std::make_shared<service_manager>();
+    auto broker = new mock::broker();
+
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
+
+    // Client Init
+    {
+        auto fn = create_sample_rules_ok();
+        network::client_init::request msg;
+        msg.pid = 1729;
+        msg.runtime_version = "1.0";
+        msg.client_version = "2.0";
+        msg.engine_settings.rules_file = fn;
+
+        network::request req(std::move(msg));
+
+        network::client_init::response res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_client_init());
+        EXPECT_STREQ(res.status.c_str(), "ok");
+    }
+
+    // Lets enable asm
+    c.get_service()->get_service_config()->enable_asm();
+
+    // Config sync
+    {
+        network::config_sync::request msg;
+        msg.data = parameter::map();
+
+        network::request req(std::move(msg));
+
+        network::config_features::response res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        EXPECT_EQ(res.enabled, true);
+    }
+}
+
 } // namespace dds

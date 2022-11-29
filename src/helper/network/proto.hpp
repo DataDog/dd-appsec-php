@@ -28,7 +28,8 @@ enum class request_id : unsigned {
     unknown,
     client_init,
     request_init,
-    request_shutdown
+    request_shutdown,
+    config_sync
 };
 
 enum class response_id : unsigned {
@@ -36,7 +37,9 @@ enum class response_id : unsigned {
     client_init,
     request_init,
     request_shutdown,
-    error
+    error,
+    config_sync,
+    config_features
 };
 
 struct base_request {
@@ -139,6 +142,38 @@ struct request_init {
         std::unordered_set<std::string> actions;
 
         MSGPACK_DEFINE(verdict, triggers, actions);
+    };
+};
+
+struct config_sync {
+    struct request : base_request {
+        static constexpr const char *name = "config_sync";
+        static constexpr request_id id = request_id::config_sync;
+
+        dds::parameter data;
+
+        request() = default;
+        request(const request &) = delete;
+        request &operator=(const request &) = delete;
+        request(request &&) = default;
+        request &operator=(request &&) = default;
+        ~request() override = default;
+    };
+
+    struct response : base_response_generic<response> {
+        static constexpr response_id id = response_id::config_sync;
+
+        MSGPACK_DEFINE();
+    };
+};
+
+struct config_features {
+    struct response : base_response_generic<response> {
+        static constexpr response_id id = response_id::config_features;
+
+        bool enabled;
+
+        MSGPACK_DEFINE(enabled);
     };
 };
 

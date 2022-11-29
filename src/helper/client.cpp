@@ -210,6 +210,44 @@ bool client::handle_command(network::request_init::request &command)
     return false;
 }
 
+bool client::handle_command(network::config_sync::request &command)
+{
+    if (!service_) {
+        // This implies a failed client_init, we can't continue.
+        SPDLOG_DEBUG("no service available on config_sync");
+        send_error_response(*broker_);
+        return false;
+    }
+
+    context_.emplace(*service_->get_engine());
+
+    SPDLOG_DEBUG("received command config_sync");
+
+    if (service_->get_service_config()->is_asm_enabled()) {
+        network::config_features::response response_cf;
+        response_cf.enabled = true;
+
+        SPDLOG_DEBUG("sending config_features to config_sync");
+        try {
+            return broker_->send(response_cf);
+        } catch (std::exception &e) {
+            SPDLOG_ERROR(e.what());
+        }
+
+        return false;
+    }
+
+    network::config_sync::response response_cs;
+    SPDLOG_DEBUG("sending config_sync to config_sync");
+    try {
+        return broker_->send(response_cs);
+    } catch (std::exception &e) {
+        SPDLOG_ERROR(e.what());
+    }
+
+    return false;
+}
+
 bool client::handle_command(network::request_shutdown::request &command)
 {
     if (!context_) {
@@ -279,7 +317,8 @@ bool client::run_request()
 {
     // TODO: figure out how to handle errors which require sending an error
     //       response to ensure the extension doesn't hang.
-    return handle_message<network::request_init, network::request_shutdown>(
+    return handle_message<network::request_init, network::config_sync,
+        network::request_shutdown>(
         *this, *broker_, std::chrono::milliseconds{0} /* no initial timeout */
     );
 }
