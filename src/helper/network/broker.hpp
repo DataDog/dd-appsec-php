@@ -24,7 +24,15 @@ public:
 
     [[nodiscard]] virtual request recv(
         std::chrono::milliseconds initial_timeout) const = 0;
-    [[nodiscard]] virtual bool send(const base_response &msg) const = 0;
+    [[nodiscard]] virtual bool send(const client_init::response &msg) const = 0;
+    [[nodiscard]] virtual bool send(
+        const config_features::response &msg) const = 0;
+    [[nodiscard]] virtual bool send(const config_sync::response &msg) const = 0;
+    [[nodiscard]] virtual bool send(const error::response &msg) const = 0;
+    [[nodiscard]] virtual bool send(
+        const request_shutdown::response &msg) const = 0;
+    [[nodiscard]] virtual bool send(
+        const request_init::response &msg) const = 0;
 };
 
 class broker : public base_broker {
@@ -49,9 +57,22 @@ public:
 
     [[nodiscard]] request recv(
         std::chrono::milliseconds initial_timeout) const override;
-    [[nodiscard]] bool send(const base_response &msg) const override;
+    [[nodiscard]] virtual bool send(
+        const client_init::response &msg) const override;
+    [[nodiscard]] virtual bool send(
+        const config_features::response &msg) const override;
+    [[nodiscard]] virtual bool send(
+        const config_sync::response &msg) const override;
+    [[nodiscard]] virtual bool send(const error::response &msg) const override;
+    [[nodiscard]] virtual bool send(
+        const request_shutdown::response &msg) const override;
+    [[nodiscard]] virtual bool send(
+        const request_init::response &msg) const override;
 
 protected:
+    template <typename T>
+    bool send(msgpack::type::tuple<std::string, T> &src) const;
+
     base_socket::ptr socket_;
 };
 

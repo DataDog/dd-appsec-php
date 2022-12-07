@@ -70,10 +70,53 @@ request broker::recv(std::chrono::milliseconds initial_timeout) const
     return oh.get().as<network::request>();
 }
 
-bool broker::send(const base_response &msg) const
+bool broker::send(const client_init::response &msg) const
+{
+    msgpack::type::tuple<std::string, client_init::response> src(
+        "client_init", msg);
+
+    return send(src);
+}
+bool broker::send(const config_features::response &msg) const
+{
+    msgpack::type::tuple<std::string, config_features::response> src(
+        "config_features", msg);
+
+    return send(src);
+}
+bool broker::send(const config_sync::response &msg) const
+{
+    msgpack::type::tuple<std::string, config_sync::response> src(
+        "config_sync", msg);
+
+    return send(src);
+}
+bool broker::send(const error::response &msg) const
+{
+    msgpack::type::tuple<std::string, error::response> src("error", msg);
+
+    return send(src);
+}
+bool broker::send(const request_shutdown::response &msg) const
+{
+    msgpack::type::tuple<std::string, request_shutdown::response> src(
+        "request_shutdown", msg);
+
+    return send(src);
+}
+bool broker::send(const request_init::response &msg) const
+{
+    msgpack::type::tuple<std::string, request_init::response> src(
+        "request_init", msg);
+
+    return send(src);
+}
+
+template <typename T>
+bool broker::send(msgpack::type::tuple<std::string, T> &src) const
 {
     std::stringstream ss;
-    msgpack::pack(ss, msg);
+    msgpack::pack(ss, src);
     const std::string &buffer = ss.str();
 
     // TODO: Add check to ensure buffer.size() fits in uint32_t
