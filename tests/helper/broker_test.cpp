@@ -621,4 +621,124 @@ TEST(BrokerTest, InvalidResponseSize)
     EXPECT_FALSE(broker.send(response));
 }
 
+void assert_type_equal_to(std::string buffer, std::string expected_type)
+{
+    msgpack::object_handle oh = msgpack::unpack(buffer.data(), buffer.size());
+
+    msgpack::object deserialized = oh.get();
+
+    msgpack::type::tuple<std::string, msgpack::object> sent;
+    deserialized.convert(sent);
+    auto type_sent = sent.get<0>().c_str();
+    EXPECT_STREQ(type_sent, expected_type.c_str());
+}
+
+TEST(BrokerTest, ClientInitTypeIsAddedToMessage)
+{
+    mock::socket *socket = new mock::socket();
+    network::broker broker{std::unique_ptr<mock::socket>(socket)};
+
+    network::header_t h;
+    std::string buffer;
+
+    EXPECT_CALL(*socket, send(_, _))
+        .WillOnce(Return(sizeof(network::header_t)))
+        .WillOnce(DoAll(SaveString(&buffer), Return(123)));
+
+    network::client_init::response response;
+    EXPECT_FALSE(broker.send(response));
+
+    assert_type_equal_to(buffer, "client_init");
+}
+
+TEST(BrokerTest, RequestInitTypeIsAddedToMessage)
+{
+    mock::socket *socket = new mock::socket();
+    network::broker broker{std::unique_ptr<mock::socket>(socket)};
+
+    network::header_t h;
+    std::string buffer;
+
+    EXPECT_CALL(*socket, send(_, _))
+        .WillOnce(Return(sizeof(network::header_t)))
+        .WillOnce(DoAll(SaveString(&buffer), Return(123)));
+
+    network::request_init::response response;
+    EXPECT_FALSE(broker.send(response));
+
+    assert_type_equal_to(buffer, "request_init");
+}
+
+TEST(BrokerTest, ErrorTypeIsAddedToMessage)
+{
+    mock::socket *socket = new mock::socket();
+    network::broker broker{std::unique_ptr<mock::socket>(socket)};
+
+    network::header_t h;
+    std::string buffer;
+
+    EXPECT_CALL(*socket, send(_, _))
+        .WillOnce(Return(sizeof(network::header_t)))
+        .WillOnce(DoAll(SaveString(&buffer), Return(123)));
+
+    network::error::response response;
+    EXPECT_FALSE(broker.send(response));
+
+    assert_type_equal_to(buffer, "error");
+}
+
+TEST(BrokerTest, ConfigFeaturesTypeIsAddedToMessage)
+{
+    mock::socket *socket = new mock::socket();
+    network::broker broker{std::unique_ptr<mock::socket>(socket)};
+
+    network::header_t h;
+    std::string buffer;
+
+    EXPECT_CALL(*socket, send(_, _))
+        .WillOnce(Return(sizeof(network::header_t)))
+        .WillOnce(DoAll(SaveString(&buffer), Return(123)));
+
+    network::config_features::response response;
+    EXPECT_FALSE(broker.send(response));
+
+    assert_type_equal_to(buffer, "config_features");
+}
+
+TEST(BrokerTest, ConfigSyncTypeIsAddedToMessage)
+{
+    mock::socket *socket = new mock::socket();
+    network::broker broker{std::unique_ptr<mock::socket>(socket)};
+
+    network::header_t h;
+    std::string buffer;
+
+    EXPECT_CALL(*socket, send(_, _))
+        .WillOnce(Return(sizeof(network::header_t)))
+        .WillOnce(DoAll(SaveString(&buffer), Return(123)));
+
+    network::config_sync::response response;
+    EXPECT_FALSE(broker.send(response));
+
+    assert_type_equal_to(buffer, "config_sync");
+}
+
+TEST(BrokerTest, RequestShutdownTypeIsAddedToMessage)
+{
+    mock::socket *socket = new mock::socket();
+    network::broker broker{std::unique_ptr<mock::socket>(socket)};
+
+    network::header_t h;
+    std::string buffer;
+
+    EXPECT_CALL(*socket, send(_, _))
+        .WillOnce(Return(sizeof(network::header_t)))
+        .WillOnce(DoAll(SaveString(&buffer), Return(123)));
+
+    network::request_shutdown::response response;
+    EXPECT_FALSE(broker.send(response));
+
+    assert_type_equal_to(buffer, "request_shutdown");
+}
+
 } // namespace dds
