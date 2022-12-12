@@ -621,15 +621,19 @@ TEST(BrokerTest, InvalidResponseSize)
     EXPECT_FALSE(broker.send(response));
 }
 
-void assert_type_equal_to(std::string buffer, std::string expected_type)
+void assert_type_equal_to(
+    std::string buffer, int message_index, std::string expected_type)
 {
     msgpack::object_handle oh = msgpack::unpack(buffer.data(), buffer.size());
 
     msgpack::object deserialized = oh.get();
 
-    msgpack::type::tuple<std::string, msgpack::object> sent;
+    std::vector<
+        msgpack::type::tuple<std::string, std::shared_ptr<msgpack::object>>>
+        sent;
     deserialized.convert(sent);
-    auto type_sent = sent.get<0>().c_str();
+
+    auto type_sent = sent[message_index].get<0>().c_str();
     EXPECT_STREQ(type_sent, expected_type.c_str());
 }
 
@@ -645,10 +649,13 @@ TEST(BrokerTest, ClientInitTypeIsAddedToMessage)
         .WillOnce(Return(sizeof(network::header_t)))
         .WillOnce(DoAll(SaveString(&buffer), Return(123)));
 
-    network::client_init::response response;
-    EXPECT_FALSE(broker.send(response));
+    auto response = std::make_shared<network::client_init::response>();
+    std::vector<std::shared_ptr<network::base_response>> responses;
+    responses.push_back(response);
 
-    assert_type_equal_to(buffer, "client_init");
+    EXPECT_FALSE(broker.send(responses));
+
+    assert_type_equal_to(buffer, 0, "client_init");
 }
 
 TEST(BrokerTest, RequestInitTypeIsAddedToMessage)
@@ -663,10 +670,13 @@ TEST(BrokerTest, RequestInitTypeIsAddedToMessage)
         .WillOnce(Return(sizeof(network::header_t)))
         .WillOnce(DoAll(SaveString(&buffer), Return(123)));
 
-    network::request_init::response response;
-    EXPECT_FALSE(broker.send(response));
+    auto response = std::make_shared<network::request_init::response>();
+    std::vector<std::shared_ptr<network::base_response>> responses;
+    responses.push_back(response);
 
-    assert_type_equal_to(buffer, "request_init");
+    EXPECT_FALSE(broker.send(responses));
+
+    assert_type_equal_to(buffer, 0, "request_init");
 }
 
 TEST(BrokerTest, ErrorTypeIsAddedToMessage)
@@ -681,10 +691,13 @@ TEST(BrokerTest, ErrorTypeIsAddedToMessage)
         .WillOnce(Return(sizeof(network::header_t)))
         .WillOnce(DoAll(SaveString(&buffer), Return(123)));
 
-    network::error::response response;
-    EXPECT_FALSE(broker.send(response));
+    auto response = std::make_shared<network::error::response>();
+    std::vector<std::shared_ptr<network::base_response>> responses;
+    responses.push_back(response);
 
-    assert_type_equal_to(buffer, "error");
+    EXPECT_FALSE(broker.send(responses));
+
+    assert_type_equal_to(buffer, 0, "error");
 }
 
 TEST(BrokerTest, ConfigFeaturesTypeIsAddedToMessage)
@@ -699,10 +712,13 @@ TEST(BrokerTest, ConfigFeaturesTypeIsAddedToMessage)
         .WillOnce(Return(sizeof(network::header_t)))
         .WillOnce(DoAll(SaveString(&buffer), Return(123)));
 
-    network::config_features::response response;
-    EXPECT_FALSE(broker.send(response));
+    auto response = std::make_shared<network::config_features::response>();
+    std::vector<std::shared_ptr<network::base_response>> responses;
+    responses.push_back(response);
 
-    assert_type_equal_to(buffer, "config_features");
+    EXPECT_FALSE(broker.send(responses));
+
+    assert_type_equal_to(buffer, 0, "config_features");
 }
 
 TEST(BrokerTest, ConfigSyncTypeIsAddedToMessage)
@@ -717,10 +733,13 @@ TEST(BrokerTest, ConfigSyncTypeIsAddedToMessage)
         .WillOnce(Return(sizeof(network::header_t)))
         .WillOnce(DoAll(SaveString(&buffer), Return(123)));
 
-    network::config_sync::response response;
-    EXPECT_FALSE(broker.send(response));
+    auto response = std::make_shared<network::config_sync::response>();
+    std::vector<std::shared_ptr<network::base_response>> responses;
+    responses.push_back(response);
 
-    assert_type_equal_to(buffer, "config_sync");
+    EXPECT_FALSE(broker.send(responses));
+
+    assert_type_equal_to(buffer, 0, "config_sync");
 }
 
 TEST(BrokerTest, RequestShutdownTypeIsAddedToMessage)
@@ -735,10 +754,13 @@ TEST(BrokerTest, RequestShutdownTypeIsAddedToMessage)
         .WillOnce(Return(sizeof(network::header_t)))
         .WillOnce(DoAll(SaveString(&buffer), Return(123)));
 
-    network::request_shutdown::response response;
-    EXPECT_FALSE(broker.send(response));
+    auto response = std::make_shared<network::request_shutdown::response>();
+    std::vector<std::shared_ptr<network::base_response>> responses;
+    responses.push_back(response);
 
-    assert_type_equal_to(buffer, "request_shutdown");
+    EXPECT_FALSE(broker.send(responses));
+
+    assert_type_equal_to(buffer, 0, "request_shutdown");
 }
 
 } // namespace dds

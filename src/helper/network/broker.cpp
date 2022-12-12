@@ -70,53 +70,45 @@ request broker::recv(std::chrono::milliseconds initial_timeout) const
     return oh.get().as<network::request>();
 }
 
-bool broker::send(const client_init::response &msg) const
+bool broker::send(
+    const std::vector<std::shared_ptr<base_response>> &messages) const
 {
-    msgpack::type::tuple<std::string, client_init::response> src(
-        "client_init", msg);
+    if (messages.size() == 0) {
+        return false;
+    }
 
-    return send(src);
-}
-bool broker::send(const config_features::response &msg) const
-{
-    msgpack::type::tuple<std::string, config_features::response> src(
-        "config_features", msg);
+    std::vector<msgpack::type::tuple<std::string, std::shared_ptr<base_response>>> tuples;
 
-    return send(src);
-}
-bool broker::send(const config_sync::response &msg) const
-{
-    msgpack::type::tuple<std::string, config_sync::response> src(
-        "config_sync", msg);
 
-    return send(src);
-}
-bool broker::send(const error::response &msg) const
-{
-    msgpack::type::tuple<std::string, error::response> src("error", msg);
+    for(auto message: messages) {
+        msgpack::type::tuple<std::string, std::shared_ptr<base_response>> tuple = {message->get_type(), message};
+        tuples.emplace_back(tuple);
+    }
 
-    return send(src);
-}
-bool broker::send(const request_shutdown::response &msg) const
-{
-    msgpack::type::tuple<std::string, request_shutdown::response> src(
-        "request_shutdown", msg);
 
-    return send(src);
-}
-bool broker::send(const request_init::response &msg) const
-{
-    msgpack::type::tuple<std::string, request_init::response> src(
-        "request_init", msg);
+    std::stringstream ss;
+    msgpack::pack(ss, tuples);
+    const std::string &buffer = ss.str();
 
-    return send(src);
+    // TODO: Add check to ensure buffer.size() fits in uint32_t
+    header_t h = {"dds", (uint32_t)buffer.size()};
+
+    // NOLINTNEXTLINE
+    auto res = socket_->send(reinterpret_cast<char *>(&h), sizeof(header_t));
+
+    if (res != sizeof(header_t)) {
+        return false;
+    }
+
+    res = socket_->send(buffer.c_str(), buffer.size());
+
+    return res == buffer.size();
 }
 
-template <typename T>
-bool broker::send(msgpack::type::tuple<std::string, T> &src) const
+bool broker::send(const base_response &msg) const
 {
     std::stringstream ss;
-    msgpack::pack(ss, src);
+    msgpack::pack(ss, msg);
     const std::string &buffer = ss.str();
 
     // TODO: Add check to ensure buffer.size() fits in uint32_t
@@ -131,5 +123,6 @@ bool broker::send(msgpack::type::tuple<std::string, T> &src) const
     res = socket_->send(buffer.c_str(), buffer.size());
     return res == buffer.size();
 }
+
 
 } // namespace dds::network

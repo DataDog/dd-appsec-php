@@ -62,9 +62,10 @@ struct base_response {
     virtual ~base_response() = default;
     // NOLINTNEXTLINE(google-runtime-references)
     virtual stream_packer &pack(stream_packer &packer) const = 0;
+    virtual std::string get_type() const = 0;
 };
 
-template <typename T> struct base_response_generic : base_response {
+template <typename T> struct base_response_generic : public base_response {
     base_response_generic() = default;
     base_response_generic(const base_response_generic &) = default;
     base_response_generic &operator=(const base_response_generic &) = default;
@@ -106,6 +107,7 @@ struct client_init {
     struct response : base_response_generic<response> {
         static constexpr response_id id = response_id::client_init;
 
+        std::string get_type() const { return "client_init";};
         std::string status;
         std::string version{dds::php_ddappsec_version};
         std::vector<std::string> errors;
@@ -137,6 +139,7 @@ struct request_init {
     struct response : base_response_generic<response> {
         static constexpr response_id id = response_id::request_init;
 
+        std::string get_type() const { return "request_init";};
         std::string verdict;
         std::vector<std::string> triggers;
         std::unordered_set<std::string> actions;
@@ -163,6 +166,8 @@ struct config_sync {
     struct response : base_response_generic<response> {
         static constexpr response_id id = response_id::config_sync;
 
+        std::string get_type() const { return "config_sync";};
+
         MSGPACK_DEFINE();
     };
 };
@@ -171,6 +176,7 @@ struct config_features {
     struct response : base_response_generic<response> {
         static constexpr response_id id = response_id::config_features;
 
+        std::string get_type() const { return "config_features";};
         bool enabled;
 
         MSGPACK_DEFINE(enabled);
@@ -197,6 +203,7 @@ struct request_shutdown {
     struct response : base_response_generic<response> {
         static constexpr response_id id = response_id::request_shutdown;
 
+        std::string get_type() const { return "request_shutdown";};
         std::string verdict;
         std::vector<std::string> triggers;
         std::unordered_set<std::string> actions;
@@ -214,6 +221,9 @@ struct request_shutdown {
 struct error {
     struct response : base_response_generic<response> {
         static constexpr response_id id = response_id::error;
+
+        std::string get_type() const { return "error";};
+
         MSGPACK_DEFINE();
     };
 };
