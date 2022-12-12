@@ -26,8 +26,6 @@ public:
         std::chrono::milliseconds initial_timeout) const = 0;
     [[nodiscard]] virtual bool send(
         const std::vector<std::shared_ptr<base_response>> &messages) const = 0;
-    [[nodiscard]] virtual bool send(
-        const base_response &msg) const = 0;
 };
 
 class broker : public base_broker {
@@ -55,10 +53,10 @@ public:
     [[nodiscard]] virtual bool send(
         const std::vector<std::shared_ptr<base_response>> &messages)
         const override;
-    [[nodiscard]] virtual bool send(
-        const base_response &msg) const override;
-
 protected:
+    bool send_tuples(std::vector<
+        msgpack::type::tuple<std::string, std::shared_ptr<base_response>>>
+            tuples) const;
     base_socket::ptr socket_;
 };
 

@@ -7,6 +7,7 @@
 #include "../exception.hpp"
 #include "proto.hpp"
 #include <chrono>
+#include <iostream>
 #include <msgpack.hpp>
 #include <spdlog/spdlog.h>
 #include <sstream>
@@ -73,18 +74,17 @@ request broker::recv(std::chrono::milliseconds initial_timeout) const
 bool broker::send(
     const std::vector<std::shared_ptr<base_response>> &messages) const
 {
-    if (messages.size() == 0) {
+    if (messages.empty()) {
         return false;
     }
 
-    std::vector<msgpack::type::tuple<std::string, std::shared_ptr<base_response>>> tuples;
-
-
-    for(auto message: messages) {
-        msgpack::type::tuple<std::string, std::shared_ptr<base_response>> tuple = {message->get_type(), message};
-        tuples.emplace_back(tuple);
+    std::vector<
+        msgpack::type::tuple<std::string, std::shared_ptr<base_response>>>
+        tuples;
+    tuples.reserve(messages.size());
+    for (auto const &message : messages) {
+        tuples.emplace_back(message->get_type(), message);
     }
-
 
     std::stringstream ss;
     msgpack::pack(ss, tuples);
@@ -104,25 +104,4 @@ bool broker::send(
 
     return res == buffer.size();
 }
-
-bool broker::send(const base_response &msg) const
-{
-    std::stringstream ss;
-    msgpack::pack(ss, msg);
-    const std::string &buffer = ss.str();
-
-    // TODO: Add check to ensure buffer.size() fits in uint32_t
-    header_t h = {"dds", (uint32_t)buffer.size()};
-
-    // NOLINTNEXTLINE
-    auto res = socket_->send(reinterpret_cast<char *>(&h), sizeof(header_t));
-    if (res != sizeof(header_t)) {
-        return false;
-    }
-
-    res = socket_->send(buffer.c_str(), buffer.size());
-    return res == buffer.size();
-}
-
-
 } // namespace dds::network
