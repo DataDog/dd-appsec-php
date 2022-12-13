@@ -16,17 +16,12 @@ class broker : public dds::network::base_broker {
 public:
     MOCK_CONST_METHOD1(
         recv, network::request(std::chrono::milliseconds initial_timeout));
-    MOCK_CONST_METHOD1(send, bool(const network::base_response &msg));
-    MOCK_CONST_METHOD1(send, bool(const std::vector<std::shared_ptr<network::base_response>> &messages));
+    MOCK_CONST_METHOD1(
+        send, bool(const std::vector<std::shared_ptr<network::base_response>>
+                      &messages));
 };
 
 } // namespace mock
-
-ACTION_TEMPLATE(SaveResponse, HAS_1_TEMPLATE_PARAMS(typename, T),
-    AND_1_VALUE_PARAMS(output))
-{
-    *output = *static_cast<const T *>(&arg0);
-}
 
 TEST(ClientTest, ClientInit)
 {
@@ -45,23 +40,26 @@ TEST(ClientTest, ClientInit)
 
     network::request req(std::move(msg));
 
-    network::client_init::response res;
+    std::vector<std::shared_ptr<network::base_response>> res;
     EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-    EXPECT_CALL(
-        *broker, send(testing::An<const network::base_response &>()))
-        .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+    EXPECT_CALL(*broker, send(_))
+        .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
     EXPECT_TRUE(c.run_client_init());
-    EXPECT_STREQ(res.status.c_str(), "ok");
-    EXPECT_EQ(res.meta.size(), 2);
-    EXPECT_STREQ(res.meta[tag::waf_version].c_str(), "1.6.0-beta0");
-    EXPECT_STREQ(res.meta[tag::event_rules_errors].c_str(), "{}");
 
-    EXPECT_EQ(res.metrics.size(), 2);
+    auto client_init_res =
+        dynamic_cast<network::client_init::response *>(res[0].get());
+
+    EXPECT_STREQ(client_init_res->status.c_str(), "ok");
+    EXPECT_EQ(client_init_res->meta.size(), 2);
+    EXPECT_STREQ(client_init_res->meta[tag::waf_version].c_str(), "1.6.0-beta0");
+    EXPECT_STREQ(client_init_res->meta[tag::event_rules_errors].c_str(), "{}");
+
+    EXPECT_EQ(client_init_res->metrics.size(), 2);
     // For small enough integers this comparison should work, otherwise replace
     // with EXPECT_NEAR.
-    EXPECT_EQ(res.metrics[tag::event_rules_loaded], 2.0);
-    EXPECT_EQ(res.metrics[tag::event_rules_failed], 0.0);
+    EXPECT_EQ(client_init_res->metrics[tag::event_rules_loaded], 2.0);
+    EXPECT_EQ(client_init_res->metrics[tag::event_rules_failed], 0.0);
 }
 
 TEST(ClientTest, ClientInitInvalidRules)
@@ -81,30 +79,33 @@ TEST(ClientTest, ClientInitInvalidRules)
 
     network::request req(std::move(msg));
 
-    network::client_init::response res;
+    std::vector<std::shared_ptr<network::base_response>> res;
     EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-    EXPECT_CALL(
-        *broker, send(testing::An<const network::base_response &>()))
-        .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+    EXPECT_CALL(*broker, send(_))
+        .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
     EXPECT_TRUE(c.run_client_init());
-    EXPECT_STREQ(res.status.c_str(), "ok");
-    EXPECT_EQ(res.meta.size(), 2);
-    EXPECT_STREQ(res.meta[tag::waf_version].c_str(), "1.6.0-beta0");
+
+    auto client_init_res =
+        dynamic_cast<network::client_init::response *>(res[0].get());
+
+    EXPECT_STREQ(client_init_res->status.c_str(), "ok");
+    EXPECT_EQ(client_init_res->meta.size(), 2);
+    EXPECT_STREQ(client_init_res->meta[tag::waf_version].c_str(), "1.6.0-beta0");
 
     rapidjson::Document doc;
-    doc.Parse(res.meta[tag::event_rules_errors]);
+    doc.Parse(client_init_res->meta[tag::event_rules_errors]);
     EXPECT_FALSE(doc.HasParseError());
     EXPECT_TRUE(doc.IsObject());
     EXPECT_TRUE(doc.HasMember("missing key 'type'"));
     EXPECT_TRUE(doc.HasMember("unknown processor: squash"));
     EXPECT_TRUE(doc.HasMember("missing key 'inputs'"));
 
-    EXPECT_EQ(res.metrics.size(), 2);
+    EXPECT_EQ(client_init_res->metrics.size(), 2);
     // For small enough integers this comparison should work, otherwise replace
     // with EXPECT_NEAR.
-    EXPECT_EQ(res.metrics[tag::event_rules_loaded], 1.0);
-    EXPECT_EQ(res.metrics[tag::event_rules_failed], 4.0);
+    EXPECT_EQ(client_init_res->metrics[tag::event_rules_loaded], 1.0);
+    EXPECT_EQ(client_init_res->metrics[tag::event_rules_failed], 4.0);
 }
 
 TEST(ClientTest, ClientInitResponseFail)
@@ -124,9 +125,7 @@ TEST(ClientTest, ClientInitResponseFail)
 
     network::request req(std::move(msg));
     EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-    EXPECT_CALL(
-        *broker, send(testing::An<const network::base_response &>()))
-        .WillOnce(Return(false));
+    EXPECT_CALL(*broker, send(_)).WillOnce(Return(false));
 
     EXPECT_FALSE(c.run_client_init());
 }
@@ -148,14 +147,15 @@ TEST(ClientTest, ClientInitMissingRuleFile)
 
     network::request req(std::move(msg));
 
-    network::client_init::response res;
+    std::vector<std::shared_ptr<network::base_response>> res;
     EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-    EXPECT_CALL(
-        *broker, send(testing::An<const network::base_response &>()))
-        .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+    EXPECT_CALL(*broker, send(_))
+        .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
     EXPECT_FALSE(c.run_client_init());
-    EXPECT_STREQ(res.status.c_str(), "fail");
+    auto client_init_res =
+        dynamic_cast<network::client_init::response *>(res[0].get());
+    EXPECT_STREQ(client_init_res->status.c_str(), "fail");
 }
 
 TEST(ClientTest, ClientInitInvalidRuleFileFormat)
@@ -180,14 +180,15 @@ TEST(ClientTest, ClientInitInvalidRuleFileFormat)
 
     network::request req(std::move(msg));
 
-    network::client_init::response res;
+    std::vector<std::shared_ptr<network::base_response>> res;
     EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-    EXPECT_CALL(
-        *broker, send(testing::An<const network::base_response &>()))
-        .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+    EXPECT_CALL(*broker, send(_))
+        .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
     EXPECT_FALSE(c.run_client_init());
-    EXPECT_STREQ(res.status.c_str(), "fail");
+    auto client_init_res =
+        dynamic_cast<network::client_init::response *>(res[0].get());
+    EXPECT_STREQ(client_init_res->status.c_str(), "fail");
 }
 
 TEST(ClientTest, ClientInitAfterClientInit)
@@ -208,14 +209,15 @@ TEST(ClientTest, ClientInitAfterClientInit)
 
         network::request req(std::move(msg));
 
-        network::client_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_client_init());
-        EXPECT_STREQ(res.status.c_str(), "ok");
+        auto client_init_res =
+            dynamic_cast<network::client_init::response *>(res[0].get());
+        EXPECT_STREQ(client_init_res->status.c_str(), "ok");
     }
 
     {
@@ -227,7 +229,7 @@ TEST(ClientTest, ClientInitAfterClientInit)
 
         network::request req(std::move(msg));
 
-        network::client_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
         EXPECT_FALSE(c.run_request());
     }
@@ -251,11 +253,9 @@ TEST(ClientTest, ClientInitBrokerThrows)
 
         network::request req(std::move(msg));
 
-        network::client_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Throw(std::exception()));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .Times(0);
+        EXPECT_CALL(*broker, send(_)).Times(0);
 
         EXPECT_FALSE(c.run_client_init());
     }
@@ -269,11 +269,9 @@ TEST(ClientTest, ClientInitBrokerThrows)
 
         network::request req(std::move(msg));
 
-        network::client_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(Throw(std::exception()));
+        EXPECT_CALL(*broker, send(_)).WillOnce(Throw(std::exception()));
 
         EXPECT_FALSE(c.run_client_init());
     }
@@ -287,11 +285,9 @@ TEST(ClientTest, ClientInitBrokerThrows)
 
         network::request req(std::move(msg));
 
-        network::client_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(Throw(24));
+        EXPECT_CALL(*broker, send(_)).WillOnce(Throw(24));
 
         EXPECT_FALSE(c.run_client_init());
     }
@@ -315,7 +311,7 @@ TEST(ClientTest, RequestInitOnClientInit)
 
         network::request req(std::move(msg));
 
-        network::request_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
 
         EXPECT_FALSE(c.run_client_init());
@@ -340,14 +336,15 @@ TEST(ClientTest, RequestInit)
 
         network::request req(std::move(msg));
 
-        network::client_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_client_init());
-        EXPECT_STREQ(res.status.c_str(), "ok");
+        auto client_init_res =
+            dynamic_cast<network::client_init::response *>(res[0].get());
+        EXPECT_STREQ(client_init_res->status.c_str(), "ok");
     }
 
     // Request Init
@@ -359,15 +356,16 @@ TEST(ClientTest, RequestInit)
 
         network::request req(std::move(msg));
 
-        network::request_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_request());
-        EXPECT_STREQ(res.verdict.c_str(), "record");
-        EXPECT_EQ(res.triggers.size(), 1);
+        auto client_init_res =
+            dynamic_cast<network::request_init::response *>(res[0].get());
+        EXPECT_STREQ(client_init_res->verdict.c_str(), "record");
+        EXPECT_EQ(client_init_res->triggers.size(), 1);
     }
 }
 
@@ -389,24 +387,24 @@ TEST(ClientTest, RequestInitUnpackError)
 
         network::request req(std::move(msg));
 
-        network::client_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_client_init());
-        EXPECT_STREQ(res.status.c_str(), "ok");
+        auto client_init_res =
+            dynamic_cast<network::client_init::response *>(res[0].get());
+        EXPECT_STREQ(client_init_res->status.c_str(), "ok");
     }
 
     // Request Init
     {
-        network::error::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_))
             .WillOnce(Throw(msgpack::unpack_error("map size overflow")));
-        EXPECT_CALL(
-            *broker, send(testing::An<const network::base_response &>()))
-            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_request());
     }
@@ -429,9 +427,7 @@ TEST(ClientTest, RequestInitNoClientInit)
         network::request req(std::move(msg));
 
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(
-            *broker, send(testing::An<const network::base_response &>()))
-            .WillOnce(Return(true));
+        EXPECT_CALL(*broker, send(_)).WillOnce(Return(true));
 
         EXPECT_FALSE(c.run_request());
     }
@@ -455,14 +451,15 @@ TEST(ClientTest, RequestInitInvalidData)
 
         network::request req(std::move(msg));
 
-        network::client_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_client_init());
-        EXPECT_STREQ(res.status.c_str(), "ok");
+        auto client_init_res =
+            dynamic_cast<network::client_init::response *>(res[0].get());
+        EXPECT_STREQ(client_init_res->status.c_str(), "ok");
     }
 
     // Request Init
@@ -473,9 +470,7 @@ TEST(ClientTest, RequestInitInvalidData)
         network::request req(std::move(msg));
 
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(
-            *broker, send(testing::An<const network::base_response &>()))
-            .WillOnce(Return(true));
+        EXPECT_CALL(*broker, send(_)).WillOnce(Return(true));
 
         EXPECT_FALSE(c.run_request());
     }
@@ -499,14 +494,15 @@ TEST(ClientTest, RequestInitBrokerThrows)
 
         network::request req(std::move(msg));
 
-        network::client_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_client_init());
-        EXPECT_STREQ(res.status.c_str(), "ok");
+        auto client_init_res =
+            dynamic_cast<network::client_init::response *>(res[0].get());
+        EXPECT_STREQ(client_init_res->status.c_str(), "ok");
     }
 
     // Request Init
@@ -518,11 +514,9 @@ TEST(ClientTest, RequestInitBrokerThrows)
 
         network::request req(std::move(msg));
 
-        network::request_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Throw(std::exception()));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .Times(0);
+        EXPECT_CALL(*broker, send(_)).Times(0);
 
         EXPECT_FALSE(c.run_request());
     }
@@ -535,11 +529,9 @@ TEST(ClientTest, RequestInitBrokerThrows)
 
         network::request req(std::move(msg));
 
-        network::request_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(Throw(std::exception()));
+        EXPECT_CALL(*broker, send(_)).WillOnce(Throw(std::exception()));
 
         EXPECT_FALSE(c.run_request());
     }
@@ -563,14 +555,15 @@ TEST(ClientTest, RequestShutdown)
 
         network::request req(std::move(msg));
 
-        network::client_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_client_init());
-        EXPECT_STREQ(res.status.c_str(), "ok");
+        auto client_init_res =
+            dynamic_cast<network::client_init::response *>(res[0].get());
+        EXPECT_STREQ(client_init_res->status.c_str(), "ok");
     }
 
     // Request Init
@@ -582,15 +575,16 @@ TEST(ClientTest, RequestShutdown)
 
         network::request req(std::move(msg));
 
-        network::request_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_request());
-        EXPECT_STREQ(res.verdict.c_str(), "ok");
-        EXPECT_EQ(res.triggers.size(), 0);
+        auto client_init_res =
+            dynamic_cast<network::request_init::response *>(res[0].get());
+        EXPECT_STREQ(client_init_res->verdict.c_str(), "ok");
+        EXPECT_EQ(client_init_res->triggers.size(), 0);
     }
 
     // Request Shutdown
@@ -601,20 +595,22 @@ TEST(ClientTest, RequestShutdown)
 
         network::request req(std::move(msg));
 
-        network::request_shutdown::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_request());
-        EXPECT_STREQ(res.verdict.c_str(), "record");
-        EXPECT_EQ(res.triggers.size(), 1);
+        auto client_init_res =
+            dynamic_cast<network::request_shutdown::response *>(res[0].get());
+        EXPECT_STREQ(client_init_res->verdict.c_str(), "record");
+        EXPECT_EQ(client_init_res->triggers.size(), 1);
 
-        EXPECT_EQ(res.metrics.size(), 1);
-        EXPECT_GT(res.metrics[tag::waf_duration], 0.0);
-        EXPECT_EQ(res.meta.size(), 1);
-        EXPECT_STREQ(res.meta[tag::event_rules_version].c_str(), "1.2.3");
+        EXPECT_EQ(client_init_res->metrics.size(), 1);
+        EXPECT_GT(client_init_res->metrics[tag::waf_duration], 0.0);
+        EXPECT_EQ(client_init_res->meta.size(), 1);
+        EXPECT_STREQ(
+            client_init_res->meta[tag::event_rules_version].c_str(), "1.2.3");
     }
 }
 
@@ -636,14 +632,15 @@ TEST(ClientTest, RequestShutdownInvalidData)
 
         network::request req(std::move(msg));
 
-        network::client_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_client_init());
-        EXPECT_STREQ(res.status.c_str(), "ok");
+        auto client_init_res =
+            dynamic_cast<network::client_init::response *>(res[0].get());
+        EXPECT_STREQ(client_init_res->status.c_str(), "ok");
     }
 
     // Request Init
@@ -655,15 +652,16 @@ TEST(ClientTest, RequestShutdownInvalidData)
 
         network::request req(std::move(msg));
 
-        network::request_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_request());
-        EXPECT_STREQ(res.verdict.c_str(), "ok");
-        EXPECT_EQ(res.triggers.size(), 0);
+        auto client_init_res =
+            dynamic_cast<network::request_init::response *>(res[0].get());
+        EXPECT_STREQ(client_init_res->verdict.c_str(), "ok");
+        EXPECT_EQ(client_init_res->triggers.size(), 0);
     }
 
     // Request Shutdown
@@ -673,11 +671,9 @@ TEST(ClientTest, RequestShutdownInvalidData)
 
         network::request req(std::move(msg));
 
-        network::request_shutdown::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(
-            *broker, send(testing::An<const network::base_response &>()))
-            .WillOnce(Return(true));
+        EXPECT_CALL(*broker, send(_)).WillOnce(Return(true));
 
         EXPECT_FALSE(c.run_request());
     }
@@ -698,9 +694,7 @@ TEST(ClientTest, RequestShutdownNoClientInit)
         network::request req(std::move(msg));
 
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(
-            *broker, send(testing::An<const network::base_response &>()))
-            .WillOnce(Return(true));
+        EXPECT_CALL(*broker, send(_)).WillOnce(Return(true));
 
         EXPECT_FALSE(c.run_request());
     }
@@ -724,14 +718,15 @@ TEST(ClientTest, RequestShutdownNoRequestInit)
 
         network::request req(std::move(msg));
 
-        network::client_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_client_init());
-        EXPECT_STREQ(res.status.c_str(), "ok");
+        auto client_init_res =
+            dynamic_cast<network::client_init::response *>(res[0].get());
+        EXPECT_STREQ(client_init_res->status.c_str(), "ok");
     }
 
     // Request Shutdown
@@ -741,15 +736,16 @@ TEST(ClientTest, RequestShutdownNoRequestInit)
 
         network::request req(std::move(msg));
 
-        network::request_shutdown::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_request());
-        EXPECT_STREQ(res.verdict.c_str(), "ok");
-        EXPECT_EQ(res.triggers.size(), 0);
+        auto client_init_res =
+            dynamic_cast<network::request_shutdown::response *>(res[0].get());
+        EXPECT_STREQ(client_init_res->verdict.c_str(), "ok");
+        EXPECT_EQ(client_init_res->triggers.size(), 0);
     }
 }
 
@@ -771,14 +767,15 @@ TEST(ClientTest, RequestShutdownBrokerThrows)
 
         network::request req(std::move(msg));
 
-        network::client_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_client_init());
-        EXPECT_STREQ(res.status.c_str(), "ok");
+        auto client_init_res =
+            dynamic_cast<network::client_init::response *>(res[0].get());
+        EXPECT_STREQ(client_init_res->status.c_str(), "ok");
     }
 
     // Request Init
@@ -790,15 +787,16 @@ TEST(ClientTest, RequestShutdownBrokerThrows)
 
         network::request req(std::move(msg));
 
-        network::request_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_request());
-        EXPECT_STREQ(res.verdict.c_str(), "ok");
-        EXPECT_EQ(res.triggers.size(), 0);
+        auto client_init_res =
+            dynamic_cast<network::request_init::response *>(res[0].get());
+        EXPECT_STREQ(client_init_res->verdict.c_str(), "ok");
+        EXPECT_EQ(client_init_res->triggers.size(), 0);
     }
 
     // Request Shutdown
@@ -809,11 +807,9 @@ TEST(ClientTest, RequestShutdownBrokerThrows)
 
         network::request req(std::move(msg));
 
-        network::request_shutdown::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Throw(std::exception()));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .Times(0);
+        EXPECT_CALL(*broker, send(_)).Times(0);
 
         EXPECT_FALSE(c.run_request());
     }
@@ -825,11 +821,9 @@ TEST(ClientTest, RequestShutdownBrokerThrows)
 
         network::request req(std::move(msg));
 
-        network::request_shutdown::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(Throw(std::exception()));
+        EXPECT_CALL(*broker, send(_)).WillOnce(Throw(std::exception()));
 
         EXPECT_FALSE(c.run_request());
     }
@@ -853,14 +847,15 @@ TEST(ClientTest, ConfigSync)
 
         network::request req(std::move(msg));
 
-        network::client_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_client_init());
-        EXPECT_STREQ(res.status.c_str(), "ok");
+        auto client_init_res =
+            dynamic_cast<network::client_init::response *>(res[0].get());
+        EXPECT_STREQ(client_init_res->status.c_str(), "ok");
     }
 
     // Config sync
@@ -870,14 +865,15 @@ TEST(ClientTest, ConfigSync)
 
         network::request req(std::move(msg));
 
-        network::config_sync::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_request());
-        EXPECT_EQ(network::config_sync::response::id, res.id);
+        auto client_init_res =
+            dynamic_cast<network::config_sync::response *>(res[0].get());
+        EXPECT_EQ(network::config_sync::response::id, client_init_res->id);
     }
 }
 
@@ -896,9 +892,7 @@ TEST(ClientTest, ConfigSyncNoClientInit)
         network::request req(std::move(msg));
 
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(
-            *broker, send(testing::An<const network::base_response &>()))
-            .WillOnce(Return(true));
+        EXPECT_CALL(*broker, send(_)).WillOnce(Return(true));
 
         EXPECT_FALSE(c.run_request());
     }
@@ -922,14 +916,15 @@ TEST(ClientTest, ConfigSyncReturnsConfigFeaturesWhenAsmEnabled)
 
         network::request req(std::move(msg));
 
-        network::client_init::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_client_init());
-        EXPECT_STREQ(res.status.c_str(), "ok");
+        auto client_init_res =
+            dynamic_cast<network::client_init::response *>(res[0].get());
+        EXPECT_STREQ(client_init_res->status.c_str(), "ok");
     }
 
     // Lets enable asm
@@ -942,14 +937,15 @@ TEST(ClientTest, ConfigSyncReturnsConfigFeaturesWhenAsmEnabled)
 
         network::request req(std::move(msg));
 
-        network::config_features::response res;
+        std::vector<std::shared_ptr<network::base_response>> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
-        EXPECT_CALL(*broker,
-            send(testing::An<const network::base_response &>()))
-            .WillOnce(DoAll(SaveResponse<decltype(res)>(&res), Return(true)));
+        EXPECT_CALL(*broker, send(_))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_request());
-        EXPECT_EQ(res.enabled, true);
+        auto client_init_res =
+            dynamic_cast<network::config_features::response *>(res[0].get());
+        EXPECT_EQ(client_init_res->enabled, true);
     }
 }
 

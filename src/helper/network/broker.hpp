@@ -54,9 +54,6 @@ public:
         const std::vector<std::shared_ptr<base_response>> &messages)
         const override;
 protected:
-    bool send_tuples(std::vector<
-        msgpack::type::tuple<std::string, std::shared_ptr<base_response>>>
-            tuples) const;
     base_socket::ptr socket_;
 };
 
