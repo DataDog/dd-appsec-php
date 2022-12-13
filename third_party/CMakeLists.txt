@@ -3,6 +3,7 @@ include(FetchContent)
 option(MPACK_DEBUG "Compile mpack with MPACK_DEBUG=1 and min buffer size" OFF)
 
 if(DD_APPSEC_BUILD_HELPER)
+    set(LIBDDWAF_TESTING OFF)
     add_subdirectory(libddwaf EXCLUDE_FROM_ALL)
 
     FetchContent_Declare(
