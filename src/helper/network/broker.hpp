@@ -50,9 +50,10 @@ public:
 
     [[nodiscard]] request recv(
         std::chrono::milliseconds initial_timeout) const override;
-    [[nodiscard]] virtual bool send(
+    [[nodiscard]] bool send(
         const std::vector<std::shared_ptr<base_response>> &messages)
         const override;
+
 protected:
     base_socket::ptr socket_;
 };

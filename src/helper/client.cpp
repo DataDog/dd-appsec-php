@@ -218,7 +218,7 @@ bool client::handle_command(network::request_init::request &command)
     return false;
 }
 
-bool client::handle_command(network::config_sync::request &command)
+bool client::handle_command(network::config_sync::request & /* command */)
 {
     if (!service_) {
         // This implies a failed client_init, we can't continue.
@@ -233,7 +233,8 @@ bool client::handle_command(network::config_sync::request &command)
     std::vector<std::shared_ptr<network::base_response>> messages;
 
     if (service_->get_service_config()->is_asm_enabled()) {
-        auto response_cf = std::make_shared<network::config_features::response>();
+        auto response_cf =
+            std::make_shared<network::config_features::response>();
         response_cf->enabled = true;
 
         SPDLOG_DEBUG("sending config_features to config_sync");
