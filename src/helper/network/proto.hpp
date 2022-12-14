@@ -62,7 +62,7 @@ struct base_response {
     virtual ~base_response() = default;
     // NOLINTNEXTLINE(google-runtime-references)
     virtual stream_packer &pack(stream_packer &packer) const = 0;
-    [[nodiscard]] virtual std::string get_type() const = 0;
+    [[nodiscard]] virtual std::string_view get_type() const = 0;
 };
 
 template <typename T> struct base_response_generic : public base_response {
@@ -81,8 +81,9 @@ template <typename T> struct base_response_generic : public base_response {
 };
 
 struct client_init {
+    static constexpr const char *name = "client_init";
     struct request : base_request {
-        static constexpr const char *name = "client_init";
+        static constexpr const char *name = client_init::name;
         static constexpr request_id id = request_id::client_init;
 
         unsigned pid{0};
@@ -107,9 +108,9 @@ struct client_init {
     struct response : base_response_generic<response> {
         static constexpr response_id id = response_id::client_init;
 
-        [[nodiscard]] std::string get_type() const override
+        [[nodiscard]] std::string_view get_type() const override
         {
-            return "client_init";
+            return client_init::name;
         };
         std::string status;
         std::string version{dds::php_ddappsec_version};
@@ -123,8 +124,10 @@ struct client_init {
 };
 
 struct request_init {
+    static constexpr const char *name = "request_init";
+
     struct request : base_request {
-        static constexpr const char *name = "request_init";
+        static constexpr const char *name = request_init::name;
         static constexpr request_id id = request_id::request_init;
 
         dds::parameter data;
@@ -142,9 +145,9 @@ struct request_init {
     struct response : base_response_generic<response> {
         static constexpr response_id id = response_id::request_init;
 
-        [[nodiscard]] std::string get_type() const override
+        [[nodiscard]] std::string_view get_type() const override
         {
-            return "request_init";
+            return request_init::name;
         };
         std::string verdict;
         std::vector<std::string> triggers;
@@ -155,11 +158,12 @@ struct request_init {
 };
 
 struct config_sync {
+    static constexpr const char *name = "config_sync";
     struct request : base_request {
-        static constexpr const char *name = "config_sync";
         static constexpr request_id id = request_id::config_sync;
-
-        dds::parameter data;
+        static constexpr const char *name = config_sync::name;
+        int appsec_enabled_env = {0}; //@TODO to be defined on next pr but it will
+                                // have 3 statuses
 
         request() = default;
         request(const request &) = delete;
@@ -167,14 +171,16 @@ struct config_sync {
         request(request &&) = default;
         request &operator=(request &&) = default;
         ~request() override = default;
+
+        MSGPACK_DEFINE(appsec_enabled_env)
     };
 
     struct response : base_response_generic<response> {
         static constexpr response_id id = response_id::config_sync;
 
-        [[nodiscard]] std::string get_type() const override
+        [[nodiscard]] std::string_view get_type() const override
         {
-            return "config_sync";
+            return config_sync::name;
         };
 
         MSGPACK_DEFINE();
@@ -182,12 +188,13 @@ struct config_sync {
 };
 
 struct config_features {
+    static constexpr const char *name = "config_features";
     struct response : base_response_generic<response> {
         static constexpr response_id id = response_id::config_features;
 
-        [[nodiscard]] std::string get_type() const override
+        [[nodiscard]] std::string_view get_type() const override
         {
-            return "config_features";
+            return config_features::name;
         };
         bool enabled;
 
@@ -196,8 +203,9 @@ struct config_features {
 };
 
 struct request_shutdown {
+    static constexpr const char *name = "request_shutdown";
     struct request : base_request {
-        static constexpr const char *name = "request_shutdown";
+        static constexpr const char *name = request_shutdown::name;
         static constexpr request_id id = request_id::request_shutdown;
 
         dds::parameter data;
@@ -215,9 +223,9 @@ struct request_shutdown {
     struct response : base_response_generic<response> {
         static constexpr response_id id = response_id::request_shutdown;
 
-        [[nodiscard]] std::string get_type() const override
+        [[nodiscard]] std::string_view get_type() const override
         {
-            return "request_shutdown";
+            return request_shutdown::name;
         };
         std::string verdict;
         std::vector<std::string> triggers;
@@ -234,10 +242,15 @@ struct request_shutdown {
 // response ensures that the extension will not be blocked waiting for a
 // message.
 struct error {
+    static constexpr const char *name = "error";
+
     struct response : base_response_generic<response> {
         static constexpr response_id id = response_id::error;
 
-        [[nodiscard]] std::string get_type() const override { return "error"; };
+        [[nodiscard]] std::string_view get_type() const override
+        {
+            return error::name;
+        };
 
         MSGPACK_DEFINE();
     };

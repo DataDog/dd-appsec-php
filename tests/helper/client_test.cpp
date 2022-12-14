@@ -861,7 +861,7 @@ TEST(ClientTest, ConfigSync)
     // Config sync
     {
         network::config_sync::request msg;
-        msg.data = parameter::map();
+        msg.appsec_enabled_env = 0;
 
         network::request req(std::move(msg));
 
@@ -887,7 +887,7 @@ TEST(ClientTest, ConfigSyncNoClientInit)
     // Config Sync
     {
         network::config_sync::request msg;
-        msg.data = parameter::map();
+        msg.appsec_enabled_env = 0;
 
         network::request req(std::move(msg));
 
@@ -933,7 +933,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigFeaturesWhenAsmEnabled)
     // Config sync
     {
         network::config_sync::request msg;
-        msg.data = parameter::map();
+        msg.appsec_enabled_env = 0;
 
         network::request req(std::move(msg));
 

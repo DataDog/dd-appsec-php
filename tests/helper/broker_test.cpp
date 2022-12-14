@@ -795,4 +795,16 @@ TEST(BrokerTest, RequestShutdownTypeIsAddedToMessage)
     assert_type_equal_to(buffer, 0, "request_shutdown");
 }
 
+TEST(BrokerTest, ItReturnsFalseWhenNoMessagesProvided)
+{
+    mock::socket *socket = new mock::socket();
+    network::broker broker{std::unique_ptr<mock::socket>(socket)};
+
+    EXPECT_CALL(*socket, send(_, _)).Times(0);
+
+    std::vector<std::shared_ptr<network::base_response>> responses;
+
+    EXPECT_FALSE(broker.send(responses));
+}
+
 } // namespace dds

@@ -79,7 +79,7 @@ bool broker::send(
     }
 
     std::vector<
-        msgpack::type::tuple<std::string, std::shared_ptr<base_response>>>
+        msgpack::type::tuple<std::string_view, std::shared_ptr<base_response>>>
         tuples;
     tuples.reserve(messages.size());
     for (auto const &message : messages) {
