@@ -52,7 +52,7 @@ TEST(ClientTest, ClientInit)
 
     EXPECT_STREQ(client_init_res->status.c_str(), "ok");
     EXPECT_EQ(client_init_res->meta.size(), 2);
-    EXPECT_STREQ(client_init_res->meta[tag::waf_version].c_str(), "1.6.0-beta0");
+    EXPECT_STREQ(client_init_res->meta[tag::waf_version].c_str(), "1.5.0");
     EXPECT_STREQ(client_init_res->meta[tag::event_rules_errors].c_str(), "{}");
 
     EXPECT_EQ(client_init_res->metrics.size(), 2);
@@ -91,7 +91,7 @@ TEST(ClientTest, ClientInitInvalidRules)
 
     EXPECT_STREQ(client_init_res->status.c_str(), "ok");
     EXPECT_EQ(client_init_res->meta.size(), 2);
-    EXPECT_STREQ(client_init_res->meta[tag::waf_version].c_str(), "1.6.0-beta0");
+    EXPECT_STREQ(client_init_res->meta[tag::waf_version].c_str(), "1.5.0");
 
     rapidjson::Document doc;
     doc.Parse(client_init_res->meta[tag::event_rules_errors]);
