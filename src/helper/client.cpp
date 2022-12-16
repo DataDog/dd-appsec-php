@@ -120,6 +120,19 @@ bool client::handle_command(const network::client_init::request &command)
 
     std::vector<std::string> errors;
     bool has_errors = false;
+
+    switch (command.enabled_configuration) {
+    case 1:
+        extension_enabled_conf = extension_enabled_configuration::ENABLED;
+        break;
+    case 2:
+        extension_enabled_conf = extension_enabled_configuration::DISABLED;
+        break;
+    default:
+        extension_enabled_conf = extension_enabled_configuration::NOT_SET;
+        break;
+    }
+
     try {
         service_ = service_manager_->create_service(
             service_id, eng_settings, command.rc_settings, meta, metrics);
@@ -210,6 +223,19 @@ bool client::handle_command(network::request_init::request &command)
     return false;
 }
 
+bool client::compute_extension_status()
+{
+    if (extension_enabled_conf == extension_enabled_configuration::ENABLED) {
+        return true;
+    } else if (extension_enabled_conf ==
+               extension_enabled_configuration::DISABLED) {
+        return false;
+    }
+
+    return service_->get_service_config()->get_asm_enabled_status() ==
+           enable_asm_status::ENABLED;
+}
+
 bool client::handle_command(network::config_sync::request & /* command */)
 {
     if (!service_) {
@@ -221,7 +247,7 @@ bool client::handle_command(network::config_sync::request & /* command */)
 
     SPDLOG_DEBUG("received command config_sync");
 
-    if (service_->get_service_config()->is_asm_enabled()) {
+    if (compute_extension_status()) {
         auto response_cf =
             std::make_shared<network::config_features::response>();
         response_cf->enabled = true;
