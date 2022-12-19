@@ -183,6 +183,21 @@ bool client::handle_command(network::request_init::request &command)
         return false;
     }
 
+    if (!compute_extension_status()) {
+        auto response_cf =
+            std::make_shared<network::config_features::response>();
+        response_cf->enabled = false;
+
+        SPDLOG_DEBUG("sending config_features to request_init");
+        try {
+            return broker_->send(response_cf);
+        } catch (std::exception &e) {
+            SPDLOG_ERROR(e.what());
+        }
+
+        return true;
+    }
+
     // During request init we initialize the engine context
     context_.emplace(*service_->get_engine());
 
@@ -259,13 +274,13 @@ bool client::handle_command(network::config_sync::request & /* command */)
             SPDLOG_ERROR(e.what());
         }
 
-        return false;
+        return true;
     }
 
-    auto response_cs = std::make_shared<network::config_sync::response>();
     SPDLOG_DEBUG("sending config_sync to config_sync");
     try {
-        return broker_->send(response_cs);
+        return broker_->send(
+            std::make_shared<network::config_sync::response>());
     } catch (std::exception &e) {
         SPDLOG_ERROR(e.what());
     }
