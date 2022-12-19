@@ -10,7 +10,7 @@
 
 namespace dds {
 
-enum class enable_asm_status : uint { NOT_SET = 0, ENABLED, DISABLED };
+enum class enable_asm_status : unsigned { NOT_SET = 0, ENABLED, DISABLED };
 
 struct service_config {
     void enable_asm() { asm_enabled = enable_asm_status::ENABLED; }

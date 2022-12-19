@@ -71,7 +71,8 @@ protected:
     std::shared_ptr<service_manager> service_manager_;
     std::shared_ptr<service> service_;
     std::optional<engine::context> context_;
-    extension_enabled_configuration extension_enabled_conf;
+    extension_enabled_configuration extension_enabled_conf = {
+        extension_enabled_configuration::NOT_SET};
 };
 
 } // namespace dds

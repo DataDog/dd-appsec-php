@@ -242,8 +242,9 @@ bool client::compute_extension_status()
 {
     if (extension_enabled_conf == extension_enabled_configuration::ENABLED) {
         return true;
-    } else if (extension_enabled_conf ==
-               extension_enabled_configuration::DISABLED) {
+    }
+
+    if (extension_enabled_conf == extension_enabled_configuration::DISABLED) {
         return false;
     }
 
