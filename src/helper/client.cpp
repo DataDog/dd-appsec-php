@@ -53,9 +53,7 @@ bool maybe_exec_cmd_M(client &client, network::request &msg)
 
 void send_error_response(const network::base_broker &broker)
 {
-    std::vector<std::shared_ptr<network::base_response>> messages;
-    messages.push_back(std::make_shared<network::error::response>());
-    if (!broker.send(messages)) {
+    if (!broker.send(std::make_shared<network::error::response>())) {
         SPDLOG_WARN("Failed to send error response");
     }
 }
@@ -147,11 +145,8 @@ bool client::handle_command(const network::client_init::request &command)
     response->meta = std::move(meta);
     response->metrics = std::move(metrics);
 
-    std::vector<std::shared_ptr<network::base_response>> messages;
-    messages.push_back(response);
-
     try {
-        if (!broker_->send(messages)) {
+        if (!broker_->send(response)) {
             has_errors = true;
         }
     } catch (std::exception &e) {
@@ -204,13 +199,10 @@ bool client::handle_command(network::request_init::request &command)
         return false;
     }
 
-    std::vector<std::shared_ptr<network::base_response>> messages;
-    messages.push_back(response);
-
     SPDLOG_DEBUG(
         "sending response to request_init, verdict: {}", response->verdict);
     try {
-        return broker_->send(messages);
+        return broker_->send(response);
     } catch (std::exception &e) {
         SPDLOG_ERROR(e.what());
     }
@@ -227,10 +219,7 @@ bool client::handle_command(network::config_sync::request & /* command */)
         return false;
     }
 
-    context_.emplace(*service_->get_engine());
-
     SPDLOG_DEBUG("received command config_sync");
-    std::vector<std::shared_ptr<network::base_response>> messages;
 
     if (service_->get_service_config()->is_asm_enabled()) {
         auto response_cf =
@@ -239,8 +228,7 @@ bool client::handle_command(network::config_sync::request & /* command */)
 
         SPDLOG_DEBUG("sending config_features to config_sync");
         try {
-            messages.push_back(response_cf);
-            return broker_->send(messages);
+            return broker_->send(response_cf);
         } catch (std::exception &e) {
             SPDLOG_ERROR(e.what());
         }
@@ -249,10 +237,9 @@ bool client::handle_command(network::config_sync::request & /* command */)
     }
 
     auto response_cs = std::make_shared<network::config_sync::response>();
-    messages.push_back(response_cs);
     SPDLOG_DEBUG("sending config_sync to config_sync");
     try {
-        return broker_->send(messages);
+        return broker_->send(response_cs);
     } catch (std::exception &e) {
         SPDLOG_ERROR(e.what());
     }
@@ -310,9 +297,7 @@ bool client::handle_command(network::request_shutdown::request &command)
     SPDLOG_DEBUG(
         "sending response to request_shutdown, verdict: {}", response->verdict);
     try {
-        std::vector<std::shared_ptr<network::base_response>> messages;
-        messages.push_back(response);
-        return broker_->send(messages);
+        return broker_->send(response);
     } catch (std::exception &e) {
         SPDLOG_ERROR(e.what());
     }

@@ -104,4 +104,13 @@ bool broker::send(
 
     return res == buffer.size();
 }
+
+bool broker::send(const std::shared_ptr<base_response> &message) const
+{
+    std::vector<std::shared_ptr<network::base_response>> messages;
+    messages.push_back(message);
+
+    return send(messages);
+}
+
 } // namespace dds::network
