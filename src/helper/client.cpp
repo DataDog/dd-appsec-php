@@ -238,7 +238,8 @@ bool client::compute_client_status()
         return false;
     }
 
-    return service_->get_service_config()->get_asm_enabled_status() == true;
+    return service_->get_service_config()->get_asm_enabled_status() ==
+           enable_asm_status::ENABLED;
 }
 
 bool client::handle_command(network::config_sync::request & /* command */)
