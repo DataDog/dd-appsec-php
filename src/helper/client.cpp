@@ -121,17 +121,7 @@ bool client::handle_command(const network::client_init::request &command)
     std::vector<std::string> errors;
     bool has_errors = false;
 
-    switch (command.enabled_configuration) {
-    case 1:
-        extension_enabled_conf = extension_enabled_configuration::ENABLED;
-        break;
-    case 2:
-        extension_enabled_conf = extension_enabled_configuration::DISABLED;
-        break;
-    default:
-        extension_enabled_conf = extension_enabled_configuration::NOT_SET;
-        break;
-    }
+    client_enabled_conf = command.enabled_configuration;
 
     try {
         service_ = service_manager_->create_service(
@@ -183,7 +173,7 @@ bool client::handle_command(network::request_init::request &command)
         return false;
     }
 
-    //    if (!compute_extension_status()) {
+    //    if (!compute_client_status()) {
     //        auto response_cf =
     //            std::make_shared<network::config_features::response>();
     //        response_cf->enabled = false;
@@ -238,18 +228,17 @@ bool client::handle_command(network::request_init::request &command)
     return false;
 }
 
-bool client::compute_extension_status()
+bool client::compute_client_status()
 {
-    if (extension_enabled_conf == extension_enabled_configuration::ENABLED) {
+    if (client_enabled_conf == true) {
         return true;
     }
 
-    if (extension_enabled_conf == extension_enabled_configuration::DISABLED) {
+    if (client_enabled_conf == false) {
         return false;
     }
 
-    return service_->get_service_config()->get_asm_enabled_status() ==
-           enable_asm_status::ENABLED;
+    return service_->get_service_config()->get_asm_enabled_status() == true;
 }
 
 bool client::handle_command(network::config_sync::request & /* command */)
@@ -263,7 +252,7 @@ bool client::handle_command(network::config_sync::request & /* command */)
 
     SPDLOG_DEBUG("received command config_sync");
 
-    if (compute_extension_status()) {
+    if (compute_client_status()) {
         auto response_cf =
             std::make_shared<network::config_features::response>();
         response_cf->enabled = true;

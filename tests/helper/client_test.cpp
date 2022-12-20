@@ -25,9 +25,9 @@ public:
 
 } // namespace mock
 
-int EXTENSION_CONFIGURATION_NOT_SET = 0;
-int EXTENSION_CONFIGURATION_ENABLED = 1;
-int EXTENSION_CONFIGURATION_DISABLED = 2;
+auto EXTENSION_CONFIGURATION_NOT_SET = std::nullopt;
+bool EXTENSION_CONFIGURATION_ENABLED = true;
+bool EXTENSION_CONFIGURATION_DISABLED = false;
 
 TEST(ClientTest, ClientInit)
 {
@@ -986,7 +986,8 @@ TEST(ClientTest, ConfigSyncNoClientInit)
     }
 }
 
-void set_extension_configuration_to(mock::broker *broker, client &c, int status)
+void set_extension_configuration_to(
+    mock::broker *broker, client &c, std::optional<bool> status)
 {
     // Client Init
     {

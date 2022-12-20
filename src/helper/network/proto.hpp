@@ -89,7 +89,7 @@ struct client_init {
         unsigned pid{0};
         std::string client_version;
         std::string runtime_version;
-        unsigned enabled_configuration{0};
+        std::optional<bool> enabled_configuration;
 
         dds::service_identifier service;
         dds::engine_settings engine_settings;

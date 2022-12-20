@@ -72,7 +72,13 @@ static dd_result _pack_command(
     dd_mpack_write_lstr(w, PHP_DDAPPSEC_VERSION);
     dd_mpack_write_lstr(w, PHP_VERSION);
 
-    mpack_write(w, (uint32_t)get_enabled_configuration());
+    enabled_configuration configuration = get_enabled_configuration();
+
+    if (configuration == NOT_CONFIGURED) {
+        mpack_write_nil(w);
+    } else {
+        mpack_write_bool(w, configuration == ENABLED ? true : false);
+    }
 
     // Service details
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)

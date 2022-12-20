@@ -58,12 +58,7 @@ public:
     void run(worker::queue_consumer &q);
 
 protected:
-    bool compute_extension_status();
-    enum class extension_enabled_configuration : uint {
-        NOT_SET,
-        ENABLED,
-        DISABLED
-    };
+    bool compute_client_status();
 
     bool initialised{false};
     uint32_t version{};
@@ -71,8 +66,7 @@ protected:
     std::shared_ptr<service_manager> service_manager_;
     std::shared_ptr<service> service_;
     std::optional<engine::context> context_;
-    extension_enabled_configuration extension_enabled_conf = {
-        extension_enabled_configuration::NOT_SET};
+    std::optional<bool> client_enabled_conf;
 };
 
 } // namespace dds

@@ -25,4 +25,4 @@ var_dump($commands[0][1][3]); //enabled_configuration
 bool(true)
 bool(true)
 string(%d) "client_init"
-int(2)
+bool(false)

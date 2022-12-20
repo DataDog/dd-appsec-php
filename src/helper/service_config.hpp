@@ -7,19 +7,20 @@
 
 #include "remote_config/protocol/config_state.hpp"
 #include <atomic>
+#include <optional>
 
 namespace dds {
 
 enum class enable_asm_status : unsigned { NOT_SET = 0, ENABLED, DISABLED };
 
 struct service_config {
-    void enable_asm() { asm_enabled = enable_asm_status::ENABLED; }
-    void disable_asm() { asm_enabled = enable_asm_status::DISABLED; }
-    void unset_asm() { asm_enabled = enable_asm_status::NOT_SET; }
-    enable_asm_status get_asm_enabled_status() { return asm_enabled; }
+    void enable_asm() { asm_enabled = true; }
+    void disable_asm() { asm_enabled = false; }
+    void unset_asm() { asm_enabled = std::nullopt; }
+    std::optional<bool> get_asm_enabled_status() { return asm_enabled; }
 
 protected:
-    std::atomic<enable_asm_status> asm_enabled = {enable_asm_status::NOT_SET};
+    std::atomic<std::optional<bool>> asm_enabled = {std::nullopt};
 };
 
 } // namespace dds

@@ -203,7 +203,7 @@ TEST(BrokerTest, RecvClientInit)
     packer.pack_unsigned_int(20);
     pack_str(packer, "one");
     pack_str(packer, "two");
-    packer.pack_unsigned_int(0);
+    packer.pack_nil();
     packer.pack_map(2);
     pack_str(packer, "service");
     pack_str(packer, "api");
