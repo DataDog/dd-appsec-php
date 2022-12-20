@@ -44,7 +44,7 @@ TEST(RemoteConfigAsmFeaturesListener, ByDefaultListenerIsNotSet)
     auto remote_config_service = std::make_shared<service_config>();
     remote_config::asm_features_listener listener(remote_config_service);
 
-    EXPECT_EQ(std::nullopt, remote_config_service->get_asm_enabled_status());
+    EXPECT_FALSE(remote_config_service->get_asm_enabled_status().has_value());
 }
 
 TEST(RemoteConfigAsmFeaturesListener, ListenerGetActiveWhenConfigSaysSoOnUpdate)
@@ -58,7 +58,7 @@ TEST(RemoteConfigAsmFeaturesListener, ListenerGetActiveWhenConfigSaysSoOnUpdate)
         std::cout << error.what() << std::endl;
     }
 
-    EXPECT_TRUE(remote_config_service->get_asm_enabled_status());
+    EXPECT_TRUE(remote_config_service->get_asm_enabled_status().value());
 }
 
 TEST(RemoteConfigAsmFeaturesListener,
@@ -73,7 +73,7 @@ TEST(RemoteConfigAsmFeaturesListener,
         std::cout << error.what() << std::endl;
     }
 
-    EXPECT_FALSE(remote_config_service->get_asm_enabled_status());
+    EXPECT_FALSE(remote_config_service->get_asm_enabled_status().value());
 }
 
 TEST(RemoteConfigAsmFeaturesListener,
@@ -94,7 +94,7 @@ TEST(RemoteConfigAsmFeaturesListener,
         error_message = error.what();
     }
 
-    EXPECT_EQ(std::nullopt, remote_config_service->get_asm_enabled_status());
+    EXPECT_FALSE(remote_config_service->get_asm_enabled_status().has_value());
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }
@@ -115,7 +115,7 @@ TEST(RemoteConfigAsmFeaturesListener,
         error_message = error.what();
     }
 
-    EXPECT_EQ(std::nullopt, remote_config_service->get_asm_enabled_status());
+    EXPECT_FALSE(remote_config_service->get_asm_enabled_status().has_value());
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }
@@ -135,7 +135,7 @@ TEST(RemoteConfigAsmFeaturesListener, ListenerThrowsAnErrorWhenAsmKeyMissing)
         error_message = error.what();
     }
 
-    EXPECT_EQ(std::nullopt, remote_config_service->get_asm_enabled_status());
+    EXPECT_FALSE(remote_config_service->get_asm_enabled_status().has_value());
     EXPECT_EQ(0, error_message.compare(expected_error_message));
 }
 
@@ -154,7 +154,7 @@ TEST(RemoteConfigAsmFeaturesListener, ListenerThrowsAnErrorWhenAsmIsNotValid)
         error_message = error.what();
     }
 
-    EXPECT_EQ(std::nullopt, remote_config_service->get_asm_enabled_status());
+    EXPECT_FALSE(remote_config_service->get_asm_enabled_status().has_value());
     EXPECT_EQ(0, error_message.compare(expected_error_message));
 }
 
@@ -174,7 +174,7 @@ TEST(
         error_message = error.what();
     }
 
-    EXPECT_EQ(std::nullopt, remote_config_service->get_asm_enabled_status());
+    EXPECT_FALSE(remote_config_service->get_asm_enabled_status().has_value());
     EXPECT_EQ(0, error_message.compare(expected_error_message));
 }
 
@@ -195,7 +195,7 @@ TEST(RemoteConfigAsmFeaturesListener,
         error_message = error.what();
     }
 
-    EXPECT_EQ(std::nullopt, remote_config_service->get_asm_enabled_status());
+    EXPECT_FALSE(remote_config_service->get_asm_enabled_status().has_value());
     EXPECT_EQ(0, error_message.compare(expected_error_message));
 }
 } // namespace dds
