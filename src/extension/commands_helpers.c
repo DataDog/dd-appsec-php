@@ -4,6 +4,7 @@
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #include "commands_helpers.h"
+#include "ddappsec.h"
 #include "ddtrace.h"
 #include "logging.h"
 #include "msgpack_helpers.h"
@@ -110,6 +111,7 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
             mlog(dd_log_error, "Array of responses could not be retrieved - %s",
                 mpack_error_to_string(err));
         }
+        mpack_node_t type = mpack_node_array_at(first_response, 0);
         mpack_node_t first_message = mpack_node_array_at(first_response, 1);
         err = mpack_node_error(first_message);
         if (err != mpack_ok) {
@@ -117,7 +119,13 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
                 "Message on first response could not be retrieved - %s",
                 mpack_error_to_string(err));
         }
-        res = spec->incoming_cb(first_message, ctx);
+
+        if (dd_mpack_node_lstr_eq(type, "config_features")) {
+            res = spec->config_features(first_message, ctx);
+        } else {
+            res = spec->incoming_cb(first_message, ctx);
+        }
+
         mlog(dd_log_debug, "Processing for command %.*s returned %s", NAME_L,
             dd_result_to_string(res));
         err = imsg.root.tree->error;
@@ -459,5 +467,28 @@ static void _dump_out_msg(dd_log_level_t lvl, zend_llist *iovecs)
 dd_result dd_command_process_config_features(
     mpack_node_t root, ATTR_UNUSED void *nullable ctx)
 {
+    mpack_node_t first_element = mpack_node_array_at(root, 0);
+    bool new_status = mpack_node_bool(first_element);
+    if (DDAPPSEC_G(enabled_by_configuration) == ENABLED && !new_status) {
+        DDAPPSEC_G(enabled) = true; //Configuration dictates
+        mlog(dd_log_debug,
+            "Remote config is trying to disable extension but it is enabled by config");
+        // This needs to be changed as the current request does not have all the
+        // info expected from the helper
+        DDAPPSEC_G(skip_rshutdown) = true;
+        return dd_error;
+    }
+    DDAPPSEC_G(enabled) = mpack_node_bool(first_element);
     return dd_success;
+}
+
+dd_result dd_command_process_config_features_unexpected(
+    mpack_node_t root, ATTR_UNUSED void *nullable ctx)
+{
+    mlog(dd_log_debug,
+        "Config_features response was given to an unexpected request");
+
+    DDAPPSEC_G(skip_rshutdown) = true;
+
+    return dd_error;
 }

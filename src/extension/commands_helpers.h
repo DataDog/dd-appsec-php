@@ -39,3 +39,5 @@ bool dd_command_process_meta(mpack_node_t root);
 bool dd_command_process_metrics(mpack_node_t root);
 dd_result dd_command_process_config_features(
     mpack_node_t root, ATTR_UNUSED void *nullable ctx);
+dd_result dd_command_process_config_features_unexpected(
+    mpack_node_t root, ATTR_UNUSED void *nullable ctx);

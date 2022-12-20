@@ -220,6 +220,10 @@ function response_list(...$responses) {
     return $responses;
 }
 
+function response_config_features($status) {
+    return response("config_features", [$status]);
+}
+
 
 // vim: set et sw=4 ts=4:
 ?>

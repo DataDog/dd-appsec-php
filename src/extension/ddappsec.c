@@ -33,6 +33,7 @@
 #include "php_helpers.h"
 #include "php_objects.h"
 #include "request_abort.h"
+#include "src/extension/commands/config_sync.h"
 #include "string_helpers.h"
 #include "tags.h"
 
@@ -191,7 +192,6 @@ static PHP_MINIT_FUNCTION(ddappsec)
         return FAILURE;
     }
 
-    _check_enabled();
     dd_log_startup();
 
 #ifdef TESTING
@@ -225,17 +225,22 @@ static PHP_MSHUTDOWN_FUNCTION(ddappsec)
     return SUCCESS;
 }
 
-static pthread_once_t _rinit_config_once_control = PTHREAD_ONCE_INIT;
+static pthread_once_t _rinit_once_control = PTHREAD_ONCE_INIT;
+
+void dd_first_rinit()
+{
+    dd_config_first_rinit();
+    _check_enabled();
+}
 
 static PHP_RINIT_FUNCTION(ddappsec)
 {
-    pthread_once(&_rinit_config_once_control, dd_config_first_rinit);
+    pthread_once(&_rinit_once_control, dd_first_rinit);
     zai_config_rinit();
 
-    _check_enabled();
-
-    if (!DDAPPSEC_G(enabled)) {
-        mlog_g(dd_log_debug, "Appsec disabled");
+    if (DDAPPSEC_G(enabled_by_configuration) == DISABLED) {
+        DDAPPSEC_G(skip_rshutdown) = true;
+        mlog_g(dd_log_debug, "Appsec disabled by configuration");
         return SUCCESS;
     }
 
@@ -273,8 +278,18 @@ static int _do_rinit(INIT_FUNC_ARGS)
         return SUCCESS;
     }
 
-    // request_init
-    int res = dd_request_init(conn);
+    int res = 0;
+    if (DDAPPSEC_G(enabled)) {
+        // request_init
+        res = dd_request_init(conn);
+    } else {
+        // config_sync
+        res = dd_config_sync(conn);
+        if (res == SUCCESS && DDAPPSEC_G(enabled)) {
+            // Since it came as enabled, lets proceed
+            res = dd_request_init(conn);
+        }
+    }
     if (res == dd_network) {
         mlog_g(dd_log_info, "request_init failed with dd_network; closing "
                             "connection to helper");
@@ -295,6 +310,7 @@ static PHP_RSHUTDOWN_FUNCTION(ddappsec)
     UNUSED(type);
     UNUSED(module_number);
 
+    //Here now we have to disconnect from the helper in all the cases but when disabled by config
     if (!DDAPPSEC_G(enabled)) {
         return SUCCESS;
     }
@@ -370,9 +386,25 @@ static void _check_enabled()
 {
     bool is_cli =
         strcmp(sapi_module.name, "cli") == 0 || sapi_module.phpinfo_as_text;
-    DDAPPSEC_NOCACHE_G(enabled) = is_cli ? get_global_DD_APPSEC_ENABLED_ON_CLI()
-                                         : get_global_DD_APPSEC_ENABLED();
+
+    zai_config_memoized_entry enabled_config_cli =
+        zai_config_memoized_entries[DDAPPSEC_CONFIG_DD_APPSEC_ENABLED_ON_CLI];
+    zai_config_memoized_entry enabled_config =
+        zai_config_memoized_entries[DDAPPSEC_CONFIG_DD_APPSEC_ENABLED];
+
+    // name_index = -1 means the config was not configured neither
+    // by ini nor ENV
+    if (is_cli && enabled_config_cli.name_index != -1) {
+        DDAPPSEC_NOCACHE_G(enabled_by_configuration) = get_global_DD_APPSEC_ENABLED_ON_CLI() ? ENABLED : DISABLED;
+    } else if (enabled_config.name_index != -1) {
+        DDAPPSEC_NOCACHE_G(enabled_by_configuration) = get_global_DD_APPSEC_ENABLED() ? ENABLED : DISABLED;
+    } else {
+        DDAPPSEC_NOCACHE_G(enabled_by_configuration) = NOT_CONFIGURED;
+    };
+
+    DDAPPSEC_NOCACHE_G(enabled) = DDAPPSEC_NOCACHE_G(enabled_by_configuration) == ENABLED;
 }
+
 
 static PHP_FUNCTION(datadog_appsec_is_enabled)
 {
