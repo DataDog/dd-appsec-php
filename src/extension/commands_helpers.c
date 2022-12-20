@@ -455,3 +455,9 @@ static void _dump_out_msg(dd_log_level_t lvl, zend_llist *iovecs)
         zend_string_release(zstr);
     }
 }
+
+dd_result dd_command_process_config_features(
+    mpack_node_t root, ATTR_UNUSED void *nullable ctx)
+{
+    return dd_success;
+}

@@ -29,6 +29,7 @@ static const dd_command_spec _spec = {
     .num_args = 7,
     .outgoing_cb = _pack_command,
     .incoming_cb = _process_response,
+    .config_features = dd_command_process_config_features,
 };
 
 dd_result dd_client_init(dd_conn *nonnull conn)
