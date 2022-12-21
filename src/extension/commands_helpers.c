@@ -478,7 +478,7 @@ dd_result dd_command_process_config_features(
         DDAPPSEC_G(skip_rshutdown) = true;
         return dd_error;
     }
-    DDAPPSEC_G(enabled) = mpack_node_bool(first_element);
+    DDAPPSEC_G(enabled) = new_status;
     return dd_success;
 }
 
