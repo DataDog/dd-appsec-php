@@ -130,7 +130,7 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
                 "Received message for command %.*s unexpected: %.*s\n", NAME_L,
                 (int)mpack_node_strlen(type), mpack_node_str(type));
             //@TODO test this cases since this is now new
-            return dd_error;
+            //return dd_error;
         }
 
         mlog(dd_log_debug, "Processing for command %.*s returned %s", NAME_L,
