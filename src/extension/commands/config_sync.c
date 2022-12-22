@@ -31,6 +31,7 @@ static dd_result _request_pack(
     mpack_writer_t *nonnull w, void *nullable ATTR_UNUSED ctx)
 {
     UNUSED(ctx);
+    UNUSED(w);
 
     return dd_success;
 }
@@ -38,6 +39,8 @@ static dd_result _request_pack(
 dd_result dd_command_process_config_sync(
     mpack_node_t root, ATTR_UNUSED void *unspecnull ctx)
 {
+    UNUSED(root);
+    UNUSED(ctx);
     // There is nothing to do here
     return dd_success;
 }
