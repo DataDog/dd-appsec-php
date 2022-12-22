@@ -131,6 +131,7 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
                 (int)mpack_node_strlen(type), mpack_node_str(type));
             //@TODO test this cases since this is now new
             err = _imsg_destroy(&imsg);
+            UNUSED(err);
             return dd_error;
         }
 
