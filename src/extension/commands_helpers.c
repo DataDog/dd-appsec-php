@@ -130,7 +130,8 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
                 "Received message for command %.*s unexpected: %.*s\n", NAME_L,
                 (int)mpack_node_strlen(type), mpack_node_str(type));
             //@TODO test this cases since this is now new
-            //return dd_error;
+            err = _imsg_destroy(&imsg);
+            return dd_error;
         }
 
         mlog(dd_log_debug, "Processing for command %.*s returned %s", NAME_L,
@@ -476,6 +477,7 @@ static void _dump_out_msg(dd_log_level_t lvl, zend_llist *iovecs)
 dd_result dd_command_process_config_features(
     mpack_node_t root, ATTR_UNUSED void *nullable ctx)
 {
+    UNUSED(ctx);
     mpack_node_t first_element = mpack_node_array_at(root, 0);
     bool new_status = mpack_node_bool(first_element);
 
@@ -495,6 +497,8 @@ dd_result dd_command_process_config_features(
 dd_result dd_command_process_config_features_unexpected(
     mpack_node_t root, ATTR_UNUSED void *nullable ctx)
 {
+    UNUSED(root);
+    UNUSED(ctx);
     mlog(dd_log_debug,
         "Config_features response was given to an unexpected request");
 
