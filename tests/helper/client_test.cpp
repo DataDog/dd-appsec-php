@@ -1304,7 +1304,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
     }
 }
 
- TEST(ClientTest,
+TEST(ClientTest,
     RequestInitReturnsRequestInitWhenExtensionNotConfiguredAndAsmEnabled)
 {
     auto smanager = std::make_shared<service_manager>();
@@ -1312,8 +1312,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
 
     client c(smanager, std::unique_ptr<mock::broker>(broker));
 
-    set_extension_configuration_to(broker, c,
-    EXTENSION_CONFIGURATION_NOT_SET);
+    set_extension_configuration_to(broker, c, EXTENSION_CONFIGURATION_NOT_SET);
 
     // Lets enable asm
     c.get_service()->get_service_config()->enable_asm();
@@ -1329,8 +1328,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
         EXPECT_CALL(*broker,
             send(
-                testing::An<const std::shared_ptr<network::base_response>
-                &>()))
+                testing::An<const std::shared_ptr<network::base_response> &>()))
             .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_request());
@@ -1338,7 +1336,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
     }
 }
 
- TEST(ClientTest,
+TEST(ClientTest,
     RequestInitReturnsConfigFeaturesWhenExtensionNotConfiguredAndAsmDisabled)
 {
     auto smanager = std::make_shared<service_manager>();
@@ -1346,8 +1344,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
 
     client c(smanager, std::unique_ptr<mock::broker>(broker));
 
-    set_extension_configuration_to(broker, c,
-    EXTENSION_CONFIGURATION_NOT_SET);
+    set_extension_configuration_to(broker, c, EXTENSION_CONFIGURATION_NOT_SET);
 
     // Lets enable asm
     c.get_service()->get_service_config()->disable_asm();
@@ -1363,8 +1360,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
         EXPECT_CALL(*broker,
             send(
-                testing::An<const std::shared_ptr<network::base_response>
-                &>()))
+                testing::An<const std::shared_ptr<network::base_response> &>()))
             .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_request());
@@ -1372,7 +1368,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
     }
 }
 
- TEST(ClientTest,
+TEST(ClientTest,
     RequestInitReturnsConfigFeaturesWhenExtensionNotConfiguredAndAsmNotSet)
 {
     auto smanager = std::make_shared<service_manager>();
@@ -1380,8 +1376,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
 
     client c(smanager, std::unique_ptr<mock::broker>(broker));
 
-    set_extension_configuration_to(broker, c,
-    EXTENSION_CONFIGURATION_NOT_SET);
+    set_extension_configuration_to(broker, c, EXTENSION_CONFIGURATION_NOT_SET);
 
     // Lets enable asm
     c.get_service()->get_service_config()->unset_asm();
@@ -1397,8 +1392,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
         EXPECT_CALL(*broker,
             send(
-                testing::An<const std::shared_ptr<network::base_response>
-                &>()))
+                testing::An<const std::shared_ptr<network::base_response> &>()))
             .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_request());
@@ -1406,16 +1400,14 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
     }
 }
 
- TEST(ClientTest,
- RequestInitReturnsRequestInitWhenExtensionEnabledAndAsmEnabled)
+TEST(ClientTest, RequestInitReturnsRequestInitWhenExtensionEnabledAndAsmEnabled)
 {
     auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
     client c(smanager, std::unique_ptr<mock::broker>(broker));
 
-    set_extension_configuration_to(broker, c,
-    EXTENSION_CONFIGURATION_ENABLED);
+    set_extension_configuration_to(broker, c, EXTENSION_CONFIGURATION_ENABLED);
 
     // Lets enable asm
     c.get_service()->get_service_config()->enable_asm();
@@ -1431,8 +1423,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
         EXPECT_CALL(*broker,
             send(
-                testing::An<const std::shared_ptr<network::base_response>
-                &>()))
+                testing::An<const std::shared_ptr<network::base_response> &>()))
             .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_request());
@@ -1440,17 +1431,15 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
     }
 }
 
- TEST(
-    ClientTest,
-    RequestInitReturnsRequestInitWhenExtensionEnabledAndAsmDisabled)
+TEST(
+    ClientTest, RequestInitReturnsRequestInitWhenExtensionEnabledAndAsmDisabled)
 {
     auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
     client c(smanager, std::unique_ptr<mock::broker>(broker));
 
-    set_extension_configuration_to(broker, c,
-    EXTENSION_CONFIGURATION_ENABLED);
+    set_extension_configuration_to(broker, c, EXTENSION_CONFIGURATION_ENABLED);
 
     // Lets enable asm
     c.get_service()->get_service_config()->disable_asm();
@@ -1466,8 +1455,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
         EXPECT_CALL(*broker,
             send(
-                testing::An<const std::shared_ptr<network::base_response>
-                &>()))
+                testing::An<const std::shared_ptr<network::base_response> &>()))
             .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_request());
@@ -1475,16 +1463,14 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
     }
 }
 
- TEST(ClientTest,
- RequestInitReturnsRequestInitWhenExtensionEnabledAndAsmNotSet)
+TEST(ClientTest, RequestInitReturnsRequestInitWhenExtensionEnabledAndAsmNotSet)
 {
     auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
 
     client c(smanager, std::unique_ptr<mock::broker>(broker));
 
-    set_extension_configuration_to(broker, c,
-    EXTENSION_CONFIGURATION_ENABLED);
+    set_extension_configuration_to(broker, c, EXTENSION_CONFIGURATION_ENABLED);
 
     // Lets enable asm
     c.get_service()->get_service_config()->unset_asm();
@@ -1500,8 +1486,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
         EXPECT_CALL(*broker,
             send(
-                testing::An<const std::shared_ptr<network::base_response>
-                &>()))
+                testing::An<const std::shared_ptr<network::base_response> &>()))
             .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_request());
@@ -1509,7 +1494,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
     }
 }
 
- TEST(ClientTest,
+TEST(ClientTest,
     RequestInitReturnsConfigFeaturesWhenExtensionDisabledAndAsmEnabled)
 {
     auto smanager = std::make_shared<service_manager>();
@@ -1517,8 +1502,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
 
     client c(smanager, std::unique_ptr<mock::broker>(broker));
 
-    set_extension_configuration_to(broker, c,
-    EXTENSION_CONFIGURATION_DISABLED);
+    set_extension_configuration_to(broker, c, EXTENSION_CONFIGURATION_DISABLED);
 
     // Lets enable asm
     c.get_service()->get_service_config()->enable_asm();
@@ -1534,8 +1518,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
         EXPECT_CALL(*broker,
             send(
-                testing::An<const std::shared_ptr<network::base_response>
-                &>()))
+                testing::An<const std::shared_ptr<network::base_response> &>()))
             .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_request());
@@ -1547,7 +1530,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
     }
 }
 
- TEST(ClientTest,
+TEST(ClientTest,
     RequestInitReturnsConfigFeaturesWhenExtensionDisabledAndAsmDisabled)
 {
     auto smanager = std::make_shared<service_manager>();
@@ -1555,8 +1538,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
 
     client c(smanager, std::unique_ptr<mock::broker>(broker));
 
-    set_extension_configuration_to(broker, c,
-    EXTENSION_CONFIGURATION_DISABLED);
+    set_extension_configuration_to(broker, c, EXTENSION_CONFIGURATION_DISABLED);
 
     // Lets enable asm
     c.get_service()->get_service_config()->disable_asm();
@@ -1572,8 +1554,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
         EXPECT_CALL(*broker,
             send(
-                testing::An<const std::shared_ptr<network::base_response>
-                &>()))
+                testing::An<const std::shared_ptr<network::base_response> &>()))
             .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_request());
@@ -1585,7 +1566,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
     }
 }
 
- TEST(ClientTest,
+TEST(ClientTest,
     RequestInitReturnsConfigFeaturesWhenExtensionDisabledAndAsmNotSet)
 {
     auto smanager = std::make_shared<service_manager>();
@@ -1593,8 +1574,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
 
     client c(smanager, std::unique_ptr<mock::broker>(broker));
 
-    set_extension_configuration_to(broker, c,
-    EXTENSION_CONFIGURATION_DISABLED);
+    set_extension_configuration_to(broker, c, EXTENSION_CONFIGURATION_DISABLED);
 
     // Lets enable asm
     c.get_service()->get_service_config()->unset_asm();
@@ -1610,8 +1590,7 @@ TEST(ClientTest, ConfigSyncReturnsConfigSyncWhenExtensionDisabledAndAsmNotSet)
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
         EXPECT_CALL(*broker,
             send(
-                testing::An<const std::shared_ptr<network::base_response>
-                &>()))
+                testing::An<const std::shared_ptr<network::base_response> &>()))
             .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_TRUE(c.run_request());

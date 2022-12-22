@@ -15,7 +15,6 @@
 #include <php.h>
 #include <stdbool.h>
 
-
 typedef enum _enabled_configuration {
     NOT_CONFIGURED = 0,
     ENABLED,

@@ -310,7 +310,8 @@ static PHP_RSHUTDOWN_FUNCTION(ddappsec)
     UNUSED(type);
     UNUSED(module_number);
 
-    //Here now we have to disconnect from the helper in all the cases but when disabled by config
+    // Here now we have to disconnect from the helper in all the cases but when
+    // disabled by config
     if (!DDAPPSEC_G(enabled)) {
         return SUCCESS;
     }
@@ -395,16 +396,18 @@ static void _check_enabled()
     // name_index = -1 means the config was not configured neither
     // by ini nor ENV
     if (is_cli && enabled_config_cli.name_index != -1) {
-        DDAPPSEC_NOCACHE_G(enabled_by_configuration) = get_global_DD_APPSEC_ENABLED_ON_CLI() ? ENABLED : DISABLED;
+        DDAPPSEC_NOCACHE_G(enabled_by_configuration) =
+            get_global_DD_APPSEC_ENABLED_ON_CLI() ? ENABLED : DISABLED;
     } else if (enabled_config.name_index != -1) {
-        DDAPPSEC_NOCACHE_G(enabled_by_configuration) = get_global_DD_APPSEC_ENABLED() ? ENABLED : DISABLED;
+        DDAPPSEC_NOCACHE_G(enabled_by_configuration) =
+            get_global_DD_APPSEC_ENABLED() ? ENABLED : DISABLED;
     } else {
         DDAPPSEC_NOCACHE_G(enabled_by_configuration) = NOT_CONFIGURED;
     };
 
-    DDAPPSEC_NOCACHE_G(enabled) = DDAPPSEC_NOCACHE_G(enabled_by_configuration) == ENABLED;
+    DDAPPSEC_NOCACHE_G(enabled) =
+        DDAPPSEC_NOCACHE_G(enabled_by_configuration) == ENABLED;
 }
-
 
 static PHP_FUNCTION(datadog_appsec_is_enabled)
 {
