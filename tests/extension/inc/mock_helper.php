@@ -224,6 +224,10 @@ function response_config_features($status) {
     return response("config_features", [$status]);
 }
 
+function response_config_sync() {
+    return response("config_sync", []);
+}
+
 
 // vim: set et sw=4 ts=4:
 ?>

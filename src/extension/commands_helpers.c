@@ -122,8 +122,15 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
 
         if (dd_mpack_node_lstr_eq(type, "config_features")) {
             res = spec->config_features(first_message, ctx);
-        } else {
+        } else if (strncmp(spec->name, mpack_node_str(type), spec->name_len) ==
+                   0) {
             res = spec->incoming_cb(first_message, ctx);
+        } else {
+            mlog(dd_log_debug,
+                "Received message for command %.*s unexpected: %.*s\n", NAME_L,
+                (int)mpack_node_strlen(type), mpack_node_str(type));
+            //@TODO test this cases since this is now new
+            return dd_error;
         }
 
         mlog(dd_log_debug, "Processing for command %.*s returned %s", NAME_L,
@@ -137,6 +144,7 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
                 "Response message for %.*s does not "
                 "have the expected form",
                 NAME_L);
+
             return dd_error;
         }
         if (res != dd_success && res != dd_should_block) {
@@ -153,6 +161,7 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
     }
 
     mlog(dd_log_debug, "%.*s succeed. Not blocking", NAME_L);
+
     return dd_success;
 }
 
@@ -469,10 +478,11 @@ dd_result dd_command_process_config_features(
 {
     mpack_node_t first_element = mpack_node_array_at(root, 0);
     bool new_status = mpack_node_bool(first_element);
+
     if (DDAPPSEC_G(enabled_by_configuration) == ENABLED && !new_status) {
-        DDAPPSEC_G(enabled) = true; //Configuration dictates
-        mlog(dd_log_debug,
-            "Remote config is trying to disable extension but it is enabled by config");
+        DDAPPSEC_G(enabled) = true; // Configuration dictates
+        mlog(dd_log_debug, "Remote config is trying to disable extension but "
+                           "it is enabled by config");
         // This needs to be changed as the current request does not have all the
         // info expected from the helper
         DDAPPSEC_G(skip_rshutdown) = true;

@@ -32,10 +32,6 @@ static dd_result _request_pack(
 {
     UNUSED(ctx);
 
-    mpack_start_map(w, 0);
-
-    mpack_finish_map(w);
-
     return dd_success;
 }
 
