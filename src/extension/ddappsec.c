@@ -239,7 +239,7 @@ static PHP_RINIT_FUNCTION(ddappsec)
     zai_config_rinit();
 
     if (DDAPPSEC_G(enabled_by_configuration) == DISABLED) {
-        DDAPPSEC_G(skip_rshutdown) = true;
+//        DDAPPSEC_G(skip_rshutdown) = true;
         mlog_g(dd_log_debug, "Appsec disabled by configuration");
         return SUCCESS;
     }
