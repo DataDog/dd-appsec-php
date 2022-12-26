@@ -109,4 +109,6 @@ DD_CONFIGURATION
 #undef CUSTOM
 #undef CALIAS
 
+bool is_config_using_default(dd_config_id id);
+
 #endif  // DD_CONFIGURATION_H

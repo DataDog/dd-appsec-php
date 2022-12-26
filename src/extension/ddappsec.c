@@ -388,17 +388,11 @@ static void _check_enabled()
     bool is_cli =
         strcmp(sapi_module.name, "cli") == 0 || sapi_module.phpinfo_as_text;
 
-    zai_config_memoized_entry enabled_config_cli =
-        zai_config_memoized_entries[DDAPPSEC_CONFIG_DD_APPSEC_ENABLED_ON_CLI];
-    zai_config_memoized_entry enabled_config =
-        zai_config_memoized_entries[DDAPPSEC_CONFIG_DD_APPSEC_ENABLED];
-
-    // name_index = -1 means the config was not configured neither
-    // by ini nor ENV
-    if (is_cli && enabled_config_cli.name_index != -1) {
+    if (is_cli &&
+        !is_config_using_default(DDAPPSEC_CONFIG_DD_APPSEC_ENABLED_ON_CLI)) {
         DDAPPSEC_NOCACHE_G(enabled_by_configuration) =
             get_global_DD_APPSEC_ENABLED_ON_CLI() ? ENABLED : DISABLED;
-    } else if (enabled_config.name_index != -1) {
+    } else if (!is_config_using_default(DDAPPSEC_CONFIG_DD_APPSEC_ENABLED)) {
         DDAPPSEC_NOCACHE_G(enabled_by_configuration) =
             get_global_DD_APPSEC_ENABLED() ? ENABLED : DISABLED;
     } else {
