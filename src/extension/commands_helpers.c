@@ -488,10 +488,10 @@ dd_result dd_command_process_config_features(
                            "it is enabled by config");
         // This needs to be changed as the current request does not have all the
         // info expected from the helper
-//        DDAPPSEC_G(skip_rshutdown) = true;
+        //        DDAPPSEC_G(skip_rshutdown) = true;
         return dd_error;
     }
-    DDAPPSEC_G(enabled) = new_status ? ENABLED: DISABLED;
+    DDAPPSEC_G(enabled) = new_status ? ENABLED : DISABLED;
     return dd_success;
 }
 
@@ -503,7 +503,7 @@ dd_result dd_command_process_config_features_unexpected(
     mlog(dd_log_debug,
         "Config_features response was given to an unexpected request");
 
-//    DDAPPSEC_G(skip_rshutdown) = true;
+    //    DDAPPSEC_G(skip_rshutdown) = true;
 
     return dd_error;
 }

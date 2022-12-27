@@ -398,7 +398,7 @@ static void _check_enabled()
         DDAPPSEC_G(enabled_by_configuration) = NOT_CONFIGURED;
     };
 
-    DDAPPSEC_G(enabled) =  DDAPPSEC_G(enabled_by_configuration);
+    DDAPPSEC_G(enabled) = DDAPPSEC_G(enabled_by_configuration);
 }
 
 static PHP_FUNCTION(datadog_appsec_is_enabled)
