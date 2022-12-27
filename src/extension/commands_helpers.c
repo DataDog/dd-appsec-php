@@ -111,7 +111,6 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
             mlog(dd_log_error, "Array of responses could not be retrieved - %s",
                 mpack_error_to_string(err));
         }
-        mpack_node_t type = mpack_node_array_at(first_response, 0);
         mpack_node_t first_message = mpack_node_array_at(first_response, 1);
         err = mpack_node_error(first_message);
         if (err != mpack_ok) {
@@ -120,6 +119,13 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
                 mpack_error_to_string(err));
         }
 
+        //@TODO test this
+        mpack_node_t type = mpack_node_array_at(first_response, 0);
+        err = mpack_node_error(type);
+        if (err != mpack_ok) {
+            mlog(dd_log_error, "Type could not be retrieved - %s",
+                mpack_error_to_string(err));
+        }
         if (dd_mpack_node_lstr_eq(type, "config_features")) {
             res = spec->config_features(first_message, ctx);
         } else if (strncmp(spec->name, mpack_node_str(type), spec->name_len) ==
@@ -486,9 +492,6 @@ dd_result dd_command_process_config_features(
         DDAPPSEC_G(enabled) = ENABLED; // Configuration dictates
         mlog(dd_log_debug, "Remote config is trying to disable extension but "
                            "it is enabled by config");
-        // This needs to be changed as the current request does not have all the
-        // info expected from the helper
-        //        DDAPPSEC_G(skip_rshutdown) = true;
         return dd_error;
     }
     DDAPPSEC_G(enabled) = new_status ? ENABLED : DISABLED;
@@ -502,8 +505,6 @@ dd_result dd_command_process_config_features_unexpected(
     UNUSED(ctx);
     mlog(dd_log_debug,
         "Config_features response was given to an unexpected request");
-
-    //    DDAPPSEC_G(skip_rshutdown) = true;
 
     return dd_error;
 }
