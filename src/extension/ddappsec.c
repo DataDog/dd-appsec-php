@@ -192,6 +192,8 @@ static PHP_MINIT_FUNCTION(ddappsec)
         return FAILURE;
     }
 
+    DDAPPSEC_G(enabled) = NOT_CONFIGURED;
+
     dd_log_startup();
 
 #ifdef TESTING
@@ -227,19 +229,16 @@ static PHP_MSHUTDOWN_FUNCTION(ddappsec)
 
 static pthread_once_t _rinit_once_control = PTHREAD_ONCE_INIT;
 
-void dd_first_rinit()
-{
-    dd_config_first_rinit();
-    _check_enabled();
-}
-
 static PHP_RINIT_FUNCTION(ddappsec)
 {
-    pthread_once(&_rinit_once_control, dd_first_rinit);
+    pthread_once(&_rinit_once_control, dd_config_first_rinit);
     zai_config_rinit();
 
+    if (DDAPPSEC_G(enabled) == NOT_CONFIGURED) {
+        _check_enabled();
+    }
+
     if (DDAPPSEC_G(enabled_by_configuration) == DISABLED) {
-//        DDAPPSEC_G(skip_rshutdown) = true;
         mlog_g(dd_log_debug, "Appsec disabled by configuration");
         return SUCCESS;
     }
@@ -279,13 +278,13 @@ static int _do_rinit(INIT_FUNC_ARGS)
     }
 
     int res = 0;
-    if (DDAPPSEC_G(enabled)) {
+    if (DDAPPSEC_G(enabled) == ENABLED) {
         // request_init
         res = dd_request_init(conn);
     } else {
         // config_sync
         res = dd_config_sync(conn);
-        if (res == SUCCESS && DDAPPSEC_G(enabled)) {
+        if (res == SUCCESS && DDAPPSEC_G(enabled) == ENABLED) {
             // Since it came as enabled, lets proceed
             res = dd_request_init(conn);
         }
@@ -312,7 +311,7 @@ static PHP_RSHUTDOWN_FUNCTION(ddappsec)
 
     // Here now we have to disconnect from the helper in all the cases but when
     // disabled by config
-    if (!DDAPPSEC_G(enabled)) {
+    if (DDAPPSEC_G(enabled_by_configuration) == DISABLED) {
         return SUCCESS;
     }
 
@@ -372,7 +371,7 @@ static PHP_MINFO_FUNCTION(ddappsec)
 
     php_info_print_table_start();
     php_info_print_table_row(2, "Datadog AppSec support",
-        DDAPPSEC_G(enabled) ? "enabled" : "disabled");
+        DDAPPSEC_G(enabled) == ENABLED ? "enabled" : "disabled");
     php_info_print_table_row(2, "Version", PHP_DDAPPSEC_VERSION);
     php_info_print_table_end();
 
@@ -390,17 +389,16 @@ static void _check_enabled()
 
     if (is_cli &&
         !is_config_using_default(DDAPPSEC_CONFIG_DD_APPSEC_ENABLED_ON_CLI)) {
-        DDAPPSEC_NOCACHE_G(enabled_by_configuration) =
+        DDAPPSEC_G(enabled_by_configuration) =
             get_global_DD_APPSEC_ENABLED_ON_CLI() ? ENABLED : DISABLED;
     } else if (!is_config_using_default(DDAPPSEC_CONFIG_DD_APPSEC_ENABLED)) {
-        DDAPPSEC_NOCACHE_G(enabled_by_configuration) =
+        DDAPPSEC_G(enabled_by_configuration) =
             get_global_DD_APPSEC_ENABLED() ? ENABLED : DISABLED;
     } else {
-        DDAPPSEC_NOCACHE_G(enabled_by_configuration) = NOT_CONFIGURED;
+        DDAPPSEC_G(enabled_by_configuration) = NOT_CONFIGURED;
     };
 
-    DDAPPSEC_NOCACHE_G(enabled) =
-        DDAPPSEC_NOCACHE_G(enabled_by_configuration) == ENABLED;
+    DDAPPSEC_G(enabled) =  DDAPPSEC_G(enabled_by_configuration);
 }
 
 static PHP_FUNCTION(datadog_appsec_is_enabled)
@@ -408,7 +406,7 @@ static PHP_FUNCTION(datadog_appsec_is_enabled)
     if (zend_parse_parameters_none() == FAILURE) {
         RETURN_FALSE;
     }
-    RETURN_BOOL(DDAPPSEC_G(enabled));
+    RETURN_BOOL(DDAPPSEC_G(enabled) == ENABLED);
 }
 
 static PHP_FUNCTION(datadog_appsec_testing_rinit)

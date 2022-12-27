@@ -25,7 +25,7 @@ typedef enum _enabled_configuration {
 // clang-format off
 ZEND_BEGIN_MODULE_GLOBALS(ddappsec)
     enabled_configuration enabled_by_configuration;
-    bool enabled;
+    enabled_configuration enabled;
     bool skip_rshutdown;
 ZEND_END_MODULE_GLOBALS(ddappsec)
 // clang-format on
