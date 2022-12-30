@@ -80,9 +80,7 @@ void service::run(std::future<bool> &&exit_signal)
         // the polling interval has actually elapsed.
         auto now = std::chrono::steady_clock::now();
         if ((now - before) >= poll_interval_) {
-            if (!rc_client_->poll()) {
-                return;
-            }
+            rc_client_->poll();
             before = now;
         }
 
