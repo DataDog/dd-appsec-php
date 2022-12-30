@@ -26,17 +26,19 @@ remote_config::config get_config(const std::string &content, bool encode = true)
 
 remote_config::config get_config_with_status(std::string status)
 {
-    return get_config("{\"asm\":{\"enabled\":\"" + status + "\"}}");
+    return get_config("{\"asm\":{\"enabled\":" + status + "}}");
 }
 
-remote_config::config get_enabled_config()
+remote_config::config get_enabled_config(bool as_string = true)
 {
-    return get_config_with_status("true");
+    std::string quotes = as_string ? "\"" : "";
+    return get_config_with_status(quotes + "true" + quotes);
 }
 
-remote_config::config get_disabled_config()
+remote_config::config get_disabled_config(bool as_string = true)
 {
-    return get_config_with_status("false");
+    std::string quotes = as_string ? "\"" : "";
+    return get_config_with_status(quotes + "false" + quotes);
 }
 
 TEST(RemoteConfigAsmFeaturesListener, ByDefaultListenerIsNotSet)
@@ -48,7 +50,8 @@ TEST(RemoteConfigAsmFeaturesListener, ByDefaultListenerIsNotSet)
         remote_config_service->get_asm_enabled_status());
 }
 
-TEST(RemoteConfigAsmFeaturesListener, ListenerGetActiveWhenConfigSaysSoOnUpdate)
+TEST(RemoteConfigAsmFeaturesListener,
+    ListenerGetActiveWhenConfigSaysSoOnUpdateAsString)
 {
     auto remote_config_service = std::make_shared<service_config>();
     remote_config::asm_features_listener listener(remote_config_service);
@@ -64,13 +67,45 @@ TEST(RemoteConfigAsmFeaturesListener, ListenerGetActiveWhenConfigSaysSoOnUpdate)
 }
 
 TEST(RemoteConfigAsmFeaturesListener,
-    ListenerGetDeactivedWhenConfigSaysSoOnUpdate)
+    ListenerGetDeactivedWhenConfigSaysSoOnUpdateAsString)
 {
     auto remote_config_service = std::make_shared<service_config>();
     remote_config::asm_features_listener listener(remote_config_service);
 
     try {
         listener.on_update(get_disabled_config());
+    } catch (remote_config::error_applying_config &error) {
+        std::cout << error.what() << std::endl;
+    }
+
+    EXPECT_EQ(enable_asm_status::DISABLED,
+        remote_config_service->get_asm_enabled_status());
+}
+
+TEST(RemoteConfigAsmFeaturesListener,
+    ListenerGetActiveWhenConfigSaysSoOnUpdateAsBoolean)
+{
+    auto remote_config_service = std::make_shared<service_config>();
+    remote_config::asm_features_listener listener(remote_config_service);
+
+    try {
+        listener.on_update(get_enabled_config(false));
+    } catch (remote_config::error_applying_config &error) {
+        std::cout << error.what() << std::endl;
+    }
+
+    EXPECT_EQ(enable_asm_status::ENABLED,
+        remote_config_service->get_asm_enabled_status());
+}
+
+TEST(RemoteConfigAsmFeaturesListener,
+    ListenerGetDeactivedWhenConfigSaysSoOnUpdateAsBoolean)
+{
+    auto remote_config_service = std::make_shared<service_config>();
+    remote_config::asm_features_listener listener(remote_config_service);
+
+    try {
+        listener.on_update(get_disabled_config(false));
     } catch (remote_config::error_applying_config &error) {
         std::cout << error.what() << std::endl;
     }
@@ -191,7 +226,7 @@ TEST(RemoteConfigAsmFeaturesListener,
 {
     std::string error_message = "";
     std::string expected_error_message =
-        "Invalid config json encoded contents: enabled key missing";
+        "Invalid config json encoded contents: enabled key invalid";
     auto remote_config_service = std::make_shared<service_config>();
     remote_config::asm_features_listener listener(remote_config_service);
     remote_config::config enabled_key_invalid =

@@ -34,15 +34,23 @@ void dds::remote_config::asm_features_listener::on_update(const config &config)
     }
 
     auto enabled_itr = asm_itr->value.FindMember("enabled");
-    if (enabled_itr == asm_itr->value.MemberEnd() ||
-        enabled_itr->value.GetType() != rapidjson::kStringType) {
+    if (enabled_itr == asm_itr->value.MemberEnd()) {
         throw error_applying_config(
             "Invalid config json encoded contents: enabled key missing");
     }
 
-    if (strcmp("true", enabled_itr->value.GetString()) == 0) {
+    if (enabled_itr->value.GetType() == rapidjson::kStringType) {
+        if (strcmp("true", enabled_itr->value.GetString()) == 0) {
+            service_config_->enable_asm();
+        } else {
+            service_config_->disable_asm();
+        }
+    } else if (enabled_itr->value.GetType() == rapidjson::kTrueType) {
         service_config_->enable_asm();
-    } else {
+    } else if (enabled_itr->value.GetType() == rapidjson::kFalseType) {
         service_config_->disable_asm();
+    } else {
+        throw error_applying_config(
+            "Invalid config json encoded contents: enabled key invalid");
     }
 }
