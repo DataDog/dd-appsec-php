@@ -26,6 +26,9 @@ bool validate_field_is_present(const rapidjson::Value &parent_field,
     output_itr = parent_field.FindMember(key);
 
     if (output_itr == parent_field.MemberEnd()) {
+        if (missing == remote_config_parser_result::allow_missing) {
+            return true;
+        }
         throw parser_exception(missing);
     }
 
@@ -61,6 +64,11 @@ std::unordered_map<std::string, target_file> parse_target_files(
     rapidjson::Value::ConstMemberIterator target_files_itr)
 {
     std::unordered_map<std::string, target_file> result;
+
+    if (target_files_itr->value.GetType() == rapidjson::kNullType) {
+        return result;
+    }
+
     for (rapidjson::Value::ConstValueIterator itr =
              target_files_itr->value.Begin();
          itr != target_files_itr->value.End(); ++itr) {
@@ -103,6 +111,11 @@ std::vector<std::string> parse_client_configs(
     rapidjson::Value::ConstMemberIterator client_configs_itr)
 {
     std::vector<std::string> result;
+
+    if (client_configs_itr->value.GetType() == rapidjson::kNullType) {
+        return result;
+    }
+
     for (rapidjson::Value::ConstValueIterator itr =
              client_configs_itr->value.Begin();
          itr != client_configs_itr->value.End(); ++itr) {
@@ -268,12 +281,12 @@ get_configs_response parse(const std::string &body)
     // Lets validate the data and since we are there we get the iterators
     validate_field_is_present(serialized_doc, "target_files",
         rapidjson::kArrayType, target_files_itr,
-        remote_config_parser_result::target_files_field_missing,
+        remote_config_parser_result::allow_missing,
         remote_config_parser_result::target_files_field_invalid_type);
 
     validate_field_is_present(serialized_doc, "client_configs",
         rapidjson::kArrayType, client_configs_itr,
-        remote_config_parser_result::client_config_field_missing,
+        remote_config_parser_result::allow_missing,
         remote_config_parser_result::client_config_field_invalid_type);
 
     validate_field_is_present(serialized_doc, "targets", rapidjson::kStringType,
