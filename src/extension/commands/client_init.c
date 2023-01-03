@@ -64,7 +64,7 @@ static dd_result _pack_command(
 
     dd_mpack_write_lstr(w, "tracer_version");
     //@todo deharcode this
-    dd_mpack_write_nullable_cstr(w, "0.0");
+    dd_mpack_write_nullable_cstr(w, PHP_DDAPPSEC_VERSION);
 
     dd_mpack_write_lstr(w, "app_version");
     //@todo deharcode this
