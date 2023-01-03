@@ -242,4 +242,21 @@ TEST(RemoteConfigAsmFeaturesListener,
         remote_config_service->get_asm_enabled_status());
     EXPECT_EQ(0, error_message.compare(expected_error_message));
 }
+
+TEST(RemoteConfigAsmFeaturesListener, WhenListenerGetsUnapplyItGetsNotSet)
+{
+    auto remote_config_service = std::make_shared<service_config>();
+    remote_config::asm_features_listener listener(remote_config_service);
+
+    listener.on_update(get_enabled_config(false));
+    EXPECT_EQ(enable_asm_status::ENABLED,
+        remote_config_service->get_asm_enabled_status());
+
+    remote_config::config some_key;
+    listener.on_unapply(some_key);
+
+    EXPECT_EQ(enable_asm_status::NOT_SET,
+        remote_config_service->get_asm_enabled_status());
+}
+
 } // namespace dds

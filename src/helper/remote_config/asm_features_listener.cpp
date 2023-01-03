@@ -43,11 +43,15 @@ void dds::remote_config::asm_features_listener::on_update(const config &config)
         if (strcmp("true", enabled_itr->value.GetString()) == 0) {
             service_config_->enable_asm();
         } else {
+            // This scenario should not happen since RC would remove the file
+            // when appsec should not be enabled
             service_config_->disable_asm();
         }
     } else if (enabled_itr->value.GetType() == rapidjson::kTrueType) {
         service_config_->enable_asm();
     } else if (enabled_itr->value.GetType() == rapidjson::kFalseType) {
+        // This scenario should not happen since RC would remove the file
+        // when appsec should not be enabled
         service_config_->disable_asm();
     } else {
         throw error_applying_config(
