@@ -327,7 +327,7 @@ static void _dd_http_url(zend_array *meta_ht, zval *_server);
 static void _dd_http_user_agent(zend_array *meta_ht, zval *_server);
 static void _dd_http_status_code(zend_array *meta_ht);
 static void _dd_http_network_client_ip(zend_array *meta_ht, zval *_server);
-static void _dd_http_client_ip(zend_array *meta_ht, zval *_server);
+static void _dd_http_client_ip(zend_array *meta_ht);
 static void _dd_request_headers(
     zend_array *meta_ht, zval *_server, HashTable *relevant_headers);
 static void _dd_response_headers(zend_array *meta_ht);
@@ -363,7 +363,7 @@ static void _add_basic_tags_to_meta(zval *nonnull meta)
         return;
     }
 
-    _dd_http_client_ip(meta_ht, _server);
+    _dd_http_client_ip(meta_ht);
     _dd_request_headers(meta_ht, _server, &_relevant_ip_headers);
 }
 
@@ -382,7 +382,7 @@ static void _add_all_tags_to_meta(zval *nonnull meta)
     _dd_http_status_code(meta_ht);
     _dd_http_network_client_ip(meta_ht, _server);
     _dd_request_headers(meta_ht, _server, &_relevant_headers);
-    _dd_http_client_ip(meta_ht, _server);
+    _dd_http_client_ip(meta_ht);
     _dd_response_headers(meta_ht);
 }
 
@@ -548,26 +548,22 @@ static void _extract_dd_multiple_ip_headers(
         meta_ht, _dd_multiple_ip_headers, ip_headers.s, false);
 }
 
-static void _dd_http_client_ip(zend_array *meta_ht, zval *_server)
+static void _dd_http_client_ip(zend_array *meta_ht)
 {
     if (zend_hash_exists(meta_ht, _dd_tag_http_client_ip_zstr) ||
         zend_hash_exists(meta_ht, _dd_multiple_ip_headers)) {
         return;
     }
 
-    zval duplicated_ip_headers;
-    array_init(&duplicated_ip_headers);
-    zend_string *client_ip =
-        dd_ip_extraction_find(_server, &duplicated_ip_headers);
+    zend_string *client_ip = dd_ip_extraction_get_ip();
     if (!client_ip) {
-        _extract_dd_multiple_ip_headers(meta_ht, &duplicated_ip_headers);
-        goto exit;
+        zval *duplicated_ip_headers = dd_ip_extraction_get_duplicated_headers();
+        _extract_dd_multiple_ip_headers(meta_ht, duplicated_ip_headers);
+        return;
     }
 
     _add_new_zstr_to_meta(
         meta_ht, _dd_tag_http_client_ip_zstr, client_ip, false);
-exit:
-    zend_array_destroy(Z_ARR(duplicated_ip_headers));
 }
 
 static void _dd_request_headers(

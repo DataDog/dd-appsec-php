@@ -11,6 +11,7 @@
 #include "../configuration.h"
 #include "../ddappsec.h"
 #include "../ddtrace.h"
+#include "../ip_extraction.h"
 #include "../logging.h"
 #include "../msgpack_helpers.h"
 #include "../php_compat.h"
@@ -50,7 +51,7 @@ static dd_result _request_pack(
 
     bool send_raw_body = get_global_DD_APPSEC_TESTING() &&
                          get_global_DD_APPSEC_TESTING_RAW_BODY();
-#define REQUEST_INIT_MAP_NUM_ENTRIES 9
+#define REQUEST_INIT_MAP_NUM_ENTRIES 10
     if (send_raw_body) {
         mpack_start_map(w, REQUEST_INIT_MAP_NUM_ENTRIES + 1);
     } else {
@@ -106,7 +107,11 @@ static dd_result _request_pack(
     dd_mpack_write_lstr(w, "server.request.path_params");
     _pack_path_params(w, request_uri);
 
-    // 10.
+    // 9.
+    dd_mpack_write_lstr(w, "server.request.ip");
+    dd_mpack_write_nullable_zstr(w, dd_ip_extraction_get_ip());
+
+    // 11.
     if (send_raw_body) {
         dd_mpack_write_lstr(w, "server.request.body.raw");
         zend_string *nonnull req_body =

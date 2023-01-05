@@ -239,13 +239,13 @@ static PHP_RINIT_FUNCTION(ddappsec)
     if (DDAPPSEC_G(enabled) == NOT_CONFIGURED) {
         _check_enabled();
     }
-
     if (DDAPPSEC_G(enabled_by_configuration) == DISABLED) {
         mlog_g(dd_log_debug, "Appsec disabled by configuration");
         return SUCCESS;
     }
-
     DDAPPSEC_G(skip_rshutdown) = false;
+
+    dd_ip_extraction_rinit();
 
     if (UNEXPECTED(get_global_DD_APPSEC_TESTING())) {
         if (get_global_DD_APPSEC_TESTING_ABORT_RINIT()) {
@@ -311,22 +311,28 @@ static PHP_RSHUTDOWN_FUNCTION(ddappsec)
     UNUSED(type);
     UNUSED(module_number);
 
+    ZEND_RESULT_CODE result = SUCCESS;
+
     // Here now we have to disconnect from the helper in all the cases but when
     // disabled by config
     if (DDAPPSEC_G(enabled_by_configuration) == DISABLED) {
-        return SUCCESS;
+        goto exit;
     }
 
     if (DDAPPSEC_G(skip_rshutdown)) {
-        return SUCCESS;
+        goto exit;
     }
 
     if (UNEXPECTED(get_global_DD_APPSEC_TESTING())) {
         dd_tags_rshutdown_testing();
-        return SUCCESS;
+        goto exit;
     }
 
-    return dd_appsec_rshutdown();
+    result = dd_appsec_rshutdown();
+
+exit:
+    dd_ip_extraction_rshutdown();
+    return result;
 }
 
 int dd_appsec_rshutdown()
