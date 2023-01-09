@@ -563,7 +563,7 @@ static void _dd_http_client_ip(zend_array *meta_ht)
     }
 
     _add_new_zstr_to_meta(
-        meta_ht, _dd_tag_http_client_ip_zstr, client_ip, false);
+        meta_ht, _dd_tag_http_client_ip_zstr, client_ip, true);
 }
 
 static void _dd_request_headers(
