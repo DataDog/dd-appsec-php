@@ -83,8 +83,8 @@ Array
     [http.status_code] => 200
     [http.url] => https://localhost:8888/foo
     [http.useragent] => my user agent
-    [rshutdown_tag] => rshutdown_value
     [%s] => %d
+    [rshutdown_tag] => rshutdown_value
 )
 metrics:
 Array
