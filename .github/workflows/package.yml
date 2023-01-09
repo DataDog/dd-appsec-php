@@ -19,12 +19,12 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
-      - name: Cache toolchain
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/toolchain.tar
-          key: toolchain-${{ hashFiles('.github/workflows/release/toolchain/*') }}
+#      - name: Cache toolchain
+        #uses: actions/cache@v2
+        #with:
+          #path: |
+            #~/toolchain.tar
+          #key: toolchain-${{ hashFiles('.github/workflows/release/toolchain/*') }}
       - name: Cache PHP
         id: cache_php
         uses: actions/cache@v2
