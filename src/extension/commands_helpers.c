@@ -110,10 +110,15 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
         if (err != mpack_ok) {
             mlog(dd_log_error, "Array of responses could not be retrieved - %s",
                 mpack_error_to_string(err));
+            err = _imsg_destroy(&imsg);
+            UNUSED(err);
+            return dd_error;
         }
         if (mpack_node_type(first_response) != mpack_type_array) {
             mlog(dd_log_error, "Invalid response. Expected array but got %s",
                 mpack_type_to_string(mpack_node_type(first_response)));
+            err = _imsg_destroy(&imsg);
+            UNUSED(err);
             return dd_error;
         }
         mpack_node_t first_message = mpack_node_array_at(first_response, 1);
@@ -129,6 +134,8 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
         if (err != mpack_ok) {
             mlog(dd_log_error, "Type could not be retrieved - %s",
                 mpack_error_to_string(err));
+            err = _imsg_destroy(&imsg);
+            UNUSED(err);
             return dd_error;
         }
         if (mpack_node_type(type) != mpack_type_str) {
@@ -136,6 +143,8 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
                 "Unexpected type field. It was expected to be string but it "
                 "got a %s",
                 mpack_type_to_string(mpack_node_type(type)));
+            err = _imsg_destroy(&imsg);
+            UNUSED(err);
             return dd_error;
         }
         if (dd_mpack_node_lstr_eq(type, "config_features")) {
