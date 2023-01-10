@@ -9,6 +9,7 @@
 #include "protocol/tuf/serializer.hpp"
 #include <algorithm>
 #include <regex>
+#include <spdlog/spdlog.h>
 #include <vector>
 
 namespace dds::remote_config {
@@ -39,8 +40,9 @@ client::client(std::unique_ptr<http_api> &&arg_api, service_identifier sid,
     }
 }
 
-client::ptr client::from_settings(
-    const service_identifier &sid, const remote_config::settings &settings, std::vector<remote_config::product> &&products)
+client::ptr client::from_settings(const service_identifier &sid,
+    const remote_config::settings &settings,
+    std::vector<remote_config::product> &&products)
 {
     if (!settings.enabled) {
         return {};
@@ -208,6 +210,7 @@ bool client::poll()
         last_poll_error_.clear();
         return process_response(response);
     } catch (protocol::parser_exception &e) {
+        SPDLOG_DEBUG("Error parsing remote config response: %s", e.what());
         return false;
     }
 }
