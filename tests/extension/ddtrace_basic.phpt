@@ -88,7 +88,7 @@ object(DDTrace\SpanData)#%d (%d) {
   string(3) "cli"
   ["meta"]=>
   array(2) {
-    ["system.pid"]=>
+    [%s]=>
     int(%d)
     ["ddappsec"]=>
     string(4) "true"
@@ -106,7 +106,7 @@ sent trace id is the same as \DDTrace\trace_id(): yes
 tags:
 Array
 (
-    [system.pid] => %s
+    [%s] => %s
     [ddappsec] => true
     [_dd.p.dm] => -1
 )
