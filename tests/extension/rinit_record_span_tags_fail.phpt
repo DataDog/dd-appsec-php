@@ -52,6 +52,6 @@ bool(true)
 tags:
 Array
 (
-    [system.pid] => %d
+    [%s] => %d
     [_dd.p.dm] => -1
 )
