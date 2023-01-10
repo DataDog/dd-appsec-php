@@ -107,8 +107,8 @@ static dd_result _request_pack(
     dd_mpack_write_lstr(w, "server.request.path_params");
     _pack_path_params(w, request_uri);
 
-    // 9.
-    dd_mpack_write_lstr(w, "server.request.ip");
+    // 10.
+    dd_mpack_write_lstr(w, "http.client_ip");
     dd_mpack_write_nullable_zstr(w, dd_ip_extraction_get_ip());
 
     // 11.
