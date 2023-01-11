@@ -5,6 +5,7 @@
 // Copyright 2021 Datadog, Inc.
 #pragma once
 #include "attributes.h"
+#include <php.h>
 #include <zend.h>
 #include <stdbool.h>
 
@@ -20,3 +21,7 @@ void dd_tags_set_sampling_priority(void);
 
 // does not increase the refcount on zstr
 void dd_tags_add_appsec_json_frag(zend_string *nonnull zstr);
+
+// Event tracking functions
+PHP_FUNCTION(datadog_appsec_track_user_login_event);
+PHP_FUNCTION(datadog_appsec_track_custom_event);
