@@ -722,9 +722,8 @@ void _set_runtime_family()
 }
 
 static bool _add_custom_event_keyval(
-    zend_string *name, zend_string *key, zval *value)
+    zend_string *nonnull name, zend_string *nonnull key, zval *nonnull value)
 {
-
     size_t final_len = LSTRLEN(DD_APPSEC_EVENTS_PREFIX) + ZSTR_LEN(name) +
                        LSTRLEN(".") + ZSTR_LEN(key);
 
@@ -737,7 +736,7 @@ static bool _add_custom_event_keyval(
     smart_str_0(&key_str);
 
     bool res = dd_trace_root_span_add_tag(key_str.s, value);
-    smart_str_free_ex(&key_str, 0);
+    smart_str_free(&key_str);
 
     return res;
 }
@@ -747,7 +746,7 @@ PHP_FUNCTION(datadog_appsec_track_user_login_event)
     UNUSED(return_value);
 
     zval *user_id = NULL;
-    zend_bool success = NULL;
+    zend_bool success = false;
     HashTable *metadata = NULL;
     if (zend_parse_parameters(ZEND_NUM_ARGS(), "zb|h", &user_id, &success,
             &metadata) == FAILURE) {
