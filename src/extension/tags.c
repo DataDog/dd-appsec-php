@@ -14,6 +14,7 @@
 #include "string_helpers.h"
 #include <SAPI.h>
 #include <zend_smart_str.h>
+#include <zend_types.h>
 
 #define DD_TAG_DATA "_dd.appsec.json"
 #define DD_TAG_EVENT "appsec.event"
@@ -721,8 +722,10 @@ void _set_runtime_family()
     }
 }
 
-static bool _add_custom_event_keyval(
-    zend_string *nonnull name, zend_string *nonnull key, zval *nonnull value)
+static void _add_custom_event_keyval(zend_array *nonnull meta_ht,
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+    zend_string *nonnull name, zend_string *nonnull key,
+    zend_string *nonnull value, bool copy)
 {
     size_t final_len = LSTRLEN(DD_APPSEC_EVENTS_PREFIX) + ZSTR_LEN(name) +
                        LSTRLEN(".") + ZSTR_LEN(key);
@@ -735,50 +738,44 @@ static bool _add_custom_event_keyval(
     smart_str_append_ex(&key_str, key, 0);
     smart_str_0(&key_str);
 
-    bool res = dd_trace_root_span_add_tag(key_str.s, value);
+    _add_new_zstr_to_meta(meta_ht, key_str.s, value, copy);
     smart_str_free(&key_str);
-
-    return res;
 }
 
-PHP_FUNCTION(datadog_appsec_track_user_login_event)
+static PHP_FUNCTION(datadog_appsec_track_user_login_event)
 {
     UNUSED(return_value);
 
-    zval *user_id = NULL;
+    zend_string *user_id = NULL;
     zend_bool success = false;
     HashTable *metadata = NULL;
-    if (zend_parse_parameters(ZEND_NUM_ARGS(), "zb|h", &user_id, &success,
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "Sb|h", &user_id, &success,
             &metadata) == FAILURE) {
+        mlog(dd_log_warning, "Unexpected parameter combination, expected "
+                             "(user_id, success, metadata)");
         return;
     }
 
-    if (Z_TYPE_P(user_id) != IS_STRING || Z_STRLEN_P(user_id) == 0) {
-        // Log something
+    if (user_id == NULL || ZSTR_LEN(user_id) == 0) {
+        mlog(dd_log_warning, "Unexpected empty user id");
         return;
     }
 
-    // Add the usr.id first
-    bool res = dd_trace_root_span_add_tag(_dd_tag_user_id, user_id);
-    if (!res) {
-        // Log something
+    zval *nullable meta = dd_trace_root_span_get_meta();
+    if (!meta) {
+        mlog(dd_log_warning, "Failed to retrieve root span meta");
         return;
     }
+    zend_array *meta_ht = Z_ARRVAL_P(meta);
 
-    // Add the login result
-    zval success_zv;
-    if (success == true) {
-        ZVAL_STR_COPY(&success_zv, _true_zstr);
-    } else {
-        ZVAL_STR_COPY(&success_zv, _false_zstr);
-    }
+    // usr.id = <user_id>
+    _add_new_zstr_to_meta(meta_ht, _dd_tag_user_id, user_id, true);
 
-    res = _add_custom_event_keyval(
-        _dd_login_success_event, _track_zstr, &success_zv);
-    if (!res) {
-        // Log something
-    }
+    // appsec.events.users.login.success.track = <success>
+    _add_custom_event_keyval(meta_ht, _dd_login_success_event, _track_zstr,
+        success ? _true_zstr : _false_zstr, true);
 
+    // appsec.events.users.login.success.<key> = <value>
     if (metadata != NULL) {
         zend_string *key = NULL;
         zval *value = NULL;
@@ -788,10 +785,8 @@ PHP_FUNCTION(datadog_appsec_track_user_login_event)
                 continue;
             }
 
-            res = _add_custom_event_keyval(_dd_login_success_event, key, value);
-            if (!res) {
-                // log something and continue
-            }
+            _add_custom_event_keyval(
+                meta_ht, _dd_login_success_event, key, Z_STR_P(value), true);
         }
         ZEND_HASH_FOREACH_END();
     }
@@ -799,7 +794,7 @@ PHP_FUNCTION(datadog_appsec_track_user_login_event)
     dd_tags_set_sampling_priority();
 }
 
-PHP_FUNCTION(datadog_appsec_track_custom_event)
+static PHP_FUNCTION(datadog_appsec_track_custom_event)
 {
     UNUSED(return_value);
 
@@ -807,23 +802,28 @@ PHP_FUNCTION(datadog_appsec_track_custom_event)
     HashTable *metadata = NULL;
     if (zend_parse_parameters(ZEND_NUM_ARGS(), "S|h", &event_name, &metadata) ==
         FAILURE) {
+        mlog(dd_log_warning, "Unexpected parameter combination, expected "
+                             "(event_name, metadata)");
         return;
     }
 
     if (event_name == NULL || ZSTR_LEN(event_name) == 0) {
-        // Log something
+        mlog(dd_log_warning, "Unexpected empty event name");
         return;
     }
 
-    // appsec.events.<event>.track = true
-    zval value_zv;
-    ZVAL_STR_COPY(&value_zv, _true_zstr);
-
-    bool res = _add_custom_event_keyval(event_name, _track_zstr, &value_zv);
-    if (!res) {
-        // Log something
+    zval *nullable meta = dd_trace_root_span_get_meta();
+    if (!meta) {
+        mlog(dd_log_warning, "Failed to retrieve root span meta");
+        return;
     }
+    zend_array *meta_ht = Z_ARRVAL_P(meta);
 
+    // appsec.events.<event>.track = true
+    _add_custom_event_keyval(
+        meta_ht, event_name, _track_zstr, _true_zstr, true);
+
+    // appsec.events.<event>.<key> = <value>
     if (metadata != NULL) {
         zend_string *key = NULL;
         zval *value = NULL;
@@ -833,10 +833,8 @@ PHP_FUNCTION(datadog_appsec_track_custom_event)
                 continue;
             }
 
-            res = _add_custom_event_keyval(event_name, key, value);
-            if (!res) {
-                // log something and continue
-            }
+            _add_custom_event_keyval(
+                meta_ht, event_name, key, Z_STR_P(value), true);
         }
         ZEND_HASH_FOREACH_END();
     }

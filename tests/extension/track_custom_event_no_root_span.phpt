@@ -1,7 +1,11 @@
 --TEST--
-Track a custom event and verify the contents of the root span
+Track a custom event when no root span is available and verify the logs
 --INI--
 extension=ddtrace.so
+datadog.appsec.log_file=/tmp/php_appsec_test.log
+datadog.appsec.log_level=debug
+--ENV--
+DD_TRACE_GENERATE_ROOT_SPAN=0
 --FILE--
 <?php
 use function datadog\appsec\testing\root_span_get_meta;
@@ -17,16 +21,8 @@ track_custom_event("myevent",
     "email" => "noneofyour@business.com"
 ]);
 
-echo "root_span_get_meta():\n";
-print_r(root_span_get_meta());
+require __DIR__ . '/inc/logging.php';
+match_log("/Failed to retrieve root span meta/");
 ?>
 --EXPECTF--
-root_span_get_meta():
-Array
-(
-    [%s] => %d
-    [appsec.events.myevent.track] => true
-    [appsec.events.myevent.value] => something
-    [appsec.events.myevent.metadata] => some other metadata
-    [appsec.events.myevent.email] => noneofyour@business.com
-)
+found message in log matching /Failed to retrieve root span meta/
