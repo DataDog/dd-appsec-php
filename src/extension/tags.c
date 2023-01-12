@@ -36,6 +36,7 @@
 #define DD_METRIC_SAMPLING_PRIORITY "_sampling_priority_v1"
 #define DD_APPSEC_EVENTS_PREFIX "appsec.events."
 #define DD_LOGIN_SUCCESS_EVENT "users.login.success"
+#define DD_LOGIN_FAILURE_EVENT "users.login.failure"
 #define DD_SAMPLING_PRIORITY_USER_KEEP 2
 
 static zend_string *_dd_tag_data_zstr;
@@ -56,6 +57,7 @@ static zend_string *_dd_metric_enabled;
 static zend_string *_dd_metric_sampling_prio_zstr;
 static zend_string *_dd_appsec_events_prefix;
 static zend_string *_dd_login_success_event;
+static zend_string *_dd_login_failure_event;
 static zend_string *_key_request_uri_zstr;
 static zend_string *_key_http_host_zstr;
 static zend_string *_key_server_name_zstr;
@@ -139,6 +141,9 @@ void dd_tags_startup()
         zend_string_init_interned(LSTRARG(DD_APPSEC_EVENTS_PREFIX), 1);
     _dd_login_success_event =
         zend_string_init_interned(LSTRARG(DD_LOGIN_SUCCESS_EVENT), 1);
+    _dd_login_failure_event =
+        zend_string_init_interned(LSTRARG(DD_LOGIN_FAILURE_EVENT), 1);
+
     _init_relevant_headers();
 
     _register_functions();
@@ -768,14 +773,25 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_event)
     }
     zend_array *meta_ht = Z_ARRVAL_P(meta);
 
-    // usr.id = <user_id>
-    _add_new_zstr_to_meta(meta_ht, _dd_tag_user_id, user_id, true);
+    zend_string *event_name = NULL;
+    if (success) {
+        event_name = _dd_login_success_event;
 
-    // appsec.events.users.login.success.track = <success>
-    _add_custom_event_keyval(meta_ht, _dd_login_success_event, _track_zstr,
-        success ? _true_zstr : _false_zstr, true);
+        // usr.id = <user_id>
+        _add_new_zstr_to_meta(meta_ht, _dd_tag_user_id, user_id, true);
+    } else {
+        event_name = _dd_login_failure_event;
 
-    // appsec.events.users.login.success.<key> = <value>
+        // appsec.events.users.login.failure.usr.id = <user_id>
+        _add_custom_event_keyval(
+            meta_ht, event_name, _dd_tag_user_id, user_id, true);
+    }
+
+    // appsec.events.users.login.<success|failure>.track = true
+    _add_custom_event_keyval(
+        meta_ht, event_name, _track_zstr, _true_zstr, true);
+
+    // appsec.events.users.login.<success|failure>.<key> = <value>
     if (metadata != NULL) {
         zend_string *key = NULL;
         zval *value = NULL;
@@ -784,9 +800,8 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_event)
             if (!key || Z_TYPE_P(value) != IS_STRING) {
                 continue;
             }
-
             _add_custom_event_keyval(
-                meta_ht, _dd_login_success_event, key, Z_STR_P(value), true);
+                meta_ht, event_name, key, Z_STR_P(value), true);
         }
         ZEND_HASH_FOREACH_END();
     }

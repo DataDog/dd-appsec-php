@@ -1,5 +1,5 @@
 --TEST--
-Track a user login event and verify the tags in the root span
+Track a user login failure event and verify the tags in the root span
 --INI--
 extension=ddtrace.so
 --FILE--
@@ -25,9 +25,9 @@ root_span_get_meta():
 Array
 (
     [%s] => %d
-    [usr.id] => Admin
-    [appsec.events.users.login.success.track] => false
-    [appsec.events.users.login.success.value] => something
-    [appsec.events.users.login.success.metadata] => some other metadata
-    [appsec.events.users.login.success.email] => noneofyour@business.com
+    [appsec.events.users.login.failure.usr.id] => Admin
+    [appsec.events.users.login.failure.track] => true
+    [appsec.events.users.login.failure.value] => something
+    [appsec.events.users.login.failure.metadata] => some other metadata
+    [appsec.events.users.login.failure.email] => noneofyour@business.com
 )
