@@ -24,6 +24,7 @@
  - ([#152](https://github.com/DataDog/dd-appsec-php/pull/152)) Fix package / release build
  - ([#153](https://github.com/DataDog/dd-appsec-php/pull/153)) Update LLVM script
  - ([#172](https://github.com/DataDog/dd-appsec-php/pull/172)) Fix package build
+ - ([#175](https://github.com/DataDog/dd-appsec-php/pull/175)) WAF upgrade to 1.6.0 and ruleset to 1.4.2
 
 ### v0.4.5
 #### Miscellaneous Changes
