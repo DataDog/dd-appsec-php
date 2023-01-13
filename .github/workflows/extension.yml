@@ -118,7 +118,7 @@ jobs:
           gcovr -f '.*src/extension/.*' -x -d -o coverage.xml
       - name: Submit coverage
         if: matrix.cfg.coverage == 'true'
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: extension
