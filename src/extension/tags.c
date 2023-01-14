@@ -145,7 +145,7 @@ void dd_tags_startup()
         zend_string_init_interned(LSTRARG(DD_LOGIN_SUCCESS_EVENT), 1);
     _dd_login_failure_event =
         zend_string_init_interned(LSTRARG(DD_LOGIN_FAILURE_EVENT), 1);
-    _usr_exists_zstr = 
+    _usr_exists_zstr =
         zend_string_init_interned(LSTRARG("usr.exists"), 1 /* permanent */);
 
     _init_relevant_headers();
@@ -757,7 +757,8 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
 
     zend_string *user_id = NULL;
     HashTable *metadata = NULL;
-    if (zend_parse_parameters(ZEND_NUM_ARGS(), "S|h", &user_id, &metadata) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "S|h", &user_id, &metadata) ==
+        FAILURE) {
         mlog(dd_log_warning, "Unexpected parameter combination, expected "
                              "(user_id, metadata)");
         return;
@@ -779,7 +780,8 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
     _add_new_zstr_to_meta(meta_ht, _dd_tag_user_id, user_id, true);
 
     // appsec.events.users.login.success.track = true
-    _add_custom_event_keyval(meta_ht, _dd_login_success_event, _track_zstr, _true_zstr, true);
+    _add_custom_event_keyval(
+        meta_ht, _dd_login_success_event, _track_zstr, _true_zstr, true);
 
     // appsec.events.users.login.success.<key> = <value>
     if (metadata != NULL) {
@@ -806,7 +808,8 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_failure_event)
     zend_string *user_id = NULL;
     zend_bool exists = false;
     HashTable *metadata = NULL;
-    if (zend_parse_parameters(ZEND_NUM_ARGS(), "Sb|h", &user_id, &exists, &metadata) == FAILURE) {
+    if (zend_parse_parameters(
+            ZEND_NUM_ARGS(), "Sb|h", &user_id, &exists, &metadata) == FAILURE) {
         mlog(dd_log_warning, "Unexpected parameter combination, expected "
                              "(user_id, exists, metadata)");
         return;
@@ -825,13 +828,16 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_failure_event)
     zend_array *meta_ht = Z_ARRVAL_P(meta);
 
     // appsec.events.users.login.failure.usr.id = <user_id>
-    _add_custom_event_keyval(meta_ht, _dd_login_failure_event, _dd_tag_user_id, user_id, true);
+    _add_custom_event_keyval(
+        meta_ht, _dd_login_failure_event, _dd_tag_user_id, user_id, true);
 
     // appsec.events.users.login.failure.track = true
-    _add_custom_event_keyval(meta_ht, _dd_login_failure_event, _track_zstr, _true_zstr, true);
+    _add_custom_event_keyval(
+        meta_ht, _dd_login_failure_event, _track_zstr, _true_zstr, true);
 
     // appsec.events.users.login.failure.usr.exists = <exists>
-    _add_custom_event_keyval(meta_ht, _dd_login_failure_event, _usr_exists_zstr, exists ? _true_zstr : _false_zstr, true);
+    _add_custom_event_keyval(meta_ht, _dd_login_failure_event, _usr_exists_zstr,
+        exists ? _true_zstr : _false_zstr, true);
 
     // appsec.events.users.login.failure.<key> = <value>
     if (metadata != NULL) {
