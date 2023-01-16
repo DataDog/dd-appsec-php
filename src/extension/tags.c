@@ -55,7 +55,6 @@ static zend_string *_dd_tag_user_id;
 static zend_string *_dd_multiple_ip_headers;
 static zend_string *_dd_metric_enabled;
 static zend_string *_dd_metric_sampling_prio_zstr;
-static zend_string *_dd_appsec_events_prefix;
 static zend_string *_dd_login_success_event;
 static zend_string *_dd_login_failure_event;
 static zend_string *_dd_login_failure_event;
@@ -139,8 +138,6 @@ void dd_tags_startup()
     // Event related strings
     _track_zstr =
         zend_string_init_interned(LSTRARG("track"), 1 /* permanent */);
-    _dd_appsec_events_prefix =
-        zend_string_init_interned(LSTRARG(DD_APPSEC_EVENTS_PREFIX), 1);
     _dd_login_success_event =
         zend_string_init_interned(LSTRARG(DD_LOGIN_SUCCESS_EVENT), 1);
     _dd_login_failure_event =
