@@ -68,9 +68,10 @@ static dd_result _pack_command(
     dd_mpack_write_lstr(w, "app_version");
     dd_mpack_write_nullable_cstr(w, ZSTR_VAL(get_DD_VERSION()));
 
+    // We send this empty for now. The helper will check for empty and if so it
+    // will generate it
     dd_mpack_write_lstr(w, "runtime_id");
-    //@todo deharcode this
-    dd_mpack_write_nullable_cstr(w, "0.0");
+    dd_mpack_write_nullable_cstr(w, "");
 
     mpack_finish_map(w);
 
