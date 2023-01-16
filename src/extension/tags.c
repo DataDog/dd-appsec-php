@@ -698,7 +698,7 @@ void _set_runtime_family()
 static bool _set_appsec_enabled(zval *metrics_zv)
 {
     zval zv;
-    ZVAL_LONG(&zv, 1);
+    ZVAL_LONG(&zv, DDAPPSEC_G(enabled) == ENABLED ? 1 : 0);
     return zend_hash_add(Z_ARRVAL_P(metrics_zv), _dd_metric_enabled, &zv) !=
            NULL;
 }

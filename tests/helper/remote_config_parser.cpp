@@ -1165,4 +1165,13 @@ TEST(RemoteConfigParser, RemoteConfigParserResultCanBeCastToString)
                           num_of_values));
 }
 
+TEST(RemoteConfigParser, ParseEmptyResponses)
+{
+    auto gcr = remote_config::protocol::parse("{}");
+
+    EXPECT_TRUE(gcr.targets.paths.empty());
+    EXPECT_TRUE(gcr.client_configs.empty());
+    EXPECT_TRUE(gcr.target_files.empty());
+}
+
 } // namespace dds
