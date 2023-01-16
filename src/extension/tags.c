@@ -35,8 +35,8 @@
 #define DD_METRIC_ENABLED "_dd.appsec.enabled"
 #define DD_METRIC_SAMPLING_PRIORITY "_sampling_priority_v1"
 #define DD_APPSEC_EVENTS_PREFIX "appsec.events."
-#define DD_LOGIN_SUCCESS_EVENT "users.login.success"
-#define DD_LOGIN_FAILURE_EVENT "users.login.failure"
+#define DD_LOGIN_SUCCESS_EVENT DD_APPSEC_EVENTS_PREFIX "users.login.success"
+#define DD_LOGIN_FAILURE_EVENT DD_APPSEC_EVENTS_PREFIX "users.login.failure"
 #define DD_SAMPLING_PRIORITY_USER_KEEP 2
 
 static zend_string *_dd_tag_data_zstr;
@@ -733,22 +733,39 @@ void _set_runtime_family()
 
 static void _add_custom_event_keyval(zend_array *nonnull meta_ht,
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    zend_string *nonnull name, zend_string *nonnull key,
+    zend_string *nonnull event, zend_string *nonnull key,
     zend_string *nonnull value, bool copy)
 {
-    size_t final_len = LSTRLEN(DD_APPSEC_EVENTS_PREFIX) + ZSTR_LEN(name) +
-                       LSTRLEN(".") + ZSTR_LEN(key);
+    size_t final_len = ZSTR_LEN(event) + LSTRLEN(".") + ZSTR_LEN(key);
 
     smart_str key_str = {0};
     smart_str_alloc(&key_str, final_len, 0);
-    smart_str_appendl_ex(&key_str, LSTRARG(DD_APPSEC_EVENTS_PREFIX), 0);
-    smart_str_append_ex(&key_str, name, 0);
+    smart_str_append_ex(&key_str, event, 0);
     smart_str_appendc_ex(&key_str, '.', 0);
     smart_str_append_ex(&key_str, key, 0);
     smart_str_0(&key_str);
 
     _add_new_zstr_to_meta(meta_ht, key_str.s, value, copy);
     smart_str_free(&key_str);
+}
+
+static void _add_custom_event_metadata(zend_array *nonnull meta_ht,
+    zend_string *nonnull event, HashTable *nullable metadata)
+{
+    if (metadata == NULL) {
+        return;
+    }
+
+    zend_string *key = NULL;
+    zval *value = NULL;
+    ZEND_HASH_FOREACH_STR_KEY_VAL(metadata, key, value)
+    {
+        if (!key || Z_TYPE_P(value) != IS_STRING) {
+            continue;
+        }
+        _add_custom_event_keyval(meta_ht, event, key, Z_STR_P(value), true);
+    }
+    ZEND_HASH_FOREACH_END();
 }
 
 static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
@@ -784,19 +801,7 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
         meta_ht, _dd_login_success_event, _track_zstr, _true_zstr, true);
 
     // appsec.events.users.login.success.<key> = <value>
-    if (metadata != NULL) {
-        zend_string *key = NULL;
-        zval *value = NULL;
-        ZEND_HASH_FOREACH_STR_KEY_VAL(metadata, key, value)
-        {
-            if (!key || Z_TYPE_P(value) != IS_STRING) {
-                continue;
-            }
-            _add_custom_event_keyval(
-                meta_ht, _dd_login_success_event, key, Z_STR_P(value), true);
-        }
-        ZEND_HASH_FOREACH_END();
-    }
+    _add_custom_event_metadata(meta_ht, _dd_login_success_event, metadata);
 
     dd_tags_set_sampling_priority();
 }
@@ -840,19 +845,7 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_failure_event)
         exists ? _true_zstr : _false_zstr, true);
 
     // appsec.events.users.login.failure.<key> = <value>
-    if (metadata != NULL) {
-        zend_string *key = NULL;
-        zval *value = NULL;
-        ZEND_HASH_FOREACH_STR_KEY_VAL(metadata, key, value)
-        {
-            if (!key || Z_TYPE_P(value) != IS_STRING) {
-                continue;
-            }
-            _add_custom_event_keyval(
-                meta_ht, _dd_login_failure_event, key, Z_STR_P(value), true);
-        }
-        ZEND_HASH_FOREACH_END();
-    }
+    _add_custom_event_metadata(meta_ht, _dd_login_failure_event, metadata);
 
     dd_tags_set_sampling_priority();
 }
@@ -882,25 +875,22 @@ static PHP_FUNCTION(datadog_appsec_track_custom_event)
     }
     zend_array *meta_ht = Z_ARRVAL_P(meta);
 
+    // Generate full event name
+    size_t event_len = LSTRLEN(DD_APPSEC_EVENTS_PREFIX) + ZSTR_LEN(event_name);
+    smart_str event_str = {0};
+    smart_str_alloc(&event_str, event_len, 0);
+    smart_str_appendl_ex(&event_str, LSTRARG(DD_APPSEC_EVENTS_PREFIX), 0);
+    smart_str_append_ex(&event_str, event_name, 0);
+    smart_str_0(&event_str);
+
     // appsec.events.<event>.track = true
     _add_custom_event_keyval(
-        meta_ht, event_name, _track_zstr, _true_zstr, true);
+        meta_ht, event_str.s, _track_zstr, _true_zstr, true);
 
     // appsec.events.<event>.<key> = <value>
-    if (metadata != NULL) {
-        zend_string *key = NULL;
-        zval *value = NULL;
-        ZEND_HASH_FOREACH_STR_KEY_VAL(metadata, key, value)
-        {
-            if (!key || Z_TYPE_P(value) != IS_STRING) {
-                continue;
-            }
+    _add_custom_event_metadata(meta_ht, event_str.s, metadata);
 
-            _add_custom_event_keyval(
-                meta_ht, event_name, key, Z_STR_P(value), true);
-        }
-        ZEND_HASH_FOREACH_END();
-    }
+    smart_str_free(&event_str);
 
     dd_tags_set_sampling_priority();
 }
