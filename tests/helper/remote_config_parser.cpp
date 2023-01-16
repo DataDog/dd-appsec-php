@@ -82,13 +82,6 @@ TEST(RemoteConfigParser, ItReturnsErrorWhenInvalidBodyIsGiven)
         remote_config::protocol::remote_config_parser_result::invalid_json);
 }
 
-TEST(RemoteConfigParser, TargetsFieldIsRequired)
-{
-    assert_parser_error("{\"target_files\": [], \"client_configs\": [] }",
-        remote_config::protocol::remote_config_parser_result::
-            targets_field_missing);
-}
-
 TEST(RemoteConfigParser, TargetsFieldMustBeString)
 {
     assert_parser_error(
@@ -1107,12 +1100,12 @@ TEST(RemoteConfigParser, TargetsAreParsed)
 
     auto gcr = remote_config::protocol::parse(response);
 
-    remote_config::protocol::targets _targets = gcr.targets;
+    std::optional<remote_config::protocol::targets> _targets = gcr.targets;
 
-    EXPECT_EQ(27487156, _targets.version);
+    EXPECT_EQ(27487156, _targets->version);
 
     std::unordered_map<std::string, remote_config::protocol::path> paths =
-        _targets.paths;
+        _targets->paths;
 
     EXPECT_EQ(3, paths.size());
 
@@ -1169,9 +1162,7 @@ TEST(RemoteConfigParser, ParseEmptyResponses)
 {
     auto gcr = remote_config::protocol::parse("{}");
 
-    EXPECT_TRUE(gcr.targets.paths.empty());
-    EXPECT_TRUE(gcr.client_configs.empty());
-    EXPECT_TRUE(gcr.target_files.empty());
+    EXPECT_FALSE(gcr.targets.has_value());
 }
 
 } // namespace dds

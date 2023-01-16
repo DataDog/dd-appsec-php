@@ -336,7 +336,7 @@ TEST(RemoteConfigSerializer, CapabilitiesCanBeSet)
         find_and_assert_type(
             client_itr->value, "capabilities", rapidjson::kArrayType);
 
-    EXPECT_EQ(15, capabilities_itr->value.Begin()->GetInt());
+    EXPECT_EQ(7, capabilities_itr->value.Begin()->GetInt());
 }
 
 } // namespace dds

@@ -20,7 +20,6 @@ namespace dds::remote_config::protocol {
     X(targets_field_empty)                                                     \
     X(targets_field_invalid_base64)                                            \
     X(targets_field_invalid_json)                                              \
-    X(targets_field_missing)                                                   \
     X(targets_field_invalid_type)                                              \
     X(signed_targets_field_invalid)                                            \
     X(signed_targets_field_missing)                                            \

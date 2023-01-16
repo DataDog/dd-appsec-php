@@ -93,12 +93,12 @@ client::ptr client::from_settings(const service_identifier &sid,
 
 bool client::process_response(const protocol::get_configs_response &response)
 {
-    if (response.targets.empty) {
+    if (!response.targets.has_value()) {
         return true;
     }
 
     const std::unordered_map<std::string, protocol::path> paths_on_targets =
-        response.targets.paths;
+        response.targets->paths;
     const std::unordered_map<std::string, protocol::target_file> target_files =
         response.target_files;
     std::unordered_map<std::string, std::unordered_map<std::string, config>>
@@ -184,8 +184,8 @@ bool client::process_response(const protocol::get_configs_response &response)
         }
     }
 
-    targets_version_ = response.targets.version;
-    opaque_backend_state_ = response.targets.opaque_backend_state;
+    targets_version_ = response.targets->version;
+    opaque_backend_state_ = response.targets->opaque_backend_state;
 
     return true;
 }

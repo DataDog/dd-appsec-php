@@ -10,6 +10,7 @@
 
 #include "parser.hpp"
 #include <base64.h>
+#include <optional>
 
 using namespace std::literals;
 
@@ -281,8 +282,9 @@ get_configs_response parse(const std::string &body)
         remote_config_parser_result::allow_missing,
         remote_config_parser_result::client_config_field_invalid_type);
 
-    validate_field_is_present(serialized_doc, "targets", rapidjson::kStringType,
-        targets_itr, remote_config_parser_result::targets_field_missing,
+    auto validated_targets = validate_field_is_present(serialized_doc,
+        "targets", rapidjson::kStringType, targets_itr,
+        remote_config_parser_result::allow_missing,
         remote_config_parser_result::targets_field_invalid_type);
 
     std::unordered_map<std::string, target_file> target_files;
@@ -293,7 +295,11 @@ get_configs_response parse(const std::string &body)
     if (validated_client_configs) {
         client_configs = parse_client_configs(client_configs_itr);
     }
-    const targets &targets = parse_targets(targets_itr);
+
+    std::optional<targets> targets;
+    if (validated_targets) {
+        targets = parse_targets(targets_itr);
+    }
 
     return {target_files, client_configs, targets};
 }
