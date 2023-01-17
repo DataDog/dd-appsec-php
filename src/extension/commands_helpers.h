@@ -20,7 +20,7 @@ typedef struct _dd_command_spec {
     dd_result (*nonnull outgoing_cb)(
         mpack_writer_t *nonnull writer, void *unspecnull ctx);
     dd_result (*nonnull incoming_cb)(mpack_node_t root, void *unspecnull ctx);
-    dd_result (*nonnull config_features)(
+    dd_result (*nonnull config_features_cb)(
         mpack_node_t root, void *unspecnull ctx);
 } dd_command_spec;
 

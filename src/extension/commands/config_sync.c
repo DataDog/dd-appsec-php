@@ -19,7 +19,7 @@ static const dd_command_spec _spec = {
     .num_args = 0, // a single map
     .outgoing_cb = _request_pack,
     .incoming_cb = dd_command_process_config_sync,
-    .config_features = dd_command_process_config_features,
+    .config_features_cb = dd_command_process_config_features,
 };
 
 dd_result dd_config_sync(dd_conn *nonnull conn)

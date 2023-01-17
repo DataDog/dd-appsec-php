@@ -15,11 +15,11 @@
 namespace dds::remote_config::protocol {
 
 enum class capabilities_e : uint8_t {
-    RESERVED = 0,
-    ASM_ACTIVATION = 1 << 0,
-    ASM_IP_BLOCKING = 1 << 1,
-    ASM_DD_RULES = 1 << 2,
-    ASM_EXCLUSIONS = 1 << 3,
+    RESERVED = 1,
+    ASM_ACTIVATION = 1 << 1,
+    ASM_IP_BLOCKING = 1 << 2,
+    ASM_DD_RULES = 1 << 3,
+    ASM_EXCLUSIONS = 1 << 4,
 };
 
 struct client {

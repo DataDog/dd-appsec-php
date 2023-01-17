@@ -148,7 +148,7 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
             return dd_error;
         }
         if (dd_mpack_node_lstr_eq(type, "config_features")) {
-            res = spec->config_features(first_message, ctx);
+            res = spec->config_features_cb(first_message, ctx);
         } else if (strncmp(spec->name, mpack_node_str(type), spec->name_len) ==
                    0) {
             res = spec->incoming_cb(first_message, ctx);

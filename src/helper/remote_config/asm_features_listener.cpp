@@ -40,7 +40,7 @@ void dds::remote_config::asm_features_listener::on_update(const config &config)
     }
 
     if (enabled_itr->value.GetType() == rapidjson::kStringType) {
-        if (strcmp("true", enabled_itr->value.GetString()) == 0) {
+        if (enabled_itr->value.GetString() == std::string("true")) {
             service_config_->enable_asm();
         } else {
             // This scenario should not happen since RC would remove the file

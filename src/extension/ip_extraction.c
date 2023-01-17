@@ -57,7 +57,7 @@ typedef enum _header_id {
 static header_map_node header_map[MAX_HEADER_ID];
 
 static zend_string *nonnull _remote_addr_key;
-static zval duplicated_ip_headers;
+static THREAD_LOCAL_ON_ZTS zval duplicated_ip_headers;
 static zend_string *nullable client_ip;
 
 static void _register_testing_objects(void);
@@ -222,17 +222,6 @@ zend_string *nullable dd_ip_extraction_find(
     return NULL;
 }
 
-void dd_ip_extraction_clean_request_values(void)
-{
-    if (Z_TYPE(duplicated_ip_headers) == IS_ARRAY) {
-        zend_array_destroy(Z_ARR(duplicated_ip_headers));
-    }
-    if (client_ip) {
-        zend_string_release(client_ip);
-        client_ip = NULL;
-    }
-}
-
 void dd_ip_extraction_rinit(void)
 {
     zval *_server =
@@ -247,7 +236,13 @@ void dd_ip_extraction_rinit(void)
 
 void dd_ip_extraction_rshutdown(void)
 {
-    dd_ip_extraction_clean_request_values();
+    if (Z_TYPE(duplicated_ip_headers) == IS_ARRAY) {
+        zend_array_destroy(Z_ARR(duplicated_ip_headers));
+    }
+    if (client_ip) {
+        zend_string_release(client_ip);
+        client_ip = NULL;
+    }
 }
 
 zend_string *nullable dd_ip_extraction_get_ip() { return client_ip; }
