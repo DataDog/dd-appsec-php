@@ -221,7 +221,7 @@ function response_list(...$responses) {
 }
 
 function response_config_features($status) {
-    return response("config_features_cb", [$status]);
+    return response("config_features", [$status]);
 }
 
 function response_config_sync() {

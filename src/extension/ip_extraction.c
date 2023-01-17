@@ -58,7 +58,7 @@ static header_map_node header_map[MAX_HEADER_ID];
 
 static zend_string *nonnull _remote_addr_key;
 static THREAD_LOCAL_ON_ZTS zval duplicated_ip_headers;
-static zend_string *nullable client_ip;
+static THREAD_LOCAL_ON_ZTS zend_string *nullable client_ip;
 
 static void _register_testing_objects(void);
 static zend_string *nullable _fetch_arr_str(

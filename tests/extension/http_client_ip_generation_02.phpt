@@ -4,6 +4,7 @@ ddappsec generates generates http.client_ip when ddtrace does not
 extension=ddtrace.so
 datadog.appsec.log_file=/tmp/php_appsec_test.log
 datadog.appsec.log_level=debug
+datadog.appsec.enabled=1
 --ENV--
 HTTP_X_FORWARDED_FOR=7.7.7.7
 DD_TRACE_CLIENT_IP_HEADER_DISABLED=true
