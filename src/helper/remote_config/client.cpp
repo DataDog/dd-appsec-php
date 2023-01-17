@@ -201,6 +201,7 @@ bool client::poll()
     std::string serialized_request;
     try {
         serialized_request = protocol::serialize(request);
+        SPDLOG_TRACE("[Remote config] Sending request: {}", serialized_request);
     } catch (protocol::serializer_exception &e) {
         return false;
     }
@@ -211,11 +212,15 @@ bool client::poll()
     }
 
     try {
+        SPDLOG_TRACE(
+            "[Remote config] Received response: {}", response_body.value());
         auto response = protocol::parse(response_body.value());
         last_poll_error_.clear();
         return process_response(response);
     } catch (protocol::parser_exception &e) {
-        SPDLOG_DEBUG("Error parsing remote config response: %s", e.what());
+        SPDLOG_ERROR(
+            "[Remote config] Error parsing remote config response - {}",
+            e.what());
         return false;
     }
 }

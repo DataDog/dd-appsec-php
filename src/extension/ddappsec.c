@@ -237,10 +237,14 @@ static PHP_RINIT_FUNCTION(ddappsec)
     //_check_enabled should be run only once. However, pthread_once approach
     // does not work with ZTS.
     if (DDAPPSEC_G(enabled) == NOT_CONFIGURED) {
+        mlog_g(dd_log_trace,
+            "[Remote config] Enabled not configured, computing enabled status");
         _check_enabled();
     }
+    mlog_g(dd_log_trace, "[Remote config] Enable status is %d",
+        DDAPPSEC_G(enabled));
+
     if (DDAPPSEC_G(enabled_by_configuration) == DISABLED) {
-        mlog_g(dd_log_debug, "Appsec disabled by configuration");
         return SUCCESS;
     }
     DDAPPSEC_G(skip_rshutdown) = false;
@@ -292,8 +296,9 @@ static int _do_rinit(INIT_FUNC_ARGS)
         }
     }
     if (res == dd_network) {
-        mlog_g(dd_log_info, "request_init failed with dd_network; closing "
-                            "connection to helper");
+        mlog_g(dd_log_info,
+            "request_init/config_sync failed with dd_network; closing "
+            "connection to helper");
         dd_helper_close_conn();
     } else if (res == dd_should_block) {
         dd_request_abort_static_page();
