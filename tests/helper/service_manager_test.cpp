@@ -28,7 +28,7 @@ TEST(ServiceManagerTest, LoadRulesOK)
     std::map<std::string_view, std::string> meta;
     std::map<std::string_view, double> metrics;
 
-    service_identifier sid{"service", "env", "", "", "some runtime id"};
+    service_identifier sid{"service", "env", "", "", ""};
     service_manager_exp manager;
     auto fn = create_sample_rules_ok();
     auto service = manager.create_service(sid, {fn, 42}, {}, meta, metrics);
@@ -88,43 +88,4 @@ TEST(ServiceManagerTest, BadRulesFile)
         },
         dds::parsing_error);
 }
-
-TEST(ServiceManagerTest, RunTimeIdIsGeneratedWhenNotProvided)
-{
-    std::map<std::string_view, std::string> meta;
-    std::map<std::string_view, double> metrics;
-
-    std::string emtpy_runtime_id = "";
-    service_identifier sid{"service", "env", "", "", emtpy_runtime_id};
-    service_manager_exp manager;
-    auto fn = create_sample_rules_ok();
-    auto service = manager.create_service(sid, {fn, 42}, {}, meta, metrics);
-
-    EXPECT_FALSE(service.get()->get_id().runtime_id.empty());
-
-    std::string valid_runtime_id = "some runtime id";
-    service_identifier sid2{"service", "env", "", "", valid_runtime_id};
-    auto service2 = manager.create_service(sid2, {fn, 42}, {}, meta, metrics);
-
-    EXPECT_EQ(valid_runtime_id, service2.get()->get_id().runtime_id);
-}
-
-TEST(ServiceManagerTest, RunTimeIdIsNotTakenIntoAccountForCache)
-{
-    std::map<std::string_view, std::string> meta;
-    std::map<std::string_view, double> metrics;
-
-    std::string runtime_id01 = "runtime id 01";
-    service_identifier sid{"service", "env", "", "", runtime_id01};
-    service_manager_exp manager;
-    auto fn = create_sample_rules_ok();
-    auto service = manager.create_service(sid, {fn, 42}, {}, meta, metrics);
-
-    // loading again should take from the cache ignoring runtime is different
-    service_identifier sid2 = sid;
-    sid2.runtime_id = "some other runtime id";
-    auto service2 = manager.create_service(sid2, {fn, 42}, {}, meta, metrics);
-    EXPECT_EQ(manager.get_cache().size(), 1);
-}
-
 } // namespace dds

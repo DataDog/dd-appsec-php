@@ -23,15 +23,9 @@ std::shared_ptr<service> service_manager::create_service(
         }
     }
 
-    service_identifier new_id = id;
-    // If extension did not send runtime_id, then it needs to be generated here
-    if (new_id.runtime_id.empty()) {
-        new_id.runtime_id = generate_random_uuid();
-    }
-
     auto service_ptr =
-        service::from_settings(new_id, settings, rc_settings, meta, metrics);
-    cache_.emplace(new_id, std::move(service_ptr));
+        service::from_settings(id, settings, rc_settings, meta, metrics);
+    cache_.emplace(id, std::move(service_ptr));
     last_service_ = service_ptr;
 
     cleanup_cache();

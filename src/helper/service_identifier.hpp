@@ -38,7 +38,7 @@ struct service_identifier {
         std::size_t operator()(const service_identifier &id) const noexcept
         {
             return dds::hash(id.service, id.env, id.tracer_version,
-                id.app_version);
+                id.app_version, id.runtime_id);
         }
     };
 };

@@ -9,9 +9,9 @@
 
 #include "../../../json_helper.hpp"
 #include "../cached_target_files.hpp"
+#include "base64.h"
 #include "exception.hpp"
 #include "serializer.hpp"
-#include "base64.h"
 
 namespace dds::remote_config::protocol {
 
@@ -80,7 +80,8 @@ void serialize_client(rapidjson::Document::AllocatorType &alloc,
     client_object.AddMember("is_tracer", true, alloc);
     // activation capability;
     char const bytes = static_cast<char>(client.capabilities);
-    client_object.AddMember("capabilities", base64_encode(std::string_view(&bytes, 1), false), alloc);
+    client_object.AddMember("capabilities",
+        base64_encode(std::string_view(&bytes, 1), false), alloc);
 
     rapidjson::Value products(rapidjson::kArrayType);
     for (const std::string &product_str : client.products) {
