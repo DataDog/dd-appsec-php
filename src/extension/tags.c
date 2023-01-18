@@ -554,7 +554,6 @@ static void _dd_http_client_ip(zend_array *meta_ht)
         zend_hash_exists(meta_ht, _dd_multiple_ip_headers)) {
         return;
     }
-
     zend_string *client_ip = dd_ip_extraction_get_ip();
     if (!client_ip) {
         zval *duplicated_ip_headers = dd_ip_extraction_get_duplicated_headers();
