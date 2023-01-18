@@ -343,7 +343,7 @@ exit:
 int dd_appsec_rshutdown()
 {
     dd_conn *conn = dd_helper_mgr_cur_conn();
-    if (conn) {
+    if (conn && DDAPPSEC_G(enabled) == ENABLED) {
         int res = dd_request_shutdown(conn);
         if (res == dd_network) {
             mlog_g(dd_log_info,
