@@ -111,14 +111,12 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
             mlog(dd_log_error, "Array of responses could not be retrieved - %s",
                 mpack_error_to_string(err));
             err = _imsg_destroy(&imsg);
-            UNUSED(err);
             return dd_error;
         }
         if (mpack_node_type(first_response) != mpack_type_array) {
             mlog(dd_log_error, "Invalid response. Expected array but got %s",
                 mpack_type_to_string(mpack_node_type(first_response)));
             err = _imsg_destroy(&imsg);
-            UNUSED(err);
             return dd_error;
         }
         mpack_node_t first_message = mpack_node_array_at(first_response, 1);
@@ -132,32 +130,27 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
         mpack_node_t type = mpack_node_array_at(first_response, 0);
         err = mpack_node_error(type);
         if (err != mpack_ok) {
-            mlog(dd_log_error, "Type could not be retrieved - %s",
+            mlog(dd_log_error, "Response type could not be retrieved - %s",
                 mpack_error_to_string(err));
             err = _imsg_destroy(&imsg);
-            UNUSED(err);
             return dd_error;
         }
         if (mpack_node_type(type) != mpack_type_str) {
             mlog(dd_log_error,
-                "Unexpected type field. It was expected to be string but it "
-                "got a %s",
+                "Unexpected type field. Expected string but got %s",
                 mpack_type_to_string(mpack_node_type(type)));
             err = _imsg_destroy(&imsg);
-            UNUSED(err);
             return dd_error;
         }
         if (dd_mpack_node_lstr_eq(type, "config_features")) {
             res = spec->config_features_cb(first_message, ctx);
-        } else if (strncmp(spec->name, mpack_node_str(type), spec->name_len) ==
-                   0) {
+        } else if (dd_mpack_node_str_eq(type, spec->name, spec->name_len)) {
             res = spec->incoming_cb(first_message, ctx);
         } else {
             mlog(dd_log_debug,
                 "Received message for command %.*s unexpected: %.*s\n", NAME_L,
                 (int)mpack_node_strlen(type), mpack_node_str(type));
             err = _imsg_destroy(&imsg);
-            UNUSED(err);
             return dd_error;
         }
 
@@ -512,7 +505,7 @@ dd_result dd_command_process_config_features(
         DDAPPSEC_G(enabled) = ENABLED; // Configuration dictates
         mlog(dd_log_debug, "Remote config is trying to disable extension but "
                            "it is enabled by config");
-        return dd_error;
+        return dd_success;
     }
     DDAPPSEC_G(enabled) = new_status ? ENABLED : DISABLED;
     return dd_success;
@@ -523,8 +516,7 @@ dd_result dd_command_process_config_features_unexpected(
 {
     UNUSED(root);
     UNUSED(ctx);
-    mlog(dd_log_debug,
-        "Config_features response was given to an unexpected request");
+    mlog(dd_log_debug, "Unexpected config_features response to request");
 
     return dd_error;
 }

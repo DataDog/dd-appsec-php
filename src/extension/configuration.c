@@ -257,7 +257,7 @@ static void _register_testing_objects()
     dd_phpobj_reg_funcs(testing_functions);
 }
 
-bool is_config_using_default(dd_config_id id)
+bool dd_is_config_using_default(dd_config_id id)
 {
     zai_config_memoized_entry config = zai_config_memoized_entries[id];
 

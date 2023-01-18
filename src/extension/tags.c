@@ -203,6 +203,8 @@ void dd_tags_add_appsec_json_frag(zend_string *nonnull zstr)
     zend_llist_add_element(&_appsec_json_frags, &zstr);
 }
 
+void dd_tags_clean() { zend_llist_clean(&_appsec_json_frags); }
+
 void dd_tags_rshutdown()
 {
     zval *metrics_zv = dd_trace_root_span_get_metrics();
@@ -224,7 +226,6 @@ void dd_tags_rshutdown()
     }
 
     zend_string *tag_value = _concat_json_fragments();
-    zend_llist_clean(&_appsec_json_frags);
 
     zval tag_value_zv;
     ZVAL_STR(&tag_value_zv, tag_value);
@@ -263,7 +264,7 @@ void dd_tags_rshutdown_testing()
 {
     // in testing, we don't add the data/event tags, but we still
     // need to clean the fragments to avoid leaking
-    zend_llist_clean(&_appsec_json_frags);
+    dd_tags_clean();
 }
 
 void dd_tags_set_sampling_priority()

@@ -16,11 +16,11 @@ $helper = Helper::createInitedRun([
 
 var_dump(rinit());
 
-match_log('/Unexpected type field. It was expected to be string but it got a mpack_type_array/');
+match_log('/Unexpected type field. Expected string but got a mpack_type_array/');
 
 
 ?>
 --EXPECTF--
-Warning: datadog\appsec\testing\rinit(): [ddappsec] Unexpected type field. It was expected to be string but it got a mpack_type_array in %shelper_bad_response_02.php on line %d
+Warning: datadog\appsec\testing\rinit(): [ddappsec] Unexpected type field. Expected string but got a mpack_type_array in %shelper_bad_response_02.php on line %d
 bool(true)
-found message in log matching /Unexpected type field. It was expected to be string but it got a mpack_type_array/
+found message in log matching /Unexpected type field. Expected string but got a mpack_type_array/

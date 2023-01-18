@@ -237,12 +237,10 @@ static PHP_RINIT_FUNCTION(ddappsec)
     //_check_enabled should be run only once. However, pthread_once approach
     // does not work with ZTS.
     if (DDAPPSEC_G(enabled) == NOT_CONFIGURED) {
-        mlog_g(dd_log_trace,
-            "[Remote config] Enabled not configured, computing enabled status");
+        mlog_g(
+            dd_log_trace, "Enabled not configured, computing enabled status");
         _check_enabled();
     }
-    mlog_g(dd_log_trace, "[Remote config] Enable status is %d",
-        DDAPPSEC_G(enabled));
 
     if (DDAPPSEC_G(enabled_by_configuration) == DISABLED) {
         return SUCCESS;
@@ -283,7 +281,7 @@ static int _do_rinit(INIT_FUNC_ARGS)
         return SUCCESS;
     }
 
-    int res = 0;
+    int res = dd_success;
     if (DDAPPSEC_G(enabled) == ENABLED) {
         // request_init
         res = dd_request_init(conn);
@@ -361,6 +359,7 @@ int dd_appsec_rshutdown()
     if (DDAPPSEC_G(enabled) == ENABLED) {
         dd_tags_rshutdown();
     }
+    dd_tags_clean();
 
     return SUCCESS;
 }
@@ -404,10 +403,10 @@ static void _check_enabled()
         strcmp(sapi_module.name, "cli") == 0 || sapi_module.phpinfo_as_text;
 
     if (is_cli &&
-        !is_config_using_default(DDAPPSEC_CONFIG_DD_APPSEC_ENABLED_ON_CLI)) {
+        !dd_is_config_using_default(DDAPPSEC_CONFIG_DD_APPSEC_ENABLED_ON_CLI)) {
         DDAPPSEC_G(enabled_by_configuration) =
             get_global_DD_APPSEC_ENABLED_ON_CLI() ? ENABLED : DISABLED;
-    } else if (!is_config_using_default(DDAPPSEC_CONFIG_DD_APPSEC_ENABLED)) {
+    } else if (!dd_is_config_using_default(DDAPPSEC_CONFIG_DD_APPSEC_ENABLED)) {
         DDAPPSEC_G(enabled_by_configuration) =
             get_global_DD_APPSEC_ENABLED() ? ENABLED : DISABLED;
     } else {

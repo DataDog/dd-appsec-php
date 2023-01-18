@@ -59,8 +59,8 @@ extern bool runtime_config_first_init;
     CONFIG(CUSTOM(uint32_t), DD_REMOTE_CONFIG_POLL_INTERVAL, "1000", .parser = _parse_uint32)                   \
     CONFIG(CUSTOM(uint64_t), DD_REMOTE_CONFIG_MAX_PAYLOAD_SIZE, "4096", .parser = _parse_uint64)                \
     CONFIG(STRING, DD_AGENT_HOST, "")                                                                           \
-    CONFIG(INT, DD_TRACE_AGENT_PORT, "8126")                                                                    \
-// clang-format on
+    CONFIG(INT, DD_TRACE_AGENT_PORT, "8126")                                                            \
+    // clang-format on
 
 #define CALIAS CONFIG
 #define SYSCFG CONFIG
@@ -114,6 +114,6 @@ DD_CONFIGURATION
 #undef CUSTOM
 #undef CALIAS
 
-bool is_config_using_default(dd_config_id id);
+bool dd_is_config_using_default(dd_config_id id);
 
 #endif // DD_CONFIGURATION_H
