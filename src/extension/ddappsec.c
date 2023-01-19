@@ -357,9 +357,9 @@ int dd_appsec_rshutdown()
     dd_helper_rshutdown();
 
     if (DDAPPSEC_G(enabled) == ENABLED) {
-        dd_tags_rshutdown();
+        dd_tags_add_tags();
     }
-    dd_tags_clean();
+    dd_tags_rshutdown();
 
     return SUCCESS;
 }

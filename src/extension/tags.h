@@ -13,8 +13,8 @@
 void dd_tags_startup(void);
 void dd_tags_shutdown(void);
 void dd_tags_rinit(void);
-void dd_tags_clean(void);
 void dd_tags_rshutdown(void);
+void dd_tags_add_tags(void);
 void dd_tags_rshutdown_testing(void);
 
 void dd_tags_set_sampling_priority(void);
