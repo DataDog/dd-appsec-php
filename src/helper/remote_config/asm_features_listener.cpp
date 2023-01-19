@@ -4,8 +4,10 @@
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #include "asm_features_listener.hpp"
+#include "../utils.hpp"
 #include "base64.h"
 #include "exception.hpp"
+#include <algorithm>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 
@@ -40,7 +42,7 @@ void dds::remote_config::asm_features_listener::on_update(const config &config)
     }
 
     if (enabled_itr->value.GetType() == rapidjson::kStringType) {
-        if (enabled_itr->value.GetString() == std::string("true")) {
+        if (dd_tolower(enabled_itr->value.GetString()) == std::string("true")) {
             service_config_->enable_asm();
         } else {
             // This scenario should not happen since RC would remove the file

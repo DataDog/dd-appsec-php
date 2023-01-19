@@ -66,6 +66,20 @@ TEST(RemoteConfigAsmFeaturesListener,
         remote_config_service->get_asm_enabled_status());
 }
 
+TEST(RemoteConfigAsmFeaturesListener, AsmParserIsCaseInsensitive)
+{
+    auto remote_config_service = std::make_shared<service_config>();
+    remote_config::asm_features_listener listener(remote_config_service);
+
+    EXPECT_EQ(enable_asm_status::NOT_SET,
+        remote_config_service->get_asm_enabled_status());
+
+    listener.on_update(get_config_with_status("\"TrUe\""));
+
+    EXPECT_EQ(enable_asm_status::ENABLED,
+        remote_config_service->get_asm_enabled_status());
+}
+
 TEST(RemoteConfigAsmFeaturesListener,
     ListenerGetDeactivedWhenConfigSaysSoOnUpdateAsString)
 {
