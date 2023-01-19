@@ -110,12 +110,14 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
         if (err != mpack_ok) {
             mlog(dd_log_error, "Array of responses could not be retrieved - %s",
                 mpack_error_to_string(err));
+            // NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
             err = _imsg_destroy(&imsg);
             return dd_error;
         }
         if (mpack_node_type(first_response) != mpack_type_array) {
             mlog(dd_log_error, "Invalid response. Expected array but got %s",
                 mpack_type_to_string(mpack_node_type(first_response)));
+            // NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
             err = _imsg_destroy(&imsg);
             return dd_error;
         }
@@ -132,6 +134,7 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
         if (err != mpack_ok) {
             mlog(dd_log_error, "Response type could not be retrieved - %s",
                 mpack_error_to_string(err));
+            // NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
             err = _imsg_destroy(&imsg);
             return dd_error;
         }
@@ -139,6 +142,7 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
             mlog(dd_log_error,
                 "Unexpected type field. Expected string but got %s",
                 mpack_type_to_string(mpack_node_type(type)));
+            // NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
             err = _imsg_destroy(&imsg);
             return dd_error;
         }
@@ -150,6 +154,7 @@ static dd_result _dd_command_exec(dd_conn *nonnull conn, bool check_cred,
             mlog(dd_log_debug,
                 "Received message for command %.*s unexpected: %.*s\n", NAME_L,
                 (int)mpack_node_strlen(type), mpack_node_str(type));
+            // NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
             err = _imsg_destroy(&imsg);
             return dd_error;
         }
