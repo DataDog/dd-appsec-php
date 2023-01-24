@@ -196,10 +196,21 @@ bool client::handle_command(network::request_init::request &command)
     auto response = std::make_shared<network::request_init::response>();
     try {
         auto res = context_->publish(std::move(command.data));
-        if (res && res->valid()) {
-            response->verdict = "record";
-            response->triggers = std::move(res->data);
-            response->actions = std::move(res->actions);
+        if (res) {
+            switch (res->type) {
+            case engine::action_type::block:
+                response->verdict = "block";
+                response->parameters = std::move(res->parameters);
+                break;
+            case engine::action_type::record:
+            default:
+                response->verdict = "record";
+                response->parameters = {};
+                break;
+            }
+
+            response->triggers = std::move(res->events);
+
             DD_STDLOG(DD_STDLOG_ATTACK_DETECTED);
         } else {
             response->verdict = "ok";
@@ -303,10 +314,21 @@ bool client::handle_command(network::request_shutdown::request &command)
     auto response = std::make_shared<network::request_shutdown::response>();
     try {
         auto res = context_->publish(std::move(command.data));
-        if (res && res->valid()) {
-            response->verdict = "record";
-            response->triggers = std::move(res->data);
-            response->actions = std::move(res->actions);
+        if (res) {
+            switch (res->type) {
+            case engine::action_type::block:
+                response->verdict = "block";
+                response->parameters = std::move(res->parameters);
+                break;
+            case engine::action_type::record:
+            default:
+                response->verdict = "record";
+                response->parameters = {};
+                break;
+            }
+
+            response->triggers = std::move(res->events);
+
             DD_STDLOG(DD_STDLOG_ATTACK_DETECTED);
         } else {
             response->verdict = "ok";

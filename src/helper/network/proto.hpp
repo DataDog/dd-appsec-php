@@ -151,10 +151,10 @@ struct request_init {
             return request_init::name;
         };
         std::string verdict;
+        std::unordered_map<std::string, std::string> parameters;
         std::vector<std::string> triggers;
-        std::unordered_set<std::string> actions;
 
-        MSGPACK_DEFINE(verdict, triggers, actions);
+        MSGPACK_DEFINE(verdict, parameters, triggers);
     };
 };
 
@@ -226,13 +226,13 @@ struct request_shutdown {
             return request_shutdown::name;
         };
         std::string verdict;
+        std::unordered_map<std::string, std::string> parameters;
         std::vector<std::string> triggers;
-        std::unordered_set<std::string> actions;
 
         std::map<std::string_view, std::string> meta;
         std::map<std::string_view, double> metrics;
 
-        MSGPACK_DEFINE(verdict, triggers, actions, meta, metrics);
+        MSGPACK_DEFINE(verdict, parameters, triggers, meta, metrics);
     };
 };
 

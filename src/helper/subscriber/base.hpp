@@ -8,7 +8,6 @@
 #include "../engine_settings.hpp"
 #include "../parameter.hpp"
 #include "../parameter_view.hpp"
-#include "../result.hpp"
 #include <memory>
 #include <optional>
 #include <vector>
@@ -18,6 +17,25 @@ namespace dds {
 class subscriber {
 public:
     using ptr = std::shared_ptr<subscriber>;
+
+    struct event {
+        event() = default;
+
+        event(std::vector<std::string> &&data_,
+            std::unordered_set<std::string> &&actions_)
+            : data(std::move(data_)), actions(std::move(actions_))
+        {}
+        event(const event &) = default;
+        event(event &&) = default;
+        event &operator=(const event &) = default;
+        event &operator=(event &&) = default;
+        ~event() = default;
+
+
+        std::vector<std::string> data;
+        std::unordered_set<std::string> actions;
+    };
+
 
     class listener {
     public:
@@ -31,7 +49,7 @@ public:
 
         virtual ~listener() = default;
         // NOLINTNEXTLINE(google-runtime-references)
-        virtual std::optional<result> call(parameter_view &data) = 0;
+        virtual std::optional<event> call(parameter_view &data) = 0;
 
         // NOLINTNEXTLINE(google-runtime-references)
         virtual void get_meta_and_metrics(
