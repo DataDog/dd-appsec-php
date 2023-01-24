@@ -208,7 +208,8 @@ instance::listener::~listener()
     }
 }
 
-std::optional<subscriber::event> instance::listener::call(dds::parameter_view &data)
+std::optional<subscriber::event> instance::listener::call(
+    dds::parameter_view &data)
 {
     ddwaf_result res;
     DDWAF_RET_CODE code;

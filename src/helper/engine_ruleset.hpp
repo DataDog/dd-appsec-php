@@ -13,13 +13,18 @@ namespace dds {
 class engine_ruleset {
 public:
     explicit engine_ruleset(std::string_view ruleset);
-    [[nodiscard]] const rapidjson::Document& get_document() const { return doc_; }
+    [[nodiscard]] const rapidjson::Document &get_document() const
+    {
+        return doc_;
+    }
 
-    [[nodiscard]] const auto& get_node(std::string_view key) const {
+    [[nodiscard]] const auto &get_node(std::string_view key) const
+    {
         return doc_[key.data()];
     }
 
     static engine_ruleset from_path(std::string_view path);
+
 protected:
     rapidjson::Document doc_;
 };

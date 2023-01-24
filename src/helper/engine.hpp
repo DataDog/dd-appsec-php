@@ -35,11 +35,7 @@ public:
     using subscription_map =
         std::map<std::string_view, std::vector<subscriber::ptr>>;
 
-    enum class action_type : uint8_t {
-        record = 1,
-        redirect = 2,
-        block = 3
-    };
+    enum class action_type : uint8_t { record = 1, redirect = 2, block = 3 };
 
     struct action {
         action_type type;
@@ -61,7 +57,7 @@ public:
     public:
         explicit context(engine &engine)
             : subscriptions_(engine.subscriptions_), limiter_(engine.limiter_),
-            actions_(engine.actions_)
+              actions_(engine.actions_)
         {}
         context(const context &) = delete;
         context &operator=(const context &) = delete;
@@ -86,20 +82,21 @@ public:
         std::map<std::string_view, std::string> &meta,
         std::map<std::string_view, double> &metrics);
 
-
     static auto create(
         uint32_t trace_rate_limit = engine_settings::default_trace_rate_limit,
         action_map actions = default_actions)
     {
-        return std::shared_ptr<engine>(new engine(trace_rate_limit, std::move(actions)));
+        return std::shared_ptr<engine>(
+            new engine(trace_rate_limit, std::move(actions)));
     }
 
     context get_context() { return context{*this}; }
     void subscribe(const subscriber::ptr &sub);
 
 protected:
-    explicit engine(uint32_t trace_rate_limit, action_map &&actions = {}) :
-        limiter_(trace_rate_limit), actions_(std::move(actions)) {}
+    explicit engine(uint32_t trace_rate_limit, action_map &&actions = {})
+        : limiter_(trace_rate_limit), actions_(std::move(actions))
+    {}
 
     static const action_map default_actions;
 

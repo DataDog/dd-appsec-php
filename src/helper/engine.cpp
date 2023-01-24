@@ -110,7 +110,8 @@ void engine::context::get_meta_and_metrics(
 namespace {
 
 template <typename T>
-engine::action_map parse_actions(const T &doc, const engine::action_map &default_actions)
+engine::action_map parse_actions(
+    const T &doc, const engine::action_map &default_actions)
 {
     engine::action_map actions = default_actions;
     if (doc.GetType() != rapidjson::kArrayType) {
@@ -135,8 +136,10 @@ engine::ptr engine::from_settings(const dds::engine_settings &eng_settings,
 {
     auto &&rules_path = eng_settings.rules_file_or_default();
     auto ruleset = engine_ruleset::from_path(rules_path);
-    auto actions = parse_actions(ruleset.get_document(), engine::default_actions);
-    std::shared_ptr engine_ptr{engine::create(eng_settings.trace_rate_limit, std::move(actions))};
+    auto actions =
+        parse_actions(ruleset.get_document(), engine::default_actions);
+    std::shared_ptr engine_ptr{
+        engine::create(eng_settings.trace_rate_limit, std::move(actions))};
 
     try {
         SPDLOG_DEBUG("Will load WAF rules from {}", rules_path);
@@ -154,8 +157,8 @@ engine::ptr engine::from_settings(const dds::engine_settings &eng_settings,
 
 // NOLINTNEXTLINE
 const engine::action_map engine::default_actions = {
-    {"block", {engine::action_type::block, {{"status_code", "403"}, {"type", "auto"}}}},
+    {"block", {engine::action_type::block,
+                  {{"status_code", "403"}, {"type", "auto"}}}},
 };
-
 
 } // namespace dds

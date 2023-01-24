@@ -31,11 +31,9 @@ public:
         event &operator=(event &&) = default;
         ~event() = default;
 
-
         std::vector<std::string> data;
         std::unordered_set<std::string> actions;
     };
-
 
     class listener {
     public:

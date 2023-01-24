@@ -43,7 +43,8 @@ TEST(WafTest, InitWithInvalidRules)
     std::map<std::string_view, std::string> meta;
     std::map<std::string_view, double> metrics;
 
-    subscriber::ptr wi{waf::instance::from_settings(cs, ruleset, meta, metrics)};
+    subscriber::ptr wi{
+        waf::instance::from_settings(cs, ruleset, meta, metrics)};
 
     EXPECT_EQ(meta.size(), 2);
     EXPECT_STREQ(meta[tag::waf_version].c_str(), "1.6.1");
@@ -185,7 +186,8 @@ TEST(WafTest, ValidRunMonitorObfuscatedFromSettings)
     cs.obfuscator_key_regex = "password";
     auto ruleset = engine_ruleset::from_path(cs.rules_file);
 
-    subscriber::ptr wi{waf::instance::from_settings(cs, ruleset, meta, metrics)};
+    subscriber::ptr wi{
+        waf::instance::from_settings(cs, ruleset, meta, metrics)};
 
     auto ctx = wi->get_listener();
 

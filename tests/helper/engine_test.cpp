@@ -18,7 +18,8 @@ class listener : public dds::subscriber::listener {
 public:
     typedef std::shared_ptr<dds::mock::listener> ptr;
 
-    MOCK_METHOD1(call, std::optional<dds::subscriber::event>(dds::parameter_view &));
+    MOCK_METHOD1(
+        call, std::optional<dds::subscriber::event>(dds::parameter_view &));
     MOCK_METHOD2(
         get_meta_and_metrics, void(std::map<std::string_view, std::string> &,
                                   std::map<std::string_view, double> &));
@@ -244,7 +245,8 @@ TEST(EngineTest, StatefulSubscriptor)
 TEST(EngineTest, CustomActions)
 {
     auto e{engine::create(engine_settings::default_trace_rate_limit,
-        {{"redirect", {engine::action_type::redirect, {{"url", "datadoghq.com"}}}}})};
+        {{"redirect",
+            {engine::action_type::redirect, {{"url", "datadoghq.com"}}}}})};
 
     mock::listener::ptr listener = mock::listener::ptr(new mock::listener());
     EXPECT_CALL(*listener, call(_))
@@ -276,7 +278,6 @@ TEST(EngineTest, CustomActions)
     res = ctx.publish(std::move(p));
     EXPECT_FALSE(res);
 }
-
 
 TEST(EngineTest, WafSubscriptorBasic)
 {
