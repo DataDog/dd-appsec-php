@@ -108,6 +108,66 @@ void engine::context::get_meta_and_metrics(
     }
 }
 
+template <typename T> engine::action parse_action(T &action_object)
+{
+    auto it = action_object.FindMember("type");
+    if (it == action_object.MemberEnd() || !it->value.IsString()) {
+        throw parsing_error("no action.type found or unexpected type");
+    }
+    std::string type = action_object["type"].GetString();
+
+    if (type != "block_request") {
+        throw parsing_error(
+            "unknown action.type " + type + " only block_request supported");
+    }
+
+    it = action_object.FindMember("parameters");
+    if (it == action_object.MemberEnd() || !it->value.IsObject()) {
+        throw parsing_error("no action.parameters found or unexpected type");
+    }
+    const auto &parameters = action_object["parameters"];
+
+    engine::action action;
+    action.type = engine::action_type::block;
+    for (auto iter = parameters.MemberBegin(); iter != parameters.MemberEnd();
+         ++iter) {
+        if (!iter->name.IsString()) {
+            // Unclear if this is even possible
+            continue;
+        }
+
+        switch (iter->value.GetType()) {
+        case rapidjson::kStringType:
+            action.parameters[iter->name.GetString()] = iter->value.GetString();
+            break;
+        case rapidjson::kNumberType: {
+            std::string value;
+            if (iter->value.IsUint64()) {
+                value = std::to_string(iter->value.GetUint64());
+            } else if (iter->value.IsInt64()) {
+                value = std::to_string(iter->value.GetInt64());
+            } else if (iter->value.IsDouble()) {
+                value = std::to_string(iter->value.GetDouble());
+            }
+
+            action.parameters[iter->name.GetString()] = std::move(value);
+
+            break;
+        }
+        case rapidjson::kTrueType:
+            action.parameters[iter->name.GetString()] = "true";
+            break;
+        case rapidjson::kFalseType:
+            action.parameters[iter->name.GetString()] = "false";
+            break;
+        default:
+            continue;
+        }
+    }
+
+    return action;
+}
+
 template <typename T, typename>
 engine::action_map engine::parse_actions(
     const T &doc, const engine::action_map &default_actions)
@@ -139,69 +199,11 @@ engine::action_map engine::parse_actions(
             continue;
         }
         std::string id = it->value.GetString();
-
-        it = action_object.FindMember("type");
-        if (it == action_object.MemberEnd() || !it->value.IsString()) {
-            SPDLOG_ERROR("no action.type found or unexpected type");
-            continue;
+        try {
+            actions[id] = parse_action(action_object);
+        } catch (const std::exception &e) {
+            SPDLOG_ERROR("failed to parse action '{}': {}", id, e.what());
         }
-        std::string type = action_object["type"].GetString();
-
-        if (type != "block_request") {
-            SPDLOG_ERROR(
-                "unknown action.type {}, only block_request supported", type);
-            continue;
-        }
-
-        it = action_object.FindMember("parameters");
-        if (it == action_object.MemberEnd() || !it->value.IsObject()) {
-            SPDLOG_ERROR("no action.parameters found or unexpected type");
-            continue;
-        }
-        const auto &parameters = action_object["parameters"];
-
-        engine::action action;
-        action.type = engine::action_type::block;
-        for (auto iter = parameters.MemberBegin();
-             iter != parameters.MemberEnd(); ++iter) {
-            if (!iter->name.IsString()) {
-                // Unclear if this is even possible
-                continue;
-            }
-
-            switch (iter->value.GetType()) {
-            case rapidjson::kStringType:
-                action.parameters[iter->name.GetString()] =
-                    iter->value.GetString();
-                break;
-            case rapidjson::kNumberType: {
-                std::string value;
-                if (iter->value.IsUint64()) {
-                    value = std::to_string(iter->value.GetUint64());
-                } else if (iter->value.IsInt64()) {
-                    value = std::to_string(iter->value.GetInt64());
-                } else if (iter->value.IsDouble()) {
-                    value = std::to_string(iter->value.GetDouble());
-                } else {
-                    continue;
-                }
-
-                action.parameters[iter->name.GetString()] = std::move(value);
-
-                break;
-            }
-            case rapidjson::kTrueType:
-                action.parameters[iter->name.GetString()] = "true";
-                break;
-            case rapidjson::kFalseType:
-                action.parameters[iter->name.GetString()] = "false";
-                break;
-            default:
-                continue;
-            }
-        }
-
-        actions[id] = action;
     }
 
     return actions;

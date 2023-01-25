@@ -364,6 +364,31 @@ TEST(EngineTest, ActionsParser)
     EXPECT_STREQ(action_spec.parameters["false"].c_str(), "false");
 }
 
+TEST(EngineTest, ActionsParseInvalidActionsType)
+{
+    const std::string action_ruleset =
+        R"({"actions": {"type": "block_request","parameters": {"status_code": 100,"type": "html","double": 1.523, "negative": -44, "true": true, "false": false, "invalid": []}}})";
+    rapidjson::Document doc;
+    rapidjson::ParseResult result = doc.Parse(action_ruleset);
+    EXPECT_NE(result, nullptr);
+    EXPECT_TRUE(doc.IsObject());
+
+    auto parsed_actions = engine::parse_actions(doc, {});
+    EXPECT_EQ(parsed_actions.size(), 0);
+}
+
+TEST(EngineTest, ActionsParseInvalidActionType)
+{
+    const std::string action_ruleset = R"({"actions": [[]]})";
+    rapidjson::Document doc;
+    rapidjson::ParseResult result = doc.Parse(action_ruleset);
+    EXPECT_NE(result, nullptr);
+    EXPECT_TRUE(doc.IsObject());
+
+    auto parsed_actions = engine::parse_actions(doc, {});
+    EXPECT_EQ(parsed_actions.size(), 0);
+}
+
 TEST(EngineTest, ActionsParserNoId)
 {
     const std::string action_ruleset =
@@ -410,6 +435,20 @@ TEST(EngineTest, ActionsParserWrongTypeType)
 {
     const std::string action_ruleset =
         R"({"actions": [{"id": "cabbage", "type": false, "parameters": {"status_code": 100,"type": "html","double": 1.523, "negative": -44, "true": true, "false": false, "invalid": []}}]})";
+
+    rapidjson::Document doc;
+    rapidjson::ParseResult result = doc.Parse(action_ruleset);
+    EXPECT_NE(result, nullptr);
+    EXPECT_TRUE(doc.IsObject());
+
+    auto parsed_actions = engine::parse_actions(doc, {});
+    EXPECT_EQ(parsed_actions.size(), 0);
+}
+
+TEST(EngineTest, ActionsParserInvalidType)
+{
+    const std::string action_ruleset =
+        R"({"actions": [{"id": "cabbage", "type": "redirect", "parameters": {"status_code": 100,"type": "html","double": 1.523, "negative": -44, "true": true, "false": false, "invalid": []}}]})";
 
     rapidjson::Document doc;
     rapidjson::ParseResult result = doc.Parse(action_ruleset);
