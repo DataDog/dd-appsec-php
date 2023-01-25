@@ -63,10 +63,9 @@ static const int timeout_send = 500;
 static const int timeout_recv_initial = 7500;
 static const int timeout_recv_subseq = 2000;
 
-#define DD_SOCKET_PATH_NAME "ddappsec_" PHP_DDAPPSEC_VERSION "_"
-#define DD_SOCKET_PATH_EXTENSION ".sock"
-#define DD_LOCK_PATH_NAME "ddappsec_" PHP_DDAPPSEC_VERSION "_"
-#define DD_LOCK_PATH_EXTENSION ".lock"
+#define DD_PATH_FORMAT "%s%sddappsec_" PHP_DDAPPSEC_VERSION "_%u.%u"
+#define DD_SOCK_PATH_EXTENSION DD_PATH_FORMAT ".sock"
+#define DD_LOCK_PATH_EXTENSION DD_PATH_FORMAT ".lock"
 
 #ifndef CLOCK_MONOTONIC_COARSE
 #    define CLOCK_MONOTONIC_COARSE CLOCK_MONOTONIC
@@ -195,72 +194,36 @@ dd_conn *nullable dd_helper_mgr_cur_conn(void)
     return NULL;
 }
 
-#define atoa(x) #x
-
-static char *_concat_paths(const char *nonnull base, size_t base_len,
-    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    const char *nonnull file, size_t file_len, uid_t uid, uid_t gid,
-    const char *nonnull extension, size_t extension_len)
-{
-    bool add_slash = base[base_len - 1] != '/';
-
-    char uid_buff[sizeof(atoa(UINT_MAX))];
-    int uid_len = sprintf(uid_buff, "%u", uid);
-    char gid_buff[sizeof(atoa(UINT_MAX))];
-    int gid_len = sprintf(gid_buff, "%u", gid);
-
-    // Since file comes from a literal, assume it has a safe length. To that
-    // add the slash, the base length and the null character.
-    char *ret = safe_pemalloc(base_len, 1,
-        (add_slash ? 2 : 1) + file_len + uid_len + 1 + gid_len + extension_len,
-        1);
-    char *ptr = ret;
-
-    memcpy(ptr, base, base_len);
-    ptr += base_len;
-    if (add_slash) {
-        *ptr++ = '/';
-    }
-
-    // File name
-    memcpy(ptr, file, file_len);
-    ptr += file_len;
-
-    // User id
-    memcpy(ptr, uid_buff, uid_len);
-    ptr += uid_len;
-
-    // Separator
-    memcpy(ptr, ".", 1);
-    ptr += 1;
-
-    // User group id
-    memcpy(ptr, gid_buff, gid_len);
-    ptr += gid_len;
-
-    // File extension
-    memcpy(ptr, extension, extension_len);
-    ptr[extension_len] = '\0';
-
-    return ret;
-}
-
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 bool dd_on_runtime_path_update(zval *nullable old_val, zval *nonnull new_val)
 {
     UNUSED(old_val);
 
-    pefree(_mgr.socket_path, 1);
     uid_t uid = getuid();
     gid_t gid = getgid();
-    _mgr.socket_path = _concat_paths(Z_STRVAL_P(new_val), Z_STRLEN_P(new_val),
-        ZEND_STRL(DD_SOCKET_PATH_NAME), uid, gid,
-        ZEND_STRL(DD_SOCKET_PATH_EXTENSION));
+    char *base = Z_STRVAL_P(new_val);
+    size_t base_len = Z_STRLEN_P(new_val);
+    char *separator = base[base_len - 1] != '/' ? "/" : "";
 
+    size_t sock_name_len =
+        snprintf(NULL, 0, DD_SOCK_PATH_EXTENSION, base, separator, uid, gid) +
+        1;
+    char *sock_name = safe_pemalloc(sock_name_len, sizeof(char), 0, 1);
+    snprintf(sock_name, sock_name_len, DD_SOCK_PATH_EXTENSION, base, separator,
+        uid, gid);
+    sock_name[sock_name_len - 1] = '\0';
+    pefree(_mgr.socket_path, 1);
+    _mgr.socket_path = sock_name;
+
+    size_t lock_name_len =
+        snprintf(NULL, 0, DD_LOCK_PATH_EXTENSION, base, separator, uid, gid) +
+        1;
+    char *lock_name = safe_pemalloc(lock_name_len, sizeof(char), 0, 1);
+    snprintf(lock_name, lock_name_len, DD_LOCK_PATH_EXTENSION, base, separator,
+        uid, gid);
+    lock_name[lock_name_len - 1] = '\0';
     pefree(_mgr.lock_path, 1);
-    _mgr.lock_path = _concat_paths(Z_STRVAL_P(new_val), Z_STRLEN_P(new_val),
-        ZEND_STRL(DD_LOCK_PATH_NAME), uid, gid,
-        ZEND_STRL(DD_LOCK_PATH_EXTENSION));
+    _mgr.lock_path = lock_name;
 
     return true;
 }
