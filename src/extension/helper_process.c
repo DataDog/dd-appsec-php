@@ -251,13 +251,15 @@ bool dd_on_runtime_path_update(zval *nullable old_val, zval *nonnull new_val)
     UNUSED(old_val);
 
     pefree(_mgr.socket_path, 1);
+    uid_t uid = getuid();
+    gid_t gid = getgid();
     _mgr.socket_path = _concat_paths(Z_STRVAL_P(new_val), Z_STRLEN_P(new_val),
-        ZEND_STRL(DD_SOCKET_PATH_NAME), getuid(), getgid(),
+        ZEND_STRL(DD_SOCKET_PATH_NAME), uid, gid,
         ZEND_STRL(DD_SOCKET_PATH_EXTENSION));
 
     pefree(_mgr.lock_path, 1);
     _mgr.lock_path = _concat_paths(Z_STRVAL_P(new_val), Z_STRLEN_P(new_val),
-        ZEND_STRL(DD_LOCK_PATH_NAME), getuid(), getgid(),
+        ZEND_STRL(DD_LOCK_PATH_NAME), uid, gid,
         ZEND_STRL(DD_LOCK_PATH_EXTENSION));
 
     return true;
