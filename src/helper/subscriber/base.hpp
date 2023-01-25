@@ -19,18 +19,6 @@ public:
     using ptr = std::shared_ptr<subscriber>;
 
     struct event {
-        event() = default;
-
-        event(std::vector<std::string> &&data_,
-            std::unordered_set<std::string> &&actions_)
-            : data(std::move(data_)), actions(std::move(actions_))
-        {}
-        event(const event &) = default;
-        event(event &&) = default;
-        event &operator=(const event &) = default;
-        event &operator=(event &&) = default;
-        ~event() = default;
-
         std::vector<std::string> data;
         std::unordered_set<std::string> actions;
     };

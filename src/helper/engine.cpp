@@ -114,12 +114,12 @@ engine::action_map parse_actions(
     const T &doc, const engine::action_map &default_actions)
 {
     engine::action_map actions = default_actions;
-    if (doc.GetType() != rapidjson::kArrayType) {
-        // perhaps throw something?
-        SPDLOG_ERROR(
-            "unexpected WAF result type {}, expected array", doc.GetType());
-        return actions;
-    }
+    /*    if (doc.GetType() != rapidjson::kArrayType) {*/
+    /*// perhaps throw something?*/
+    /*SPDLOG_ERROR(*/
+    /*"unexpected WAF result type {}, expected array", doc.GetType());*/
+    /*return actions;*/
+    /*}*/
 
     /*for (auto &action : doc.GetArray()) {*/
 
