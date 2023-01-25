@@ -12,6 +12,7 @@
 #include "subscriber/base.hpp"
 #include <map>
 #include <memory>
+#include <rapidjson/document.h>
 #include <spdlog/fmt/ostr.h>
 #include <string>
 #include <vector>
@@ -92,6 +93,15 @@ public:
 
     context get_context() { return context{*this}; }
     void subscribe(const subscriber::ptr &sub);
+
+    // Only exposed for testing purposes
+    template <typename T,
+        typename = std::enable_if_t<std::disjunction_v<
+            std::is_same<rapidjson::Document,
+                std::remove_cv_t<std::decay_t<T>>>,
+            std::is_same<rapidjson::Value, std::remove_cv_t<std::decay_t<T>>>>>>
+    static action_map parse_actions(
+        const T &doc, const action_map &default_actions);
 
 protected:
     explicit engine(uint32_t trace_rate_limit, action_map &&actions = {})

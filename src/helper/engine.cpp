@@ -3,6 +3,7 @@
 //
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
+#include <rapidjson/rapidjson.h>
 #include <set>
 #include <spdlog/fmt/ostr.h>
 #include <spdlog/spdlog.h>
@@ -107,27 +108,104 @@ void engine::context::get_meta_and_metrics(
     }
 }
 
-namespace {
-
-template <typename T>
-engine::action_map parse_actions(
+template <typename T, typename>
+engine::action_map engine::parse_actions(
     const T &doc, const engine::action_map &default_actions)
 {
     engine::action_map actions = default_actions;
-    /*    if (doc.GetType() != rapidjson::kArrayType) {*/
-    /*// perhaps throw something?*/
-    /*SPDLOG_ERROR(*/
-    /*"unexpected WAF result type {}, expected array", doc.GetType());*/
-    /*return actions;*/
-    /*}*/
 
-    /*for (auto &action : doc.GetArray()) {*/
+    auto it = doc.FindMember("actions");
+    if (it == doc.MemberEnd()) {
+        return actions;
+    }
 
-    /*}*/
+    const auto &actions_array = it->value;
+    if (actions_array.GetType() != rapidjson::kArrayType) {
+        SPDLOG_ERROR("unexpected 'actions' type {}, expected array",
+            actions_array.GetType());
+        return actions;
+    }
+
+    for (auto &action_object : actions_array.GetArray()) {
+        if (action_object.GetType() != rapidjson::kObjectType) {
+            SPDLOG_ERROR("unexpected action item type {}, expected object",
+                action_object.GetType());
+            continue;
+        }
+
+        it = action_object.FindMember("id");
+        if (it == action_object.MemberEnd() || !it->value.IsString()) {
+            SPDLOG_ERROR("no action.id found or unexpected type");
+            continue;
+        }
+        std::string id = it->value.GetString();
+
+        it = action_object.FindMember("type");
+        if (it == action_object.MemberEnd() || !it->value.IsString()) {
+            SPDLOG_ERROR("no action.type found or unexpected type");
+            continue;
+        }
+        std::string type = action_object["type"].GetString();
+
+        if (type != "block_request") {
+            SPDLOG_ERROR(
+                "unknown action.type {}, only block_request supported", type);
+            continue;
+        }
+
+        it = action_object.FindMember("parameters");
+        if (it == action_object.MemberEnd() || !it->value.IsObject()) {
+            SPDLOG_ERROR("no action.parameters found or unexpected type");
+            continue;
+        }
+        const auto &parameters = action_object["parameters"];
+
+        engine::action action;
+        action.type = engine::action_type::block;
+        for (auto iter = parameters.MemberBegin();
+             iter != parameters.MemberEnd(); ++iter) {
+            if (!iter->name.IsString()) {
+                // Unclear if this is even possible
+                continue;
+            }
+
+            switch (iter->value.GetType()) {
+            case rapidjson::kStringType:
+                action.parameters[iter->name.GetString()] =
+                    iter->value.GetString();
+                break;
+            case rapidjson::kNumberType: {
+                std::string value;
+                if (iter->value.IsUint64()) {
+                    value = std::to_string(iter->value.GetUint64());
+                } else if (iter->value.IsInt64()) {
+                    value = std::to_string(iter->value.GetInt64());
+                } else if (iter->value.IsDouble()) {
+                    value = std::to_string(iter->value.GetDouble());
+                } else {
+                    continue;
+                }
+
+                action.parameters[iter->name.GetString()] = std::move(value);
+
+                break;
+            }
+            case rapidjson::kTrueType:
+                action.parameters[iter->name.GetString()] = "true";
+                break;
+            case rapidjson::kFalseType:
+                action.parameters[iter->name.GetString()] = "false";
+                break;
+            default:
+                continue;
+            }
+        }
+
+        actions[id] = action;
+    }
 
     return actions;
 }
-} // namespace
 
 engine::ptr engine::from_settings(const dds::engine_settings &eng_settings,
     std::map<std::string_view, std::string> &meta,
