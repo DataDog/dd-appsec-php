@@ -19,6 +19,12 @@ using stream_packer = msgpack::packer<std::stringstream>;
 
 namespace dds::network {
 
+struct verdict {
+    static constexpr std::string_view ok = "ok";
+    static constexpr std::string_view record = "record";
+    static constexpr std::string_view block = "block";
+};
+
 using header_t = struct __attribute__((__packed__)) header {
     char code[4]{"dds"}; // dds\0 NOLINT
     uint32_t size{0};

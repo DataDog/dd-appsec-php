@@ -199,12 +199,12 @@ bool client::handle_command(network::request_init::request &command)
         if (res) {
             switch (res->type) {
             case engine::action_type::block:
-                response->verdict = "block";
+                response->verdict = network::verdict::block;
                 response->parameters = std::move(res->parameters);
                 break;
             case engine::action_type::record:
             default:
-                response->verdict = "record";
+                response->verdict = network::verdict::record;
                 response->parameters = {};
                 break;
             }
@@ -213,7 +213,7 @@ bool client::handle_command(network::request_init::request &command)
 
             DD_STDLOG(DD_STDLOG_ATTACK_DETECTED);
         } else {
-            response->verdict = "ok";
+            response->verdict = network::verdict::ok;
         }
     } catch (const invalid_object &e) {
         // This error indicates some issue in either the communication with
@@ -317,12 +317,12 @@ bool client::handle_command(network::request_shutdown::request &command)
         if (res) {
             switch (res->type) {
             case engine::action_type::block:
-                response->verdict = "block";
+                response->verdict = network::verdict::block;
                 response->parameters = std::move(res->parameters);
                 break;
             case engine::action_type::record:
             default:
-                response->verdict = "record";
+                response->verdict = network::verdict::record;
                 response->parameters = {};
                 break;
             }
@@ -331,7 +331,7 @@ bool client::handle_command(network::request_shutdown::request &command)
 
             DD_STDLOG(DD_STDLOG_ATTACK_DETECTED);
         } else {
-            response->verdict = "ok";
+            response->verdict = network::verdict::ok;
         }
 
         context_->get_meta_and_metrics(response->meta, response->metrics);
