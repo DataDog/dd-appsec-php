@@ -109,7 +109,7 @@ static int _ddtrace_rshutdown_testing(SHUTDOWN_FUNC_ARGS)
     return _orig_ddtrace_shutdown(SHUTDOWN_FUNC_ARGS_PASSTHRU);
 }
 
-const char *dd_trace_version()
+const char *nullable dd_trace_version()
 {
     return _mod_version;
 }
