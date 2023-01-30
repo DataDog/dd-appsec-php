@@ -312,6 +312,7 @@ static void _run_rshutdowns()
     bool found_ddappsec = false;
 
     mlog_g(dd_log_debug, "Running remaining extensions' RSHUTDOWN");
+    PG(during_request_startup) = 0;
     for (zend_hash_internal_pointer_end_ex(&module_registry, &pos);
          (module = zend_hash_get_current_data_ptr_ex(&module_registry, &pos)) !=
          NULL;
@@ -328,9 +329,11 @@ static void _run_rshutdowns()
         if (found_ddappsec) {
             mlog_g(dd_log_debug, "Running RSHUTDOWN function for module %s",
                 module->name);
+
             module->request_shutdown_func(module->type, module->module_number);
         }
     }
+    PG(during_request_startup) = 1;
 }
 
 static void _suppress_error_reporting()
