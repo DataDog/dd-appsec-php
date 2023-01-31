@@ -352,6 +352,8 @@ int dd_appsec_rshutdown()
                 "request_shutdown failed with dd_network; closing "
                 "connection to helper");
             dd_helper_close_conn();
+        } else if (res == dd_should_block) {
+            dd_request_abort_static_page();
         } else if (res) {
             mlog_g(dd_log_info, "request shutdown failed: %s",
                 dd_result_to_string(res));

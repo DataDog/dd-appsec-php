@@ -1,5 +1,5 @@
 --TEST--
-Record response from request_init and ancillary tags in root span
+Abort request as a result of rinit, with custom status code and content type
 --INI--
 datadog.appsec.enabled=1
 --FILE--
