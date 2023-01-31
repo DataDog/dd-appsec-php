@@ -21,6 +21,6 @@ rinit();
 --EXPECTHEADERS--
 Content-type: text/html; charset=UTF-8
 --EXPECTF--
-Warning: Unknown: Failed to open stream: No such file or directory in %s on line %d
+Warning: %s: %s to open stream: No such file or directory in %s on line %d
 
 Warning: datadog\appsec\testing\rinit(): Datadog blocked the request, but the response has already been partially committed in %s on line %d
