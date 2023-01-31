@@ -258,8 +258,7 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfContentNotInBase64)
     remote_config::asm_data_listener listener(remote_config_service);
     std::string invalid_content = "&&&";
     std::string error_message = "";
-    std::string expected_error_message =
-        "Invalid config base64 encoded contents:";
+    std::string expected_error_message = "Invalid config contents";
     remote_config::config non_base_64_content_config =
         get_asm_data(invalid_content, false);
 
@@ -280,7 +279,7 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfContentNotValidJsonContent)
     remote_config::asm_data_listener listener(remote_config_service);
     std::string invalid_content = "InvalidJsonContent";
     std::string error_message = "";
-    std::string expected_error_message = "Invalid config json contents";
+    std::string expected_error_message = "Invalid config contents";
     remote_config::config invalid_json_config =
         get_asm_data(invalid_content, true);
 
@@ -521,6 +520,100 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataEntryNotObject)
     std::string error_message = "";
     std::string expected_error_message =
         "Invalid config json contents: Entry on data not a valid object";
+    remote_config::config invalid_content_config =
+        get_asm_data(invalid_content, true);
+
+    try {
+        listener.on_update(invalid_content_config);
+    } catch (remote_config::error_applying_config &error) {
+        error_message = error.what();
+    }
+
+    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
+    EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
+                     expected_error_message));
+}
+
+TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataExpirationMissing)
+{
+    auto remote_config_service = std::make_shared<service_config>();
+    remote_config::asm_data_listener listener(remote_config_service);
+    std::string invalid_content =
+        "{\"rules_data\": [{\"data\": [{\"value\": \"1.2.3.4\"} ], \"id\": "
+        "\"some_id\", \"type\": \"some_type\"} ] }";
+    std::string error_message = "";
+    std::string expected_error_message = "Invalid content of data entry";
+    remote_config::config invalid_content_config =
+        get_asm_data(invalid_content, true);
+
+    try {
+        listener.on_update(invalid_content_config);
+    } catch (remote_config::error_applying_config &error) {
+        error_message = error.what();
+    }
+
+    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
+    EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
+                     expected_error_message));
+}
+
+TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataExpirationHasInvalidType)
+{
+    auto remote_config_service = std::make_shared<service_config>();
+    remote_config::asm_data_listener listener(remote_config_service);
+    std::string invalid_content =
+        "{\"rules_data\": [{\"data\": [{\"expiration\": \"invalid\", "
+        "\"value\": \"1.2.3.4\"} ], \"id\": \"some_id\", \"type\": "
+        "\"some_type\"} ] }";
+    std::string error_message = "";
+    std::string expected_error_message = "Invalid content of data entry";
+    remote_config::config invalid_content_config =
+        get_asm_data(invalid_content, true);
+
+    try {
+        listener.on_update(invalid_content_config);
+    } catch (remote_config::error_applying_config &error) {
+        error_message = error.what();
+    }
+
+    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
+    EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
+                     expected_error_message));
+}
+
+TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataValueMissing)
+{
+    auto remote_config_service = std::make_shared<service_config>();
+    remote_config::asm_data_listener listener(remote_config_service);
+    std::string invalid_content =
+        "{\"rules_data\": [{\"data\": [{\"expiration\": 11} ], \"id\": "
+        "\"some_id\", \"type\": \"some_type\"} ] }";
+    std::string error_message = "";
+    std::string expected_error_message = "Invalid content of data entry";
+    remote_config::config invalid_content_config =
+        get_asm_data(invalid_content, true);
+
+    try {
+        listener.on_update(invalid_content_config);
+    } catch (remote_config::error_applying_config &error) {
+        error_message = error.what();
+    }
+
+    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
+    EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
+                     expected_error_message));
+}
+
+TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataValueHasInvalidType)
+{
+    auto remote_config_service = std::make_shared<service_config>();
+    remote_config::asm_data_listener listener(remote_config_service);
+    std::string invalid_content =
+        "{\"rules_data\": [{\"data\": [{\"expiration\": 11, "
+        "\"value\": 1234} ], \"id\": \"some_id\", \"type\": "
+        "\"some_type\"} ] }";
+    std::string error_message = "";
+    std::string expected_error_message = "Invalid content of data entry";
     remote_config::config invalid_content_config =
         get_asm_data(invalid_content, true);
 
