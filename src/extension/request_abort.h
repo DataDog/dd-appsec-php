@@ -18,5 +18,6 @@ typedef enum {
 void dd_set_response_code_and_type(int code, dd_response_type type);
 
 void dd_request_abort_startup(void);
+void dd_request_abort_rinit_once(void);
 // noreturn unless called from rinit on fpm
 void dd_request_abort_static_page(void);

@@ -229,9 +229,15 @@ static PHP_MSHUTDOWN_FUNCTION(ddappsec)
 
 static pthread_once_t _rinit_once_control = PTHREAD_ONCE_INIT;
 
+static void _rinit_once()
+{
+    dd_config_first_rinit();
+    dd_request_abort_rinit_once();
+}
+
 static PHP_RINIT_FUNCTION(ddappsec)
 {
-    pthread_once(&_rinit_once_control, dd_config_first_rinit);
+    pthread_once(&_rinit_once_control, _rinit_once);
     zai_config_rinit();
 
     //_check_enabled should be run only once. However, pthread_once approach

@@ -51,8 +51,8 @@ static const char static_error_json[] =
     "u cannot access this page. Please contact the customer service team. Secur"
     "ity provided by Datadog.\"}]}";
 
-/*static zend_string *_custom_error_html = NULL;*/
-/*static zend_string *_custom_error_json = NULL;*/
+static zend_string *_custom_error_html = NULL;
+static zend_string *_custom_error_json = NULL;
 static THREAD_LOCAL_ON_ZTS int _response_code = DEFAULT_RESPONSE_CODE;
 static THREAD_LOCAL_ON_ZTS dd_response_type _response_type =
     DEFAULT_RESPONSE_TYPE;
@@ -61,7 +61,8 @@ static void _abort_prelude(void);
 ATTR_FORMAT(1, 2)
 static void _emit_error(const char *format, ...);
 
-zend_string *nullable read_file_contents(const char *nonnull path)
+zend_string *nullable read_file_contents(
+    const char *nonnull path, int persistent)
 {
     php_stream *fs =
         php_stream_open_wrapper_ex(path, "rb", REPORT_ERRORS, NULL, NULL);
@@ -70,7 +71,7 @@ zend_string *nullable read_file_contents(const char *nonnull path)
     }
 
     zend_string *contents;
-    contents = php_stream_copy_to_mem(fs, PHP_STREAM_COPY_ALL, 0);
+    contents = php_stream_copy_to_mem(fs, PHP_STREAM_COPY_ALL, persistent);
 
     php_stream_close(fs);
 
@@ -97,6 +98,11 @@ static void _set_output(const char *nonnull output, size_t length)
         mlog(dd_log_info, "could not write full response (written: %zu)",
             written);
     }
+}
+
+static void _set_output_zstr(const zend_string *str)
+{
+    _set_output(ZSTR_VAL(str), ZSTR_LEN(str));
 }
 
 static dd_response_type _get_response_type_from_accept_header()
@@ -168,10 +174,18 @@ void dd_request_abort_static_page()
     SG(sapi_headers).http_response_code = _response_code;
     if (response_type == response_type_html) {
         _set_content_type(HTML_CONTENT_TYPE);
-        _set_output(static_error_html, sizeof(static_error_html) - 1);
+        if (_custom_error_html != NULL) {
+            _set_output_zstr(_custom_error_html);
+        } else {
+            _set_output(static_error_html, sizeof(static_error_html) - 1);
+        }
     } else if (response_type == response_type_json) {
         _set_content_type(JSON_CONTENT_TYPE);
-        _set_output(static_error_json, sizeof(static_error_json) - 1);
+        if (_custom_error_json != NULL) {
+            _set_output_zstr(_custom_error_json);
+        } else {
+            _set_output(static_error_json, sizeof(static_error_json) - 1);
+        }
     } else {
         mlog(dd_log_warning, "unknown response type (bug) %d", response_type);
     }
@@ -365,4 +379,37 @@ void dd_request_abort_startup()
     }
 
     dd_phpobj_reg_funcs(functions);
+}
+
+void dd_request_abort_rinit_once()
+{
+    zend_string *json_template_file =
+        get_DD_APPSEC_HTTP_BLOCKED_TEMPLATE_JSON();
+    if (json_template_file != NULL && ZSTR_LEN(json_template_file) > 0) {
+        _custom_error_json =
+            read_file_contents(ZSTR_VAL(json_template_file), 1);
+        if (_custom_error_json != NULL) {
+            if (ZSTR_LEN(_custom_error_json) == 0) {
+                zend_string_release(_custom_error_json);
+                _custom_error_json = NULL;
+            } else {
+                zend_new_interned_string(_custom_error_json);
+            }
+        }
+    }
+
+    zend_string *html_template_file =
+        get_DD_APPSEC_HTTP_BLOCKED_TEMPLATE_HTML();
+    if (html_template_file != NULL && ZSTR_LEN(html_template_file) > 0) {
+        _custom_error_html =
+            read_file_contents(ZSTR_VAL(html_template_file), 1);
+        if (_custom_error_html != NULL) {
+            if (ZSTR_LEN(_custom_error_html) == 0) {
+                zend_string_release(_custom_error_html);
+                _custom_error_html = NULL;
+            } else {
+                zend_new_interned_string(_custom_error_html);
+            }
+        }
+    }
 }
