@@ -22,9 +22,6 @@
 #define HTML_CONTENT_TYPE "text/html"
 #define JSON_CONTENT_TYPE "application/json"
 
-#define DEFAULT_RESPONSE_CODE 403
-#define DEFAULT_RESPONSE_TYPE response_type_auto
-
 static const char static_error_html[] =
     "<!-- Sorry, you’ve been blocked --><!DOCTYPE html><html lang=\"en\"><head>"
     "<meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-wid"
@@ -141,6 +138,24 @@ exit:
     return response_type_json;
 }
 
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+void dd_set_response_code_and_type(int code, dd_response_type type)
+{
+    _response_code = code;
+
+    // Account for lack of enum type safety
+    switch (type) {
+    case response_type_auto:
+    case response_type_html:
+    case response_type_json:
+        _response_type = type;
+        break;
+    default:
+        _response_type = response_type_auto;
+        break;
+    }
+}
+
 void dd_request_abort_static_page()
 {
     _abort_prelude();
@@ -182,7 +197,7 @@ static void _abort_prelude()
     if (SG(headers_sent)) {
         mlog(dd_log_info, "Headers already sent; response code was %d",
             SG(sapi_headers).http_response_code);
-        _emit_error("Sqreen blocked the request, but the response has already "
+        _emit_error("Datadog blocked the request, but the response has already "
                     "been partially committed");
         return;
     }
