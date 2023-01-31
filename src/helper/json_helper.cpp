@@ -167,8 +167,14 @@ json_helper::get_field_of_type(
     rapidjson::Value::ConstMemberIterator const output_itr =
         parent_field.FindMember(key);
 
-    if (output_itr == parent_field.MemberEnd() ||
-        type != output_itr->value.GetType()) {
+    if (output_itr == parent_field.MemberEnd()) {
+        SPDLOG_DEBUG("Field {} found", key);
+        return std::nullopt;
+    }
+
+    if (type != output_itr->value.GetType()) {
+        SPDLOG_DEBUG("Field {} is not of type {}. Instead {}", key, type,
+            output_itr->value.GetType());
         return std::nullopt;
     }
 

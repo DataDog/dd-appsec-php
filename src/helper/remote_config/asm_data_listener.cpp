@@ -48,55 +48,53 @@ void dds::remote_config::asm_data_listener::on_update(const config &config)
         }
 
         auto rule = rules_data.find(id_itr.value()->value.GetString());
-        // Data parsing
-        std::map<std::string,
-            dds::service_config::rule_data::data_with_expiration>
-            new_set;
-        std::map<std::string,
-            dds::service_config::rule_data::data_with_expiration> &data =
-            rule != rules_data.end() ? rule->second.data : new_set;
-
-        for (const auto *data_entry_itr = data_itr.value()->value.Begin();
-             data_entry_itr != data_itr.value()->value.End();
-             ++data_entry_itr) {
-            if (!data_entry_itr->IsObject()) {
-                throw error_applying_config("Invalid config json contents: "
-                                            "Entry on data not a valid object");
+        if (rule == rules_data.end()) { // New rule
+            dds::service_config::rule_data new_rule_data = {
+                id_itr.value()->value.GetString(),
+                type_itr.value()->value.GetString()};
+            extract_data(data_itr.value(), new_rule_data);
+            if (!new_rule_data.data.empty()) {
+                rules_data.insert(
+                    {id_itr.value()->value.GetString(), new_rule_data});
             }
-
-            auto expiration = json_helper::get_field_of_type(
-                data_entry_itr, "expiration", rapidjson::kNumberType);
-            auto value = json_helper::get_field_of_type(
-                data_entry_itr, "value", rapidjson::kStringType);
-            if (!expiration || !value) {
-                throw error_applying_config("Invalid content of data entry");
-            }
-
-            auto previous = data.find(value.value()->value.GetString());
-            if (previous != data.end()) {
-                if (previous->second.expiration <
-                    expiration.value()->value.GetInt()) {
-                    previous->second.expiration =
-                        expiration.value()->value.GetInt();
-                }
-            } else {
-                data.insert({value.value()->value.GetString(),
-                    {value.value()->value.GetString(),
-                        expiration.value()->value.GetInt()}});
-            }
-        }
-
-        if (data.empty()) {
-            continue;
-        }
-
-        // New set
-        if (rule == rules_data.end()) {
-            rules_data.insert({id_itr.value()->value.GetString(),
-                {id_itr.value()->value.GetString(),
-                    type_itr.value()->value.GetString(), data}});
+        } else {
+            extract_data(data_itr.value(), rule->second);
         }
     }
 
     service_config_->set_rules_data(std::move(rules_data));
+}
+
+void dds::remote_config::asm_data_listener::extract_data(
+    rapidjson::Value::ConstMemberIterator itr,
+    dds::service_config::rule_data &rule_data)
+{
+    for (const auto *data_entry_itr = itr->value.Begin();
+         data_entry_itr != itr->value.End(); ++data_entry_itr) {
+        if (!data_entry_itr->IsObject()) {
+            throw error_applying_config("Invalid config json contents: "
+                                        "Entry on data not a valid object");
+        }
+
+        auto expiration = json_helper::get_field_of_type(
+            data_entry_itr, "expiration", rapidjson::kNumberType);
+        auto value = json_helper::get_field_of_type(
+            data_entry_itr, "value", rapidjson::kStringType);
+        if (!expiration || !value) {
+            throw error_applying_config("Invalid content of data entry");
+        }
+
+        auto previous = rule_data.data.find(value.value()->value.GetString());
+        if (previous != rule_data.data.end()) {
+            if (previous->second.expiration <
+                expiration.value()->value.GetInt()) {
+                previous->second.expiration =
+                    expiration.value()->value.GetInt();
+            }
+        } else {
+            rule_data.data.insert({value.value()->value.GetString(),
+                {value.value()->value.GetString(),
+                    expiration.value()->value.GetInt()}});
+        }
+    }
 }

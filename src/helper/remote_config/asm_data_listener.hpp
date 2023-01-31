@@ -19,6 +19,10 @@ public:
         : product_listener_base(std::move(service_config)){};
     void on_update(const config &config) override;
     void on_unapply(const config & /*config*/) override{};
+
+protected:
+    static void extract_data(rapidjson::Value::ConstMemberIterator itr,
+        dds::service_config::rule_data &rule_data);
 };
 
 } // namespace dds::remote_config
