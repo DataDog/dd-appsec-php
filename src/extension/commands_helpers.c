@@ -321,20 +321,18 @@ static void _command_process_block_parameters(mpack_node_t root)
         mpack_node_t value = mpack_node_map_value_at(root, i);
 
         if (mpack_node_type(key) != mpack_type_str) {
-            mlog(dd_log_warning, "Failed to add tags: invalid type for key");
+            mlog(dd_log_warning,
+                "Failed to add response parameter: invalid type for key");
             continue;
         }
         if (mpack_node_type(value) != mpack_type_str) {
-            mlog(dd_log_warning, "Failed to add tags: invalid type for value");
+            mlog(dd_log_warning,
+                "Failed to add response parameter: invalid type for value");
             continue;
         }
 
         if (dd_mpack_node_lstr_eq(key, "status_code")) {
             size_t code_len = mpack_node_strlen(value);
-            if (code_len > INT_MAX) {
-                code_len = INT_MAX;
-            }
-
             if (code_len != 3) {
                 mlog(dd_log_warning, "Invalid http status code received %.*s",
                     (int)code_len, mpack_node_str(value));

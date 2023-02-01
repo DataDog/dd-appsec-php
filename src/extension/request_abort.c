@@ -94,7 +94,7 @@ static void _set_content_type(const char *nonnull content_type)
 static void _set_output(const char *nonnull output, size_t length)
 {
     size_t written = php_output_write(output, length);
-    if (written != sizeof(static_error_html) - 1) {
+    if (written != length) {
         mlog(dd_log_info, "could not write full response (written: %zu)",
             written);
     }
@@ -117,17 +117,20 @@ static dd_response_type _get_response_type_from_accept_header()
     const zend_string *accept_zstr =
         dd_php_get_string_elem_cstr(_server, LSTRARG("HTTP_ACCEPT"));
     if (!accept_zstr) {
-        mlog(dd_log_info, "Could not determine request URI");
+        mlog(dd_log_info,
+            "Could not find Accept header, using default content-type");
         goto exit;
     }
 
     const char *accept_end = ZSTR_VAL(accept_zstr) + ZSTR_LEN(accept_zstr);
+
     const char *accept_json = memmem(ZSTR_VAL(accept_zstr),
         ZSTR_LEN(accept_zstr), LSTRARG(JSON_CONTENT_TYPE));
     const char *accept_json_end = accept_json + LSTRLEN(JSON_CONTENT_TYPE);
 
     if (accept_json != NULL && accept_json_end <= accept_end &&
-        (*accept_json_end == ',' || *accept_json_end == '\0')) {
+        (*accept_json_end == ',' || *accept_json_end == '\0' ||
+            *accept_json_end == ';')) {
         return response_type_json;
     }
 
@@ -136,7 +139,8 @@ static dd_response_type _get_response_type_from_accept_header()
     const char *accept_html_end = accept_html + LSTRLEN(HTML_CONTENT_TYPE);
 
     if (accept_html != NULL && accept_html_end <= accept_end &&
-        (*accept_html_end == ',' || *accept_html_end == '\0')) {
+        (*accept_html_end == ',' || *accept_html_end == '\0' ||
+            *accept_html_end == ';')) {
         return response_type_html;
     }
 
@@ -166,12 +170,13 @@ void dd_request_abort_static_page()
 {
     _abort_prelude();
 
+    SG(sapi_headers).http_response_code = _response_code;
+
     dd_response_type response_type = _response_type;
     if (response_type == response_type_auto) {
         response_type = _get_response_type_from_accept_header();
     }
 
-    SG(sapi_headers).http_response_code = _response_code;
     if (response_type == response_type_html) {
         _set_content_type(HTML_CONTENT_TYPE);
         if (_custom_error_html != NULL) {
