@@ -58,7 +58,7 @@ std::optional<rapidjson::Value::ConstMemberIterator> get_field_of_type(
 std::optional<rapidjson::Value::ConstMemberIterator> get_field_of_type(
     rapidjson::Value::ConstValueIterator parent_field, const char *key,
     rapidjson::Type type);
-std::optional<rapidjson::Document> get_json_base64_encoded_content(
-    std::string content);
+bool get_json_base64_encoded_content(
+    const std::string &content, rapidjson::Document &output);
 } // namespace json_helper
 } // namespace dds

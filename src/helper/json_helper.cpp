@@ -194,14 +194,11 @@ json_helper::get_field_of_type(
     rapidjson::Value::ConstValueIterator parent_field, const char *key,
     rapidjson::Type type)
 {
-    if (!parent_field) {
-        return std::nullopt;
-    }
     return get_field_of_type(*parent_field, key, type);
 }
 
-std::optional<rapidjson::Document> json_helper::get_json_base64_encoded_content(
-    std::string content)
+bool json_helper::get_json_base64_encoded_content(
+    const std::string &content, rapidjson::Document &output)
 {
     std::string base64_decoded;
     try {
@@ -209,16 +206,15 @@ std::optional<rapidjson::Document> json_helper::get_json_base64_encoded_content(
     } catch (std::runtime_error &error) {
         SPDLOG_DEBUG(
             "Invalid base64 encoded content: " + std::string(error.what()));
-        return std::nullopt;
+        return false;
     }
 
-    rapidjson::Document serialized_doc;
-    if (serialized_doc.Parse(base64_decoded).HasParseError()) {
+    if (output.Parse(base64_decoded).HasParseError()) {
         SPDLOG_DEBUG("Invalid json: " + std::string(rapidjson::GetParseError_En(
-                                            serialized_doc.GetParseError())));
-        return std::nullopt;
+                                            output.GetParseError())));
+        return false;
     }
 
-    return serialized_doc;
+    return true;
 }
 } // namespace dds

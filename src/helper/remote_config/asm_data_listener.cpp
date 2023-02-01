@@ -13,15 +13,14 @@ void dds::remote_config::asm_data_listener::on_update(const config &config)
 {
     std::unordered_map<std::string, dds::service_config::rule_data> rules_data =
         {};
-    std::optional<rapidjson::Document> serialized_doc =
-        json_helper::get_json_base64_encoded_content(config.contents);
-
-    if (!serialized_doc) {
+    rapidjson::Document serialized_doc;
+    if (!json_helper::get_json_base64_encoded_content(
+            config.contents, serialized_doc)) {
         throw error_applying_config("Invalid config contents");
     }
 
     auto rules_data_itr = json_helper::get_field_of_type(
-        serialized_doc.value(), "rules_data", rapidjson::kArrayType);
+        serialized_doc, "rules_data", rapidjson::kArrayType);
     if (!rules_data_itr) {
         throw error_applying_config("Invalid config json contents: "
                                     "rules_data key missing or invalid");

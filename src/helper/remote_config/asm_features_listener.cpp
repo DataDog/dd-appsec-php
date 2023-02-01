@@ -12,15 +12,13 @@
 
 void dds::remote_config::asm_features_listener::on_update(const config &config)
 {
-    std::optional<rapidjson::Document> serialized_doc =
-        json_helper::get_json_base64_encoded_content(config.contents);
-
-    if (!serialized_doc) {
+    rapidjson::Document serialized_doc;
+    if (!json_helper::get_json_base64_encoded_content(config.contents, serialized_doc)) {
         throw error_applying_config("Invalid config contents");
     }
 
     auto asm_itr = json_helper::get_field_of_type(
-        serialized_doc.value(), "asm", rapidjson::kObjectType);
+        serialized_doc, "asm", rapidjson::kObjectType);
     if (!asm_itr) {
         throw error_applying_config("Invalid config json encoded contents: "
                                     "asm key missing or invalid");
