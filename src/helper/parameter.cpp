@@ -41,25 +41,31 @@ parameter parameter::array() noexcept
     return parameter{obj};
 }
 
-parameter parameter::uint64(uint64_t value, bool as_string) noexcept
+parameter parameter::uint64(uint64_t value) noexcept
 {
     ddwaf_object obj;
-    if (as_string) {
-        ddwaf_object_unsigned(&obj, value);
-    } else {
-        ddwaf_object_unsigned_force(&obj, value);
-    }
+    ddwaf_object_unsigned_force(&obj, value);
     return parameter{obj};
 }
 
-parameter parameter::int64(int64_t value, bool as_string) noexcept
+parameter parameter::int64(int64_t value) noexcept
 {
     ddwaf_object obj;
-    if (as_string) {
-        ddwaf_object_signed(&obj, value);
-    } else {
-        ddwaf_object_signed_force(&obj, value);
-    }
+    ddwaf_object_signed_force(&obj, value);
+    return parameter{obj};
+}
+
+parameter parameter::string(uint64_t value) noexcept
+{
+    ddwaf_object obj;
+    ddwaf_object_unsigned(&obj, value);
+    return parameter{obj};
+}
+
+parameter parameter::string(int64_t value) noexcept
+{
+    ddwaf_object obj;
+    ddwaf_object_signed(&obj, value);
     return parameter{obj};
 }
 

@@ -70,8 +70,8 @@ dds::parameter rules_to_parameter(
         dds::parameter data = dds::parameter::array();
         for (const auto &[value, data_entry] : rule.data) {
             dds::parameter data_parameter = dds::parameter::map();
-            data_parameter.add("expiration",
-                dds::parameter::uint64(data_entry.expiration, false));
+            data_parameter.add(
+                "expiration", dds::parameter::uint64(data_entry.expiration));
             data_parameter.add("value", dds::parameter::string(value));
             data.add(std::move(data_parameter));
         }
@@ -101,8 +101,7 @@ void dds::remote_config::asm_data_listener::on_update(const config &config)
                                     "rules_data key missing or invalid");
     }
 
-    for (rapidjson::Value::ConstValueIterator itr =
-             rules_data_itr.value()->value.Begin();
+    for (auto itr = rules_data_itr.value()->value.Begin();
          itr != rules_data_itr.value()->value.End(); ++itr) {
         if (!itr->IsObject()) {
             throw error_applying_config("Invalid config json contents: "

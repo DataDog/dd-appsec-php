@@ -13,7 +13,7 @@ namespace dds::remote_config {
 
 class product_listener_base {
 public:
-    explicit product_listener_base() = default;
+    product_listener_base() = default;
     product_listener_base(const product_listener_base &) = default;
     product_listener_base(product_listener_base &&) = default;
     product_listener_base &operator=(const product_listener_base &) = default;
