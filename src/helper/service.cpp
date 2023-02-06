@@ -51,7 +51,7 @@ service::ptr service::from_settings(const service_identifier &id,
     auto asm_features_listener =
         std::make_shared<remote_config::asm_features_listener>(service_config);
     auto asm_data_listener =
-        std::make_shared<remote_config::asm_data_listener>(service_config);
+        std::make_shared<remote_config::asm_data_listener>(engine_ptr);
     std::vector<remote_config::product> products = {
         {"ASM_FEATURES", asm_features_listener},
         {"ASM_DATA", asm_data_listener}};

@@ -14,6 +14,29 @@
 
 namespace dds {
 
+namespace mock {
+class engine : public dds::engine {
+public:
+    explicit engine(
+        uint32_t trace_rate_limit = engine_settings::default_trace_rate_limit,
+        action_map &&actions = {})
+        : dds::engine(trace_rate_limit, std::move(actions))
+    {}
+    MOCK_METHOD(
+        void, update_rule_data, (dds::parameter_view & parameter), (override));
+
+    static auto create() { return std::shared_ptr<engine>(new engine()); }
+};
+} // namespace mock
+
+ACTION_P(SaveParameterView, param)
+{
+    rapidjson::Document &document =
+        *reinterpret_cast<rapidjson::Document *>(param);
+    std::string str = parameter_to_json(arg0);
+    document.Parse(str);
+}
+
 struct test_rule_data_data {
     int expiration;
     std::string value;
@@ -76,191 +99,185 @@ remote_config::config get_rules_data(std::vector<test_rule_data> data)
     return get_asm_data(buffer.get_string_ref());
 }
 
-TEST(RemoteConfigAsmDataListener, ByDefaultRulesDataIsEmpty)
-{
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
-
-    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
-}
-
 TEST(RemoteConfigAsmDataListener, ItParsesRulesData)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
+    auto engine = mock::engine::create();
+
+    rapidjson::Document rules;
 
     std::vector<test_rule_data> rules_data = {
         {"id01", "type01", {{11, "1.2.3.4"}, {22, "5.6.7.8"}}},
         {"id02", "type02", {{33, "user1"}}}};
 
+    EXPECT_CALL(*engine, update_rule_data(_))
+        .Times(1)
+        .WillOnce(DoAll(SaveParameterView(&rules)));
+
+    remote_config::asm_data_listener listener(engine);
+
     listener.on_update(get_rules_data(rules_data));
 
-    auto rules_data_parsed = remote_config_service->get_rules_data();
+    auto rules_data_json = rules.FindMember("rules_data")->value.GetArray();
+    const auto &first = rules_data_json[0];
+    EXPECT_STREQ("id02", first.FindMember("id")->value.GetString());
+    EXPECT_STREQ("type02", first.FindMember("type")->value.GetString());
+    const auto &first_in_data = first.FindMember("data")->value.GetArray()[0];
+    EXPECT_STREQ("user1", first_in_data.FindMember("value")->value.GetString());
+    EXPECT_EQ(33, first_in_data.FindMember("expiration")->value.GetInt64());
 
-    EXPECT_EQ(2, rules_data_parsed.size());
-    // First
-    auto first_parsed = rules_data[0];
-    auto first_id = first_parsed.id;
-    EXPECT_STREQ("id01", rules_data_parsed[first_id].id.c_str());
-    EXPECT_STREQ("type01", rules_data_parsed[first_id].type.c_str());
-    // First data on first
-    EXPECT_STREQ("1.2.3.4", rules_data_parsed[first_id]
-                                .data[first_parsed.data[0].value]
-                                .value.c_str());
-    EXPECT_EQ(11, rules_data_parsed[first_id]
-                      .data[first_parsed.data[0].value]
-                      .expiration);
-    // Second data on first
-    EXPECT_STREQ("5.6.7.8", rules_data_parsed[first_id]
-                                .data[first_parsed.data[1].value]
-                                .value.c_str());
-    EXPECT_EQ(22, rules_data_parsed[first_id]
-                      .data[first_parsed.data[1].value]
-                      .expiration);
-    // Second
-    auto second_parsed = rules_data[1];
-    auto second_id = second_parsed.id;
-    EXPECT_STREQ("id02", rules_data_parsed[second_id].id.c_str());
-    EXPECT_STREQ("type02", rules_data_parsed[second_id].type.c_str());
-    // First data on second
-    EXPECT_STREQ("user1", rules_data_parsed[second_id]
-                              .data[second_parsed.data[0].value]
-                              .value.c_str());
-    EXPECT_EQ(33, rules_data_parsed[second_id]
-                      .data[second_parsed.data[0].value]
-                      .expiration);
+    const auto &second = rules_data_json[1];
+    EXPECT_STREQ("id01", second.FindMember("id")->value.GetString());
+    EXPECT_STREQ("type01", second.FindMember("type")->value.GetString());
+    const auto &second_first_data =
+        second.FindMember("data")->value.GetArray()[0];
+    EXPECT_STREQ(
+        "1.2.3.4", second_first_data.FindMember("value")->value.GetString());
+    EXPECT_EQ(11, second_first_data.FindMember("expiration")->value.GetInt64());
+    const auto &second_second_data =
+        second.FindMember("data")->value.GetArray()[1];
+    EXPECT_STREQ(
+        "5.6.7.8", second_second_data.FindMember("value")->value.GetString());
+    EXPECT_EQ(
+        22, second_second_data.FindMember("expiration")->value.GetInt64());
 }
 
 TEST(RemoteConfigAsmDataListener, ItMergesValuesWhenIdIsTheSame)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
 
     std::vector<test_rule_data> rules_data = {
         {"id01", "type01", {{11, "1.2.3.4"}}},
         {"id01", "type01", {{22, "5.6.7.8"}}}};
 
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_))
+        .Times(1)
+        .WillOnce(DoAll(SaveParameterView(&rules)));
+    remote_config::asm_data_listener listener(engine);
     listener.on_update(get_rules_data(rules_data));
+    auto rules_data_json = rules.FindMember("rules_data")->value.GetArray();
 
-    auto rules_data_parsed = remote_config_service->get_rules_data();
-
-    EXPECT_EQ(1, rules_data_parsed.size());
-    // First
-    auto first_id = rules_data[0].id;
-    auto first_parsed = rules_data_parsed[first_id];
-    EXPECT_STREQ("id01", first_parsed.id.c_str());
-    EXPECT_STREQ("type01", first_parsed.type.c_str());
-    EXPECT_EQ(2, first_parsed.data.size());
-
-    // First data on first
+    EXPECT_EQ(1, rules_data_json.Size());
+    const auto &first = rules_data_json[0];
+    EXPECT_STREQ("id01", first.FindMember("id")->value.GetString());
+    EXPECT_STREQ("type01", first.FindMember("type")->value.GetString());
+    const auto &first_in_data = first.FindMember("data")->value.GetArray()[0];
     EXPECT_STREQ(
-        "1.2.3.4", first_parsed.data.find("1.2.3.4")->second.value.c_str());
-    EXPECT_EQ(11, first_parsed.data.find("1.2.3.4")->second.expiration);
-    // Second data on first
+        "1.2.3.4", first_in_data.FindMember("value")->value.GetString());
+    EXPECT_EQ(11, first_in_data.FindMember("expiration")->value.GetInt64());
+    const auto &second_in_data = first.FindMember("data")->value.GetArray()[1];
     EXPECT_STREQ(
-        "5.6.7.8", first_parsed.data.find("5.6.7.8")->second.value.c_str());
-    EXPECT_EQ(22, first_parsed.data.find("5.6.7.8")->second.expiration);
+        "5.6.7.8", second_in_data.FindMember("value")->value.GetString());
+    EXPECT_EQ(22, second_in_data.FindMember("expiration")->value.GetInt64());
 }
 
 TEST(RemoteConfigAsmDataListener, WhenIdMatchesTypeIsSecondTypeIsIgnored)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
-
     std::vector<test_rule_data> rules_data = {
         {"id01", "type01", {{11, "1.2.3.4"}}},
         {"id01", "another type", {{22, "5.6.7.8"}}}};
 
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_))
+        .Times(1)
+        .WillOnce(DoAll(SaveParameterView(&rules)));
+    remote_config::asm_data_listener listener(engine);
     listener.on_update(get_rules_data(rules_data));
+    auto rules_data_json = rules.FindMember("rules_data")->value.GetArray();
 
-    auto rules_data_parsed = remote_config_service->get_rules_data();
-
-    EXPECT_EQ(1, rules_data_parsed.size());
+    EXPECT_EQ(1, rules_data_json.Size());
     // First
-    auto first_id = rules_data[0].id;
-    auto first_parsed = rules_data_parsed[first_id];
-    EXPECT_STREQ("id01", first_parsed.id.c_str());
-    EXPECT_STREQ("type01", first_parsed.type.c_str());
-    EXPECT_EQ(2, first_parsed.data.size());
+    const auto &first = rules_data_json[0];
+    EXPECT_STREQ("id01", first.FindMember("id")->value.GetString());
+    EXPECT_STREQ("type01", first.FindMember("type")->value.GetString());
+    EXPECT_EQ(2, first.FindMember("data")->value.GetArray().Size());
 }
 
 TEST(RemoteConfigAsmDataListener,
     IfTwoEntriesWithTheSameIdHaveTheSameValueItGetsLatestExpirationOnDifferentSets)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
-
     std::vector<test_rule_data> rules_data = {
         {"id01", "type01", {{11, "1.2.3.4"}}},
         {"id01", "type01", {{33, "1.2.3.4"}}},
         {"id01", "type01", {{22, "1.2.3.4"}}}};
 
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_))
+        .Times(1)
+        .WillOnce(DoAll(SaveParameterView(&rules)));
+    remote_config::asm_data_listener listener(engine);
     listener.on_update(get_rules_data(rules_data));
+    auto rules_data_json = rules.FindMember("rules_data")->value.GetArray();
 
-    auto rules_data_parsed = remote_config_service->get_rules_data();
-
-    EXPECT_EQ(1, rules_data_parsed.size());
+    EXPECT_EQ(1, rules_data_json.Size());
     // First
-    auto first_id = rules_data[0].id;
-    auto first_parsed = rules_data_parsed[first_id];
-    EXPECT_STREQ("id01", first_parsed.id.c_str());
-    EXPECT_STREQ("type01", first_parsed.type.c_str());
-    EXPECT_EQ(1, first_parsed.data.size());
-
+    const auto &first = rules_data_json[0];
+    EXPECT_STREQ("id01", first.FindMember("id")->value.GetString());
+    EXPECT_STREQ("type01", first.FindMember("type")->value.GetString());
+    EXPECT_EQ(1, first.FindMember("data")->value.GetArray().Size());
+    const auto &first_in_data = first.FindMember("data")->value.GetArray()[0];
     EXPECT_STREQ(
-        "1.2.3.4", first_parsed.data.find("1.2.3.4")->second.value.c_str());
-    EXPECT_EQ(33, first_parsed.data.find("1.2.3.4")->second.expiration);
+        "1.2.3.4", first_in_data.FindMember("value")->value.GetString());
+    EXPECT_EQ(33, first_in_data.FindMember("expiration")->value.GetInt64());
 }
 
 TEST(RemoteConfigAsmDataListener,
     IfTwoEntriesWithTheSameIdHaveTheSameValueItGetsLatestExpirationInSameSet)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
-
     std::vector<test_rule_data> rules_data = {{"id01", "type01",
         {{11, "1.2.3.4"}, {33, "1.2.3.4"}, {22, "1.2.3.4"}}}};
 
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_))
+        .Times(1)
+        .WillOnce(DoAll(SaveParameterView(&rules)));
+    remote_config::asm_data_listener listener(engine);
     listener.on_update(get_rules_data(rules_data));
+    auto rules_data_json = rules.FindMember("rules_data")->value.GetArray();
 
-    auto rules_data_parsed = remote_config_service->get_rules_data();
-
-    EXPECT_EQ(1, rules_data_parsed.size());
+    EXPECT_EQ(1, rules_data_json.Size());
     // First
-    auto first_id = rules_data[0].id;
-    auto first_parsed = rules_data_parsed[first_id];
-    EXPECT_STREQ("id01", first_parsed.id.c_str());
-    EXPECT_STREQ("type01", first_parsed.type.c_str());
-    EXPECT_EQ(1, first_parsed.data.size());
-
+    const auto &first = rules_data_json[0];
+    EXPECT_STREQ("id01", first.FindMember("id")->value.GetString());
+    EXPECT_STREQ("type01", first.FindMember("type")->value.GetString());
+    EXPECT_EQ(1, first.FindMember("data")->value.GetArray().Size());
+    const auto &first_in_data = first.FindMember("data")->value.GetArray()[0];
     EXPECT_STREQ(
-        "1.2.3.4", first_parsed.data.find("1.2.3.4")->second.value.c_str());
-    EXPECT_EQ(33, first_parsed.data.find("1.2.3.4")->second.expiration);
+        "1.2.3.4", first_in_data.FindMember("value")->value.GetString());
+    EXPECT_EQ(33, first_in_data.FindMember("expiration")->value.GetInt64());
 }
 
 TEST(RemoteConfigAsmDataListener, IfDataIsEmptyItDoesNotAddAnyRule)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
-
     std::vector<test_rule_data> rules_data = {{"id01", "type01", {}}};
 
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_))
+        .Times(1)
+        .WillOnce(DoAll(SaveParameterView(&rules)));
+    remote_config::asm_data_listener listener(engine);
     listener.on_update(get_rules_data(rules_data));
+    auto rules_data_json = rules.FindMember("rules_data")->value.GetArray();
 
-    auto rules_data_parsed = remote_config_service->get_rules_data();
-
-    EXPECT_EQ(0, rules_data_parsed.size());
+    EXPECT_EQ(0, rules_data_json.Size());
 }
 
 TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfContentNotInBase64)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
     std::string invalid_content = "&&&";
     std::string error_message = "";
     std::string expected_error_message = "Invalid config contents";
     remote_config::config non_base_64_content_config =
         get_asm_data(invalid_content, false);
+
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_)).Times(0);
+    remote_config::asm_data_listener listener(engine);
 
     try {
         listener.on_update(non_base_64_content_config);
@@ -268,36 +285,34 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfContentNotInBase64)
         error_message = error.what();
     }
 
-    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }
 
 TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfContentNotValidJsonContent)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
     std::string invalid_content = "InvalidJsonContent";
     std::string error_message = "";
     std::string expected_error_message = "Invalid config contents";
     remote_config::config invalid_json_config =
         get_asm_data(invalid_content, true);
 
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_)).Times(0);
+    remote_config::asm_data_listener listener(engine);
+
     try {
         listener.on_update(invalid_json_config);
     } catch (remote_config::error_applying_config &error) {
         error_message = error.what();
     }
-
-    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }
 
 TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfNoRulesDataKey)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
     std::string invalid_content = "{\"another_key\": 1234}";
     std::string error_message = "";
     std::string expected_error_message =
@@ -306,21 +321,22 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfNoRulesDataKey)
     remote_config::config invalid_content_config =
         get_asm_data(invalid_content, true);
 
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_)).Times(0);
+    remote_config::asm_data_listener listener(engine);
+
     try {
         listener.on_update(invalid_content_config);
     } catch (remote_config::error_applying_config &error) {
         error_message = error.what();
     }
-
-    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }
 
 TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfRulesDataNotArray)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
     std::string invalid_content = "{ \"rules_data\": 1234}";
     std::string error_message = "";
     std::string expected_error_message =
@@ -329,21 +345,22 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfRulesDataNotArray)
     remote_config::config invalid_content_config =
         get_asm_data(invalid_content, true);
 
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_)).Times(0);
+    remote_config::asm_data_listener listener(engine);
+
     try {
         listener.on_update(invalid_content_config);
     } catch (remote_config::error_applying_config &error) {
         error_message = error.what();
     }
-
-    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }
 
 TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfRulesDataEntryNotObject)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
     std::string invalid_content = "{\"rules_data\": [\"invalid\"] }";
     std::string error_message = "";
     std::string expected_error_message =
@@ -351,21 +368,22 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfRulesDataEntryNotObject)
     remote_config::config invalid_content_config =
         get_asm_data(invalid_content, true);
 
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_)).Times(0);
+    remote_config::asm_data_listener listener(engine);
+
     try {
         listener.on_update(invalid_content_config);
     } catch (remote_config::error_applying_config &error) {
         error_message = error.what();
     }
-
-    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }
 
 TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfNoId)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
     std::string invalid_content =
         "{\"rules_data\": [{\"data\": [{\"expiration\": 11, \"value\": "
         "\"1.2.3.4\"} ], \"type\": \"some_type\"} ] }";
@@ -376,21 +394,22 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfNoId)
     remote_config::config invalid_content_config =
         get_asm_data(invalid_content, true);
 
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_)).Times(0);
+    remote_config::asm_data_listener listener(engine);
+
     try {
         listener.on_update(invalid_content_config);
     } catch (remote_config::error_applying_config &error) {
         error_message = error.what();
     }
-
-    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }
 
 TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfIdNotString)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
     std::string invalid_content =
         "{\"rules_data\": [{\"data\": [{\"expiration\": 11, \"value\": "
         "\"1.2.3.4\"} ], \"id\": 1234, \"type\": \"some_type\"} ] }";
@@ -401,21 +420,22 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfIdNotString)
     remote_config::config invalid_content_config =
         get_asm_data(invalid_content, true);
 
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_)).Times(0);
+    remote_config::asm_data_listener listener(engine);
+
     try {
         listener.on_update(invalid_content_config);
     } catch (remote_config::error_applying_config &error) {
         error_message = error.what();
     }
-
-    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }
 
 TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfNoType)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
     std::string invalid_content =
         "{\"rules_data\": [{\"data\": [{\"expiration\": 11, \"value\": "
         "\"1.2.3.4\"} ], \"id\": \"some_id\"} ] }";
@@ -426,21 +446,22 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfNoType)
     remote_config::config invalid_content_config =
         get_asm_data(invalid_content, true);
 
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_)).Times(0);
+    remote_config::asm_data_listener listener(engine);
+
     try {
         listener.on_update(invalid_content_config);
     } catch (remote_config::error_applying_config &error) {
         error_message = error.what();
     }
-
-    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }
 
 TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfTypeNotString)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
     std::string invalid_content =
         "{\"rules_data\": [{\"data\": [{\"expiration\": 11, \"value\": "
         "\"1.2.3.4\"} ], \"type\": 1234, \"id\": \"some_id\"} ] }";
@@ -451,23 +472,24 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfTypeNotString)
     remote_config::config invalid_content_config =
         get_asm_data(invalid_content, true);
 
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_)).Times(0);
+    remote_config::asm_data_listener listener(engine);
+
     try {
         listener.on_update(invalid_content_config);
     } catch (remote_config::error_applying_config &error) {
         error_message = error.what();
     }
-
-    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }
 
 TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfNoData)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
     std::string invalid_content =
-        "{\"rules_data\": [{\"id\": \"some_id\", \"type\": \"some_type\"} ] }";
+        "{\"rules_data\": [{\"id\": \"some_id\", \"type\": \"some_type\"} ]}";
     std::string error_message = "";
     std::string expected_error_message =
         "Invalid config json contents: rules_data missing a field or "
@@ -475,23 +497,25 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfNoData)
     remote_config::config invalid_content_config =
         get_asm_data(invalid_content, true);
 
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_)).Times(0);
+    remote_config::asm_data_listener listener(engine);
+
     try {
         listener.on_update(invalid_content_config);
     } catch (remote_config::error_applying_config &error) {
         error_message = error.what();
     }
-
-    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }
 
 TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataNotArray)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
-    std::string invalid_content = "{\"rules_data\": [{\"data\": 1234, \"id\": "
-                                  "\"some_id\", \"type\": \"some_type\"} ] }";
+    std::string invalid_content =
+        "{\"rules_data\": [{\"data\": 1234, \"id\":\"some_id\", \"type\": "
+        "\"some_type\"} ]}";
     std::string error_message = "";
     std::string expected_error_message =
         "Invalid config json contents: rules_data missing a field or "
@@ -499,21 +523,22 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataNotArray)
     remote_config::config invalid_content_config =
         get_asm_data(invalid_content, true);
 
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_)).Times(0);
+    remote_config::asm_data_listener listener(engine);
+
     try {
         listener.on_update(invalid_content_config);
     } catch (remote_config::error_applying_config &error) {
         error_message = error.what();
     }
-
-    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }
 
 TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataEntryNotObject)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
     std::string invalid_content =
         "{\"rules_data\": [{\"data\": [ \"invalid\" ], \"id\": \"some_id\", "
         "\"type\": \"some_type\"} ] }";
@@ -523,21 +548,22 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataEntryNotObject)
     remote_config::config invalid_content_config =
         get_asm_data(invalid_content, true);
 
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_)).Times(0);
+    remote_config::asm_data_listener listener(engine);
+
     try {
         listener.on_update(invalid_content_config);
     } catch (remote_config::error_applying_config &error) {
         error_message = error.what();
     }
-
-    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }
 
 TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataExpirationMissing)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
     std::string invalid_content =
         "{\"rules_data\": [{\"data\": [{\"value\": \"1.2.3.4\"} ], \"id\": "
         "\"some_id\", \"type\": \"some_type\"} ] }";
@@ -546,21 +572,22 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataExpirationMissing)
     remote_config::config invalid_content_config =
         get_asm_data(invalid_content, true);
 
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_)).Times(0);
+    remote_config::asm_data_listener listener(engine);
+
     try {
         listener.on_update(invalid_content_config);
     } catch (remote_config::error_applying_config &error) {
         error_message = error.what();
     }
-
-    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }
 
 TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataExpirationHasInvalidType)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
     std::string invalid_content =
         "{\"rules_data\": [{\"data\": [{\"expiration\": \"invalid\", "
         "\"value\": \"1.2.3.4\"} ], \"id\": \"some_id\", \"type\": "
@@ -570,21 +597,22 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataExpirationHasInvalidType)
     remote_config::config invalid_content_config =
         get_asm_data(invalid_content, true);
 
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_)).Times(0);
+    remote_config::asm_data_listener listener(engine);
+
     try {
         listener.on_update(invalid_content_config);
     } catch (remote_config::error_applying_config &error) {
         error_message = error.what();
     }
-
-    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }
 
 TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataValueMissing)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
     std::string invalid_content =
         "{\"rules_data\": [{\"data\": [{\"expiration\": 11} ], \"id\": "
         "\"some_id\", \"type\": \"some_type\"} ] }";
@@ -593,21 +621,22 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataValueMissing)
     remote_config::config invalid_content_config =
         get_asm_data(invalid_content, true);
 
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_)).Times(0);
+    remote_config::asm_data_listener listener(engine);
+
     try {
         listener.on_update(invalid_content_config);
     } catch (remote_config::error_applying_config &error) {
         error_message = error.what();
     }
-
-    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }
 
 TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataValueHasInvalidType)
 {
-    auto remote_config_service = std::make_shared<service_config>();
-    remote_config::asm_data_listener listener(remote_config_service);
     std::string invalid_content =
         "{\"rules_data\": [{\"data\": [{\"expiration\": 11, "
         "\"value\": 1234} ], \"id\": \"some_id\", \"type\": "
@@ -617,13 +646,16 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataValueHasInvalidType)
     remote_config::config invalid_content_config =
         get_asm_data(invalid_content, true);
 
+    auto engine = mock::engine::create();
+    rapidjson::Document rules;
+    EXPECT_CALL(*engine, update_rule_data(_)).Times(0);
+    remote_config::asm_data_listener listener(engine);
+
     try {
         listener.on_update(invalid_content_config);
     } catch (remote_config::error_applying_config &error) {
         error_message = error.what();
     }
-
-    EXPECT_TRUE(remote_config_service->get_rules_data().empty());
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }

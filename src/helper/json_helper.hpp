@@ -50,13 +50,13 @@ dds::parameter json_to_parameter(std::string_view json);
 
 namespace json_helper {
 std::optional<rapidjson::Value::ConstMemberIterator> get_field_of_type(
-    const rapidjson::Value &parent_field, const char *key,
+    const rapidjson::Value &parent_field, std::string_view key,
     rapidjson::Type type);
 std::optional<rapidjson::Value::ConstMemberIterator> get_field_of_type(
-    rapidjson::Value::ConstMemberIterator &parent_field, const char *key,
+    rapidjson::Value::ConstMemberIterator &parent_field, std::string_view key,
     rapidjson::Type type);
 std::optional<rapidjson::Value::ConstMemberIterator> get_field_of_type(
-    rapidjson::Value::ConstValueIterator parent_field, const char *key,
+    rapidjson::Value::ConstValueIterator parent_field, std::string_view key,
     rapidjson::Type type);
 bool get_json_base64_encoded_content(
     const std::string &content, rapidjson::Document &output);

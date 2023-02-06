@@ -39,8 +39,8 @@ public:
 
     static parameter map() noexcept;
     static parameter array() noexcept;
-    static parameter uint64(uint64_t value) noexcept;
-    static parameter int64(int64_t value) noexcept;
+    static parameter uint64(uint64_t value, bool as_string = true) noexcept;
+    static parameter int64(int64_t value, bool as_string = true) noexcept;
     static parameter string(const std::string &str) noexcept;
     static parameter string(std::string_view str) noexcept;
 
