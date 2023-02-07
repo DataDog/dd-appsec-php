@@ -416,7 +416,7 @@ static void _command_process_redirect_parameters(mpack_node_t root)
 dd_result dd_command_proc_resp_verd_span_data(
     mpack_node_t root, ATTR_UNUSED void *unspecnull ctx)
 {
-    // expected: ['ok' / 'record' / 'block', 'redirect']
+    // expected: ['ok' / 'record' / 'block' / 'redirect']
     mpack_node_t verdict = mpack_node_array_at(root, 0);
     if (mlog_should_log(dd_log_debug)) {
         const char *verd_str = mpack_node_str(verdict);
@@ -437,6 +437,7 @@ dd_result dd_command_proc_resp_verd_span_data(
     } else if (dd_mpack_node_lstr_eq(verdict, "redirect")) {
         res = dd_should_redirect;
         _command_process_redirect_parameters(mpack_node_array_at(root, 1));
+        dd_tags_add_blocked();
     }
 
     if (res == dd_should_block || dd_mpack_node_lstr_eq(verdict, "record")) {
