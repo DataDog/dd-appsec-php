@@ -31,26 +31,26 @@ void extract_data(
                 "Entry on data not a valid object");
         }
 
-        auto expiration = dds::json_helper::get_field_of_type(
+        auto expiration_itr = dds::json_helper::get_field_of_type(
             data_entry_itr, "expiration", rapidjson::kNumberType);
-        auto value = dds::json_helper::get_field_of_type(
+        auto value_itr = dds::json_helper::get_field_of_type(
             data_entry_itr, "value", rapidjson::kStringType);
-        if (!expiration || !value) {
+        if (!expiration_itr || !value_itr) {
             throw dds::remote_config::error_applying_config(
                 "Invalid content of data entry");
         }
 
-        auto previous = rule_data.data.find(value.value()->value.GetString());
+        auto value = value_itr.value();
+        auto expiration = expiration_itr.value();
+
+        auto previous = rule_data.data.find(value->value.GetString());
         if (previous != rule_data.data.end()) {
-            if (previous->second.expiration <
-                expiration.value()->value.GetInt()) {
-                previous->second.expiration =
-                    expiration.value()->value.GetInt();
+            if (previous->second.expiration < expiration->value.GetInt()) {
+                previous->second.expiration = expiration->value.GetInt();
             }
         } else {
-            rule_data.data.insert({value.value()->value.GetString(),
-                {value.value()->value.GetString(),
-                    expiration.value()->value.GetInt()}});
+            rule_data.data.insert({value->value.GetString(),
+                {value->value.GetString(), expiration->value.GetInt()}});
         }
     }
 }
@@ -101,8 +101,10 @@ void dds::remote_config::asm_data_listener::on_update(const config &config)
                                     "rules_data key missing or invalid");
     }
 
-    for (auto itr = rules_data_itr.value()->value.Begin();
-         itr != rules_data_itr.value()->value.End(); ++itr) {
+    auto rules_data_value = rules_data_itr.value();
+
+    for (const auto *itr = rules_data_value->value.Begin();
+         itr != rules_data_value->value.End(); ++itr) {
         if (!itr->IsObject()) {
             throw error_applying_config("Invalid config json contents: "
                                         "rules_data entry invalid");
@@ -120,14 +122,16 @@ void dds::remote_config::asm_data_listener::on_update(const config &config)
                 "rules_data missing a field or field is invalid");
         }
 
-        auto rule = rules_data.find(id_itr.value()->value.GetString());
+        auto id = id_itr.value();
+        auto type = type_itr.value();
+
+        auto rule = rules_data.find(id->value.GetString());
         if (rule == rules_data.end()) { // New rule
-            rule_data new_rule_data = {id_itr.value()->value.GetString(),
-                type_itr.value()->value.GetString()};
+            rule_data new_rule_data = {
+                id->value.GetString(), type->value.GetString()};
             extract_data(data_itr.value(), new_rule_data);
             if (!new_rule_data.data.empty()) {
-                rules_data.insert(
-                    {id_itr.value()->value.GetString(), new_rule_data});
+                rules_data.insert({id->value.GetString(), new_rule_data});
             }
         } else {
             extract_data(data_itr.value(), rule->second);
