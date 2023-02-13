@@ -1739,4 +1739,78 @@ TEST(ClientTest,
     }
 }
 
+TEST(ClientTest, RequestExecution)
+{
+    auto smanager = std::make_shared<service_manager>();
+    auto broker = new mock::broker();
+
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
+
+    // Client Init
+    {
+        auto fn = create_sample_rules_ok();
+        network::client_init::request msg;
+        msg.pid = 1729;
+        msg.runtime_version = "1.0";
+        msg.client_version = "2.0";
+        msg.engine_settings.rules_file = fn;
+
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_client_init());
+        auto msg_res =
+            dynamic_cast<network::client_init::response *>(res.get());
+        EXPECT_STREQ(msg_res->status.c_str(), "ok");
+    }
+
+    // Request Execution
+    {
+        network::request_execution::request msg;
+
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_execution::response *>(res.get());
+        EXPECT_EQ(network::request_execution::response::id, msg_res->id);
+    }
+}
+
+TEST(ClientTest, RequestExecutionWithoutClientInit)
+{
+    auto smanager = std::make_shared<service_manager>();
+    auto broker = new mock::broker();
+
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
+
+    // Request Execution
+    {
+        network::request_execution::request msg;
+
+        network::request req(std::move(msg));
+
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(Return(true));
+
+        EXPECT_FALSE(c.run_request());
+    }
+}
+
 } // namespace dds

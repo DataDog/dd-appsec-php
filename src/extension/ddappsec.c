@@ -19,6 +19,7 @@
 #include <stdatomic.h>
 
 #include "commands/client_init.h"
+#include "commands/request_execution.h"
 #include "commands/request_init.h"
 #include "commands/request_shutdown.h"
 #include "configuration.h"
@@ -497,8 +498,34 @@ static PHP_FUNCTION(datadog_appsec_testing_stop_for_debugger)
     RETURN_TRUE;
 }
 
+static PHP_FUNCTION(datadog_appsec_testing_request_execution)
+{
+    UNUSED(return_value);
+    zval *data;
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "a/", &data) == FAILURE) {
+        return;
+    }
+
+    zend_array *arr = Z_ARRVAL_P(data);
+
+    UNUSED(arr);
+
+
+    zend_string *key = 
+    dd_request_execution_add_data(key, value);
+
+    dd_conn *conn = dd_helper_mgr_acquire_conn(_acquire_conn_cb);
+    dd_request_execution(conn);
+
+    RETURN_TRUE;
+}
+
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(
     void_ret_bool_arginfo, 0, 0, _IS_BOOL, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(request_execution_args_info, 0, 1, IS_VOID, 0)
+ZEND_ARG_TYPE_INFO(1, "data", IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
 // clang-format off
@@ -511,6 +538,7 @@ static const zend_function_entry testing_functions[] = {
     ZEND_RAW_FENTRY(DD_TESTING_NS "rshutdown", PHP_FN(datadog_appsec_testing_rshutdown), void_ret_bool_arginfo, 0)
     ZEND_RAW_FENTRY(DD_TESTING_NS "helper_mgr_acquire_conn", PHP_FN(datadog_appsec_testing_helper_mgr_acquire_conn), void_ret_bool_arginfo, 0)
     ZEND_RAW_FENTRY(DD_TESTING_NS "stop_for_debugger", PHP_FN(datadog_appsec_testing_stop_for_debugger), void_ret_bool_arginfo, 0)
+    ZEND_RAW_FENTRY(DD_TESTING_NS "request_execution", PHP_FN(datadog_appsec_testing_request_execution), request_execution_args_info, 0)
     PHP_FE_END
 };
 // clang-format on
