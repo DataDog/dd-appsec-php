@@ -440,7 +440,8 @@ dd_result dd_command_proc_resp_verd_span_data(
         dd_tags_add_blocked();
     }
 
-    if (res == dd_should_block || dd_mpack_node_lstr_eq(verdict, "record")) {
+    if (res == dd_should_block || res == dd_should_redirect ||
+        dd_mpack_node_lstr_eq(verdict, "record")) {
         _set_appsec_span_data(mpack_node_array_at(root, 2));
     }
 
