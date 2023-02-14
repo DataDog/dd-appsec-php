@@ -178,7 +178,8 @@ void dd_set_redirect_code_and_location(int code, zend_string *nullable location)
 void dd_request_abort_redirect()
 {
     if (_redirection_location == NULL || ZSTR_LEN(_redirection_location) == 0) {
-        mlog(dd_log_warning, "Failing to redirect: No location set");
+        _response_code = DEFAULT_BLOCKING_RESPONSE_CODE;
+        dd_request_abort_static_page();
         return;
     }
     _abort_prelude();
