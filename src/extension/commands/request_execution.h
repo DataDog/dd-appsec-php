@@ -6,8 +6,9 @@
 #pragma once
 
 #include "../network.h"
+#include <SAPI.h>
+#include <php.h>
 
 dd_result dd_request_execution(dd_conn *nonnull conn);
-void dd_request_execution_add_data(zend_string *key, zval *data);
-void dd_request_execution_rinit(void);
 void dd_request_execution_rshutdown(void);
+void dd_request_execution_add_data(char *key, zval *value);

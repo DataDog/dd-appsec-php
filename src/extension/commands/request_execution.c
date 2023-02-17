@@ -11,8 +11,10 @@
 #include "mpack-node.h"
 #include "mpack-writer.h"
 #include <php.h>
+#include <zend_hash.h>
+#include <zend_types.h>
 
-static THREAD_LOCAL_ON_ZTS zend_array *nullable data;
+static THREAD_LOCAL_ON_ZTS zval data;
 
 static dd_result _pack_command(
     mpack_writer_t *nonnull w, ATTR_UNUSED void *nullable ctx);
@@ -31,17 +33,36 @@ dd_result dd_request_execution(dd_conn *nonnull conn)
     return dd_command_exec(conn, &_spec, NULL);
 }
 
+static bool _prepare_data(void)
+{
+    if (Z_TYPE(data) == IS_UNDEF) {
+        array_init(&data);
+    }
+
+    return Z_TYPE(data) == IS_ARRAY;
+}
+
 static dd_result _pack_command(
     mpack_writer_t *nonnull w, ATTR_UNUSED void *nullable ctx)
 {
-    UNUSED(w);
     UNUSED(ctx);
+    _prepare_data();
+    dd_mpack_write_zval(w, &data);
 
     return dd_success;
 }
 
-void dd_request_execution_rinit(void)
-{}
-
 void dd_request_execution_rshutdown(void)
-{}
+{
+    if (Z_TYPE(data) == IS_ARRAY) {
+        zend_array_destroy(Z_ARR(data));
+    }
+}
+
+void dd_request_execution_add_data(char *key, zval *value)
+{
+    if (!_prepare_data()) {
+        return;
+    }
+    add_assoc_zval(&data, key, value);
+}

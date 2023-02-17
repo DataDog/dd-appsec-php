@@ -347,6 +347,7 @@ static PHP_RSHUTDOWN_FUNCTION(ddappsec)
     result = dd_appsec_rshutdown();
 
 exit:
+    dd_request_execution_rshutdown();
     dd_ip_extraction_rshutdown();
     return result;
 }
@@ -498,21 +499,26 @@ static PHP_FUNCTION(datadog_appsec_testing_stop_for_debugger)
     RETURN_TRUE;
 }
 
-static PHP_FUNCTION(datadog_appsec_testing_request_execution)
+// TODO Remove this function when request_execution gets plugged into SDK
+static PHP_FUNCTION(datadog_appsec_testing_request_execution_add_data)
 {
-    UNUSED(return_value);
-    zval *data;
-    if (zend_parse_parameters(ZEND_NUM_ARGS(), "a/", &data) == FAILURE) {
+    zval *value;
+    zend_string *key;
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "Sz", &key, &value) == FAILURE) {
         return;
     }
 
-    zend_array *arr = Z_ARRVAL_P(data);
+    dd_request_execution_add_data(ZSTR_VAL(key), value);
 
-    UNUSED(arr);
+    RETURN_TRUE;
+}
 
-
-    zend_string *key = 
-    dd_request_execution_add_data(key, value);
+// TODO Remove this function when request_execution gets plugged into SDK
+static PHP_FUNCTION(datadog_appsec_testing_request_execution)
+{
+    if (zend_parse_parameters_none() == FAILURE) {
+        RETURN_FALSE;
+    }
 
     dd_conn *conn = dd_helper_mgr_acquire_conn(_acquire_conn_cb);
     dd_request_execution(conn);
@@ -524,8 +530,10 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(
     void_ret_bool_arginfo, 0, 0, _IS_BOOL, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(request_execution_args_info, 0, 1, IS_VOID, 0)
-ZEND_ARG_TYPE_INFO(1, "data", IS_ARRAY, 0)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(
+    request_execution_args_info, 0, 1, IS_VOID, 0)
+ZEND_ARG_TYPE_INFO(1, "key", IS_STRING, 1)
+ZEND_ARG_TYPE_INFO(1, "value", IS_STRING, 1)
 ZEND_END_ARG_INFO()
 
 // clang-format off
@@ -538,7 +546,8 @@ static const zend_function_entry testing_functions[] = {
     ZEND_RAW_FENTRY(DD_TESTING_NS "rshutdown", PHP_FN(datadog_appsec_testing_rshutdown), void_ret_bool_arginfo, 0)
     ZEND_RAW_FENTRY(DD_TESTING_NS "helper_mgr_acquire_conn", PHP_FN(datadog_appsec_testing_helper_mgr_acquire_conn), void_ret_bool_arginfo, 0)
     ZEND_RAW_FENTRY(DD_TESTING_NS "stop_for_debugger", PHP_FN(datadog_appsec_testing_stop_for_debugger), void_ret_bool_arginfo, 0)
-    ZEND_RAW_FENTRY(DD_TESTING_NS "request_execution", PHP_FN(datadog_appsec_testing_request_execution), request_execution_args_info, 0)
+ZEND_RAW_FENTRY(DD_TESTING_NS "request_execution_add_data", PHP_FN(datadog_appsec_testing_request_execution_add_data), request_execution_args_info, 0)
+ZEND_RAW_FENTRY(DD_TESTING_NS "request_execution", PHP_FN(datadog_appsec_testing_request_execution), void_ret_bool_arginfo, 0)
     PHP_FE_END
 };
 // clang-format on
