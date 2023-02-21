@@ -83,7 +83,7 @@ public:
         std::string_view value_regex = std::string_view());
 
 protected:
-    ddwaf_handle handle_{nullptr};
+    std::atomic<ddwaf_handle> handle_{nullptr};
     std::chrono::microseconds waf_timeout_;
     std::string ruleset_version_;
 };

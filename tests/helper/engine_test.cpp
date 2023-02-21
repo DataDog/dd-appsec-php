@@ -599,7 +599,7 @@ TEST(EngineTest, WafSubscriptorUpdateRuleData)
 
     {
         auto rule_data = json_to_parameter(
-            R"([{"id":"blocked_ips","type":"data_with_expiration","data":[{"value":"192.168.1.1","expiration":"9999999999"}]}])");
+            R"({"rules_data":[{"id":"blocked_ips","type":"data_with_expiration","data":[{"value":"192.168.1.1","expiration":"9999999999"}]}]})");
         parameter_view rule_data_view(rule_data);
         e->update_rule_data(rule_data_view);
     }
@@ -618,7 +618,7 @@ TEST(EngineTest, WafSubscriptorUpdateRuleData)
 
     {
         auto rule_data = json_to_parameter(
-            R"([{"id":"blocked_ips","type":"data_with_expiration","data":[{"value":"192.168.1.2","expiration":"9999999999"}]}])");
+            R"({"rules_data":[{"id":"blocked_ips","type":"data_with_expiration","data":[{"value":"192.168.1.2","expiration":"9999999999"}]}]})");
         parameter_view rule_data_view(rule_data);
         e->update_rule_data(rule_data_view);
     }

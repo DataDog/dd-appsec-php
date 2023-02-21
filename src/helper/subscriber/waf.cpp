@@ -5,6 +5,7 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #include "../std_logging.hpp"
 #include "ddwaf.h"
+#include <atomic>
 #include <chrono>
 #include <cstdlib>
 #include <limits>
@@ -238,43 +239,59 @@ instance::instance(parameter &rule,
     }
 }
 
-instance::instance(instance &&other) noexcept
-    : handle_{other.handle_}, waf_timeout_{other.waf_timeout_}
+instance::instance(instance &&other) noexcept : waf_timeout_{other.waf_timeout_}
 {
-    other.handle_ = nullptr;
+    handle_.store(other.handle_.load());
+    other.handle_.store(nullptr);
     other.waf_timeout_ = {};
 }
 
 instance &instance::operator=(instance &&other) noexcept
 {
-    handle_ = other.handle_;
-    other.handle_ = nullptr;
+    handle_.store(other.handle_.load());
+    other.handle_.store(nullptr);
 
     return *this;
 }
 
 instance::~instance()
 {
-    if (handle_ != nullptr) {
-        ddwaf_destroy(handle_);
+    auto *handle = handle_.load();
+    if (handle != nullptr) {
+        ddwaf_destroy(handle);
     }
 }
 
 instance::listener::ptr instance::get_listener()
 {
+    auto *handle = handle_.load();
     return listener::ptr(new listener(
-        ddwaf_context_init(handle_), waf_timeout_, ruleset_version_));
+        ddwaf_context_init(handle), waf_timeout_, ruleset_version_));
 }
 
 bool instance::update_rule_data(parameter_view &data)
 {
-    return ddwaf_update_rule_data(handle_, data) == DDWAF_OK;
+    // The function isn't thread safe so in theory the handle shouldn't change
+    // as we are calling it
+    auto *handle = handle_.load(std::memory_order_relaxed);
+    auto *new_handle = ddwaf_update(handle, data, nullptr);
+
+    if (new_handle != nullptr) {
+        handle_.store(new_handle);
+    } else {
+        return false;
+    }
+
+    ddwaf_destroy(handle);
+    return true;
 }
 
 std::vector<std::string_view> instance::get_subscriptions()
 {
     uint32_t size;
-    const auto *addrs = ddwaf_required_addresses(handle_, &size);
+    // TODO this could crash if the handle is replaced at the same time
+    auto *handle = handle_.load(std::memory_order_relaxed);
+    const auto *addrs = ddwaf_required_addresses(handle, &size);
 
     std::vector<std::string_view> output(size);
     for (uint32_t i = 0; i < size; i++) { output.emplace_back(addrs[i]); }

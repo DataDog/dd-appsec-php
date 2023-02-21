@@ -33,7 +33,8 @@ ACTION_P(SaveParameterView, param)
 {
     rapidjson::Document &document =
         *reinterpret_cast<rapidjson::Document *>(param);
-    std::string str = parameter_to_json(arg0);
+    // The first and only key should be "rules_data"
+    std::string str = parameter_to_json(arg0[0]);
     document.Parse(str);
 }
 

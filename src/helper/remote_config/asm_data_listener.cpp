@@ -99,7 +99,10 @@ dds::parameter rules_to_parameter(
         rules_data.add(std::move(parameter_rule));
     }
 
-    return rules_data;
+    dds::parameter root = dds::parameter::map();
+    root.add("rules_data", std::move(rules_data));
+
+    return root;
 }
 
 void dds::remote_config::asm_data_listener::on_update(const config &config)
