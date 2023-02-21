@@ -57,7 +57,7 @@ public:
     class context {
     public:
         explicit context(engine &engine)
-            : subscriptions_(engine.subscriptions_), limiter_(engine.limiter_),
+            : subscribers_(engine.subscribers_), limiter_(engine.limiter_),
               actions_(engine.actions_)
         {}
         context(const context &) = delete;
@@ -74,7 +74,7 @@ public:
     protected:
         std::vector<parameter> prev_published_params_;
         std::map<subscriber::ptr, subscriber::listener::ptr> listeners_;
-        const subscription_map &subscriptions_;
+        std::vector<subscriber::ptr> &subscribers_;
         rate_limiter &limiter_;
         const action_map &actions_;
     };
@@ -113,7 +113,6 @@ protected:
     static const action_map default_actions;
 
     std::vector<subscriber::ptr> subscribers_;
-    subscription_map subscriptions_;
     rate_limiter limiter_;
     action_map actions_;
 };

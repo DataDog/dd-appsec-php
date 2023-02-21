@@ -22,15 +22,6 @@ namespace dds {
 void engine::subscribe(const subscriber::ptr &sub)
 {
     subscribers_.emplace_back(sub);
-    for (const auto &addr : sub->get_subscriptions()) {
-        auto it = subscriptions_.find(addr);
-        if (it == subscriptions_.end()) {
-            subscriptions_.emplace(
-                addr, std::move(std::vector<subscriber::ptr>{sub}));
-        } else {
-            it->second.push_back(sub);
-        }
-    }
 }
 
 void engine::update_rule_data(parameter_view &data)
@@ -53,22 +44,14 @@ std::optional<engine::result> engine::context::publish(parameter &&param)
         throw invalid_object(".", "not a map");
     }
 
-    std::set<subscriber::ptr> sub_set;
     for (const auto &entry : data) {
-        auto key = entry.key();
-        DD_STDLOG(DD_STDLOG_IG_DATA_PUSHED, key);
-        auto it = subscriptions_.find(key);
-        if (it == subscriptions_.end()) {
-            continue;
-        }
-        for (auto &&sub : it->second) { sub_set.insert(sub); }
+        DD_STDLOG(DD_STDLOG_IG_DATA_PUSHED, entry.key());
     }
 
-    // Now that we have found the required subscriptions, find the current
-    // context and pass the data.
     std::vector<std::string> event_data;
     std::unordered_set<std::string> event_actions;
-    for (const auto &sub : sub_set) {
+
+    for (auto &sub : subscribers_) {
         auto it = listeners_.find(sub);
         if (it == listeners_.end()) {
             it = listeners_.emplace(sub, sub->get_listener()).first;

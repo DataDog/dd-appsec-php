@@ -220,7 +220,8 @@ instance::instance(parameter &rule,
     const ddwaf_config config{
         {0, 0, 0}, {key_regex.data(), value_regex.data()}, nullptr};
 
-    handle_ = ddwaf_init(rule, &config, &info);
+    auto *handle = ddwaf_init(rule, &config, &info);
+    swap_handle(handle);
 
     metrics[tag::event_rules_loaded] = info.loaded;
     metrics[tag::event_rules_failed] = info.failed;
@@ -239,7 +240,10 @@ instance::instance(parameter &rule,
     }
 }
 
-instance::instance(instance &&other) noexcept : waf_timeout_{other.waf_timeout_}
+instance::instance(instance &&other) noexcept
+    : waf_timeout_(other.waf_timeout_),
+      ruleset_version_(std::move(other.ruleset_version_)),
+      addresses_(std::move(other.addresses_))
 {
     handle_.store(other.handle_.load());
     other.handle_.store(nullptr);
@@ -250,6 +254,12 @@ instance &instance::operator=(instance &&other) noexcept
 {
     handle_.store(other.handle_.load());
     other.handle_.store(nullptr);
+
+    waf_timeout_ = other.waf_timeout_;
+    other.waf_timeout_ = {};
+
+    ruleset_version_ = std::move(other.ruleset_version_);
+    addresses_ = std::move(other.addresses_);
 
     return *this;
 }
@@ -273,29 +283,14 @@ bool instance::update_rule_data(parameter_view &data)
 {
     // The function isn't thread safe so in theory the handle shouldn't change
     // as we are calling it
-    auto *handle = handle_.load(std::memory_order_relaxed);
-    auto *new_handle = ddwaf_update(handle, data, nullptr);
-
+    auto *new_handle = ddwaf_update(handle_, data, nullptr);
     if (new_handle != nullptr) {
-        handle_.store(new_handle);
+        swap_handle(new_handle);
     } else {
         return false;
     }
 
-    ddwaf_destroy(handle);
     return true;
-}
-
-std::vector<std::string_view> instance::get_subscriptions()
-{
-    uint32_t size;
-    // TODO this could crash if the handle is replaced at the same time
-    auto *handle = handle_.load(std::memory_order_relaxed);
-    const auto *addrs = ddwaf_required_addresses(handle, &size);
-
-    std::vector<std::string_view> output(size);
-    for (uint32_t i = 0; i < size; i++) { output.emplace_back(addrs[i]); }
-    return output;
 }
 
 instance::ptr instance::from_settings(const engine_settings &settings,
@@ -318,6 +313,25 @@ instance::ptr instance::from_string(std::string_view rule,
     dds::parameter param = json_to_parameter(ruleset.get_document());
     return std::make_shared<instance>(
         param, meta, metrics, waf_timeout_us, key_regex, value_regex);
+}
+
+void instance::swap_handle(ddwaf_handle new_handle)
+{
+    if (new_handle == nullptr) {
+        return;
+    }
+
+    auto *old_handle = handle_.load(std::memory_order_relaxed);
+    handle_.store(new_handle);
+    if (old_handle != nullptr) {
+        ddwaf_destroy(old_handle);
+    }
+
+    uint32_t size;
+    const auto *addrs = ddwaf_required_addresses(handle_, &size);
+
+    addresses_.clear();
+    for (uint32_t i = 0; i < size; i++) { addresses_.emplace(addrs[i]); }
 }
 
 } // namespace dds::waf
