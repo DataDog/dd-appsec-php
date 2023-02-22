@@ -227,6 +227,10 @@ TEST(WafTest, UpdateRuleData)
         waf::instance::from_string(waf_rule_with_data, meta, metrics)};
     ASSERT_TRUE(wi);
 
+    auto addresses = wi->get_subscriptions();
+    EXPECT_EQ(addresses.size(), 1);
+    EXPECT_STREQ(addresses.begin()->c_str(), "http.client_ip");
+
     {
         auto ctx = wi->get_listener();
 
@@ -243,6 +247,11 @@ TEST(WafTest, UpdateRuleData)
 
     wi = wi->update(param, meta, metrics);
     ASSERT_TRUE(wi);
+
+    addresses = wi->get_subscriptions();
+    EXPECT_EQ(addresses.size(), 1);
+    EXPECT_STREQ(addresses.begin()->c_str(), "http.client_ip");
+
     {
         auto ctx = wi->get_listener();
 

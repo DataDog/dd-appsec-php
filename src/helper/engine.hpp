@@ -107,6 +107,8 @@ public:
     context get_context() { return context{*this}; }
     void subscribe(const subscriber::ptr &sub);
 
+    // Update is not thread-safe, although only one remote config client should
+    // be able to update it so in practice it should not be a problem.
     virtual void update(engine_ruleset &ruleset,
         std::map<std::string_view, std::string> &meta,
         std::map<std::string_view, double> &metrics);

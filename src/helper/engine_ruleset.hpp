@@ -28,8 +28,6 @@ public:
     static engine_ruleset from_path(std::string_view path);
 
     // Used only for testing
-    void swap_document(rapidjson::Document &new_doc) { new_doc.Swap(doc_); }
-
     void copy(rapidjson::Document &new_doc)
     {
         new_doc.CopyFrom(doc_, new_doc.GetAllocator(), true);
