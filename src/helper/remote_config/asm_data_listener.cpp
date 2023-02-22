@@ -10,6 +10,8 @@
 #include <rapidjson/document.h>
 #include <rapidjson/rapidjson.h>
 
+using dds::StringRef;
+
 struct rule_data {
     struct data_with_expiration {
         std::string_view value;
@@ -71,11 +73,6 @@ void extract_data(
                 {value->value.GetString(), expiration}});
         }
     }
-}
-
-rapidjson::GenericStringRef<char> StringRef(std::string_view str)
-{
-    return {str.data(), static_cast<rapidjson::SizeType>(str.size())};
 }
 
 dds::engine_ruleset rules_to_engine_ruleset(

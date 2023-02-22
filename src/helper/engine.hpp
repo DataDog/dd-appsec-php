@@ -86,7 +86,12 @@ public:
         rate_limiter &limiter_;
     };
 
+    engine(const engine &) = delete;
+    engine &operator=(const engine &) = delete;
+    engine(engine &&) = delete;
+    engine &operator=(engine &&) = delete;
     virtual ~engine() = default;
+
     static engine::ptr from_settings(const dds::engine_settings &eng_settings,
         std::map<std::string_view, std::string> &meta,
         std::map<std::string_view, double> &metrics);
