@@ -35,7 +35,6 @@ public:
     MOCK_METHOD0(get_name, std::string_view());
     MOCK_METHOD0(get_listener, dds::subscriber::listener::ptr());
     MOCK_METHOD0(get_subscriptions, std::unordered_set<std::string>());
-    MOCK_METHOD1(update_rule_data, bool(dds::parameter_view &));
     MOCK_METHOD3(update, dds::subscriber::ptr(dds::parameter &,
                              std::map<std::string_view, std::string> &meta,
                              std::map<std::string_view, double> &metrics));
@@ -526,12 +525,23 @@ TEST(EngineTest, MockSubscriptorsUpdateRuleData)
 {
     auto e{engine::create()};
 
+    mock::listener::ptr ignorer = mock::listener::ptr(new mock::listener());
+    EXPECT_CALL(*ignorer, call(_)).WillRepeatedly(Return(std::nullopt));
+
+    mock::subscriber::ptr new_sub1 =
+        mock::subscriber::ptr(new mock::subscriber());
+    EXPECT_CALL(*new_sub1, get_listener()).WillOnce(Return(ignorer));
+
     mock::subscriber::ptr sub1 = mock::subscriber::ptr(new mock::subscriber());
-    EXPECT_CALL(*sub1, update(_, _, _));
+    EXPECT_CALL(*sub1, update(_, _, _)).WillOnce(Return(new_sub1));
     EXPECT_CALL(*sub1, get_name()).WillRepeatedly(Return(""));
 
+    mock::subscriber::ptr new_sub2 =
+        mock::subscriber::ptr(new mock::subscriber());
+    EXPECT_CALL(*new_sub2, get_listener()).WillOnce(Return(ignorer));
+
     mock::subscriber::ptr sub2 = mock::subscriber::ptr(new mock::subscriber());
-    EXPECT_CALL(*sub2, update(_, _, _));
+    EXPECT_CALL(*sub2, update(_, _, _)).WillOnce(Return(new_sub2));
     EXPECT_CALL(*sub2, get_name()).WillRepeatedly(Return(""));
 
     e->subscribe(sub1);
@@ -540,21 +550,36 @@ TEST(EngineTest, MockSubscriptorsUpdateRuleData)
     std::map<std::string_view, std::string> meta;
     std::map<std::string_view, double> metrics;
 
-    engine_ruleset ruleset(R"({})");
+    engine_ruleset ruleset(
+        R"({"rules_data":[{"id":"blocked_ips","type":"data_with_expiration","data":[{"value":"192.168.1.1","expiration":"9999999999"}]}]})");
     e->update(ruleset, meta, metrics);
+
+    // Ensure after the update we still have the same number of subscribers
+    auto ctx = e->get_context();
+
+    auto p = parameter::map();
+    p.add("http.client_ip", parameter::string("192.168.1.1"sv));
+
+    auto res = ctx.publish(std::move(p));
+    EXPECT_FALSE(res);
 }
 
 TEST(EngineTest, MockSubscriptorsInvalidRuleData)
 {
     auto e{engine::create()};
 
+    mock::listener::ptr ignorer = mock::listener::ptr(new mock::listener());
+    EXPECT_CALL(*ignorer, call(_)).WillRepeatedly(Return(std::nullopt));
+
     mock::subscriber::ptr sub1 = mock::subscriber::ptr(new mock::subscriber());
     EXPECT_CALL(*sub1, update(_, _, _)).WillRepeatedly(Throw(std::exception()));
     EXPECT_CALL(*sub1, get_name()).WillRepeatedly(Return(""));
+    EXPECT_CALL(*sub1, get_listener()).WillOnce(Return(ignorer));
 
     mock::subscriber::ptr sub2 = mock::subscriber::ptr(new mock::subscriber());
     EXPECT_CALL(*sub2, update(_, _, _)).WillRepeatedly(Throw(std::exception()));
     EXPECT_CALL(*sub2, get_name()).WillRepeatedly(Return(""));
+    EXPECT_CALL(*sub2, get_listener()).WillOnce(Return(ignorer));
 
     e->subscribe(sub1);
     e->subscribe(sub2);
@@ -565,6 +590,15 @@ TEST(EngineTest, MockSubscriptorsInvalidRuleData)
     engine_ruleset ruleset(R"({})");
     // All subscribers should be called regardless of failures
     e->update(ruleset, meta, metrics);
+
+    // Ensure after the update we still have the same number of subscribers
+    auto ctx = e->get_context();
+
+    auto p = parameter::map();
+    p.add("http.client_ip", parameter::string("192.168.1.1"sv));
+
+    auto res = ctx.publish(std::move(p));
+    EXPECT_FALSE(res);
 }
 
 TEST(EngineTest, WafSubscriptorUpdateRuleData)

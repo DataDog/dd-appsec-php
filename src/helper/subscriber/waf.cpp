@@ -316,7 +316,7 @@ subscriber::ptr instance::update(parameter &rule,
 
     ddwaf_ruleset_info_free(&info);
 
-    if (handle_ == nullptr) {
+    if (new_handle == nullptr) {
         throw invalid_object();
     }
 

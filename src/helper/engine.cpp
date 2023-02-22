@@ -44,9 +44,11 @@ void engine::update(engine_ruleset &ruleset,
         } catch (const std::exception &e) {
             SPDLOG_WARN("Failed to update subscriber {}: {}", sub->get_name(),
                 e.what());
+            new_subscribers.emplace_back(sub);
         } catch (...) {
             SPDLOG_WARN("Failed to update subscriber {}: unknown reason",
                 sub->get_name());
+            new_subscribers.emplace_back(sub);
         }
     }
 
