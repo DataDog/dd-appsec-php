@@ -71,7 +71,7 @@ jobs:
         run: ./build.sh
 
       - name: Run
-        run: ./run.sh
+        run: ./run.sh APPSEC_IP_BLOCKING
 
       - name: Compress artifact
         if: ${{ always() }}
