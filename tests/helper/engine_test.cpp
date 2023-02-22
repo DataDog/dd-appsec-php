@@ -36,6 +36,9 @@ public:
     MOCK_METHOD0(get_listener, dds::subscriber::listener::ptr());
     MOCK_METHOD0(get_subscriptions, std::unordered_set<std::string>());
     MOCK_METHOD1(update_rule_data, bool(dds::parameter_view &));
+    MOCK_METHOD3(update, dds::subscriber::ptr(dds::parameter &,
+                             std::map<std::string_view, std::string> &meta,
+                             std::map<std::string_view, double> &metrics));
 };
 } // namespace mock
 
@@ -524,18 +527,21 @@ TEST(EngineTest, MockSubscriptorsUpdateRuleData)
     auto e{engine::create()};
 
     mock::subscriber::ptr sub1 = mock::subscriber::ptr(new mock::subscriber());
-    EXPECT_CALL(*sub1, update_rule_data(_)).WillRepeatedly(Return(true));
+    EXPECT_CALL(*sub1, update(_, _, _));
     EXPECT_CALL(*sub1, get_name()).WillRepeatedly(Return(""));
 
     mock::subscriber::ptr sub2 = mock::subscriber::ptr(new mock::subscriber());
-    EXPECT_CALL(*sub2, update_rule_data(_)).WillRepeatedly(Return(true));
+    EXPECT_CALL(*sub2, update(_, _, _));
     EXPECT_CALL(*sub2, get_name()).WillRepeatedly(Return(""));
 
     e->subscribe(sub1);
     e->subscribe(sub2);
 
-    parameter_view pv;
-    e->update_rule_data(pv);
+    std::map<std::string_view, std::string> meta;
+    std::map<std::string_view, double> metrics;
+
+    engine_ruleset ruleset(R"({})");
+    e->update(ruleset, meta, metrics);
 }
 
 TEST(EngineTest, MockSubscriptorsInvalidRuleData)
@@ -543,20 +549,22 @@ TEST(EngineTest, MockSubscriptorsInvalidRuleData)
     auto e{engine::create()};
 
     mock::subscriber::ptr sub1 = mock::subscriber::ptr(new mock::subscriber());
-    EXPECT_CALL(*sub1, update_rule_data(_)).WillRepeatedly(Return(false));
+    EXPECT_CALL(*sub1, update(_, _, _)).WillRepeatedly(Throw(std::exception()));
     EXPECT_CALL(*sub1, get_name()).WillRepeatedly(Return(""));
 
     mock::subscriber::ptr sub2 = mock::subscriber::ptr(new mock::subscriber());
-    EXPECT_CALL(*sub2, update_rule_data(_)).WillRepeatedly(Return(false));
+    EXPECT_CALL(*sub2, update(_, _, _)).WillRepeatedly(Throw(std::exception()));
     EXPECT_CALL(*sub2, get_name()).WillRepeatedly(Return(""));
 
     e->subscribe(sub1);
     e->subscribe(sub2);
 
-    parameter_view pv;
+    std::map<std::string_view, std::string> meta;
+    std::map<std::string_view, double> metrics;
 
+    engine_ruleset ruleset(R"({})");
     // All subscribers should be called regardless of failures
-    e->update_rule_data(pv);
+    e->update(ruleset, meta, metrics);
 }
 
 TEST(EngineTest, WafSubscriptorUpdateRuleData)
@@ -578,10 +586,10 @@ TEST(EngineTest, WafSubscriptorUpdateRuleData)
     }
 
     {
-        auto rule_data = json_to_parameter(
+
+        engine_ruleset rule_data(
             R"({"rules_data":[{"id":"blocked_ips","type":"data_with_expiration","data":[{"value":"192.168.1.1","expiration":"9999999999"}]}]})");
-        parameter_view rule_data_view(rule_data);
-        e->update_rule_data(rule_data_view);
+        e->update(rule_data, meta, metrics);
     }
 
     {
@@ -597,10 +605,9 @@ TEST(EngineTest, WafSubscriptorUpdateRuleData)
     }
 
     {
-        auto rule_data = json_to_parameter(
+        engine_ruleset rule_data(
             R"({"rules_data":[{"id":"blocked_ips","type":"data_with_expiration","data":[{"value":"192.168.1.2","expiration":"9999999999"}]}]})");
-        parameter_view rule_data_view(rule_data);
-        e->update_rule_data(rule_data_view);
+        e->update(rule_data, meta, metrics);
     }
 
     {
@@ -633,10 +640,9 @@ TEST(EngineTest, WafSubscriptorInvalidRuleData)
     }
 
     {
-        auto rule_data = json_to_parameter(
+        engine_ruleset rule_data(
             R"({"id":"blocked_ips","type":"data_with_expiration","data":[{"value":"192.168.1.1","expiration":"9999999999"}]})");
-        parameter_view rule_data_view(rule_data);
-        e->update_rule_data(rule_data_view);
+        e->update(rule_data, meta, metrics);
     }
 
     {

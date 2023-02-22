@@ -220,8 +220,7 @@ instance::instance(parameter &rule,
     const ddwaf_config config{
         {0, 0, 0}, {key_regex.data(), value_regex.data()}, nullptr};
 
-    auto *handle = ddwaf_init(rule, &config, &info);
-    swap_handle(handle);
+    handle_ = ddwaf_init(rule, &config, &info);
 
     metrics[tag::event_rules_loaded] = info.loaded;
     metrics[tag::event_rules_failed] = info.failed;
@@ -238,22 +237,27 @@ instance::instance(parameter &rule,
     if (handle_ == nullptr) {
         throw invalid_object();
     }
+
+    uint32_t size;
+    const auto *addrs = ddwaf_required_addresses(handle_, &size);
+
+    addresses_.clear();
+    for (uint32_t i = 0; i < size; i++) { addresses_.emplace(addrs[i]); }
 }
 
 instance::instance(instance &&other) noexcept
-    : waf_timeout_(other.waf_timeout_),
+    : handle_(other.handle_), waf_timeout_(other.waf_timeout_),
       ruleset_version_(std::move(other.ruleset_version_)),
       addresses_(std::move(other.addresses_))
 {
-    handle_.store(other.handle_.load());
-    other.handle_.store(nullptr);
+    other.handle_ = nullptr;
     other.waf_timeout_ = {};
 }
 
 instance &instance::operator=(instance &&other) noexcept
 {
-    handle_.store(other.handle_.load());
-    other.handle_.store(nullptr);
+    handle_ = other.handle_;
+    other.handle_ = nullptr;
 
     waf_timeout_ = other.waf_timeout_;
     other.waf_timeout_ = {};
@@ -266,31 +270,58 @@ instance &instance::operator=(instance &&other) noexcept
 
 instance::~instance()
 {
-    auto *handle = handle_.load();
-    if (handle != nullptr) {
-        ddwaf_destroy(handle);
+    if (handle_ != nullptr) {
+        ddwaf_destroy(handle_);
     }
 }
 
 instance::listener::ptr instance::get_listener()
 {
-    auto *handle = handle_.load();
     return listener::ptr(new listener(
-        ddwaf_context_init(handle), waf_timeout_, ruleset_version_));
+        ddwaf_context_init(handle_), waf_timeout_, ruleset_version_));
 }
 
-bool instance::update_rule_data(parameter_view &data)
+instance::instance(
+    ddwaf_handle handle, std::chrono::microseconds timeout, std::string version)
+    : handle_(handle), waf_timeout_(timeout),
+      ruleset_version_(std::move(version))
 {
-    // The function isn't thread safe so in theory the handle shouldn't change
-    // as we are calling it
-    auto *new_handle = ddwaf_update(handle_, data, nullptr);
-    if (new_handle != nullptr) {
-        swap_handle(new_handle);
+    uint32_t size;
+    const auto *addrs = ddwaf_required_addresses(handle_, &size);
+
+    addresses_.clear();
+    for (uint32_t i = 0; i < size; i++) { addresses_.emplace(addrs[i]); }
+}
+
+subscriber::ptr instance::update(parameter &rule,
+    std::map<std::string_view, std::string> &meta,
+    std::map<std::string_view, double> &metrics)
+{
+    ddwaf_ruleset_info info;
+    auto *new_handle = ddwaf_update(handle_, rule, &info);
+
+    metrics[tag::event_rules_loaded] = info.loaded;
+    metrics[tag::event_rules_failed] = info.failed;
+    meta[tag::event_rules_errors] =
+        parameter_to_json(dds::parameter_view(info.errors));
+
+    meta[tag::waf_version] = ddwaf_get_version();
+
+    std::string version;
+    if (info.version != nullptr) {
+        version = info.version;
     } else {
-        return false;
+        version = ruleset_version_;
     }
 
-    return true;
+    ddwaf_ruleset_info_free(&info);
+
+    if (handle_ == nullptr) {
+        throw invalid_object();
+    }
+
+    return subscriber::ptr(
+        new instance(new_handle, waf_timeout_, std::move(version)));
 }
 
 instance::ptr instance::from_settings(const engine_settings &settings,
@@ -313,25 +344,6 @@ instance::ptr instance::from_string(std::string_view rule,
     dds::parameter param = json_to_parameter(ruleset.get_document());
     return std::make_shared<instance>(
         param, meta, metrics, waf_timeout_us, key_regex, value_regex);
-}
-
-void instance::swap_handle(ddwaf_handle new_handle)
-{
-    if (new_handle == nullptr) {
-        return;
-    }
-
-    auto *old_handle = handle_.load(std::memory_order_relaxed);
-    handle_.store(new_handle);
-    if (old_handle != nullptr) {
-        ddwaf_destroy(old_handle);
-    }
-
-    uint32_t size;
-    const auto *addrs = ddwaf_required_addresses(handle_, &size);
-
-    addresses_.clear();
-    for (uint32_t i = 0; i < size; i++) { addresses_.emplace(addrs[i]); }
 }
 
 } // namespace dds::waf

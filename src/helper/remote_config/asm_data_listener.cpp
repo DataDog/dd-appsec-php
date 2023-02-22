@@ -8,6 +8,7 @@
 #include "exception.hpp"
 #include <optional>
 #include <rapidjson/document.h>
+#include <rapidjson/rapidjson.h>
 
 struct rule_data {
     struct data_with_expiration {
@@ -72,37 +73,44 @@ void extract_data(
     }
 }
 
-dds::parameter rules_to_parameter(
+rapidjson::GenericStringRef<char> StringRef(std::string_view str)
+{
+    return {str.data(), static_cast<rapidjson::SizeType>(str.size())};
+}
+
+dds::engine_ruleset rules_to_engine_ruleset(
     const std::unordered_map<std::string, rule_data> &rules)
 {
-    dds::parameter rules_data = dds::parameter::array();
+    rapidjson::Document document;
+    rapidjson::Document::AllocatorType &alloc = document.GetAllocator();
+
+    document.SetObject();
+
+    rapidjson::Value rules_data(rapidjson::kArrayType);
     for (const auto &[key, rule] : rules) {
-
-        dds::parameter parameter_rule = dds::parameter::map();
-
-        parameter_rule.add("id", dds::parameter::string(rule.id));
-        parameter_rule.add("type", dds::parameter::string(rule.type));
+        rapidjson::Value parameter_rule(rapidjson::kObjectType);
+        parameter_rule.AddMember("id", StringRef(rule.id), alloc);
+        parameter_rule.AddMember("type", StringRef(rule.type), alloc);
 
         // Data
-        dds::parameter data = dds::parameter::array();
+        rapidjson::Value data(rapidjson::kArrayType);
         for (const auto &[value, data_entry] : rule.data) {
-            dds::parameter data_parameter = dds::parameter::map();
+            rapidjson::Value data_parameter(rapidjson::kObjectType);
             if (data_entry.expiration) {
-                data_parameter.add("expiration",
-                    dds::parameter::uint64(data_entry.expiration.value()));
+                data_parameter.AddMember(
+                    "expiration", data_entry.expiration.value(), alloc);
             }
-            data_parameter.add("value", dds::parameter::string(value));
-            data.add(std::move(data_parameter));
+            data_parameter.AddMember("value", StringRef(value), alloc);
+            data.PushBack(data_parameter, alloc);
         }
-        parameter_rule.add("data", std::move(data));
+        parameter_rule.AddMember("data", data, alloc);
 
-        rules_data.add(std::move(parameter_rule));
+        rules_data.PushBack(parameter_rule, alloc);
     }
 
-    dds::parameter root = dds::parameter::map();
-    root.add("rules_data", std::move(rules_data));
+    document.AddMember("rules_data", rules_data, alloc);
 
-    return root;
+    return dds::engine_ruleset(std::move(document));
 }
 
 void dds::remote_config::asm_data_listener::on_update(const config &config)
@@ -158,7 +166,11 @@ void dds::remote_config::asm_data_listener::on_update(const config &config)
         }
     }
 
-    auto parameter = rules_to_parameter(rules_data);
-    auto parameter_view = dds::parameter_view(parameter);
-    engine_->update_rule_data(parameter_view);
+    std::map<std::string_view, std::string> meta;
+    std::map<std::string_view, double> metrics;
+
+    engine_ruleset ruleset = rules_to_engine_ruleset(rules_data);
+
+    // TODO find a way to provide this information to the service
+    engine_->update(ruleset, meta, metrics);
 }

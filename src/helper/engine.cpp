@@ -10,9 +10,9 @@
 #include <spdlog/spdlog.h>
 
 #include "engine.hpp"
-#include "engine_ruleset.hpp"
 #include "engine_settings.hpp"
 #include "exception.hpp"
+#include "json_helper.hpp"
 #include "parameter_view.hpp"
 #include "std_logging.hpp"
 #include "subscriber/waf.hpp"
@@ -21,16 +21,39 @@ namespace dds {
 
 void engine::subscribe(const subscriber::ptr &sub)
 {
-    subscribers_.emplace_back(sub);
+    auto common = std::atomic_load(&common_);
+    common->subscribers.emplace_back(sub);
 }
 
-void engine::update_rule_data(parameter_view &data)
+void engine::update(engine_ruleset &ruleset,
+    std::map<std::string_view, std::string> &meta,
+    std::map<std::string_view, double> &metrics)
 {
-    for (auto &sub : subscribers_) {
-        if (!sub->update_rule_data(data)) {
-            SPDLOG_WARN("Failed to update rule data for {}", sub->get_name());
+    auto new_actions =
+        parse_actions(ruleset.get_document(), engine::default_actions);
+    if (new_actions.empty()) {
+        new_actions = common_->actions;
+    }
+
+    std::vector<subscriber::ptr> new_subscribers;
+    new_subscribers.reserve(common_->subscribers.size());
+    dds::parameter param = json_to_parameter(ruleset.get_document());
+    for (auto &sub : common_->subscribers) {
+        try {
+            new_subscribers.emplace_back(sub->update(param, meta, metrics));
+        } catch (const std::exception &e) {
+            SPDLOG_WARN("Failed to update subscriber {}: {}", sub->get_name(),
+                e.what());
+        } catch (...) {
+            SPDLOG_WARN("Failed to update subscriber {}: unknown reason",
+                sub->get_name());
         }
     }
+
+    std::shared_ptr<shared_state> new_common(
+        new shared_state{std::move(new_subscribers), std::move(new_actions)});
+
+    std::atomic_store(&common_, new_common);
 }
 
 std::optional<engine::result> engine::context::publish(parameter &&param)
@@ -51,7 +74,7 @@ std::optional<engine::result> engine::context::publish(parameter &&param)
     std::vector<std::string> event_data;
     std::unordered_set<std::string> event_actions;
 
-    for (auto &sub : subscribers_) {
+    for (auto &sub : common_->subscribers) {
         auto it = listeners_.find(sub);
         if (it == listeners_.end()) {
             it = listeners_.emplace(sub, sub->get_listener()).first;
@@ -81,8 +104,8 @@ std::optional<engine::result> engine::context::publish(parameter &&param)
         // The extension can only handle one action, so we pick the first one
         // available in the list of actions.
         for (const auto &action_str : event_actions) {
-            auto it = actions_.find(action_str);
-            if (it != actions_.end()) {
+            auto it = common_->actions.find(action_str);
+            if (it != common_->actions.end()) {
                 res.type = it->second.type;
                 res.parameters = it->second.parameters;
                 break;
