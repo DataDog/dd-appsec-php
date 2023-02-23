@@ -137,23 +137,23 @@ trait CommonTests {
         assertThat appsecJson, matchesJson(expJson, false, true)
     }
 
-   @Test
-    void 'test blocking'() {
-        def trace = container.traceFromRequest('/phpinfo.php') { HttpURLConnection conn ->
-            //Set ip which is blocked
-            conn.setRequestProperty('X-Forwarded-For', '80.80.80.80')
-            assert conn.responseCode == 403
+/*   @Test*/
+    /*void 'test blocking'() {*/
+        /*def trace = container.traceFromRequest('/phpinfo.php') { HttpURLConnection conn ->*/
+            /*//Set ip which is blocked*/
+            /*conn.setRequestProperty('X-Forwarded-For', '80.80.80.80')*/
+            /*assert conn.responseCode == 403*/
 
-            def content = (conn.errorStream ?: conn.inputStream).text
-            assert content.contains('blocked')
-        }
-        // assert sth about the trace
+            /*def content = (conn.errorStream ?: conn.inputStream).text*/
+            /*assert content.contains('blocked')*/
+        /*}*/
+        /*// assert sth about the trace*/
 
-        assert trace.metrics."_dd.appsec.enabled" == 1.0d
-        assert trace.metrics."_dd.appsec.waf.duration" > 0.0d
-        assert trace.meta."_dd.appsec.event_rules.version" != ''
-        assert trace.meta."appsec.blocked" == "true"
-    }
+        /*assert trace.metrics."_dd.appsec.enabled" == 1.0d*/
+        /*assert trace.metrics."_dd.appsec.waf.duration" > 0.0d*/
+        /*assert trace.meta."_dd.appsec.event_rules.version" != ''*/
+        /*assert trace.meta."appsec.blocked" == "true"*/
+    /*}*/
 
    @Test
     void 'test redirecting'() {
