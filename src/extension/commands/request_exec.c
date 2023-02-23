@@ -26,9 +26,9 @@ static const dd_command_spec _spec = {
     .config_features_cb = dd_command_process_config_features_unexpected,
 };
 
-dd_result dd_request_exec(dd_conn *nonnull conn, zval *data)
+dd_result dd_request_exec(dd_conn *nonnull conn, zval *nonnull data)
 {
-    if (data == NULL || Z_TYPE_P(data) != IS_ARRAY) {
+    if (Z_TYPE_P(data) != IS_ARRAY) {
         mlog(dd_log_debug, "Invalid data provided to command request_exec, "
                            "expected hash table.");
         return dd_error;

@@ -1,5 +1,5 @@
 --TEST--
-Test request execution. This php method will be removed once request_exec gets plugged into SDK
+Test request execution.
 --INI--
 extension=ddtrace.so
 datadog.appsec.enabled=1
