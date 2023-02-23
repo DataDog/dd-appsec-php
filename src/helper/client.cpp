@@ -319,9 +319,6 @@ bool client::handle_command(network::request_exec::request &command)
 
     SPDLOG_DEBUG(
         "sending response to request_exec, verdict: {}", response->verdict);
-
-    SPDLOG_DEBUG(
-        "sending response to request_exec, verdict: {}", response->verdict);
     try {
         return broker_->send(response);
     } catch (std::exception &e) {
