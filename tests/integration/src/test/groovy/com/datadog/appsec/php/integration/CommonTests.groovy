@@ -42,20 +42,20 @@ trait CommonTests {
         assert trace.meta."appsec.events.users.login.success.role" == 'admin'
     }
 
-    /*@Test*/
-    /*void 'user login failure event'() {*/
-        /*def trace = container.traceFromRequest('/user_login_failure.php') { HttpURLConnection conn ->*/
-            /*assert conn.responseCode == 200*/
-        /*}*/
+    @Test
+    void 'user login failure event'() {
+        def trace = container.traceFromRequest('/user_login_failure.php') { HttpURLConnection conn ->
+            assert conn.responseCode == 200
+        }
 
-        /*assert trace.metrics._sampling_priority_v1 == 2.0d*/
-        /*assert trace.meta."appsec.events.users.login.failure.usr.id" == 'Admin'*/
-        /*assert trace.meta."appsec.events.users.login.failure.usr.exists" == 'false'*/
-        /*assert trace.meta."appsec.events.users.login.failure.track" == 'true'*/
-        /*assert trace.meta."appsec.events.users.login.failure.email" == 'jean.example@example.com'*/
-        /*assert trace.meta."appsec.events.users.login.failure.session_id" == '987654321'*/
-        /*assert trace.meta."appsec.events.users.login.failure.role" == 'admin'*/
-    /*}*/
+        assert trace.metrics._sampling_priority_v1 == 2.0d
+        assert trace.meta."appsec.events.users.login.failure.usr.id" == 'Admin'
+        assert trace.meta."appsec.events.users.login.failure.usr.exists" == 'false'
+        assert trace.meta."appsec.events.users.login.failure.track" == 'true'
+        assert trace.meta."appsec.events.users.login.failure.email" == 'jean.example@example.com'
+        assert trace.meta."appsec.events.users.login.failure.session_id" == '987654321'
+        assert trace.meta."appsec.events.users.login.failure.role" == 'admin'
+    }
 
 
     /*@Test*/
