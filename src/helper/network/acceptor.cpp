@@ -65,9 +65,10 @@ socket::ptr acceptor::accept()
     struct sockaddr_un addr {};
     socklen_t len = sizeof(addr);
 
-    // NOLINTNEXTLINE(android-cloexec-accept,cppcoreguidelines-pro-type-reinterpret-cast)
+    // NOLINTBEGIN(android-cloexec-accept,cppcoreguidelines-pro-type-reinterpret-cast)
     int const s =
         ::accept(sock_, reinterpret_cast<struct sockaddr *>(&addr), &len);
+    // NOLINTEND(android-cloexec-accept,cppcoreguidelines-pro-type-reinterpret-cast)
     if (s == -1) {
         if (errno == EAGAIN) {
             throw dds::timeout_error();

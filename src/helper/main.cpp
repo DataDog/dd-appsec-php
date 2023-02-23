@@ -50,8 +50,8 @@ bool ensure_unique(const dds::config::config &config)
 
 int main(int argc, char *argv[])
 {
-    std::signal(SIGTERM, signal_handler);
-    std::signal(SIGPIPE, SIG_IGN); // NOLINT
+    std::signal(SIGTERM, signal_handler); // NOLINT(cert-err33-c)
+    std::signal(SIGPIPE, SIG_IGN);        // NOLINT
     dds::config::config const config(argc, argv);
 
     auto logger = spdlog::stderr_color_mt("ddappsec");

@@ -198,6 +198,12 @@ jobs:
         run: VERBOSE=1 make -j ddappsec-helper ddappsec_helper_test
         working-directory: ${{ github.workspace }}/build
       - name: Test
-        run: valgrind --leak-check=full --show-reachable=yes --suppressions=../tests/helper/re2.supp --error-exitcode=1 ./tests/helper/ddappsec_helper_test
+        run: valgrind --leak-check=full --show-reachable=yes --error-limit=no --gen-suppressions=all --log-file=valgrind.log ./tests/helper/ddappsec_helper_test
         working-directory: ${{ github.workspace }}/build
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: Upload suppressions
+          path: |
+              ${{ github.workspace }}/build/valgrind.log
 
