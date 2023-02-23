@@ -198,6 +198,6 @@ jobs:
         run: VERBOSE=1 make -j ddappsec-helper ddappsec_helper_test
         working-directory: ${{ github.workspace }}/build
       - name: Test
-        run: valgrind --leak-check=full --show-reachable=yes --suppressions=../tests/helper/re2.supp ./tests/helper/ddappsec_helper_test
+        run: valgrind --leak-check=full --show-reachable=yes --suppressions=../tests/helper/re2.supp --error-exitcode=1 ./tests/helper/ddappsec_helper_test
         working-directory: ${{ github.workspace }}/build
 
