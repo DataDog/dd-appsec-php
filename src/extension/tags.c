@@ -389,7 +389,7 @@ static void _add_basic_ancillary_tags()
         return;
     }
 
-    _add_basic_tags_to_meta(meta);
+    /*_add_basic_tags_to_meta(meta);*/
 }
 
 static bool _add_all_ancillary_tags()
