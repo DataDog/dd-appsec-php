@@ -41,6 +41,7 @@ RUN if ! { echo $VARIANT | grep -q zts; }; then a2dismod mpm_event; a2enmod mpm_
 RUN a2enmod php
 
 ENV DD_TRACE_ENABLED=true
+ENV DD_TRACE_DEBUG=1
 ENV DD_TRACE_GENERATE_ROOT_SPAN=true
 
 EXPOSE 80
