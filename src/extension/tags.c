@@ -254,7 +254,9 @@ void dd_tags_add_tags()
     _set_runtime_family();
 
     if (zend_llist_count(&_appsec_json_frags) == 0) {
+        mlog(dd_log_debug, "no triggers, adding basic ancillary tags");
         _add_basic_ancillary_tags();
+        mlog(dd_log_debug, "tags added");
         return;
     }
 
@@ -380,8 +382,10 @@ static void _dd_response_headers(zend_array *meta_ht);
 
 static void _add_basic_ancillary_tags()
 {
+    mlog(dd_log_debug, "getting meta");
     zval *nullable meta = dd_trace_root_span_get_meta();
     if (!meta) {
+        mlog(dd_log_debug, "No meta");
         return;
     }
 
@@ -409,7 +413,9 @@ static void _add_basic_tags_to_meta(zval *nonnull meta)
         return;
     }
 
+    mlog(dd_log_debug, "Adding client ip");
     _dd_http_client_ip(meta_ht);
+    mlog(dd_log_debug, "Adding request headers");
     _dd_request_headers(meta_ht, _server, &_relevant_ip_headers);
 }
 

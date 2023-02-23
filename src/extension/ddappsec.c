@@ -346,8 +346,10 @@ static PHP_RSHUTDOWN_FUNCTION(ddappsec)
 
     result = dd_appsec_rshutdown();
 
+    mlog(dd_log_debug, "shutting down ip extraction");
 exit:
     dd_ip_extraction_rshutdown();
+    mlog(dd_log_debug, "finalising");
     return result;
 }
 
@@ -374,6 +376,8 @@ int dd_appsec_rshutdown()
     if (DDAPPSEC_G(enabled) == ENABLED) {
         dd_tags_add_tags();
     }
+
+    mlog(dd_log_debug, "shutting down tags");
     dd_tags_rshutdown();
 
     return SUCCESS;
