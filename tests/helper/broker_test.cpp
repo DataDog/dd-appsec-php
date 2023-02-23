@@ -794,13 +794,13 @@ TEST(BrokerTest, RequestExecutionTypeIsAddedToMessage)
         .WillOnce(Return(sizeof(network::header_t)))
         .WillOnce(DoAll(SaveString(&buffer), Return(123)));
 
-    auto response = std::make_shared<network::request_execution::response>();
+    auto response = std::make_shared<network::request_exec::response>();
     std::vector<std::shared_ptr<network::base_response>> responses;
     responses.push_back(response);
 
     EXPECT_FALSE(broker.send(responses));
 
-    assert_type_equal_to(buffer, 0, "request_execution");
+    assert_type_equal_to(buffer, 0, "request_exec");
 }
 
 TEST(BrokerTest, RequestShutdownTypeIsAddedToMessage)

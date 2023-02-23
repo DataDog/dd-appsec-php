@@ -1928,7 +1928,7 @@ TEST(ClientTest, RequestExecution)
 
     // Request Execution
     {
-        network::request_execution::request msg;
+        network::request_exec::request msg;
 
         network::request req(std::move(msg));
 
@@ -1941,8 +1941,8 @@ TEST(ClientTest, RequestExecution)
 
         EXPECT_TRUE(c.run_request());
         auto msg_res =
-            dynamic_cast<network::request_execution::response *>(res.get());
-        EXPECT_EQ(network::request_execution::response::id, msg_res->id);
+            dynamic_cast<network::request_exec::response *>(res.get());
+        EXPECT_EQ(network::request_exec::response::id, msg_res->id);
     }
 }
 
@@ -1955,7 +1955,7 @@ TEST(ClientTest, RequestExecutionWithoutClientInit)
 
     // Request Execution
     {
-        network::request_execution::request msg;
+        network::request_exec::request msg;
 
         network::request req(std::move(msg));
 

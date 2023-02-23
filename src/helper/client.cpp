@@ -255,21 +255,21 @@ bool client::handle_command(network::request_init::request &command)
     return false;
 }
 
-bool client::handle_command(network::request_execution::request &)
+bool client::handle_command(network::request_exec::request &)
 {
     if (!service_) {
         // This implies a failed client_init, we can't continue.
-        SPDLOG_DEBUG("no service available on request_execution");
+        SPDLOG_DEBUG("no service available on request_exec");
         send_error_response(*broker_);
         return false;
     }
 
-    SPDLOG_DEBUG("received command request_execution");
+    SPDLOG_DEBUG("received command request_exec");
 
-    SPDLOG_DEBUG("sending request_execution to request_execution");
+    SPDLOG_DEBUG("sending request_exec to request_exec");
     try {
         return broker_->send(
-            std::make_shared<network::request_execution::response>());
+            std::make_shared<network::request_exec::response>());
     } catch (std::exception &e) {
         SPDLOG_ERROR(e.what());
     }
@@ -412,7 +412,7 @@ bool client::run_request()
 {
     // TODO: figure out how to handle errors which require sending an error
     //       response to ensure the extension doesn't hang.
-    return handle_message<network::request_init, network::request_execution,
+    return handle_message<network::request_init, network::request_exec,
         network::config_sync, network::request_shutdown>(
         *this, *broker_, std::chrono::milliseconds{0} /* no initial timeout */
     );

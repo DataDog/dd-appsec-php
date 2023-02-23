@@ -42,7 +42,7 @@ public:
     // NOLINTNEXTLINE(google-runtime-references)
     bool handle_command(network::request_init::request &);
     // NOLINTNEXTLINE(google-runtime-references)
-    bool handle_command(network::request_execution::request &);
+    bool handle_command(network::request_exec::request &);
     // NOLINTNEXTLINE(google-runtime-references)
     bool handle_command(network::request_shutdown::request &);
     // NOLINTNEXTLINE(google-runtime-references)

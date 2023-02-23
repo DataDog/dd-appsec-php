@@ -35,7 +35,7 @@ enum class request_id : unsigned {
     unknown,
     client_init,
     request_init,
-    request_execution,
+    request_exec,
     request_shutdown,
     config_sync
 };
@@ -44,7 +44,7 @@ enum class response_id : unsigned {
     unknown,
     client_init,
     request_init,
-    request_execution,
+    request_exec,
     request_shutdown,
     error,
     config_sync,
@@ -167,12 +167,12 @@ struct request_init {
     };
 };
 
-struct request_execution {
-    static constexpr const char *name = "request_execution";
+struct request_exec {
+    static constexpr const char *name = "request_exec";
 
     struct request : base_request {
-        static constexpr const char *name = request_execution::name;
-        static constexpr request_id id = request_id::request_execution;
+        static constexpr const char *name = request_exec::name;
+        static constexpr request_id id = request_id::request_exec;
 
         dds::parameter data;
 
@@ -187,11 +187,11 @@ struct request_execution {
     };
 
     struct response : base_response_generic<response> {
-        static constexpr response_id id = response_id::request_execution;
+        static constexpr response_id id = response_id::request_exec;
 
         [[nodiscard]] std::string_view get_type() const override
         {
-            return request_execution::name;
+            return request_exec::name;
         };
         std::string verdict;
         std::unordered_map<std::string, std::string> parameters;

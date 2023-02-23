@@ -9,6 +9,4 @@
 #include <SAPI.h>
 #include <php.h>
 
-dd_result dd_request_execution(dd_conn *nonnull conn);
-void dd_request_execution_rshutdown(void);
-void dd_request_execution_add_data(char *key, zval *value);
+dd_result dd_request_exec(dd_conn *nonnull conn, zval *data);
