@@ -23,7 +23,32 @@ public:
         send, bool(const std::shared_ptr<network::base_response> &message));
 };
 
+class service_manager : public dds::service_manager {
+public:
+    MOCK_METHOD(std::shared_ptr<dds::service>, create_service,
+        (const dds::service_identifier &id,
+            const dds::engine_settings &settings,
+            const dds::remote_config::settings &rc_settings,
+            (std::map<std::string_view, std::string> & meta),
+            (std::map<std::string_view, double> & metrics),
+            std::vector<dds::remote_config::protocol::capabilities_e>
+                &&capabilities),
+        (override));
+};
+
 } // namespace mock
+
+ACTION_P(SaveCapabilities, capabilities)
+{
+    std::vector<dds::remote_config::protocol::capabilities_e> &temp =
+        *reinterpret_cast<
+            std::vector<dds::remote_config::protocol::capabilities_e> *>(
+            capabilities);
+
+    temp = arg5;
+
+    return nullptr;
+}
 
 auto EXTENSION_CONFIGURATION_NOT_SET = std::nullopt;
 bool EXTENSION_CONFIGURATION_ENABLED = true;
@@ -58,7 +83,7 @@ TEST(ClientTest, ClientInit)
 
     EXPECT_STREQ(msg_res->status.c_str(), "ok");
     EXPECT_EQ(msg_res->meta.size(), 2);
-    EXPECT_STREQ(msg_res->meta[tag::waf_version].c_str(), "1.6.2");
+    EXPECT_STREQ(msg_res->meta[tag::waf_version].c_str(), "1.8.2");
     EXPECT_STREQ(msg_res->meta[tag::event_rules_errors].c_str(), "{}");
 
     EXPECT_EQ(msg_res->metrics.size(), 2);
@@ -97,7 +122,7 @@ TEST(ClientTest, ClientInitInvalidRules)
 
     EXPECT_STREQ(msg_res->status.c_str(), "ok");
     EXPECT_EQ(msg_res->meta.size(), 2);
-    EXPECT_STREQ(msg_res->meta[tag::waf_version].c_str(), "1.6.2");
+    EXPECT_STREQ(msg_res->meta[tag::waf_version].c_str(), "1.8.2");
 
     rapidjson::Document doc;
     doc.Parse(msg_res->meta[tag::event_rules_errors]);
@@ -1737,6 +1762,137 @@ TEST(ClientTest,
             dynamic_cast<network::config_features::response *>(res.get());
         EXPECT_FALSE(request_init_res->enabled);
     }
+}
+
+TEST(ClientTest, AsmActivationCapabilitieIsAddedWhenEnabledIsNotConfigured)
+{
+    auto smanager = std::make_shared<mock::service_manager>();
+    auto broker = new mock::broker();
+
+    std::vector<dds::remote_config::protocol::capabilities_e> capabilities;
+
+    EXPECT_CALL(*smanager, create_service(_, _, _, _, _, _))
+        .WillOnce(SaveCapabilities(&capabilities));
+    std::shared_ptr<network::base_response> res;
+    EXPECT_CALL(*broker,
+        send(testing::An<const std::shared_ptr<network::base_response> &>()))
+        .WillOnce(Return(true));
+
+    client client(smanager, std::unique_ptr<mock::broker>(broker));
+
+    network::client_init::request msg;
+    msg.enabled_configuration = std::nullopt;
+    client.handle_command(msg);
+
+    EXPECT_TRUE(
+        std::find(capabilities.begin(), capabilities.end(),
+            dds::remote_config::protocol::capabilities_e::ASM_ACTIVATION) !=
+        capabilities.end());
+}
+
+TEST(
+    ClientTest, AsmActivationCapabilitieIsNotAddedWhenEnabledIsConfiguredToTrue)
+{
+    auto smanager = std::make_shared<mock::service_manager>();
+    auto broker = new mock::broker();
+
+    std::vector<dds::remote_config::protocol::capabilities_e> capabilities;
+
+    EXPECT_CALL(*smanager, create_service(_, _, _, _, _, _))
+        .WillOnce(SaveCapabilities(&capabilities));
+    std::shared_ptr<network::base_response> res;
+    EXPECT_CALL(*broker,
+        send(testing::An<const std::shared_ptr<network::base_response> &>()))
+        .WillOnce(Return(true));
+
+    client client(smanager, std::unique_ptr<mock::broker>(broker));
+
+    network::client_init::request msg;
+    msg.enabled_configuration = true;
+    client.handle_command(msg);
+
+    EXPECT_TRUE(
+        std::find(capabilities.begin(), capabilities.end(),
+            dds::remote_config::protocol::capabilities_e::ASM_ACTIVATION) ==
+        capabilities.end());
+}
+
+TEST(ClientTest,
+    AsmActivationCapabilitieIsNotAddedWhenEnabledIsConfiguredToFalse)
+{
+    auto smanager = std::make_shared<mock::service_manager>();
+    auto broker = new mock::broker();
+
+    std::vector<dds::remote_config::protocol::capabilities_e> capabilities;
+
+    EXPECT_CALL(*smanager, create_service(_, _, _, _, _, _))
+        .WillOnce(SaveCapabilities(&capabilities));
+    std::shared_ptr<network::base_response> res;
+    EXPECT_CALL(*broker,
+        send(testing::An<const std::shared_ptr<network::base_response> &>()))
+        .WillOnce(Return(true));
+
+    client client(smanager, std::unique_ptr<mock::broker>(broker));
+
+    network::client_init::request msg;
+    msg.enabled_configuration = false;
+    client.handle_command(msg);
+
+    EXPECT_TRUE(
+        std::find(capabilities.begin(), capabilities.end(),
+            dds::remote_config::protocol::capabilities_e::ASM_ACTIVATION) ==
+        capabilities.end());
+}
+
+TEST(ClientTest, AsmIpBlockingIsAddedWhenRulesFileIsEmpty)
+{
+    auto smanager = std::make_shared<mock::service_manager>();
+    auto broker = new mock::broker();
+
+    std::vector<dds::remote_config::protocol::capabilities_e> capabilities;
+
+    EXPECT_CALL(*smanager, create_service(_, _, _, _, _, _))
+        .WillOnce(SaveCapabilities(&capabilities));
+    std::shared_ptr<network::base_response> res;
+    EXPECT_CALL(*broker,
+        send(testing::An<const std::shared_ptr<network::base_response> &>()))
+        .WillOnce(Return(true));
+
+    client client(smanager, std::unique_ptr<mock::broker>(broker));
+
+    network::client_init::request msg;
+    client.handle_command(msg);
+
+    EXPECT_TRUE(
+        std::find(capabilities.begin(), capabilities.end(),
+            dds::remote_config::protocol::capabilities_e::ASM_IP_BLOCKING) !=
+        capabilities.end());
+}
+
+TEST(ClientTest, AsmIpBlockingIsNotAddedWhenRulesFileSet)
+{
+    auto smanager = std::make_shared<mock::service_manager>();
+    auto broker = new mock::broker();
+
+    std::vector<dds::remote_config::protocol::capabilities_e> capabilities;
+
+    EXPECT_CALL(*smanager, create_service(_, _, _, _, _, _))
+        .WillOnce(SaveCapabilities(&capabilities));
+    std::shared_ptr<network::base_response> res;
+    EXPECT_CALL(*broker,
+        send(testing::An<const std::shared_ptr<network::base_response> &>()))
+        .WillOnce(Return(true));
+
+    client client(smanager, std::unique_ptr<mock::broker>(broker));
+
+    network::client_init::request msg;
+    msg.engine_settings.rules_file = "/some/file";
+    client.handle_command(msg);
+
+    EXPECT_FALSE(
+        std::find(capabilities.begin(), capabilities.end(),
+            dds::remote_config::protocol::capabilities_e::ASM_IP_BLOCKING) !=
+        capabilities.end());
 }
 
 TEST(ClientTest, RequestExecution)
