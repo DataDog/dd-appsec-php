@@ -28,19 +28,19 @@ trait CommonTests {
         assert trace.meta."usr.scope" == 'read:message, write:files'
     }
 
-    /*@Test*/
-    /*void 'user login success event'() {*/
-        /*def trace = container.traceFromRequest('/user_login_success.php') { HttpURLConnection conn ->*/
-            /*assert conn.responseCode == 200*/
-        /*}*/
+    @Test
+    void 'user login success event'() {
+        def trace = container.traceFromRequest('/user_login_success.php') { HttpURLConnection conn ->
+            assert conn.responseCode == 200
+        }
 
-        /*assert trace.metrics._sampling_priority_v1 == 2.0d*/
-        /*assert trace.meta."usr.id" == 'Admin'*/
-        /*assert trace.meta."appsec.events.users.login.success.track" == 'true'*/
-        /*assert trace.meta."appsec.events.users.login.success.email" == 'jean.example@example.com'*/
-        /*assert trace.meta."appsec.events.users.login.success.session_id" == '987654321'*/
-        /*assert trace.meta."appsec.events.users.login.success.role" == 'admin'*/
-    /*}*/
+        assert trace.metrics._sampling_priority_v1 == 2.0d
+        assert trace.meta."usr.id" == 'Admin'
+        assert trace.meta."appsec.events.users.login.success.track" == 'true'
+        assert trace.meta."appsec.events.users.login.success.email" == 'jean.example@example.com'
+        assert trace.meta."appsec.events.users.login.success.session_id" == '987654321'
+        assert trace.meta."appsec.events.users.login.success.role" == 'admin'
+    }
 
     /*@Test*/
     /*void 'user login failure event'() {*/
@@ -71,13 +71,13 @@ trait CommonTests {
         /*assert trace.meta."appsec.events.custom_event.metadata2" == 'value2'*/
     /*}*/
 
-    /*@Test*/
-    /*void 'sanity check against non PHP endpoint'() {*/
-        /*def conn = container.createRequest('/')*/
-        /*conn.inputStream.withCloseable {*/
-            /*assert conn.responseCode == 200*/
-        /*}*/
-    /*}*/
+    @Test
+    void 'sanity check against non PHP endpoint'() {
+        def conn = container.createRequest('/')
+        conn.inputStream.withCloseable {
+            assert conn.responseCode == 200
+        }
+    }
 
     @Test
     void 'trace without attack'() {
