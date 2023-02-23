@@ -173,3 +173,31 @@ jobs:
           path: |
               ${{ github.workspace }}/tests/fuzzer/results/*
               ${{ github.workspace }}/coverage.html
+  helper-test-valgrind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Install Valgrind
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y valgrind
+      - name: Cache hunter packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.hunter
+          key: ${{ runner.os }}-helper
+      - name: Generate Build Scripts
+        run: |
+            mkdir build
+            cd build
+            cmake .. -DDD_APPSEC_BUILD_EXTENSION=OFF
+      - name: Build
+        run: VERBOSE=1 make -j ddappsec-helper ddappsec_helper_test
+        working-directory: ${{ github.workspace }}/build
+      - name: Test
+        run: valgrind --leak-check=full --show-reachable=yes --suppressions=../tests/helper/re2.supp ./tests/helper/ddappsec_helper_test
+        working-directory: ${{ github.workspace }}/build
+
