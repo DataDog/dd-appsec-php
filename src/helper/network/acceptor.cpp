@@ -37,7 +37,7 @@ acceptor::acceptor(const std::string_view &sv)
     // Remove the existing socket
     ::unlink(static_cast<char *>(addr.sun_path));
 
-    socklen_t len = sv.size() + sizeof(addr.sun_family);
+    socklen_t const len = sv.size() + sizeof(addr.sun_family);
     // NOLINTNEXTLINE
     auto res = ::bind(sock_, reinterpret_cast<struct sockaddr *>(&addr), len);
     if (res == -1) {
@@ -54,7 +54,7 @@ acceptor::acceptor(const std::string_view &sv)
 void acceptor::set_accept_timeout(std::chrono::seconds timeout)
 {
     struct timeval tv = {timeout.count(), 0};
-    int res = setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    int const res = setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
     if (res == -1) {
         throw std::system_error(errno, std::generic_category());
     }
@@ -66,7 +66,8 @@ socket::ptr acceptor::accept()
     socklen_t len = sizeof(addr);
 
     // NOLINTNEXTLINE(android-cloexec-accept,cppcoreguidelines-pro-type-reinterpret-cast)
-    int s = ::accept(sock_, reinterpret_cast<struct sockaddr *>(&addr), &len);
+    int const s =
+        ::accept(sock_, reinterpret_cast<struct sockaddr *>(&addr), &len);
     if (s == -1) {
         if (errno == EAGAIN) {
             throw dds::timeout_error();
