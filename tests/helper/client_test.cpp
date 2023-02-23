@@ -50,9 +50,9 @@ ACTION_P(SaveCapabilities, capabilities)
     return nullptr;
 }
 
-auto EXTENSION_CONFIGURATION_NOT_SET = std::nullopt;
-bool EXTENSION_CONFIGURATION_ENABLED = true;
-bool EXTENSION_CONFIGURATION_DISABLED = false;
+constexpr auto EXTENSION_CONFIGURATION_NOT_SET = std::nullopt;
+constexpr bool EXTENSION_CONFIGURATION_ENABLED = true;
+constexpr bool EXTENSION_CONFIGURATION_DISABLED = false;
 
 TEST(ClientTest, ClientInit)
 {
@@ -945,6 +945,7 @@ TEST(ClientTest, RequestShutdownNoRequestInit)
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
         msg.engine_settings.rules_file = fn;
+        msg.enabled_configuration = EXTENSION_CONFIGURATION_ENABLED;
 
         network::request req(std::move(msg));
 
@@ -1069,6 +1070,56 @@ TEST(ClientTest, RequestShutdownBrokerThrows)
             send(
                 testing::An<const std::shared_ptr<network::base_response> &>()))
             .WillOnce(Throw(std::exception()));
+
+        EXPECT_FALSE(c.run_request());
+    }
+}
+
+TEST(ClientTest, RequestShutdownDisabledClient)
+{
+    auto smanager = std::make_shared<service_manager>();
+    auto broker = new mock::broker();
+
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
+
+    // Client Init
+    {
+        auto fn = create_sample_rules_ok();
+        network::client_init::request msg;
+        msg.pid = 1729;
+        msg.runtime_version = "1.0";
+        msg.client_version = "2.0";
+        msg.engine_settings.rules_file = fn;
+        msg.enabled_configuration = EXTENSION_CONFIGURATION_DISABLED;
+
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_client_init());
+        auto msg_res =
+            dynamic_cast<network::client_init::response *>(res.get());
+        EXPECT_STREQ(msg_res->status.c_str(), "ok");
+    }
+
+    // Request Shutdown
+    {
+        network::request_shutdown::request msg;
+        msg.data = parameter::map();
+
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(Return(true));
 
         EXPECT_FALSE(c.run_request());
     }
@@ -1895,7 +1946,7 @@ TEST(ClientTest, AsmIpBlockingIsNotAddedWhenRulesFileSet)
         capabilities.end());
 }
 
-TEST(ClientTest, RequestExecution)
+TEST(ClientTest, RequestExecAfterRequestInit)
 {
     auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
@@ -1910,6 +1961,87 @@ TEST(ClientTest, RequestExecution)
         msg.runtime_version = "1.0";
         msg.client_version = "2.0";
         msg.engine_settings.rules_file = fn;
+        msg.enabled_configuration = EXTENSION_CONFIGURATION_ENABLED;
+
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_client_init());
+        auto msg_res =
+            dynamic_cast<network::client_init::response *>(res.get());
+        EXPECT_STREQ(msg_res->status.c_str(), "ok");
+    }
+
+    // Request Init
+    {
+        network::request_init::request msg;
+        msg.data = parameter::map();
+        msg.data.add("server.request.headers.no_cookies",
+            parameter::string("acunetix-product"sv));
+
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_init::response *>(res.get());
+        EXPECT_STREQ(msg_res->verdict.c_str(), "record");
+        EXPECT_EQ(msg_res->triggers.size(), 1);
+    }
+
+    // Request Execution
+    {
+        network::request_exec::request msg;
+        msg.data = parameter::map();
+        msg.data.add("http.client_ip", parameter::string("192.168.1.1"sv));
+
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_exec::response *>(res.get());
+        EXPECT_STREQ(msg_res->verdict.c_str(), "block");
+        EXPECT_STREQ(msg_res->parameters["type"].c_str(), "auto");
+        EXPECT_STREQ(msg_res->parameters["status_code"].c_str(), "403");
+        EXPECT_EQ(msg_res->triggers.size(), 1);
+    }
+}
+
+TEST(ClientTest, RequestExecWithoutAttack)
+{
+    auto smanager = std::make_shared<service_manager>();
+    auto broker = new mock::broker();
+
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
+
+    // Client Init
+    {
+        auto fn = create_sample_rules_ok();
+        network::client_init::request msg;
+        msg.pid = 1729;
+        msg.runtime_version = "1.0";
+        msg.client_version = "2.0";
+        msg.engine_settings.rules_file = fn;
+        msg.enabled_configuration = EXTENSION_CONFIGURATION_ENABLED;
 
         network::request req(std::move(msg));
 
@@ -1929,6 +2061,7 @@ TEST(ClientTest, RequestExecution)
     // Request Execution
     {
         network::request_exec::request msg;
+        msg.data = parameter::map();
 
         network::request req(std::move(msg));
 
@@ -1942,11 +2075,70 @@ TEST(ClientTest, RequestExecution)
         EXPECT_TRUE(c.run_request());
         auto msg_res =
             dynamic_cast<network::request_exec::response *>(res.get());
-        EXPECT_EQ(network::request_exec::response::id, msg_res->id);
+        EXPECT_STREQ(msg_res->verdict.c_str(), "ok");
+        EXPECT_EQ(msg_res->parameters.size(), 0);
+        EXPECT_EQ(msg_res->triggers.size(), 0);
     }
 }
 
-TEST(ClientTest, RequestExecutionWithoutClientInit)
+TEST(ClientTest, RequestExecWithAttack)
+{
+    auto smanager = std::make_shared<service_manager>();
+    auto broker = new mock::broker();
+
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
+
+    // Client Init
+    {
+        auto fn = create_sample_rules_ok();
+        network::client_init::request msg;
+        msg.pid = 1729;
+        msg.runtime_version = "1.0";
+        msg.client_version = "2.0";
+        msg.engine_settings.rules_file = fn;
+        msg.enabled_configuration = EXTENSION_CONFIGURATION_ENABLED;
+
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_client_init());
+        auto msg_res =
+            dynamic_cast<network::client_init::response *>(res.get());
+        EXPECT_STREQ(msg_res->status.c_str(), "ok");
+    }
+
+    // Request Execution
+    {
+        network::request_exec::request msg;
+        msg.data = parameter::map();
+        msg.data.add("http.client_ip", parameter::string("192.168.1.1"sv));
+
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_exec::response *>(res.get());
+        EXPECT_STREQ(msg_res->verdict.c_str(), "block");
+        EXPECT_STREQ(msg_res->parameters["type"].c_str(), "auto");
+        EXPECT_STREQ(msg_res->parameters["status_code"].c_str(), "403");
+        EXPECT_EQ(msg_res->triggers.size(), 1);
+    }
+}
+
+TEST(ClientTest, RequestExecWithoutClientInit)
 {
     auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
@@ -1959,6 +2151,57 @@ TEST(ClientTest, RequestExecutionWithoutClientInit)
 
         network::request req(std::move(msg));
 
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(Return(true));
+
+        EXPECT_FALSE(c.run_request());
+    }
+}
+
+TEST(ClientTest, RequestExecDisabledClient)
+{
+    auto smanager = std::make_shared<service_manager>();
+    auto broker = new mock::broker();
+
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
+
+    // Client Init
+    {
+        auto fn = create_sample_rules_ok();
+        network::client_init::request msg;
+        msg.pid = 1729;
+        msg.runtime_version = "1.0";
+        msg.client_version = "2.0";
+        msg.engine_settings.rules_file = fn;
+        msg.enabled_configuration = EXTENSION_CONFIGURATION_DISABLED;
+
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_client_init());
+        auto msg_res =
+            dynamic_cast<network::client_init::response *>(res.get());
+        EXPECT_STREQ(msg_res->status.c_str(), "ok");
+    }
+
+    // Request Execution
+    {
+        network::request_exec::request msg;
+        msg.data = parameter::map();
+        msg.data.add("http.client_ip", parameter::string("192.168.1.1"sv));
+
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
         EXPECT_CALL(*broker,
             send(

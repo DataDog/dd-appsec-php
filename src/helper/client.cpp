@@ -255,21 +255,75 @@ bool client::handle_command(network::request_init::request &command)
     return false;
 }
 
-bool client::handle_command(network::request_exec::request &)
+bool client::handle_command(network::request_exec::request &command)
 {
-    if (!service_) {
-        // This implies a failed client_init, we can't continue.
-        SPDLOG_DEBUG("no service available on request_exec");
-        send_error_response(*broker_);
-        return false;
+    if (!context_) {
+        // A lack of context implies processing request_init failed, this
+        // can happen for legitimate reasons so let's try to process the data.
+        if (!service_) {
+            // This implies a failed client_init, we can't continue.
+            SPDLOG_DEBUG("no service available on request_exec");
+            send_error_response(*broker_);
+            return false;
+        }
+
+        if (!compute_client_status()) {
+            SPDLOG_DEBUG("request_exec received on disabled client");
+            send_error_response(*broker_);
+            return false;
+        }
+
+        context_.emplace(*service_->get_engine());
     }
 
     SPDLOG_DEBUG("received command request_exec");
 
-    SPDLOG_DEBUG("sending request_exec to request_exec");
+    auto response = std::make_shared<network::request_exec::response>();
     try {
-        return broker_->send(
-            std::make_shared<network::request_exec::response>());
+        auto res = context_->publish(std::move(command.data));
+        if (res) {
+            switch (res->type) {
+            case engine::action_type::block:
+                response->verdict = network::verdict::block;
+                response->parameters = std::move(res->parameters);
+                break;
+            case engine::action_type::redirect:
+                response->verdict = network::verdict::redirect;
+                response->parameters = std::move(res->parameters);
+                break;
+            case engine::action_type::record:
+            default:
+                response->verdict = network::verdict::record;
+                response->parameters = {};
+                break;
+            }
+
+            response->triggers = std::move(res->events);
+
+            DD_STDLOG(DD_STDLOG_ATTACK_DETECTED);
+        } else {
+            response->verdict = network::verdict::ok;
+        }
+    } catch (const invalid_object &e) {
+        // This error indicates some issue in either the communication with
+        // the client, incompatible versions or malicious client.
+        SPDLOG_ERROR("invalid data format provided by the client");
+        send_error_response(*broker_);
+        return false;
+    } catch (const std::exception &e) {
+        // Uncertain what the issue is... lets be cautious
+        DD_STDLOG(DD_STDLOG_REQUEST_ANALYSIS_FAILED, e.what());
+        send_error_response(*broker_);
+        return false;
+    }
+
+    SPDLOG_DEBUG(
+        "sending response to request_exec, verdict: {}", response->verdict);
+
+    SPDLOG_DEBUG(
+        "sending response to request_exec, verdict: {}", response->verdict);
+    try {
+        return broker_->send(response);
     } catch (std::exception &e) {
         SPDLOG_ERROR(e.what());
     }
@@ -279,12 +333,8 @@ bool client::handle_command(network::request_exec::request &)
 
 bool client::compute_client_status()
 {
-    if (client_enabled_conf == true) {
-        return true;
-    }
-
-    if (client_enabled_conf == false) {
-        return false;
+    if (client_enabled_conf.has_value()) {
+        return client_enabled_conf.value();
     }
 
     return service_->get_service_config()->get_asm_enabled_status() ==
@@ -340,7 +390,12 @@ bool client::handle_command(network::request_shutdown::request &command)
             return false;
         }
 
-        // During request init we initialize the engine context
+        if (!compute_client_status()) {
+            SPDLOG_DEBUG("request_shutdown received on disabled client");
+            send_error_response(*broker_);
+            return false;
+        }
+
         context_.emplace(*service_->get_engine());
     }
 

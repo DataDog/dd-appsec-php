@@ -506,6 +506,11 @@ static PHP_FUNCTION(datadog_appsec_testing_request_exec)
     }
 
     dd_conn *conn = dd_helper_mgr_acquire_conn(_acquire_conn_cb);
+    if (conn == NULL) {
+        mlog_g(dd_log_debug, "No connection; skipping rest of RINIT");
+        RETURN_FALSE;
+    }
+
     if (dd_request_exec(conn, data) != dd_success) {
         RETURN_FALSE;
     }
