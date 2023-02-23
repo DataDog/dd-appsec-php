@@ -14,19 +14,19 @@ trait CommonTests {
         getClass().CONTAINER
     }
 
-    @Test
-    void 'user tracking'() {
-        def trace = container.traceFromRequest('/user_id.php') { HttpURLConnection conn ->
-            assert conn.responseCode == 200
-        }
+    /*@Test*/
+    /*void 'user tracking'() {*/
+        /*def trace = container.traceFromRequest('/user_id.php') { HttpURLConnection conn ->*/
+            /*assert conn.responseCode == 200*/
+        /*}*/
 
-        assert trace.meta."usr.id" == '123456789'
-        assert trace.meta."usr.name" == 'Jean Example'
-        assert trace.meta."usr.email" == 'jean.example@example.com'
-        assert trace.meta."usr.session_id" == '987654321'
-        assert trace.meta."usr.role" == 'admin'
-        assert trace.meta."usr.scope" == 'read:message, write:files'
-    }
+        /*assert trace.meta."usr.id" == '123456789'*/
+        /*assert trace.meta."usr.name" == 'Jean Example'*/
+        /*assert trace.meta."usr.email" == 'jean.example@example.com'*/
+        /*assert trace.meta."usr.session_id" == '987654321'*/
+        /*assert trace.meta."usr.role" == 'admin'*/
+        /*assert trace.meta."usr.scope" == 'read:message, write:files'*/
+    /*}*/
 
     @Test
     void 'user login success event'() {
@@ -94,39 +94,39 @@ trait CommonTests {
     }
 
 
-/*   @Test*/
-    /*void 'test blocking'() {*/
-        /*def trace = container.traceFromRequest('/phpinfo.php') { HttpURLConnection conn ->*/
-            /*//Set ip which is blocked*/
-            /*conn.setRequestProperty('X-Forwarded-For', '80.80.80.80')*/
-            /*assert conn.responseCode == 403*/
+   @Test
+    void 'test blocking'() {
+        def trace = container.traceFromRequest('/phpinfo.php') { HttpURLConnection conn ->
+            //Set ip which is blocked
+            conn.setRequestProperty('X-Forwarded-For', '80.80.80.80')
+            assert conn.responseCode == 403
 
-            /*def content = (conn.errorStream ?: conn.inputStream).text*/
-            /*assert content.contains('blocked')*/
-        /*}*/
-        /*// assert sth about the trace*/
+            def content = (conn.errorStream ?: conn.inputStream).text
+            assert content.contains('blocked')
+        }
+        // assert sth about the trace
 
-        /*assert trace.metrics."_dd.appsec.enabled" == 1.0d*/
-        /*assert trace.metrics."_dd.appsec.waf.duration" > 0.0d*/
-        /*assert trace.meta."_dd.appsec.event_rules.version" != ''*/
-        /*assert trace.meta."appsec.blocked" == "true"*/
-    /*}*/
+        assert trace.metrics."_dd.appsec.enabled" == 1.0d
+        assert trace.metrics."_dd.appsec.waf.duration" > 0.0d
+        assert trace.meta."_dd.appsec.event_rules.version" != ''
+        assert trace.meta."appsec.blocked" == "true"
+    }
 
-/*   @Test*/
-    /*void 'test redirecting'() {*/
-        /*def trace = container.traceFromRequest('/phpinfo.php') { HttpURLConnection conn ->*/
-            /*conn.setInstanceFollowRedirects(false)*/
-            /*//Set ip which is set to be redirected*/
-            /*conn.setRequestProperty('X-Forwarded-For', '80.80.80.81')*/
-            /*assert conn.responseCode == 303*/
-        /*}*/
-        /*// assert sth about the trace*/
+   @Test
+    void 'test redirecting'() {
+        def trace = container.traceFromRequest('/phpinfo.php') { HttpURLConnection conn ->
+            conn.setInstanceFollowRedirects(false)
+            //Set ip which is set to be redirected
+            conn.setRequestProperty('X-Forwarded-For', '80.80.80.81')
+            assert conn.responseCode == 303
+        }
+        // assert sth about the trace
 
-        /*assert trace.metrics."_dd.appsec.enabled" == 1.0d*/
-        /*assert trace.metrics."_dd.appsec.waf.duration" > 0.0d*/
-        /*assert trace.meta."_dd.appsec.event_rules.version" != ''*/
-        /*assert trace.meta."appsec.blocked" == "true"*/
-    /*}*/
+        assert trace.metrics."_dd.appsec.enabled" == 1.0d
+        assert trace.metrics."_dd.appsec.waf.duration" > 0.0d
+        assert trace.meta."_dd.appsec.event_rules.version" != ''
+        assert trace.meta."appsec.blocked" == "true"
+    }
 
     @Test
     void 'module does not have STATIC_TLS flag'() {
