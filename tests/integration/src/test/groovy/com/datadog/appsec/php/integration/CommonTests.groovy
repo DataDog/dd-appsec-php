@@ -58,18 +58,18 @@ trait CommonTests {
     }
 
 
-    /*@Test*/
-    /*void 'custom event'() {*/
-        /*def trace = container.traceFromRequest('/custom_event.php') { HttpURLConnection conn ->*/
-            /*assert conn.responseCode == 200*/
-        /*}*/
+    @Test
+    void 'custom event'() {
+        def trace = container.traceFromRequest('/custom_event.php') { HttpURLConnection conn ->
+            assert conn.responseCode == 200
+        }
 
-        /*assert trace.metrics._sampling_priority_v1 == 2.0d*/
-        /*assert trace.meta."appsec.events.custom_event.track" == 'true'*/
-        /*assert trace.meta."appsec.events.custom_event.metadata0" == 'value0'*/
-        /*assert trace.meta."appsec.events.custom_event.metadata1" == 'value1'*/
-        /*assert trace.meta."appsec.events.custom_event.metadata2" == 'value2'*/
-    /*}*/
+        assert trace.metrics._sampling_priority_v1 == 2.0d
+        assert trace.meta."appsec.events.custom_event.track" == 'true'
+        assert trace.meta."appsec.events.custom_event.metadata0" == 'value0'
+        assert trace.meta."appsec.events.custom_event.metadata1" == 'value1'
+        assert trace.meta."appsec.events.custom_event.metadata2" == 'value2'
+    }
 
     @Test
     void 'sanity check against non PHP endpoint'() {
