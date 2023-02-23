@@ -14,19 +14,19 @@ trait CommonTests {
         getClass().CONTAINER
     }
 
-    /*@Test*/
-    /*void 'user tracking'() {*/
-        /*def trace = container.traceFromRequest('/user_id.php') { HttpURLConnection conn ->*/
-            /*assert conn.responseCode == 200*/
-        /*}*/
+    @Test
+    void 'user tracking'() {
+        def trace = container.traceFromRequest('/user_id.php') { HttpURLConnection conn ->
+            assert conn.responseCode == 200
+        }
 
-        /*assert trace.meta."usr.id" == '123456789'*/
-        /*assert trace.meta."usr.name" == 'Jean Example'*/
-        /*assert trace.meta."usr.email" == 'jean.example@example.com'*/
-        /*assert trace.meta."usr.session_id" == '987654321'*/
-        /*assert trace.meta."usr.role" == 'admin'*/
-        /*assert trace.meta."usr.scope" == 'read:message, write:files'*/
-    /*}*/
+        assert trace.meta."usr.id" == '123456789'
+        assert trace.meta."usr.name" == 'Jean Example'
+        assert trace.meta."usr.email" == 'jean.example@example.com'
+        assert trace.meta."usr.session_id" == '987654321'
+        assert trace.meta."usr.role" == 'admin'
+        assert trace.meta."usr.scope" == 'read:message, write:files'
+    }
 
     @Test
     void 'user login success event'() {
