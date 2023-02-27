@@ -17,13 +17,16 @@ namespace dds::remote_config {
 
 class asm_dd_listener : public product_listener_base {
 public:
-    explicit asm_dd_listener(std::shared_ptr<dds::engine> engine)
-        : engine_(std::move(engine)){};
+    explicit asm_dd_listener(
+        std::shared_ptr<dds::engine> engine, std::string fallback_rules_file)
+        : engine_(std::move(engine)),
+          fallback_rules_file_(fallback_rules_file){};
     void on_update(const config &config) override;
-    void on_unapply(const config & /*config*/) override{};
+    void on_unapply(const config & /*config*/) override;
 
 protected:
     std::shared_ptr<dds::engine> engine_;
+    std::string fallback_rules_file_;
 };
 
 } // namespace dds::remote_config

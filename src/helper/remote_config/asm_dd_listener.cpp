@@ -22,3 +22,12 @@ void dds::remote_config::asm_dd_listener::on_update(const config &config)
     engine_ruleset ruleset = dds::engine_ruleset(std::move(serialized_doc));
     engine_->update(ruleset, meta, metrics);
 }
+
+void dds::remote_config::asm_dd_listener::on_unapply(const config & /*config*/)
+{
+    std::map<std::string_view, std::string> meta;
+    std::map<std::string_view, double> metrics;
+
+    engine_ruleset ruleset = engine_ruleset::from_path(fallback_rules_file_);
+    engine_->update(ruleset, meta, metrics);
+}
