@@ -81,7 +81,7 @@ void serialize_client(rapidjson::Document::AllocatorType &alloc,
     // activation capability;
     char const bytes = static_cast<char>(client.capabilities);
     client_object.AddMember("capabilities",
-        base64_encode(std::string_view(&bytes, 2), false), alloc);
+        base64_encode(std::string_view(&bytes, 1), false), alloc);
 
     rapidjson::Value products(rapidjson::kArrayType);
     for (const std::string &product_str : client.products) {

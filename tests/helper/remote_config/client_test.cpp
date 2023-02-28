@@ -13,8 +13,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "base64.h"
 #include "../common.hpp"
+#include "base64.h"
 #include "json_helper.hpp"
 #include "remote_config/client.hpp"
 #include "remote_config/product.hpp"
@@ -107,8 +107,7 @@ public:
         std::unique_ptr<remote_config::http_api> &&arg_api,
         const service_identifier &sid, const remote_config::settings &settings,
         const std::vector<remote_config::product> &products = {},
-        std::vector<remote_config::protocol::capabilities_e> capabilities =
-            {})
+        std::vector<remote_config::protocol::capabilities_e> capabilities = {})
         : remote_config::client(std::move(arg_api), sid, settings, products,
               std::move(capabilities))
     {
@@ -436,8 +435,9 @@ TEST_F(RemoteConfigClient, ItCallsToApiOnPoll)
 
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
-    
-    dds::test_client api_client(id, std::move(api), sid, settings, _products, capabilities);
+
+    dds::test_client api_client(
+        id, std::move(api), sid, settings, _products, capabilities);
 
     EXPECT_TRUE(api_client.poll());
     EXPECT_EQ(sort_arrays(generate_request_serialized(false, false)),
@@ -1142,42 +1142,6 @@ get_config_states(const rapidjson::Document &serialized_doc)
         ->value.FindMember("state")
         ->value.FindMember("config_states")
         ->value.GetArray();
-}
-
-TEST_F(RemoteConfigClient, ProductsWithoutAListenerCantAcknowledgeUpdates)
-{
-    auto api = std::make_unique<mock::api>();
-
-    std::string response01 = generate_example_response({first_path});
-
-    std::string request_sent;
-    EXPECT_CALL(*api, get_configs(_))
-        .Times(2)
-        .WillRepeatedly(
-            DoAll(testing::SaveArg<0>(&request_sent), Return(response01)));
-
-    remote_config::product p(std::string(first_product_product), NULL);
-    std::vector<remote_config::product> products = {p};
-
-    service_identifier sid{
-        service, env, tracer_version, app_version, runtime_id};
-    dds::test_client api_client(
-        id, std::move(api), sid, settings, products, std::move(capabilities));
-
-    EXPECT_TRUE(api_client.poll());
-    EXPECT_TRUE(api_client.poll());
-
-    rapidjson::Document serialized_doc;
-    serialized_doc.Parse(request_sent);
-
-    auto config_states_arr = get_config_states(serialized_doc);
-    EXPECT_EQ(1, config_states_arr.Size());
-    EXPECT_EQ((int)remote_config::protocol::config_state::applied_state::
-                  UNACKNOWLEDGED,
-        config_states_arr[0].FindMember("apply_state")->value.GetInt());
-    EXPECT_EQ("",
-        std::string(
-            config_states_arr[0].FindMember("apply_error")->value.GetString()));
 }
 
 TEST_F(RemoteConfigClient, ProductsWithAListenerAcknowledgeUpdates)

@@ -11,7 +11,7 @@
 #include <rapidjson/rapidjson.h>
 
 namespace dds::remote_config {
-//using dds::StringRef;
+// using dds::StringRef;
 
 using rule_data = asm_data_listener::rule_data;
 
@@ -158,7 +158,6 @@ void asm_data_listener::on_update(const config &config)
         }
     }
 }
-
 
 void asm_data_listener::commit()
 {

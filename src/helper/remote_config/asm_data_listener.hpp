@@ -35,8 +35,8 @@ public:
 
     void init() override { rules_data_.clear(); }
     void commit() override;
-protected:
 
+protected:
     std::shared_ptr<dds::engine> engine_;
     std::unordered_map<std::string, rule_data> rules_data_;
 };

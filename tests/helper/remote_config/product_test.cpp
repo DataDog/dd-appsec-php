@@ -51,25 +51,36 @@ remote_config::config acknowledged(remote_config::config c)
     return c;
 }
 
+TEST(RemoteConfigProduct, InvalidListener)
+{
+    EXPECT_THROW(
+        remote_config::product("some name", nullptr), std::runtime_error);
+}
+
 TEST(RemoteConfigProduct, NameIsSaved)
 {
-    remote_config::product product("some name", nullptr);
+    auto listener = std::make_shared<mock::listener_mock>();
+    remote_config::product product("some name", listener);
 
     EXPECT_EQ("some name", product.get_name());
 }
 
 TEST(RemoteConfigProduct, ConfigsAreEmptyByDefault)
 {
-    remote_config::product product("some name", nullptr);
+    auto listener = std::make_shared<mock::listener_mock>();
+    remote_config::product product("some name", listener);
 
     EXPECT_EQ(0, product.get_configs().size());
 }
 
 TEST(RemoteConfigProduct, ConfigsAreSaved)
 {
-    remote_config::product product("some name", nullptr);
+    auto listener = std::make_shared<mock::listener_mock>();
+    remote_config::product product("some name", listener);
 
     remote_config::config config = get_config();
+
+    EXPECT_CALL(*listener, on_update(config)).Times(1);
 
     product.assign_configs({{"config name", config}});
 
@@ -78,7 +89,7 @@ TEST(RemoteConfigProduct, ConfigsAreSaved)
 
     EXPECT_EQ(1, configs_on_product.size());
     EXPECT_EQ("config name", config_saved->first);
-    EXPECT_EQ(config, config_saved->second);
+    EXPECT_EQ(acknowledged(config), config_saved->second);
 }
 
 TEST(
@@ -113,12 +124,14 @@ TEST(RemoteConfigProduct,
     EXPECT_EQ(0, product.get_configs().size());
 }
 
-TEST(RemoteConfigProduct, WhenAConfigDoesNotChangeItsListenerShouldNotBeCalled)
+TEST(RemoteConfigProduct, WhenAConfigDoesNotChangeItsListenerShouldBeCalled)
 {
     auto listener = std::make_shared<mock::listener_mock>();
     remote_config::config config = get_config();
 
     EXPECT_CALL(*listener, on_update(unacknowledged(config))).Times(1);
+    EXPECT_CALL(*listener, on_update(acknowledged(config))).Times(1);
+
     remote_config::product product("some name", listener);
 
     product.assign_configs({{"config name", unacknowledged(config)}});

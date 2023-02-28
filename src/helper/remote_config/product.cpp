@@ -8,10 +8,6 @@
 void dds::remote_config::product::update_configs(
     std::unordered_map<std::string, dds::remote_config::config> &to_update)
 {
-    if (listener_ == nullptr) {
-        return;
-    }
-
     for (auto &[name, config] : to_update) {
         try {
             listener_->on_update(config);
@@ -29,10 +25,6 @@ void dds::remote_config::product::update_configs(
 void dds::remote_config::product::unapply_configs(
     std::unordered_map<std::string, dds::remote_config::config> &to_unapply)
 {
-    if (listener_ == nullptr) {
-        return;
-    }
-
     for (auto &[path, conf] : to_unapply) {
         try {
             listener_->on_unapply(conf);

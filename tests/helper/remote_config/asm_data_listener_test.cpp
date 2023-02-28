@@ -4,8 +4,8 @@
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 
-#include "base64.h"
 #include "../common.hpp"
+#include "base64.h"
 #include "json_helper.hpp"
 #include "remote_config/asm_data_listener.hpp"
 #include "remote_config/product.hpp"
