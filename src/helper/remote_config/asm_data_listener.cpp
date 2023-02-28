@@ -12,7 +12,6 @@
 #include <rapidjson/rapidjson.h>
 
 namespace dds::remote_config {
-// using dds::StringRef;
 
 using rule_data = asm_data_listener::rule_data;
 
