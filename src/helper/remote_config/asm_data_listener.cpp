@@ -146,7 +146,7 @@ void asm_data_listener::on_update(const config &config)
         }
 
         auto id = id_itr.value();
-        std::string_view type = type_itr.value()->value.GetString();
+        const std::string_view type = type_itr.value()->value.GetString();
 
         if (type != "data_with_expiration" && type != "ip_with_expiration") {
             SPDLOG_DEBUG("Unsupported rule data type {}", type);
