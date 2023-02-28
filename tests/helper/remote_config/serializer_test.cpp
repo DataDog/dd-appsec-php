@@ -8,7 +8,7 @@
 #include <string>
 
 #include "base64.h"
-#include "common.hpp"
+#include "../common.hpp"
 #include "remote_config/protocol/client.hpp"
 #include "remote_config/protocol/client_state.hpp"
 #include "remote_config/protocol/client_tracer.hpp"

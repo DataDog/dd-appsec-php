@@ -4,7 +4,7 @@
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 
-#include "common.hpp"
+#include "../common.hpp"
 #include "remote_config/config.hpp"
 #include "remote_config/listener.hpp"
 #include "remote_config/product.hpp"

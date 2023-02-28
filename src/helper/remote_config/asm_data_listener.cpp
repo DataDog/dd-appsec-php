@@ -10,19 +10,12 @@
 #include <rapidjson/document.h>
 #include <rapidjson/rapidjson.h>
 
-using dds::StringRef;
+namespace dds::remote_config {
+//using dds::StringRef;
 
-struct rule_data {
-    struct data_with_expiration {
-        std::string_view value;
-        std::optional<uint64_t> expiration;
-    };
+using rule_data = asm_data_listener::rule_data;
 
-    std::string_view id;
-    std::string_view type;
-    std::map<std::string_view, data_with_expiration> data;
-};
-
+namespace {
 void extract_data(
     rapidjson::Value::ConstMemberIterator itr, rule_data &rule_data)
 {
@@ -111,9 +104,10 @@ dds::engine_ruleset rules_to_engine_ruleset(
     return dds::engine_ruleset(std::move(document));
 }
 
-void dds::remote_config::asm_data_listener::on_update(const config &config)
+} // namespace
+
+void asm_data_listener::on_update(const config &config)
 {
-    std::unordered_map<std::string, rule_data> rules_data = {};
     rapidjson::Document serialized_doc;
     if (!json_helper::get_json_base64_encoded_content(
             config.contents, serialized_doc)) {
@@ -151,24 +145,30 @@ void dds::remote_config::asm_data_listener::on_update(const config &config)
         auto id = id_itr.value();
         auto type = type_itr.value();
 
-        auto rule = rules_data.find(id->value.GetString());
-        if (rule == rules_data.end()) { // New rule
+        auto rule = rules_data_.find(id->value.GetString());
+        if (rule == rules_data_.end()) { // New rule
             rule_data new_rule_data = {
                 id->value.GetString(), type->value.GetString()};
             extract_data(data_itr.value(), new_rule_data);
             if (!new_rule_data.data.empty()) {
-                rules_data.insert({id->value.GetString(), new_rule_data});
+                rules_data_.emplace(id->value.GetString(), new_rule_data);
             }
         } else {
             extract_data(data_itr.value(), rule->second);
         }
     }
+}
 
+
+void asm_data_listener::commit()
+{
+    // TODO find a way to provide this information to the service
     std::map<std::string_view, std::string> meta;
     std::map<std::string_view, double> metrics;
 
-    engine_ruleset ruleset = rules_to_engine_ruleset(rules_data);
+    engine_ruleset ruleset = rules_to_engine_ruleset(rules_data_);
 
-    // TODO find a way to provide this information to the service
     engine_->update(ruleset, meta, metrics);
 }
+
+} // namespace dds::remote_config

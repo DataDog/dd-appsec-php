@@ -5,7 +5,7 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 
 #include "base64.h"
-#include "common.hpp"
+#include "../common.hpp"
 #include "remote_config/asm_features_listener.hpp"
 #include "remote_config/product.hpp"
 

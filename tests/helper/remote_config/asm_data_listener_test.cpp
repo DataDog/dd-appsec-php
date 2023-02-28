@@ -5,7 +5,7 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 
 #include "base64.h"
-#include "common.hpp"
+#include "../common.hpp"
 #include "json_helper.hpp"
 #include "remote_config/asm_data_listener.hpp"
 #include "remote_config/product.hpp"
@@ -120,6 +120,7 @@ TEST(RemoteConfigAsmDataListener, ItParsesRulesData)
     remote_config::asm_data_listener listener(engine);
 
     listener.on_update(get_rules_data(rules_data));
+    listener.commit();
 
     const auto &rules = doc["rules_data"];
     const auto &first = rules[0];
@@ -161,6 +162,7 @@ TEST(RemoteConfigAsmDataListener, ItMergesValuesWhenIdIsTheSame)
         .WillOnce(DoAll(SaveDocument(&doc)));
     remote_config::asm_data_listener listener(engine);
     listener.on_update(get_rules_data(rules_data));
+    listener.commit();
 
     const auto &rules = doc["rules_data"];
     EXPECT_EQ(1, rules.Size());
@@ -190,6 +192,7 @@ TEST(RemoteConfigAsmDataListener, WhenIdMatchesTypeIsSecondTypeIsIgnored)
         .WillOnce(DoAll(SaveDocument(&doc)));
     remote_config::asm_data_listener listener(engine);
     listener.on_update(get_rules_data(rules_data));
+    listener.commit();
 
     const auto &rules = doc["rules_data"];
     EXPECT_EQ(1, rules.Size());
@@ -215,6 +218,7 @@ TEST(RemoteConfigAsmDataListener,
         .WillOnce(DoAll(SaveDocument(&doc)));
     remote_config::asm_data_listener listener(engine);
     listener.on_update(get_rules_data(rules_data));
+    listener.commit();
 
     const auto &rules = doc["rules_data"];
     EXPECT_EQ(1, rules.Size());
@@ -242,6 +246,7 @@ TEST(RemoteConfigAsmDataListener,
         .WillOnce(DoAll(SaveDocument(&doc)));
     remote_config::asm_data_listener listener(engine);
     listener.on_update(get_rules_data(rules_data));
+    listener.commit();
 
     const auto &rules = doc["rules_data"];
     EXPECT_EQ(1, rules.Size());
@@ -270,6 +275,7 @@ TEST(RemoteConfigAsmDataListener,
         .WillOnce(DoAll(SaveDocument(&doc)));
     remote_config::asm_data_listener listener(engine);
     listener.on_update(get_rules_data(rules_data));
+    listener.commit();
 
     const auto &rules = doc["rules_data"];
     EXPECT_EQ(1, rules.Size());
@@ -296,6 +302,7 @@ TEST(RemoteConfigAsmDataListener, IfDataIsEmptyItDoesNotAddAnyRule)
         .WillOnce(DoAll(SaveDocument(&doc)));
     remote_config::asm_data_listener listener(engine);
     listener.on_update(get_rules_data(rules_data));
+    listener.commit();
 
     const auto &rules = doc["rules_data"];
     EXPECT_EQ(0, rules.Size());

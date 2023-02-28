@@ -14,7 +14,7 @@
 #include <vector>
 
 #include "base64.h"
-#include "common.hpp"
+#include "../common.hpp"
 #include "json_helper.hpp"
 #include "remote_config/client.hpp"
 #include "remote_config/product.hpp"
@@ -107,7 +107,7 @@ public:
         std::unique_ptr<remote_config::http_api> &&arg_api,
         const service_identifier &sid, const remote_config::settings &settings,
         const std::vector<remote_config::product> &products = {},
-        std::vector<remote_config::protocol::capabilities_e> &&capabilities =
+        std::vector<remote_config::protocol::capabilities_e> capabilities =
             {})
         : remote_config::client(std::move(arg_api), sid, settings, products,
               std::move(capabilities))
@@ -436,8 +436,8 @@ TEST_F(RemoteConfigClient, ItCallsToApiOnPoll)
 
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
-    dds::test_client api_client(id, std::move(api), sid, settings, _products,
-        std::move(std::vector(capabilities)));
+    
+    dds::test_client api_client(id, std::move(api), sid, settings, _products, capabilities);
 
     EXPECT_TRUE(api_client.poll());
     EXPECT_EQ(sort_arrays(generate_request_serialized(false, false)),
