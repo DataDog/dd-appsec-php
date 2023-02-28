@@ -6,6 +6,7 @@
 #include "asm_data_listener.hpp"
 #include "../json_helper.hpp"
 #include "exception.hpp"
+#include "spdlog/spdlog.h"
 #include <optional>
 #include <rapidjson/document.h>
 #include <rapidjson/rapidjson.h>
@@ -51,11 +52,14 @@ void extract_data(
             if (!expiration_itr) {
                 // This has no expiration so it last forever
                 previous->second.expiration = std::nullopt;
-            } else if (previous->second.expiration &&
-                       previous->second.expiration <
-                           expiration_itr.value()->value.GetUint64()) {
-                previous->second.expiration =
-                    expiration_itr.value()->value.GetUint64();
+            } else {
+                auto expiration = expiration_itr.value()->value.GetUint64();
+                if (previous->second.expiration &&
+                    (expiration == 0 ||
+                        previous->second.expiration < expiration)) {
+                    previous->second.expiration =
+                        expiration_itr.value()->value.GetUint64();
+                }
             }
         } else {
             std::optional<uint64_t> expiration = std::nullopt;
@@ -143,12 +147,17 @@ void asm_data_listener::on_update(const config &config)
         }
 
         auto id = id_itr.value();
-        auto type = type_itr.value();
+        std::string_view type = type_itr.value()->value.GetString();
+
+        if (type != "data_with_expiration" && type != "ip_with_expiration") {
+            SPDLOG_DEBUG("Unsupported rule data type {}", type);
+            continue;
+        }
 
         auto rule = rules_data_.find(id->value.GetString());
         if (rule == rules_data_.end()) { // New rule
             rule_data new_rule_data = {
-                id->value.GetString(), type->value.GetString()};
+                id->value.GetString(), std::string(type)};
             extract_data(data_itr.value(), new_rule_data);
             if (!new_rule_data.data.empty()) {
                 rules_data_.emplace(id->value.GetString(), new_rule_data);

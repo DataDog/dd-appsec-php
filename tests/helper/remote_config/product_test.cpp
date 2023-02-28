@@ -21,10 +21,14 @@ ACTION(ThrowErrorApplyingConfig)
 class listener_mock : public remote_config::product_listener_base {
 public:
     listener_mock() = default;
+    ~listener_mock() override = default;
+
     MOCK_METHOD(
         void, on_update, ((const remote_config::config &config)), (override));
     MOCK_METHOD(
         void, on_unapply, ((const remote_config::config &config)), (override));
+    MOCK_METHOD(void, init, (), (override));
+    MOCK_METHOD(void, commit, (), (override));
 };
 } // namespace mock
 
@@ -80,7 +84,9 @@ TEST(RemoteConfigProduct, ConfigsAreSaved)
 
     remote_config::config config = get_config();
 
+    EXPECT_CALL(*listener, init()).Times(1);
     EXPECT_CALL(*listener, on_update(config)).Times(1);
+    EXPECT_CALL(*listener, commit()).Times(1);
 
     product.assign_configs({{"config name", config}});
 
@@ -97,8 +103,10 @@ TEST(
 {
     auto listener = std::make_shared<mock::listener_mock>();
     remote_config::config config = get_config();
+    EXPECT_CALL(*listener, init()).Times(1);
     EXPECT_CALL(*listener, on_update(config)).Times(1);
     EXPECT_CALL(*listener, on_unapply(_)).Times(0);
+    EXPECT_CALL(*listener, commit()).Times(1);
     remote_config::product product("some name", listener);
 
     product.assign_configs({{"config name", config}});
@@ -114,8 +122,10 @@ TEST(RemoteConfigProduct,
     auto listener = std::make_shared<mock::listener_mock>();
     remote_config::config config = get_config();
 
+    EXPECT_CALL(*listener, init()).Times(2);
     EXPECT_CALL(*listener, on_update(unacknowledged(config))).Times(1);
     EXPECT_CALL(*listener, on_unapply(acknowledged(config))).Times(1);
+    EXPECT_CALL(*listener, commit()).Times(2);
     remote_config::product product("some name", listener);
 
     product.assign_configs({{"config name", unacknowledged(config)}});
@@ -129,8 +139,10 @@ TEST(RemoteConfigProduct, WhenAConfigDoesNotChangeItsListenerShouldBeCalled)
     auto listener = std::make_shared<mock::listener_mock>();
     remote_config::config config = get_config();
 
+    EXPECT_CALL(*listener, init()).Times(2);
     EXPECT_CALL(*listener, on_update(unacknowledged(config))).Times(1);
     EXPECT_CALL(*listener, on_update(acknowledged(config))).Times(1);
+    EXPECT_CALL(*listener, commit()).Times(2);
 
     remote_config::product product("some name", listener);
 
@@ -147,11 +159,13 @@ TEST(RemoteConfigProduct, WhenAConfigChangeItsHashItsListenerUpdateIsCalled)
     remote_config::config same_config_different_hash = get_config();
     same_config_different_hash.hashes.emplace("hash key", "hash value");
 
+    EXPECT_CALL(*listener, init()).Times(2);
     EXPECT_CALL(*listener, on_update(unacknowledged(config))).Times(1);
     EXPECT_CALL(
         *listener, on_update(unacknowledged(same_config_different_hash)))
         .Times(1);
     EXPECT_CALL(*listener, on_unapply(_)).Times(0);
+    EXPECT_CALL(*listener, commit()).Times(2);
     remote_config::product product("some name", listener);
 
     product.assign_configs({{"config name", config}});
@@ -165,8 +179,10 @@ TEST(RemoteConfigProduct, SameConfigWithDifferentNameItsTreatedAsNewConfig)
     auto listener = std::make_shared<mock::listener_mock>();
     remote_config::config config = get_config();
 
+    EXPECT_CALL(*listener, init()).Times(2);
     EXPECT_CALL(*listener, on_update(unacknowledged(config))).Times(2);
     EXPECT_CALL(*listener, on_unapply(acknowledged(config))).Times(1);
+    EXPECT_CALL(*listener, commit()).Times(2);
     remote_config::product product("some name", listener);
 
     product.assign_configs({{"config name 01", config}});
@@ -180,9 +196,11 @@ TEST(RemoteConfigProduct, WhenAListenerFailsUpdatingAConfigItsStateGetsError)
     auto listener = std::make_shared<mock::listener_mock>();
     remote_config::config config = get_config();
 
+    EXPECT_CALL(*listener, init()).Times(1);
     EXPECT_CALL(*listener, on_update(_))
         .WillRepeatedly(mock::ThrowErrorApplyingConfig());
     remote_config::product product("some name", listener);
+    EXPECT_CALL(*listener, commit()).Times(1);
 
     product.assign_configs({{"config name", config}});
 

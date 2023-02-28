@@ -54,13 +54,18 @@ public:
     {
         config_to_cout(config);
     };
+
+    void init() override {}
+    void commit() override {}
 };
 
 class listener_dummy : public remote_config::product_listener_base {
 public:
     listener_dummy() = default;
-    void on_update(const remote_config::config &config) override{};
-    void on_unapply(const remote_config::config &config) override{};
+    void on_update(const remote_config::config &config) override {}
+    void on_unapply(const remote_config::config &config) override {}
+    void init() override {}
+    void commit() override {}
 };
 
 namespace mock {
@@ -83,10 +88,13 @@ public:
 class listener_mock : public remote_config::product_listener_base {
 public:
     listener_mock() = default;
+    ~listener_mock() override = default;
     MOCK_METHOD(
         void, on_update, ((const remote_config::config &config)), (override));
     MOCK_METHOD(
         void, on_unapply, ((const remote_config::config &config)), (override));
+    MOCK_METHOD(void, init, (), (override));
+    MOCK_METHOD(void, commit, (), (override));
 };
 } // namespace mock
 
@@ -697,15 +705,19 @@ TEST_F(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
 
     // Product on response
     auto listener01 = std::make_shared<mock::listener_mock>();
+    EXPECT_CALL(*listener01, init()).Times(1);
     EXPECT_CALL(*listener01, on_update(expected_config)).Times(1);
     EXPECT_CALL(*listener01, on_unapply(_)).Times(0);
+    EXPECT_CALL(*listener01, commit()).Times(1);
     remote_config::product product(
         std::move(first_product_product), listener01);
 
     // Product on response
     auto listener_called_no_configs01 = std::make_shared<mock::listener_mock>();
+    EXPECT_CALL(*listener_called_no_configs01, init()).Times(1);
     EXPECT_CALL(*listener_called_no_configs01, on_update(_)).Times(0);
     EXPECT_CALL(*listener_called_no_configs01, on_unapply(_)).Times(0);
+    EXPECT_CALL(*listener_called_no_configs01, commit()).Times(1);
     std::string product_str_not_in_response = "NOT_IN_RESPONSE";
     remote_config::product product_not_in_response(
         std::move(product_str_not_in_response), listener_called_no_configs01);
@@ -759,6 +771,7 @@ TEST_F(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
 
     // Product on response
     auto listener01 = std::make_shared<mock::listener_mock>();
+    EXPECT_CALL(*listener01, init()).Times(2);
     // First poll expectations
     EXPECT_CALL(*listener01, on_update(expected_config01))
         .Times(1)
@@ -771,6 +784,8 @@ TEST_F(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
     EXPECT_CALL(*listener01, on_unapply(expected_config01_at_unapply))
         .Times(1)
         .RetiresOnSaturation();
+    EXPECT_CALL(*listener01, commit()).Times(2);
+    // First poll expectations
     remote_config::product product(
         std::move(first_product_product), listener01);
 
@@ -863,6 +878,7 @@ TEST_F(
 
     // Product on response
     auto listener01 = std::make_shared<mock::listener_mock>();
+    EXPECT_CALL(*listener01, init()).Times(2);
     // Second poll expectations
     EXPECT_CALL(*listener01, on_update(expected_config_02))
         .Times(1)
@@ -873,6 +889,7 @@ TEST_F(
         .Times(1)
         .RetiresOnSaturation();
     EXPECT_CALL(*listener01, on_unapply(_)).Times(0);
+    EXPECT_CALL(*listener01, commit()).Times(2);
     remote_config::product product(std::move(apm_sampling), listener01);
 
     service_identifier sid{
@@ -1195,8 +1212,10 @@ TEST_F(RemoteConfigClient, WhenAListerCanProccesAnUpdateTheConfigStateGetsError)
             DoAll(testing::SaveArg<0>(&request_sent), Return(response01)));
 
     auto listener = std::make_shared<mock::listener_mock>();
+    EXPECT_CALL(*listener, init()).Times(2);
     EXPECT_CALL(*listener, on_update(_))
         .WillRepeatedly(mock::ThrowErrorApplyingConfig());
+    EXPECT_CALL(*listener, commit()).Times(2);
 
     remote_config::product p(std::string(first_product_product), listener);
     std::vector<remote_config::product> products = {p};

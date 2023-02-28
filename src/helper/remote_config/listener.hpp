@@ -24,8 +24,8 @@ public:
     virtual void on_unapply(const config &config) = 0;
 
     // Stateful listeners need to override these methods
-    virtual void init(){};
-    virtual void commit(){};
+    virtual void init() = 0;
+    virtual void commit() = 0;
 };
 
 } // namespace dds::remote_config

@@ -103,15 +103,16 @@ remote_config::config get_rules_data(std::vector<test_rule_data> data)
     return get_asm_data(buffer.get_string_ref());
 }
 
-TEST(RemoteConfigAsmDataListener, ItParsesRulesData)
+TEST(RemoteConfigAsmDataListener, ParseRulesData)
 {
     auto engine = mock::engine::create();
 
     rapidjson::Document doc;
 
     std::vector<test_rule_data> rules_data = {
-        {"id01", "type01", {{11, "1.2.3.4"}, {3657529743, "5.6.7.8"}}},
-        {"id02", "type02", {{std::nullopt, "user1"}}}};
+        {"id01", "ip_with_expiration",
+            {{11, "1.2.3.4"}, {3657529743, "5.6.7.8"}}},
+        {"id02", "data_with_expiration", {{std::nullopt, "user1"}}}};
 
     EXPECT_CALL(*engine, update(_, _, _))
         .Times(1)
@@ -125,7 +126,8 @@ TEST(RemoteConfigAsmDataListener, ItParsesRulesData)
     const auto &rules = doc["rules_data"];
     const auto &first = rules[0];
     EXPECT_STREQ("id02", first.FindMember("id")->value.GetString());
-    EXPECT_STREQ("type02", first.FindMember("type")->value.GetString());
+    EXPECT_STREQ(
+        "data_with_expiration", first.FindMember("type")->value.GetString());
     const auto &first_in_data = first.FindMember("data")->value.GetArray()[0];
     EXPECT_STREQ("user1", first_in_data.FindMember("value")->value.GetString());
     EXPECT_TRUE(
@@ -133,7 +135,8 @@ TEST(RemoteConfigAsmDataListener, ItParsesRulesData)
 
     const auto &second = rules[1];
     EXPECT_STREQ("id01", second.FindMember("id")->value.GetString());
-    EXPECT_STREQ("type01", second.FindMember("type")->value.GetString());
+    EXPECT_STREQ(
+        "ip_with_expiration", second.FindMember("type")->value.GetString());
     const auto &second_first_data =
         second.FindMember("data")->value.GetArray()[0];
     EXPECT_STREQ(
@@ -150,10 +153,9 @@ TEST(RemoteConfigAsmDataListener, ItParsesRulesData)
 
 TEST(RemoteConfigAsmDataListener, ItMergesValuesWhenIdIsTheSame)
 {
-
     std::vector<test_rule_data> rules_data = {
-        {"id01", "type01", {{11, "1.2.3.4"}}},
-        {"id01", "type01", {{22, "5.6.7.8"}}}};
+        {"id01", "ip_with_expiration", {{11, "1.2.3.4"}}},
+        {"id01", "ip_with_expiration", {{22, "5.6.7.8"}}}};
 
     auto engine = mock::engine::create();
     rapidjson::Document doc;
@@ -168,7 +170,8 @@ TEST(RemoteConfigAsmDataListener, ItMergesValuesWhenIdIsTheSame)
     EXPECT_EQ(1, rules.Size());
     const auto &first = rules[0];
     EXPECT_STREQ("id01", first.FindMember("id")->value.GetString());
-    EXPECT_STREQ("type01", first.FindMember("type")->value.GetString());
+    EXPECT_STREQ(
+        "ip_with_expiration", first.FindMember("type")->value.GetString());
     const auto &first_in_data = first.FindMember("data")->value.GetArray()[0];
     EXPECT_STREQ(
         "1.2.3.4", first_in_data.FindMember("value")->value.GetString());
@@ -182,8 +185,8 @@ TEST(RemoteConfigAsmDataListener, ItMergesValuesWhenIdIsTheSame)
 TEST(RemoteConfigAsmDataListener, WhenIdMatchesTypeIsSecondTypeIsIgnored)
 {
     std::vector<test_rule_data> rules_data = {
-        {"id01", "type01", {{11, "1.2.3.4"}}},
-        {"id01", "another type", {{22, "5.6.7.8"}}}};
+        {"id01", "ip_with_expiration", {{11, "1.2.3.4"}}},
+        {"id01", "data_with_expiration", {{22, "5.6.7.8"}}}};
 
     auto engine = mock::engine::create();
     rapidjson::Document doc;
@@ -199,7 +202,8 @@ TEST(RemoteConfigAsmDataListener, WhenIdMatchesTypeIsSecondTypeIsIgnored)
     // First
     const auto &first = rules[0];
     EXPECT_STREQ("id01", first.FindMember("id")->value.GetString());
-    EXPECT_STREQ("type01", first.FindMember("type")->value.GetString());
+    EXPECT_STREQ(
+        "ip_with_expiration", first.FindMember("type")->value.GetString());
     EXPECT_EQ(2, first.FindMember("data")->value.GetArray().Size());
 }
 
@@ -207,9 +211,9 @@ TEST(RemoteConfigAsmDataListener,
     IfTwoEntriesWithTheSameIdHaveTheSameValueItGetsLatestExpirationOnDifferentSets)
 {
     std::vector<test_rule_data> rules_data = {
-        {"id01", "type01", {{11, "1.2.3.4"}}},
-        {"id01", "type01", {{33, "1.2.3.4"}}},
-        {"id01", "type01", {{22, "1.2.3.4"}}}};
+        {"id01", "ip_with_expiration", {{11, "1.2.3.4"}}},
+        {"id01", "ip_with_expiration", {{33, "1.2.3.4"}}},
+        {"id01", "ip_with_expiration", {{22, "1.2.3.4"}}}};
 
     auto engine = mock::engine::create();
     rapidjson::Document doc;
@@ -225,7 +229,8 @@ TEST(RemoteConfigAsmDataListener,
     // First
     const auto &first = rules[0];
     EXPECT_STREQ("id01", first.FindMember("id")->value.GetString());
-    EXPECT_STREQ("type01", first.FindMember("type")->value.GetString());
+    EXPECT_STREQ(
+        "ip_with_expiration", first.FindMember("type")->value.GetString());
     EXPECT_EQ(1, first.FindMember("data")->value.GetArray().Size());
     const auto &first_in_data = first.FindMember("data")->value.GetArray()[0];
     EXPECT_STREQ(
@@ -236,7 +241,7 @@ TEST(RemoteConfigAsmDataListener,
 TEST(RemoteConfigAsmDataListener,
     IfTwoEntriesWithTheSameIdHaveTheSameValueItGetsLatestExpirationInSameSet)
 {
-    std::vector<test_rule_data> rules_data = {{"id01", "type01",
+    std::vector<test_rule_data> rules_data = {{"id01", "ip_with_expiration",
         {{11, "1.2.3.4"}, {33, "1.2.3.4"}, {22, "1.2.3.4"}}}};
 
     auto engine = mock::engine::create();
@@ -253,7 +258,8 @@ TEST(RemoteConfigAsmDataListener,
     // First
     const auto &first = rules[0];
     EXPECT_STREQ("id01", first.FindMember("id")->value.GetString());
-    EXPECT_STREQ("type01", first.FindMember("type")->value.GetString());
+    EXPECT_STREQ(
+        "ip_with_expiration", first.FindMember("type")->value.GetString());
     EXPECT_EQ(1, first.FindMember("data")->value.GetArray().Size());
     const auto &first_in_data = first.FindMember("data")->value.GetArray()[0];
     EXPECT_STREQ(
@@ -262,9 +268,9 @@ TEST(RemoteConfigAsmDataListener,
 }
 
 TEST(RemoteConfigAsmDataListener,
-    NonExitingExprirationMeansItNeversExpireAndThereforeTakesPriority)
+    NonExistingExpirationMeansItNeversExpireAndThereforeTakesPriority)
 {
-    std::vector<test_rule_data> rules_data = {{"id01", "type01",
+    std::vector<test_rule_data> rules_data = {{"id01", "ip_with_expiration",
         {{11, "1.2.3.4"}, {std::nullopt, "1.2.3.4"},
             {std::numeric_limits<uint64_t>::max(), "1.2.3.4"}}}};
 
@@ -282,7 +288,8 @@ TEST(RemoteConfigAsmDataListener,
     // First
     const auto &first = rules[0];
     EXPECT_STREQ("id01", first.FindMember("id")->value.GetString());
-    EXPECT_STREQ("type01", first.FindMember("type")->value.GetString());
+    EXPECT_STREQ(
+        "ip_with_expiration", first.FindMember("type")->value.GetString());
     EXPECT_EQ(1, first.FindMember("data")->value.GetArray().Size());
     const auto &first_in_data = first.FindMember("data")->value.GetArray()[0];
     EXPECT_STREQ(
@@ -291,9 +298,76 @@ TEST(RemoteConfigAsmDataListener,
         first_in_data.FindMember("expiration") == first_in_data.MemberEnd());
 }
 
+TEST(RemoteConfigAsmDataListener, ParseMultipleConfigurations)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(1)
+        .WillOnce(DoAll(SaveDocument(&doc)));
+
+    remote_config::asm_data_listener listener(engine);
+
+    {
+        std::vector<test_rule_data> rules_data = {
+            {"id01", "ip_with_expiration",
+                {{11, "1.2.3.4"}, {3657529743, "5.6.7.8"}}},
+            {"id02", "data_with_expiration", {{std::nullopt, "user1"}}}};
+
+        listener.on_update(get_rules_data(rules_data));
+    }
+
+    {
+        std::vector<test_rule_data> rules_data = {
+            {"id01", "ip_with_expiration",
+                {{0, "1.2.3.4"}, {5, "192.168.1.1"}}},
+            {"id02", "data_with_expiration", {{2999, "user8"}}}};
+
+        listener.on_update(get_rules_data(rules_data));
+    }
+
+    listener.commit();
+
+    const auto &rules = doc["rules_data"];
+    const auto &first = rules[0];
+    EXPECT_STREQ("id02", first.FindMember("id")->value.GetString());
+    EXPECT_STREQ(
+        "data_with_expiration", first.FindMember("type")->value.GetString());
+    const auto &first_in_data = first.FindMember("data")->value.GetArray()[0];
+    EXPECT_STREQ("user1", first_in_data.FindMember("value")->value.GetString());
+    EXPECT_TRUE(
+        first_in_data.FindMember("expiration") == first_in_data.MemberEnd());
+
+    const auto &second = rules[1];
+    EXPECT_STREQ("id01", second.FindMember("id")->value.GetString());
+    EXPECT_STREQ(
+        "ip_with_expiration", second.FindMember("type")->value.GetString());
+    {
+        const auto &data = second.FindMember("data")->value.GetArray()[0];
+        EXPECT_STREQ("1.2.3.4", data.FindMember("value")->value.GetString());
+        EXPECT_EQ(0, data.FindMember("expiration")->value.GetUint64());
+    }
+
+    {
+        const auto &data = second.FindMember("data")->value.GetArray()[1];
+        EXPECT_STREQ(
+            "192.168.1.1", data.FindMember("value")->value.GetString());
+        EXPECT_EQ(5, data.FindMember("expiration")->value.GetUint64());
+    }
+
+    {
+        const auto &data = second.FindMember("data")->value.GetArray()[2];
+        EXPECT_STREQ("5.6.7.8", data.FindMember("value")->value.GetString());
+        EXPECT_EQ(3657529743, data.FindMember("expiration")->value.GetUint64());
+    }
+}
+
 TEST(RemoteConfigAsmDataListener, IfDataIsEmptyItDoesNotAddAnyRule)
 {
-    std::vector<test_rule_data> rules_data = {{"id01", "type01", {}}};
+    std::vector<test_rule_data> rules_data = {
+        {"id01", "ip_with_expiration", {}}};
 
     auto engine = mock::engine::create();
     rapidjson::Document doc;
@@ -308,7 +382,7 @@ TEST(RemoteConfigAsmDataListener, IfDataIsEmptyItDoesNotAddAnyRule)
     EXPECT_EQ(0, rules.Size());
 }
 
-TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfContentNotInBase64)
+TEST(RemoteConfigAsmDataListener, ThrowsAnErrorIfContentNotInBase64)
 {
     std::string invalid_content = "&&&";
     std::string error_message = "";
@@ -331,7 +405,7 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfContentNotInBase64)
                      expected_error_message));
 }
 
-TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfContentNotValidJsonContent)
+TEST(RemoteConfigAsmDataListener, ThrowsAnErrorIfContentNotValidJsonContent)
 {
     std::string invalid_content = "InvalidJsonContent";
     std::string error_message = "";
@@ -353,7 +427,7 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfContentNotValidJsonContent)
                      expected_error_message));
 }
 
-TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfNoRulesDataKey)
+TEST(RemoteConfigAsmDataListener, ThrowsAnErrorIfNoRulesDataKey)
 {
     std::string invalid_content = "{\"another_key\": 1234}";
     std::string error_message = "";
@@ -377,7 +451,7 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfNoRulesDataKey)
                      expected_error_message));
 }
 
-TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfRulesDataNotArray)
+TEST(RemoteConfigAsmDataListener, ThrowsAnErrorIfRulesDataNotArray)
 {
     std::string invalid_content = "{ \"rules_data\": 1234}";
     std::string error_message = "";
@@ -401,7 +475,7 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfRulesDataNotArray)
                      expected_error_message));
 }
 
-TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfRulesDataEntryNotObject)
+TEST(RemoteConfigAsmDataListener, ThrowsAnErrorIfRulesDataEntryNotObject)
 {
     std::string invalid_content = "{\"rules_data\": [\"invalid\"] }";
     std::string error_message = "";
@@ -424,7 +498,7 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfRulesDataEntryNotObject)
                      expected_error_message));
 }
 
-TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfNoId)
+TEST(RemoteConfigAsmDataListener, ThrowsAnErrorIfNoId)
 {
     std::string invalid_content =
         "{\"rules_data\": [{\"data\": [{\"expiration\": 11, \"value\": "
@@ -450,7 +524,7 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfNoId)
                      expected_error_message));
 }
 
-TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfIdNotString)
+TEST(RemoteConfigAsmDataListener, ThrowsAnErrorIfIdNotString)
 {
     std::string invalid_content =
         "{\"rules_data\": [{\"data\": [{\"expiration\": 11, \"value\": "
@@ -476,7 +550,7 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfIdNotString)
                      expected_error_message));
 }
 
-TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfNoType)
+TEST(RemoteConfigAsmDataListener, ThrowsAnErrorIfNoType)
 {
     std::string invalid_content =
         "{\"rules_data\": [{\"data\": [{\"expiration\": 11, \"value\": "
@@ -502,7 +576,7 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfNoType)
                      expected_error_message));
 }
 
-TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfTypeNotString)
+TEST(RemoteConfigAsmDataListener, ThrowsAnErrorIfTypeNotString)
 {
     std::string invalid_content =
         "{\"rules_data\": [{\"data\": [{\"expiration\": 11, \"value\": "
@@ -528,7 +602,7 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfTypeNotString)
                      expected_error_message));
 }
 
-TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfNoData)
+TEST(RemoteConfigAsmDataListener, ThrowsAnErrorIfNoData)
 {
     std::string invalid_content =
         "{\"rules_data\": [{\"id\": \"some_id\", \"type\": \"some_type\"} ]}";
@@ -553,7 +627,7 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfNoData)
                      expected_error_message));
 }
 
-TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataNotArray)
+TEST(RemoteConfigAsmDataListener, ThrowsAnErrorIfDataNotArray)
 {
     std::string invalid_content =
         "{\"rules_data\": [{\"data\": 1234, \"id\":\"some_id\", \"type\": "
@@ -579,11 +653,10 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataNotArray)
                      expected_error_message));
 }
 
-TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataEntryNotObject)
+TEST(RemoteConfigAsmDataListener, ThrowsAnErrorIfDataEntryNotObject)
 {
     std::string invalid_content =
-        "{\"rules_data\": [{\"data\": [ \"invalid\" ], \"id\": \"some_id\", "
-        "\"type\": \"some_type\"} ] }";
+        R"({"rules_data": [{"data": [ "invalid" ], "id": "some_id", "type": "ip_with_expiration"} ] })";
     std::string error_message = "";
     std::string expected_error_message =
         "Invalid config json contents: Entry on data not a valid object";
@@ -604,12 +677,10 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataEntryNotObject)
                      expected_error_message));
 }
 
-TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataExpirationHasInvalidType)
+TEST(RemoteConfigAsmDataListener, ThrowsAnErrorIfDataExpirationHasInvalidType)
 {
     std::string invalid_content =
-        "{\"rules_data\": [{\"data\": [{\"expiration\": \"invalid\", "
-        "\"value\": \"1.2.3.4\"} ], \"id\": \"some_id\", \"type\": "
-        "\"some_type\"} ] }";
+        R"({"rules_data": [{"data": [{"expiration": "invalid", "value": "1.2.3.4"}], "id": "some_id", "type": "data_with_expiration"}]})";
     std::string error_message = "";
     std::string expected_error_message = "Invalid type for expiration entry";
     remote_config::config invalid_content_config =
@@ -629,11 +700,11 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataExpirationHasInvalidType)
                      expected_error_message));
 }
 
-TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataValueMissing)
+TEST(RemoteConfigAsmDataListener, ThrowsAnErrorIfDataValueMissing)
 {
     std::string invalid_content =
         "{\"rules_data\": [{\"data\": [{\"expiration\": 11} ], \"id\": "
-        "\"some_id\", \"type\": \"some_type\"} ] }";
+        "\"some_id\", \"type\": \"data_with_expiration\"} ] }";
     std::string error_message = "";
     std::string expected_error_message = "Invalid value of data entry";
     remote_config::config invalid_content_config =
@@ -653,12 +724,12 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataValueMissing)
                      expected_error_message));
 }
 
-TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataValueHasInvalidType)
+TEST(RemoteConfigAsmDataListener, ThrowsAnErrorIfDataValueHasInvalidType)
 {
     std::string invalid_content =
         "{\"rules_data\": [{\"data\": [{\"expiration\": 11, "
         "\"value\": 1234} ], \"id\": \"some_id\", \"type\": "
-        "\"some_type\"} ] }";
+        "\"ip_with_expiration\"} ] }";
     std::string error_message = "";
     std::string expected_error_message = "Invalid value of data entry";
     remote_config::config invalid_content_config =
@@ -677,4 +748,5 @@ TEST(RemoteConfigAsmDataListener, ItThrowsAnErrorIfDataValueHasInvalidType)
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
                      expected_error_message));
 }
+
 } // namespace dds
