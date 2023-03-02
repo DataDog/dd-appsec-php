@@ -678,7 +678,7 @@ TEST(RemoteConfigAsmDataListener, ThrowsAnErrorIfDataNotArray)
 
     try {
         listener.on_update(invalid_content_config);
-    } catch (remote_config::error_applying_config &error) 
+    } catch (remote_config::error_applying_config &error) {
         error_message = error.what();
     }
     EXPECT_EQ(0, error_message.compare(0, expected_error_message.length(),
