@@ -39,7 +39,7 @@ void asm_listener::on_update(const config &config)
         if (source_it != doc.MemberEnd()) {
             auto &source_value = source_it->value;
             if (!source_value.IsArray()) {
-                std::string key = destination_it->name.GetString();
+                const std::string &key = destination_it->name.GetString();
                 throw dds::remote_config::error_applying_config(
                     "Invalid type for " + key);
             }
@@ -54,7 +54,7 @@ void asm_listener::init()
 {
     ruleset_ = rapidjson::Document(rapidjson::kObjectType);
     static constexpr std::array<std::string_view, 4> expected_keys{
-        "exclusions", "actions", "custom_rules", "rules_override"};
+        "exclusions", "actions", "rules_override"};
 
     for (const auto &key : expected_keys) {
         rapidjson::Value empty_array(rapidjson::kArrayType);

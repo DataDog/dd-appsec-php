@@ -30,7 +30,7 @@ ACTION_P(SaveDocument, param)
     arg0.copy(document);
 }
 
-TEST(RemoteConfigAsmListener, RulesOverrideEmptyCommit)
+TEST(RemoteConfigAsmListener, EmptyCommit)
 {
     auto engine = mock::engine::create();
 
@@ -56,10 +56,71 @@ TEST(RemoteConfigAsmListener, RulesOverrideEmptyCommit)
     const auto &actions = doc["actions"];
     EXPECT_TRUE(actions.IsArray());
     EXPECT_EQ(actions.Size(), 0);
+}
 
-    const auto &custom_rules = doc["custom_rules"];
-    EXPECT_TRUE(custom_rules.IsArray());
-    EXPECT_EQ(custom_rules.Size(), 0);
+TEST(RemoteConfigAsmListener, EmptyConfigThrows)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(1)
+        .WillRepeatedly(DoAll(SaveDocument(&doc)));
+
+    remote_config::asm_listener listener(engine);
+
+    listener.init();
+    EXPECT_THROW(listener.on_update(generate_config({})),
+        remote_config::error_applying_config);
+
+    listener.commit();
+
+    const auto &overrides = doc["rules_override"];
+    EXPECT_TRUE(overrides.IsArray());
+    EXPECT_EQ(overrides.Size(), 0);
+
+    const auto &exclusions = doc["exclusions"];
+    EXPECT_TRUE(exclusions.IsArray());
+    EXPECT_EQ(exclusions.Size(), 0);
+
+    const auto &actions = doc["actions"];
+    EXPECT_TRUE(actions.IsArray());
+    EXPECT_EQ(actions.Size(), 0);
+}
+
+TEST(RemoteConfigAsmListener, IncorrectTypeThrows)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(1)
+        .WillRepeatedly(DoAll(SaveDocument(&doc)));
+
+    remote_config::asm_listener listener(engine);
+
+    const std::string rule_override =
+        R"({"rules_override": {"rules_target": [{"tags": {"confidence": "1"}}], "on_match": ["block"]}})";
+
+    listener.init();
+    EXPECT_THROW(listener.on_update(generate_config(rule_override)),
+        remote_config::error_applying_config);
+
+    listener.commit();
+
+    const auto &overrides = doc["rules_override"];
+    EXPECT_TRUE(overrides.IsArray());
+    EXPECT_EQ(overrides.Size(), 0);
+
+    const auto &exclusions = doc["exclusions"];
+    EXPECT_TRUE(exclusions.IsArray());
+    EXPECT_EQ(exclusions.Size(), 0);
+
+    const auto &actions = doc["actions"];
+    EXPECT_TRUE(actions.IsArray());
+    EXPECT_EQ(actions.Size(), 0);
 }
 
 TEST(RemoteConfigAsmListener, RulesOverrideSingleConfig)
@@ -107,10 +168,6 @@ TEST(RemoteConfigAsmListener, RulesOverrideSingleConfig)
     const auto &actions = doc["actions"];
     EXPECT_TRUE(actions.IsArray());
     EXPECT_EQ(actions.Size(), 0);
-
-    const auto &custom_rules = doc["custom_rules"];
-    EXPECT_TRUE(custom_rules.IsArray());
-    EXPECT_EQ(custom_rules.Size(), 0);
 }
 
 TEST(RemoteConfigAsmListener, RulesOverrideMultipleConfigs)
@@ -146,10 +203,6 @@ TEST(RemoteConfigAsmListener, RulesOverrideMultipleConfigs)
     const auto &actions = doc["actions"];
     EXPECT_TRUE(actions.IsArray());
     EXPECT_EQ(actions.Size(), 0);
-
-    const auto &custom_rules = doc["custom_rules"];
-    EXPECT_TRUE(custom_rules.IsArray());
-    EXPECT_EQ(custom_rules.Size(), 0);
 
     for (auto *it = overrides.Begin(); it != overrides.End(); ++it) {
         const auto &ovrd = *it;
@@ -201,10 +254,6 @@ TEST(RemoteConfigAsmListener, RulesOverridesConfigCycling)
         EXPECT_TRUE(actions.IsArray());
         EXPECT_EQ(actions.Size(), 0);
 
-        const auto &custom_rules = doc["custom_rules"];
-        EXPECT_TRUE(custom_rules.IsArray());
-        EXPECT_EQ(custom_rules.Size(), 0);
-
         for (auto *it = overrides.Begin(); it != overrides.End(); ++it) {
             const auto &ovrd = *it;
             EXPECT_TRUE(ovrd.IsObject());
@@ -242,10 +291,6 @@ TEST(RemoteConfigAsmListener, RulesOverridesConfigCycling)
         EXPECT_TRUE(actions.IsArray());
         EXPECT_EQ(actions.Size(), 0);
 
-        const auto &custom_rules = doc["custom_rules"];
-        EXPECT_TRUE(custom_rules.IsArray());
-        EXPECT_EQ(custom_rules.Size(), 0);
-
         for (auto *it = overrides.Begin(); it != overrides.End(); ++it) {
             const auto &ovrd = *it;
             EXPECT_TRUE(ovrd.IsObject());
@@ -265,7 +310,7 @@ TEST(RemoteConfigAsmListener, RulesOverridesConfigCycling)
     }
 }
 
-TEST(RemoteConfigAsmListener, RulesOverridesEmptyConfigThrows)
+TEST(RemoteConfigAsmListener, ActionsSingleConfig)
 {
     auto engine = mock::engine::create();
 
@@ -273,14 +318,15 @@ TEST(RemoteConfigAsmListener, RulesOverridesEmptyConfigThrows)
 
     EXPECT_CALL(*engine, update(_, _, _))
         .Times(1)
-        .WillRepeatedly(DoAll(SaveDocument(&doc)));
+        .WillOnce(DoAll(SaveDocument(&doc)));
 
     remote_config::asm_listener listener(engine);
 
-    listener.init();
-    EXPECT_THROW(listener.on_update(generate_config({})),
-        remote_config::error_applying_config);
+    const std::string action_definitions =
+        R"({"actions": [{"id": "redirect", "type": "redirect_request", "parameters": {"status_code": "303", "location": "localhost"}}]})";
 
+    listener.init();
+    listener.on_update(generate_config(action_definitions));
     listener.commit();
 
     const auto &overrides = doc["rules_override"];
@@ -293,14 +339,10 @@ TEST(RemoteConfigAsmListener, RulesOverridesEmptyConfigThrows)
 
     const auto &actions = doc["actions"];
     EXPECT_TRUE(actions.IsArray());
-    EXPECT_EQ(actions.Size(), 0);
-
-    const auto &custom_rules = doc["custom_rules"];
-    EXPECT_TRUE(custom_rules.IsArray());
-    EXPECT_EQ(custom_rules.Size(), 0);
+    EXPECT_EQ(actions.Size(), 1);
 }
 
-TEST(RemoteConfigAsmListener, RulesOverridesIncorrectTypeThrows)
+TEST(RemoteConfigAsmListener, ActionsMultipleConfigs)
 {
     auto engine = mock::engine::create();
 
@@ -308,17 +350,17 @@ TEST(RemoteConfigAsmListener, RulesOverridesIncorrectTypeThrows)
 
     EXPECT_CALL(*engine, update(_, _, _))
         .Times(1)
-        .WillRepeatedly(DoAll(SaveDocument(&doc)));
+        .WillOnce(DoAll(SaveDocument(&doc)));
 
     remote_config::asm_listener listener(engine);
 
-    const std::string rule_override =
-        R"({"rules_override": {"rules_target": [{"tags": {"confidence": "1"}}], "on_match": ["block"]}})";
+    const std::string action_definitions =
+        R"({"actions": [{"id": "redirect", "type": "redirect_request", "parameters": {"status_code": "303", "location": "localhost"}}]})";
 
     listener.init();
-    EXPECT_THROW(listener.on_update(generate_config(rule_override)),
-        remote_config::error_applying_config);
-
+    listener.on_update(generate_config(action_definitions));
+    listener.on_update(generate_config(action_definitions));
+    listener.on_update(generate_config(action_definitions));
     listener.commit();
 
     const auto &overrides = doc["rules_override"];
@@ -331,14 +373,218 @@ TEST(RemoteConfigAsmListener, RulesOverridesIncorrectTypeThrows)
 
     const auto &actions = doc["actions"];
     EXPECT_TRUE(actions.IsArray());
-    EXPECT_EQ(actions.Size(), 0);
-
-    const auto &custom_rules = doc["custom_rules"];
-    EXPECT_TRUE(custom_rules.IsArray());
-    EXPECT_EQ(custom_rules.Size(), 0);
+    EXPECT_EQ(actions.Size(), 3);
 }
 
-TEST(RemoteConfigAsmListener, RulesOverridesRealEngine)
+TEST(RemoteConfigAsmListener, ActionsConfigCycling)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(2)
+        .WillRepeatedly(DoAll(SaveDocument(&doc)));
+
+    remote_config::asm_listener listener(engine);
+
+    const std::string action_definitions =
+        R"({"actions": [{"id": "redirect", "type": "redirect_request", "parameters": {"status_code": "303", "location": "localhost"}}]})";
+
+    {
+        listener.init();
+        listener.on_update(generate_config(action_definitions));
+        listener.on_update(generate_config(action_definitions));
+        listener.on_update(generate_config(action_definitions));
+        listener.commit();
+
+        const auto &overrides = doc["rules_override"];
+        EXPECT_TRUE(overrides.IsArray());
+        EXPECT_EQ(overrides.Size(), 0);
+
+        const auto &exclusions = doc["exclusions"];
+        EXPECT_TRUE(exclusions.IsArray());
+        EXPECT_EQ(exclusions.Size(), 0);
+
+        const auto &actions = doc["actions"];
+        EXPECT_TRUE(actions.IsArray());
+        EXPECT_EQ(actions.Size(), 3);
+    }
+
+    {
+        listener.init();
+        listener.on_update(generate_config(action_definitions));
+        listener.commit();
+
+        const auto &overrides = doc["rules_override"];
+        EXPECT_TRUE(overrides.IsArray());
+        EXPECT_EQ(overrides.Size(), 0);
+
+        const auto &exclusions = doc["exclusions"];
+        EXPECT_TRUE(exclusions.IsArray());
+        EXPECT_EQ(exclusions.Size(), 0);
+
+        const auto &actions = doc["actions"];
+        EXPECT_TRUE(actions.IsArray());
+        EXPECT_EQ(actions.Size(), 1);
+    }
+}
+
+TEST(RemoteConfigAsmListener, ExclusionsSingleConfig)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(1)
+        .WillOnce(DoAll(SaveDocument(&doc)));
+
+    remote_config::asm_listener listener(engine);
+
+    const std::string update =
+        R"({"exclusions":[{"id":1,"rules_target":[{"rule_id":1}]}]})";
+
+    listener.init();
+    listener.on_update(generate_config(update));
+    listener.commit();
+
+    const auto &overrides = doc["exclusions"];
+    EXPECT_TRUE(overrides.IsArray());
+    EXPECT_EQ(overrides.Size(), 1);
+
+    const auto &exclusions = doc["rules_override"];
+    EXPECT_TRUE(exclusions.IsArray());
+    EXPECT_EQ(exclusions.Size(), 0);
+
+    const auto &actions = doc["actions"];
+    EXPECT_TRUE(actions.IsArray());
+    EXPECT_EQ(actions.Size(), 0);
+}
+
+TEST(RemoteConfigAsmListener, ExclusionsMultipleConfigs)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(1)
+        .WillOnce(DoAll(SaveDocument(&doc)));
+
+    remote_config::asm_listener listener(engine);
+
+    const std::string update =
+        R"({"exclusions":[{"id":1,"rules_target":[{"rule_id":1}]}]})";
+
+    listener.init();
+    listener.on_update(generate_config(update));
+    listener.on_update(generate_config(update));
+    listener.on_update(generate_config(update));
+    listener.on_update(generate_config(update));
+    listener.commit();
+
+    const auto &overrides = doc["exclusions"];
+    EXPECT_TRUE(overrides.IsArray());
+    EXPECT_EQ(overrides.Size(), 4);
+
+    const auto &exclusions = doc["rules_override"];
+    EXPECT_TRUE(exclusions.IsArray());
+    EXPECT_EQ(exclusions.Size(), 0);
+
+    const auto &actions = doc["actions"];
+    EXPECT_TRUE(actions.IsArray());
+    EXPECT_EQ(actions.Size(), 0);
+}
+
+TEST(RemoteConfigAsmListener, ExclusionsConfigCycling)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(2)
+        .WillRepeatedly(DoAll(SaveDocument(&doc)));
+
+    remote_config::asm_listener listener(engine);
+
+    const std::string update =
+        R"({"exclusions":[{"id":1,"rules_target":[{"rule_id":1}]}]})";
+
+    {
+        listener.init();
+        listener.on_update(generate_config(update));
+        listener.on_update(generate_config(update));
+        listener.on_update(generate_config(update));
+        listener.on_update(generate_config(update));
+        listener.commit();
+
+        const auto &overrides = doc["exclusions"];
+        EXPECT_TRUE(overrides.IsArray());
+        EXPECT_EQ(overrides.Size(), 4);
+
+        const auto &exclusions = doc["rules_override"];
+        EXPECT_TRUE(exclusions.IsArray());
+        EXPECT_EQ(exclusions.Size(), 0);
+
+        const auto &actions = doc["actions"];
+        EXPECT_TRUE(actions.IsArray());
+        EXPECT_EQ(actions.Size(), 0);
+    }
+
+    {
+        listener.init();
+        listener.on_update(generate_config(update));
+        listener.commit();
+
+        const auto &overrides = doc["exclusions"];
+        EXPECT_TRUE(overrides.IsArray());
+        EXPECT_EQ(overrides.Size(), 1);
+
+        const auto &exclusions = doc["rules_override"];
+        EXPECT_TRUE(exclusions.IsArray());
+        EXPECT_EQ(exclusions.Size(), 0);
+
+        const auto &actions = doc["actions"];
+        EXPECT_TRUE(actions.IsArray());
+        EXPECT_EQ(actions.Size(), 0);
+    }
+}
+
+TEST(RemoteConfigAsmListener, AllSingleConfigs)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(1)
+        .WillOnce(DoAll(SaveDocument(&doc)));
+
+    remote_config::asm_listener listener(engine);
+
+    const std::string update =
+        R"({"rules_override": [{"rules_target": [{"tags": {"confidence": "1"}}], "on_match": ["block"]}],"exclusions":[{"id":1,"rules_target":[{"rule_id":1}]}],"actions": [{"id": "redirect", "type": "redirect_request", "parameters": {"status_code": "303", "location": "localhost"}}]})";
+
+    listener.init();
+    listener.on_update(generate_config(update));
+    listener.commit();
+
+    const auto &overrides = doc["exclusions"];
+    EXPECT_TRUE(overrides.IsArray());
+    EXPECT_EQ(overrides.Size(), 1);
+
+    const auto &exclusions = doc["rules_override"];
+    EXPECT_TRUE(exclusions.IsArray());
+    EXPECT_EQ(exclusions.Size(), 1);
+
+    const auto &actions = doc["actions"];
+    EXPECT_TRUE(actions.IsArray());
+    EXPECT_EQ(actions.Size(), 1);
+}
+
+TEST(RemoteConfigAsmListener, EngineRulesOverrideDisableRule)
 {
     std::map<std::string_view, std::string> meta;
     std::map<std::string_view, double> metrics;
@@ -385,5 +631,155 @@ TEST(RemoteConfigAsmListener, RulesOverridesRealEngine)
         EXPECT_FALSE(res);
     }
 }
+
+TEST(RemoteConfigAsmListener, EngineRulesOverrideSetOnMatch)
+{
+    std::map<std::string_view, std::string> meta;
+    std::map<std::string_view, double> metrics;
+
+    auto engine{dds::engine::create()};
+    engine->subscribe(waf::instance::from_string(waf_rule, meta, metrics));
+
+    remote_config::asm_listener listener(engine);
+
+    listener.init();
+
+    {
+        auto ctx = engine->get_context();
+
+        auto p = parameter::map();
+        p.add("arg1", parameter::string("value"sv));
+
+        auto res = ctx.publish(std::move(p));
+        EXPECT_TRUE(res);
+        EXPECT_EQ(res->type, engine::action_type::record);
+    }
+
+    const std::string rule_override =
+        R"({"rules_override": [{"rules_target": [{"tags": {"type": "flow1"}}], "on_match": ["block"]}]})";
+    listener.on_update(generate_config(rule_override));
+
+    {
+        auto ctx = engine->get_context();
+
+        auto p = parameter::map();
+        p.add("arg1", parameter::string("value"sv));
+
+        auto res = ctx.publish(std::move(p));
+        EXPECT_TRUE(res);
+        EXPECT_EQ(res->type, engine::action_type::record);
+    }
+
+    listener.commit();
+    {
+        auto ctx = engine->get_context();
+
+        auto p = parameter::map();
+        p.add("arg1", parameter::string("value"sv));
+
+        auto res = ctx.publish(std::move(p));
+        EXPECT_TRUE(res);
+        EXPECT_EQ(res->type, engine::action_type::block);
+    }
+}
+
+TEST(RemoteConfigAsmListener, EngineRulesOverrideAndActionDefinition)
+{
+    std::map<std::string_view, std::string> meta;
+    std::map<std::string_view, double> metrics;
+
+    auto engine{dds::engine::create()};
+    engine->subscribe(waf::instance::from_string(waf_rule, meta, metrics));
+
+    remote_config::asm_listener listener(engine);
+
+    listener.init();
+
+    {
+        auto ctx = engine->get_context();
+
+        auto p = parameter::map();
+        p.add("arg1", parameter::string("value"sv));
+
+        auto res = ctx.publish(std::move(p));
+        EXPECT_TRUE(res);
+        EXPECT_EQ(res->type, engine::action_type::record);
+    }
+    const std::string update =
+        R"({"actions": [{"id": "redirect", "type": "redirect_request", "parameters": {"status_code": "303", "location": "localhost"}}],"rules_override": [{"rules_target": [{"rule_id": "1"}], "on_match": ["redirect"]}]})";
+    listener.on_update(generate_config(update));
+
+    {
+        auto ctx = engine->get_context();
+
+        auto p = parameter::map();
+        p.add("arg1", parameter::string("value"sv));
+
+        auto res = ctx.publish(std::move(p));
+        EXPECT_TRUE(res);
+        EXPECT_EQ(res->type, engine::action_type::record);
+    }
+
+    listener.commit();
+    {
+        auto ctx = engine->get_context();
+
+        auto p = parameter::map();
+        p.add("arg1", parameter::string("value"sv));
+
+        auto res = ctx.publish(std::move(p));
+        EXPECT_TRUE(res);
+        EXPECT_EQ(res->type, engine::action_type::redirect);
+    }
+}
+
+TEST(RemoteConfigAsmListener, EngineExclusionPasslistRule)
+{
+    std::map<std::string_view, std::string> meta;
+    std::map<std::string_view, double> metrics;
+
+    auto engine{dds::engine::create()};
+    engine->subscribe(waf::instance::from_string(waf_rule, meta, metrics));
+
+    remote_config::asm_listener listener(engine);
+
+    listener.init();
+
+    {
+        auto ctx = engine->get_context();
+
+        auto p = parameter::map();
+        p.add("arg1", parameter::string("value"sv));
+
+        auto res = ctx.publish(std::move(p));
+        EXPECT_TRUE(res);
+    }
+
+    const std::string update =
+        R"({"exclusions":[{"id":1,"rules_target":[{"rule_id":1}]}]})";
+    listener.on_update(generate_config(update));
+
+    {
+        auto ctx = engine->get_context();
+
+        auto p = parameter::map();
+        p.add("arg1", parameter::string("value"sv));
+
+        auto res = ctx.publish(std::move(p));
+        EXPECT_TRUE(res);
+    }
+
+    listener.commit();
+    {
+        auto ctx = engine->get_context();
+
+        auto p = parameter::map();
+        p.add("arg1", parameter::string("value"sv));
+
+        auto res = ctx.publish(std::move(p));
+        EXPECT_FALSE(res);
+    }
+}
+
 } // namespace
 } // namespace dds::remote_config
