@@ -199,6 +199,25 @@ bool client::process_response(const protocol::get_configs_response &response)
     return true;
 }
 
+bool client::is_remote_config_available()
+{
+    auto response_body = api_->get_info();
+    if (!response_body) {
+        return false;
+    }
+
+    try {
+        SPDLOG_DEBUG("Received info response: {}", response_body.value());
+        auto response = protocol::parse_info(response_body.value());
+
+        return std::find(response.endpoints.begin(), response.endpoints.end(),
+                   "/v0.7/config") != response.endpoints.end();
+    } catch (protocol::parser_exception &e) {
+        SPDLOG_ERROR("Error parsing info response - {}", e.what());
+        return false;
+    }
+}
+
 bool client::poll()
 {
     if (api_ == nullptr) {

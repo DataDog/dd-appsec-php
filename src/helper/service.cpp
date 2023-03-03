@@ -66,14 +66,20 @@ service::ptr service::from_settings(const service_identifier &id,
 
     auto rc_client = remote_config::client::from_settings(
         id, rc_settings, std::move(products), std::move(capabilities));
+    bool const rc_available =
+        rc_settings.enabled && rc_client->is_remote_config_available();
 
-    return std::make_shared<service>(id, engine_ptr, std::move(rc_client),
+    return std::make_shared<service>(id, engine_ptr,
+        rc_available ? std::move(rc_client) : nullptr,
         std::move(service_config),
         std::chrono::milliseconds{rc_settings.poll_interval});
 }
 
 void service::run(std::future<bool> &&exit_signal)
 {
+    if (!rc_client_) {
+        return;
+    }
     std::chrono::time_point<std::chrono::steady_clock> before{0s};
     std::future_status fs = exit_signal.wait_for(0s);
     while (fs == std::future_status::timeout) {
