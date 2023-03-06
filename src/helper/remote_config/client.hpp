@@ -49,7 +49,7 @@ public:
         std::vector<protocol::capabilities_e> capabilities);
 
     virtual bool poll();
-    bool is_remote_config_available();
+    virtual bool is_remote_config_available();
 
     [[nodiscard]] const service_identifier &get_service_identifier()
     {

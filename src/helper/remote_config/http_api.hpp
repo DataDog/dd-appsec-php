@@ -10,6 +10,18 @@
 
 namespace dds::remote_config {
 
+class network_exception : public std::exception {
+public:
+    explicit network_exception(std::string what) : what_(std::move(what)) {}
+    [[nodiscard]] const char *what() const noexcept override
+    {
+        return what_.c_str();
+    }
+
+protected:
+    const std::string what_;
+};
+
 class http_api {
 public:
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
@@ -24,8 +36,8 @@ public:
 
     virtual ~http_api() = default;
 
-    virtual std::optional<std::string> get_info() const;
-    virtual std::optional<std::string> get_configs(std::string &&request) const;
+    virtual std::string get_info() const;
+    virtual std::string get_configs(std::string &&request) const;
 
 protected:
     std::string host_;

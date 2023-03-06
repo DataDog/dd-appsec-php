@@ -20,10 +20,10 @@ using tcp = net::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
 static const int version = 11;
 
-std::optional<std::string> execute_request(const std::string &host,
-    const std::string &port, const http::request<http::string_body> &request)
+std::string execute_request(const std::string &host, const std::string &port,
+    const http::request<http::string_body> &request)
 {
-    std::optional<std::string> result;
+    std::string result;
 
     try {
         // The io_context is required for all I/O
@@ -69,13 +69,15 @@ std::optional<std::string> execute_request(const std::string &host,
     } catch (std::exception const &e) {
         SPDLOG_ERROR("Connection error - {} - {}", request.target().to_string(),
             e.what());
-        return std::nullopt;
+        throw dds::remote_config::network_exception(
+            "Connection error - " + request.target().to_string() + " - " +
+            e.what());
     }
 
     return result;
 }
 
-std::optional<std::string> dds::remote_config::http_api::get_info() const
+std::string dds::remote_config::http_api::get_info() const
 {
     http::request<http::string_body> req{http::verb::get, "/info", version};
     req.set(http::field::host, host_);
@@ -84,7 +86,7 @@ std::optional<std::string> dds::remote_config::http_api::get_info() const
     return execute_request(host_, port_, req);
 }
 
-std::optional<std::string> dds::remote_config::http_api::get_configs(
+std::string dds::remote_config::http_api::get_configs(
     std::string &&request) const
 {
     // Set up an HTTP POST request message
