@@ -8,6 +8,7 @@
 #include "msgpack/object.h"
 #include "network/broker.hpp"
 #include "network/proto.hpp"
+#include "remote_config/protocol/client.hpp"
 #include "std_logging.hpp"
 #include "utils.hpp"
 #include <chrono>
@@ -134,6 +135,8 @@ bool client::handle_command(const network::client_init::request &command)
         // ASM_DATA
         capabilities.push_back(
             remote_config::protocol::capabilities_e::ASM_IP_BLOCKING);
+        capabilities.push_back(
+            remote_config::protocol::capabilities_e::ASM_USER_BLOCKING);
 
         // ASM_DD
         capabilities.push_back(
