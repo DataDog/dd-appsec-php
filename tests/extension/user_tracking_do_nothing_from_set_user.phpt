@@ -1,5 +1,5 @@
 --TEST--
-Do nothing from DDTrace\set_user
+Don't block or redirect from DDTrace\set_user
 --INI--
 extension=ddtrace.so
 --FILE--

@@ -796,6 +796,8 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
         return;
     }
 
+    dd_find_and_apply_verdict_for_user(user_id);
+
     zval *nullable meta = dd_trace_root_span_get_meta();
     if (!meta) {
         mlog(dd_log_warning, "Failed to retrieve root span meta");
@@ -814,8 +816,6 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
     _add_custom_event_metadata(meta_ht, _dd_login_success_event, metadata);
 
     dd_tags_set_sampling_priority();
-
-    dd_find_and_apply_verdict_for_user(user_id);
 }
 
 static PHP_FUNCTION(datadog_appsec_track_user_login_failure_event)
