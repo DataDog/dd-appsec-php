@@ -81,3 +81,30 @@
    fun:zai_interceptor_post_startup
    ...
 }
+{
+   <leak from zai interceptor>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:_dd_compile_file
+   fun:zai_interceptor_compile_file
+   ...
+}
+{
+   <leak from zai interceptor>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:zai_hook_activate
+   fun:zm_activate_ddtrace
+   ...
+}
+{
+   <leak from zai interceptor>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:zai_hook_rinit
+   fun:ddtrace_activate
+   ...
+}
