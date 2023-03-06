@@ -12,6 +12,7 @@
 #include "php_helpers.h"
 #include "php_objects.h"
 #include "string_helpers.h"
+#include "user_tracking.h"
 #include <SAPI.h>
 #include <zend_smart_str.h>
 #include <zend_types.h>
@@ -813,6 +814,8 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
     _add_custom_event_metadata(meta_ht, _dd_login_success_event, metadata);
 
     dd_tags_set_sampling_priority();
+
+    dd_find_and_apply_verdict_for_user(user_id);
 }
 
 static PHP_FUNCTION(datadog_appsec_track_user_login_failure_event)
