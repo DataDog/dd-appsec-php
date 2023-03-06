@@ -5,7 +5,7 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 
 #ifndef _GNU_SOURCE
-#define _GNU_SOURCE
+#    define _GNU_SOURCE
 #endif
 
 #include <errno.h>

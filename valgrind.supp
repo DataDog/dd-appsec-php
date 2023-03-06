@@ -93,6 +93,15 @@
 {
    <leak from zai interceptor>
    Memcheck:Leak
+   match-leak-kinds: definite
+   ...
+   fun:_dd_compile_file
+   fun:zai_interceptor_compile_file
+   ...
+}
+{
+   <leak from zai interceptor>
+   Memcheck:Leak
    match-leak-kinds: possible
    ...
    fun:zai_hook_activate
@@ -106,5 +115,25 @@
    ...
    fun:zai_hook_rinit
    fun:ddtrace_activate
+   ...
+}
+{
+   <leak from zai interceptor>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:zai_hook_resolve_class
+   fun:zai_interceptor_add_new_entries
+   fun:zai_interceptor_compile_file
+   ...
+}
+{
+   <leak from zai interceptor>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:zai_hook_resolve_class
+   fun:zai_interceptor_add_new_entries
+   fun:zai_interceptor_compile_file
    ...
 }
