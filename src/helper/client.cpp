@@ -69,7 +69,7 @@ bool handle_message(client &client, const network::base_broker &broker,
         std::ostringstream all_names;
         std::copy(names.begin(), names.end(),
             std::ostream_iterator<std::string>(all_names, " "));
-        SPDLOG_DEBUG("Wait for one these messages: {}", all_names.str());
+        SPDLOG_DEBUG("Wait for one of these messages: {}", all_names.str());
     }
 
     bool send_error = false;

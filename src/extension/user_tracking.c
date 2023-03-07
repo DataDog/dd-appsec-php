@@ -6,12 +6,12 @@
 
 #include "user_tracking.h"
 #include "commands/request_exec.h"
+#include "ddappsec.h"
 #include "helper_process.h"
 #include "logging.h"
 #include "php_compat.h"
 #include "src/extension/request_abort.h"
 #include "string_helpers.h"
-#include <zend_hash.h>
 
 static void (*_ddtrace_set_user)(INTERNAL_FUNCTION_PARAMETERS) = NULL;
 

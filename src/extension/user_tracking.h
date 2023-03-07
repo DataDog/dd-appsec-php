@@ -6,9 +6,6 @@
 #pragma once
 
 #include "attributes.h"
-#include "dddefs.h"
-#include <php.h>
-#include <stdbool.h>
 #include <zend.h>
 
 void dd_user_tracking_startup(void);
