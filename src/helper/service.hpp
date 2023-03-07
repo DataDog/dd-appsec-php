@@ -75,7 +75,7 @@ protected:
     void discover();
     std::function<void()> rc_action_;
 
-    int errors_ = {0};
+    std::uint16_t errors_ = {0};
 
     std::promise<bool> exit_;
     std::thread handler_;

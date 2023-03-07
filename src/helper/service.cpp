@@ -12,7 +12,8 @@
 
 namespace dds {
 
-static constexpr int max_increment = 10;
+// This will limit the max increase to 4.266666667 minutes
+static constexpr std::uint16_t max_increment = 8;
 
 service::service(service_identifier id, std::shared_ptr<engine> engine,
     remote_config::client::ptr &&rc_client,
@@ -80,9 +81,11 @@ service::ptr service::from_settings(const service_identifier &id,
 void service::handle_error()
 {
     rc_action_ = [this] { discover(); };
-    errors_++;
     interval_ = std::chrono::duration_cast<std::chrono::milliseconds>(
-        poll_interval_ * pow(2, std::min((errors_ - 1), max_increment)));
+        poll_interval_ * pow(2, std::min(errors_, max_increment)));
+    if (errors_ < std::numeric_limits<std::uint16_t>::max() - 1) {
+        errors_++;
+    }
 }
 
 void service::poll()
