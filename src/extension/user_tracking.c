@@ -89,11 +89,11 @@ void dd_find_and_apply_verdict_for_user(zend_string *nonnull user_id)
     dd_result res = dd_request_exec(conn, &data_zv);
     zval_ptr_dtor(&data_zv);
 
+    dd_tags_set_event_user_id(user_id);
+
     if (res == dd_should_block) {
-        dd_tags_set_blocked_user_id(user_id);
         dd_request_abort_static_page();
     } else if (res == dd_should_redirect) {
-        dd_tags_set_blocked_user_id(user_id);
         dd_request_abort_redirect();
     }
 }
