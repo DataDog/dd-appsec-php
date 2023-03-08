@@ -11,30 +11,31 @@
 #include "logging.h"
 #include "php_compat.h"
 #include "src/extension/request_abort.h"
+#include "src/extension/tags.h"
 #include "string_helpers.h"
 
 static void (*_ddtrace_set_user)(INTERNAL_FUNCTION_PARAMETERS) = NULL;
 
 static PHP_FUNCTION(set_user_wrapper)
 {
-    if (_ddtrace_set_user != NULL) {
-        _ddtrace_set_user(INTERNAL_FUNCTION_PARAM_PASSTHRU);
-    } else {
-        // This shouldn't be necessary, if it is we have a bug
-        mlog(dd_log_debug, "Invalid DDTrace\\set_user, this shouldn't happen");
-    }
 
     zend_string *user_id = NULL;
     HashTable *metadata = NULL;
     zend_bool propagate = false;
     if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(),
-            "S|hb", &user_id, &metadata, &propagate) != SUCCESS) {
+            "S|hb", &user_id, &metadata, &propagate) == SUCCESS) {
+        if (user_id != NULL) {
+            dd_find_and_apply_verdict_for_user(user_id);
+        }
+    }
+
+    // This shouldn't be necessary, if it is we have a bug
+    if (_ddtrace_set_user == NULL) {
+        mlog(dd_log_debug, "Invalid DDTrace\\set_user, this shouldn't happen");
         return;
     }
 
-    if (user_id != NULL) {
-        dd_find_and_apply_verdict_for_user(user_id);
-    }
+    _ddtrace_set_user(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
 void dd_user_tracking_startup(void)
@@ -89,8 +90,10 @@ void dd_find_and_apply_verdict_for_user(zend_string *nonnull user_id)
     zval_ptr_dtor(&data_zv);
 
     if (res == dd_should_block) {
+        dd_tags_set_blocked_user_id(user_id);
         dd_request_abort_static_page();
     } else if (res == dd_should_redirect) {
+        dd_tags_set_blocked_user_id(user_id);
         dd_request_abort_redirect();
     }
 }

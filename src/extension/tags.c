@@ -75,6 +75,7 @@ static HashTable _relevant_headers;
 static HashTable _relevant_ip_headers;
 static THREAD_LOCAL_ON_ZTS bool _appsec_json_frags_inited;
 static THREAD_LOCAL_ON_ZTS zend_llist _appsec_json_frags;
+static THREAD_LOCAL_ON_ZTS zend_string *nullable _blocked_user_id;
 
 static void _init_relevant_headers(void);
 static zend_string *_concat_json_fragments(void);
@@ -230,6 +231,9 @@ void dd_tags_rinit()
         zend_llist_init(&_appsec_json_frags, sizeof(zend_string *),
             _zend_string_release_indirect, 0);
     }
+
+    // Just in case...
+    _blocked_user_id = NULL;
 }
 
 void dd_tags_add_appsec_json_frag(zend_string *nonnull zstr)
@@ -237,7 +241,20 @@ void dd_tags_add_appsec_json_frag(zend_string *nonnull zstr)
     zend_llist_add_element(&_appsec_json_frags, &zstr);
 }
 
-void dd_tags_rshutdown() { zend_llist_clean(&_appsec_json_frags); }
+void dd_tags_set_blocked_user_id(zend_string *nonnull zstr)
+{
+    _blocked_user_id = zend_string_copy(zstr);
+}
+
+void dd_tags_rshutdown()
+{
+    zend_llist_clean(&_appsec_json_frags);
+
+    if (_blocked_user_id) {
+        zend_string_release(_blocked_user_id);
+        _blocked_user_id = NULL;
+    }
+}
 
 void dd_tags_add_tags()
 {
@@ -378,6 +395,7 @@ static void _dd_http_client_ip(zend_array *meta_ht);
 static void _dd_request_headers(
     zend_array *meta_ht, zval *_server, HashTable *relevant_headers);
 static void _dd_response_headers(zend_array *meta_ht);
+static void _dd_blocked_user_id(zend_array *meta_ht);
 
 static void _add_basic_ancillary_tags()
 {
@@ -431,6 +449,7 @@ static void _add_all_tags_to_meta(zval *nonnull meta)
     _dd_request_headers(meta_ht, _server, &_relevant_headers);
     _dd_http_client_ip(meta_ht);
     _dd_response_headers(meta_ht);
+    _dd_blocked_user_id(meta_ht);
 }
 
 static void _add_new_zstr_to_meta(
@@ -707,6 +726,13 @@ static void _dd_response_headers(zend_array *meta_ht)
     }
 }
 
+static void _dd_blocked_user_id(zend_array *meta_ht)
+{
+    if (_blocked_user_id) {
+        _add_new_zstr_to_meta(meta_ht, _dd_tag_user_id, _blocked_user_id, true);
+    }
+}
+
 static zend_string *nullable _is_relevant_resp_header(
     const char *name, size_t name_len)
 {
@@ -796,10 +822,12 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
         return;
     }
 
+    dd_find_and_apply_verdict_for_user(user_id);
+
     zval *nullable meta = dd_trace_root_span_get_meta();
     if (!meta) {
         mlog(dd_log_warning, "Failed to retrieve root span meta");
-        goto verdict_on_exit;
+        return;
     }
     zend_array *meta_ht = Z_ARRVAL_P(meta);
 
@@ -814,9 +842,6 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
     _add_custom_event_metadata(meta_ht, _dd_login_success_event, metadata);
 
     dd_tags_set_sampling_priority();
-
-verdict_on_exit:
-    dd_find_and_apply_verdict_for_user(user_id);
 }
 
 static PHP_FUNCTION(datadog_appsec_track_user_login_failure_event)
