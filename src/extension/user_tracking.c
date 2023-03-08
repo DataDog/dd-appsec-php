@@ -18,7 +18,6 @@ static void (*_ddtrace_set_user)(INTERNAL_FUNCTION_PARAMETERS) = NULL;
 
 static PHP_FUNCTION(set_user_wrapper)
 {
-
     zend_string *user_id = NULL;
     HashTable *metadata = NULL;
     zend_bool propagate = false;
