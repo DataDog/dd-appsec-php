@@ -17,23 +17,24 @@ static void (*_ddtrace_set_user)(INTERNAL_FUNCTION_PARAMETERS) = NULL;
 
 static PHP_FUNCTION(set_user_wrapper)
 {
+    if (_ddtrace_set_user != NULL) {
+        _ddtrace_set_user(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+    } else {
+        // This shouldn't be necessary, if it is we have a bug
+        mlog(dd_log_debug, "Invalid DDTrace\\set_user, this shouldn't happen");
+    }
+
     zend_string *user_id = NULL;
     HashTable *metadata = NULL;
     zend_bool propagate = false;
     if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(),
-            "S|hb", &user_id, &metadata, &propagate) == SUCCESS) {
-        if (user_id != NULL) {
-            dd_find_and_apply_verdict_for_user(user_id);
-        }
-    }
-
-    // This shouldn't be necessary, if it is we have a bug
-    if (_ddtrace_set_user == NULL) {
-        mlog(dd_log_debug, "Invalid DDTrace\\set_user, this shouldn't happen");
+            "S|hb", &user_id, &metadata, &propagate) != SUCCESS) {
         return;
     }
 
-    _ddtrace_set_user(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+    if (user_id != NULL) {
+        dd_find_and_apply_verdict_for_user(user_id);
+    }
 }
 
 void dd_user_tracking_startup(void)
