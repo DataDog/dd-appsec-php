@@ -347,14 +347,14 @@ static PHP_RSHUTDOWN_FUNCTION(ddappsec)
         goto exit;
     }
 
-    result = dd_appsec_rshutdown();
+    result = dd_appsec_rshutdown(false);
 
 exit:
     dd_ip_extraction_rshutdown();
     return result;
 }
 
-int dd_appsec_rshutdown()
+int dd_appsec_rshutdown(bool ignore_verdict)
 {
     int verdict = dd_success;
     dd_conn *conn = dd_helper_mgr_cur_conn();
@@ -366,7 +366,7 @@ int dd_appsec_rshutdown()
                 "connection to helper");
             dd_helper_close_conn();
         } else if (res == dd_should_block || res == dd_should_redirect) {
-            verdict = res;
+            verdict = ignore_verdict ? dd_success : res;
         } else if (res) {
             mlog_g(dd_log_info, "request shutdown failed: %s",
                 dd_result_to_string(res));
@@ -475,7 +475,7 @@ static PHP_FUNCTION(datadog_appsec_testing_rshutdown)
     }
 
     mlog(dd_log_debug, "Running rshutdown actions");
-    int res = dd_appsec_rshutdown();
+    int res = dd_appsec_rshutdown(false);
     if (res == 0) {
         RETURN_TRUE;
     } else {
