@@ -356,6 +356,7 @@ exit:
 
 int dd_appsec_rshutdown()
 {
+    int verdict = dd_success;
     dd_conn *conn = dd_helper_mgr_cur_conn();
     if (conn && DDAPPSEC_G(enabled) == ENABLED) {
         int res = dd_request_shutdown(conn);
@@ -364,8 +365,8 @@ int dd_appsec_rshutdown()
                 "request_shutdown failed with dd_network; closing "
                 "connection to helper");
             dd_helper_close_conn();
-        } else if (res == dd_should_block) {
-            dd_request_abort_static_page();
+        } else if (res == dd_should_block || res == dd_should_redirect) {
+            verdict = res;
         } else if (res) {
             mlog_g(dd_log_info, "request shutdown failed: %s",
                 dd_result_to_string(res));
@@ -378,6 +379,12 @@ int dd_appsec_rshutdown()
         dd_tags_add_tags();
     }
     dd_tags_rshutdown();
+
+    if (verdict == dd_should_block) {
+        dd_request_abort_static_page();
+    } else if (verdict == dd_should_redirect) {
+        dd_request_abort_redirect();
+    }
 
     return SUCCESS;
 }
