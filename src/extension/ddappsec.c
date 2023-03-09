@@ -380,9 +380,12 @@ int dd_appsec_rshutdown()
     }
     dd_tags_rshutdown();
 
+    // TODO when blocking on shutdown, let the tracer handle flushing
     if (verdict == dd_should_block) {
+        dd_trace_close_all_spans_and_flush();
         dd_request_abort_static_page();
     } else if (verdict == dd_should_redirect) {
+        dd_trace_close_all_spans_and_flush();
         dd_request_abort_redirect();
     }
 
