@@ -8,8 +8,10 @@
 
 namespace dds {
 
-// This will limit the max increase to 4.266666667 minutes
-static constexpr std::uint16_t max_increment = 8;
+// Independently of the poll interval defined, the retry strategy will cap it at
+// 5 minutes
+static constexpr std::chrono::milliseconds max_time_interval =
+    std::chrono::milliseconds(std::chrono::minutes(5));
 
 service::service(service_identifier id, std::shared_ptr<engine> engine,
     remote_config::client::ptr &&rc_client,
@@ -26,6 +28,8 @@ service::service(service_identifier id, std::shared_ptr<engine> engine,
     if (!engine_) {
         throw std::runtime_error("invalid engine");
     }
+
+    interval_ = std::min(max_time_interval, poll_interval);
 
     if (rc_client_) {
         handler_ = std::thread(&service::run, this, exit_.get_future());
@@ -64,8 +68,12 @@ service::ptr service::from_settings(const service_identifier &id,
 void service::handle_error()
 {
     rc_action_ = [this] { discover(); };
-    interval_ = std::chrono::duration_cast<std::chrono::milliseconds>(
-        poll_interval_ * pow(2, std::min(errors_, max_increment)));
+    if (interval_ < max_time_interval) {
+        auto new_interval =
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                poll_interval_ * pow(2, errors_));
+        interval_ = std::min(max_time_interval, new_interval);
+    }
     if (errors_ < std::numeric_limits<std::uint16_t>::max() - 1) {
         errors_++;
     }

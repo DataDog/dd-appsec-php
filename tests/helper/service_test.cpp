@@ -28,6 +28,18 @@ struct engine_settings : public dds::engine_settings {
         return mock_default_rules;
     }
 };
+
+class service : public dds::service {
+public:
+    service(dds::service_identifier id, std::shared_ptr<dds::engine> engine,
+        remote_config::client::ptr &&rc_client,
+        std::shared_ptr<service_config> service_config,
+        const std::chrono::milliseconds &poll_interval = 1s)
+        : dds::service(id, engine, std::move(rc_client), service_config,
+              poll_interval){};
+    std::chrono::milliseconds get_interval() { return interval_; }
+    void simulate_error() { this->handle_error(); }
+};
 } // namespace mock
 
 ACTION_P(SignalCall, promise) { promise->set_value(true); }
@@ -264,6 +276,34 @@ TEST(ServiceTest, DynamicEnablementIsSetFromParameter)
 
         EXPECT_FALSE(svc->get_service_config()->dynamic_enablement);
     }
+}
+
+TEST(ServiceTest, IntervalGivenIsCapAtFiveMinutes)
+{
+    dds::service_identifier sid{
+        "service", "env", "tracer_version", "app_version", "runtime_id"};
+    std::shared_ptr<engine> engine{engine::create()};
+    mock::service svc{
+        sid, engine, nullptr, std::make_shared<service_config>(), 10min};
+
+    auto five_minutes = 300000ms;
+    EXPECT_EQ(five_minutes, svc.get_interval());
+}
+
+TEST(ServiceTest, RetryStrategyWongGoOverFiveMinutes)
+{
+    dds::service_identifier sid{
+        "service", "env", "tracer_version", "app_version", "runtime_id"};
+    std::shared_ptr<engine> engine{engine::create()};
+    mock::service svc{
+        sid, engine, nullptr, std::make_shared<service_config>(), 5min - 1s};
+
+    // Generate some errors so interval gets increased
+    svc.simulate_error();
+    svc.simulate_error();
+
+    auto five_minutes = 300000ms;
+    EXPECT_EQ(five_minutes, svc.get_interval());
 }
 
 } // namespace dds
