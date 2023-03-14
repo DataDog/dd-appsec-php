@@ -9,6 +9,7 @@
 #include "exception.hpp"
 #include "remote_config/client.hpp"
 #include "remote_config/settings.hpp"
+#include "scheduler.hpp"
 #include "service_config.hpp"
 #include "service_identifier.hpp"
 #include "std_logging.hpp"
@@ -29,14 +30,7 @@ public:
     service(service_identifier id, std::shared_ptr<engine> engine,
         remote_config::client::ptr &&rc_client,
         std::shared_ptr<service_config> service_config,
-        const std::chrono::milliseconds &poll_interval = 1s);
-    ~service();
-
-    service(const service &) = delete;
-    service &operator=(const service &) = delete;
-
-    service(service &&) = delete;
-    service &operator=(service &&) = delete;
+        dds::scheduler &&scheduler);
 
     static service::ptr from_settings(const service_identifier &id,
         const dds::engine_settings &eng_settings,
@@ -56,29 +50,20 @@ public:
         return service_config_;
     }
 
-    [[nodiscard]] bool running() const { return handler_.joinable(); }
     [[nodiscard]] service_identifier get_id() const { return id_; }
-
+    bool run();
 protected:
-    void run(std::future<bool> &&exit_signal);
     void handle_error();
 
     service_identifier id_;
     std::shared_ptr<engine> engine_;
     remote_config::client::ptr rc_client_;
     std::shared_ptr<service_config> service_config_;
+    dds::scheduler scheduler_;
 
-    std::chrono::milliseconds poll_interval_;
-    std::chrono::milliseconds interval_;
-    std::chrono::milliseconds max_allowed_interval_;
-    void poll();
-    void discover();
-    std::function<void()> rc_action_;
-
-    std::uint16_t errors_ = {0};
-
-    std::promise<bool> exit_;
-    std::thread handler_;
+    bool poll();
+    bool discover();
+    std::function<bool()> rc_action_;
 };
 
 } // namespace dds

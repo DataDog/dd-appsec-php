@@ -8,40 +8,22 @@
 
 namespace dds {
 
-// Independently of the poll interval defined, the retry strategy will cap it at
-// 5 minutes
-static constexpr std::chrono::milliseconds max_time_interval =
-    std::chrono::milliseconds(std::chrono::minutes(5));
-
 service::service(service_identifier id, std::shared_ptr<engine> engine,
     remote_config::client::ptr &&rc_client,
-    std::shared_ptr<service_config> service_config,
-    const std::chrono::milliseconds &poll_interval)
+    std::shared_ptr<service_config> service_config, dds::scheduler &&scheduler)
     : id_(std::move(id)), engine_(std::move(engine)),
       service_config_(std::move(service_config)),
-      rc_client_(std::move(rc_client)), poll_interval_(poll_interval),
-      interval_(poll_interval)
+      rc_client_(std::move(rc_client)), scheduler_(std::move(scheduler))
 {
     // It starts checking if rc is available
-    rc_action_ = [this] { discover(); };
+    rc_action_ = [this]() -> bool { return discover(); };
     // The engine should always be valid
     if (!engine_) {
         throw std::runtime_error("invalid engine");
     }
 
-    max_allowed_interval_ =
-        poll_interval > max_time_interval ? poll_interval : max_time_interval;
-
     if (rc_client_) {
-        handler_ = std::thread(&service::run, this, exit_.get_future());
-    }
-}
-
-service::~service()
-{
-    if (handler_.joinable()) {
-        exit_.set_value(true);
-        handler_.join();
+        scheduler_.start([this]() -> bool { return run(); });
     }
 }
 
@@ -61,61 +43,53 @@ service::ptr service::from_settings(const service_identifier &id,
     auto rc_client = remote_config::client::from_settings(
         id, rc_settings, service_config, engine_ptr);
 
+    dds::scheduler scheduler(poll_interval,
+        std::max(
+            std::chrono::milliseconds(std::chrono::minutes(5)), poll_interval));
+
     return std::make_shared<service>(id, engine_ptr, std::move(rc_client),
-        std::move(service_config),
-        std::chrono::milliseconds{rc_settings.poll_interval});
+        std::move(service_config), std::move(scheduler));
 }
 
 void service::handle_error()
 {
-    rc_action_ = [this] { discover(); };
-    if (interval_ < max_allowed_interval_) {
-        auto new_interval =
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                poll_interval_ * pow(2, errors_));
-        interval_ = std::min(max_allowed_interval_, new_interval);
-    }
-    if (errors_ < std::numeric_limits<std::uint16_t>::max() - 1) {
-        errors_++;
-    }
+    std::cout << "handling error" << std::endl;
+
+    rc_action_ = [this]() -> bool { return discover(); };
 }
 
-void service::poll()
+bool service::poll()
 {
+    std::cout << "poll" << std::endl;
+
     try {
         rc_client_->poll();
+        return true;
     } catch (dds::remote_config::network_exception & /** e */) {
         handle_error();
     }
+    return false;
 }
-void service::discover()
+bool service::discover()
 {
+    std::cout << "discover" << std::endl;
     try {
         if (rc_client_->is_remote_config_available()) {
             // Remote config is available. Start polls
-            rc_action_ = [this] { poll(); };
-            errors_ = 0;
-            interval_ = poll_interval_;
-            return;
+            rc_action_ = [this]() -> bool { return poll(); };
+            std::cout << "discover true" << std::endl;
+
+            return true;
         }
+        std::cout << "discover false" << std::endl;
     } catch (dds::remote_config::network_exception & /** e */) {}
+    std::cout << "discover end" << std::endl;
     handle_error();
+    return false;
 }
 
-void service::run(std::future<bool> &&exit_signal)
-{
-    std::chrono::time_point<std::chrono::steady_clock> before{0s};
-    std::future_status fs = exit_signal.wait_for(0s);
-    while (fs == std::future_status::timeout) {
-        // If the thread is interrupted somehow, make sure to check that
-        // the polling interval has actually elapsed.
-        auto now = std::chrono::steady_clock::now();
-        if ((now - before) >= interval_) {
-            rc_action_();
-            before = now;
-        }
-
-        fs = exit_signal.wait_for(interval_);
-    }
+bool service::run() {
+    std::cout << "Run" << std::endl;
+    return rc_action_();
 }
 } // namespace dds
