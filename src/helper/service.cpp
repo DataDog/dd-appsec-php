@@ -29,7 +29,8 @@ service::service(service_identifier id, std::shared_ptr<engine> engine,
         throw std::runtime_error("invalid engine");
     }
 
-    interval_ = std::min(max_time_interval, poll_interval);
+    max_allowed_interval_ =
+        poll_interval > max_time_interval ? poll_interval : max_time_interval;
 
     if (rc_client_) {
         handler_ = std::thread(&service::run, this, exit_.get_future());
@@ -68,11 +69,11 @@ service::ptr service::from_settings(const service_identifier &id,
 void service::handle_error()
 {
     rc_action_ = [this] { discover(); };
-    if (interval_ < max_time_interval) {
+    if (interval_ < max_allowed_interval_) {
         auto new_interval =
             std::chrono::duration_cast<std::chrono::milliseconds>(
                 poll_interval_ * pow(2, errors_));
-        interval_ = std::min(max_time_interval, new_interval);
+        interval_ = std::min(max_allowed_interval_, new_interval);
     }
     if (errors_ < std::numeric_limits<std::uint16_t>::max() - 1) {
         errors_++;

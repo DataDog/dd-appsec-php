@@ -39,6 +39,11 @@ public:
               poll_interval){};
     std::chrono::milliseconds get_interval() { return interval_; }
     void simulate_error() { this->handle_error(); }
+    void simulate_errors()
+    {
+        this->simulate_error();
+        this->simulate_error();
+    }
 };
 } // namespace mock
 
@@ -278,7 +283,7 @@ TEST(ServiceTest, DynamicEnablementIsSetFromParameter)
     }
 }
 
-TEST(ServiceTest, IntervalGivenIsCapAtFiveMinutes)
+TEST(ServiceTest, IntervalGivenIsNotCapped)
 {
     dds::service_identifier sid{
         "service", "env", "tracer_version", "app_version", "runtime_id"};
@@ -286,11 +291,25 @@ TEST(ServiceTest, IntervalGivenIsCapAtFiveMinutes)
     mock::service svc{
         sid, engine, nullptr, std::make_shared<service_config>(), 10min};
 
-    auto five_minutes = 300000ms;
-    EXPECT_EQ(five_minutes, svc.get_interval());
+    EXPECT_EQ(std::chrono::milliseconds(10min), svc.get_interval());
 }
 
-TEST(ServiceTest, RetryStrategyWongGoOverFiveMinutes)
+TEST(
+    ServiceTest, WhenOriginalIntervalIsOverFiveMinutesItDoesNotIncreaseOnErrors)
+{
+    dds::service_identifier sid{
+        "service", "env", "tracer_version", "app_version", "runtime_id"};
+    std::shared_ptr<engine> engine{engine::create()};
+    mock::service svc{
+        sid, engine, nullptr, std::make_shared<service_config>(), 10min};
+
+    // Generate some errors so interval gets increased
+    svc.simulate_errors();
+
+    EXPECT_EQ(std::chrono::milliseconds(10min), svc.get_interval());
+}
+
+TEST(ServiceTest, IntervalIsCapToFiveMinutesWhenGivenUnderFive)
 {
     dds::service_identifier sid{
         "service", "env", "tracer_version", "app_version", "runtime_id"};
@@ -299,11 +318,22 @@ TEST(ServiceTest, RetryStrategyWongGoOverFiveMinutes)
         sid, engine, nullptr, std::make_shared<service_config>(), 5min - 1s};
 
     // Generate some errors so interval gets increased
-    svc.simulate_error();
-    svc.simulate_error();
+    svc.simulate_errors();
 
-    auto five_minutes = 300000ms;
-    EXPECT_EQ(five_minutes, svc.get_interval());
+    EXPECT_EQ(std::chrono::milliseconds(5min), svc.get_interval());
 }
 
+TEST(ServiceTest, OnErrorIntervalGetsIncreased)
+{
+    dds::service_identifier sid{
+        "service", "env", "tracer_version", "app_version", "runtime_id"};
+    std::shared_ptr<engine> engine{engine::create()};
+    mock::service svc{
+        sid, engine, nullptr, std::make_shared<service_config>(), 1s};
+
+    // Generate some errors so interval gets increased
+    svc.simulate_errors();
+
+    EXPECT_GT(svc.get_interval(), 1s);
+}
 } // namespace dds
