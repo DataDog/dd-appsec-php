@@ -7,6 +7,7 @@
 
 #include "config.hpp"
 #include "listener.hpp"
+#include "service_config.hpp"
 
 namespace dds::remote_config {
 
@@ -19,6 +20,10 @@ public:
     void on_unapply(const config & /*config*/) override
     {
         service_config_->unset_asm();
+    }
+    remote_config::protocol::capabilities_e get_capabilities() override
+    {
+        return remote_config::protocol::capabilities_e::ASM_ACTIVATION;
     }
 
     void init() override {}

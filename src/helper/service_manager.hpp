@@ -28,7 +28,7 @@ public:
         const remote_config::settings &rc_settings,
         std::map<std::string_view, std::string> &meta,
         std::map<std::string_view, double> &metrics,
-        std::vector<remote_config::protocol::capabilities_e> &&capabilities);
+        std::optional<bool> client_enable_configuration);
 
 protected:
     using cache_t = std::unordered_map<service_identifier,

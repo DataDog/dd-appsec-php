@@ -32,6 +32,11 @@ public:
         : engine_(std::move(engine)){};
     void on_update(const config &config) override;
     void on_unapply(const config & /*config*/) override{};
+    remote_config::protocol::capabilities_e get_capabilities() override
+    {
+        return remote_config::protocol::capabilities_e::ASM_IP_BLOCKING |
+               remote_config::protocol::capabilities_e::ASM_USER_BLOCKING;
+    }
 
     void init() override { rules_data_.clear(); }
     void commit() override;

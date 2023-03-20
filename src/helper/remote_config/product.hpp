@@ -6,7 +6,6 @@
 #pragma once
 
 #include "config.hpp"
-#include "exception.hpp"
 #include "listener.hpp"
 #include <algorithm>
 #include <iostream>
@@ -19,7 +18,8 @@ namespace dds::remote_config {
 
 class product {
 public:
-    product(std::string &&name, std::shared_ptr<product_listener_base> listener)
+    product(std::string &&name,
+        std::shared_ptr<dds::remote_config::product_listener_base> listener)
         : name_(std::move(name)), listener_(std::move(listener))
     {
         if (listener_ == nullptr) {
@@ -38,6 +38,10 @@ public:
         return name_ == b.name_ && configs_ == b.configs_;
     }
     [[nodiscard]] const std::string &get_name() const { return name_; }
+    [[nodiscard]] const protocol::capabilities_e get_capabilities() const
+    {
+        return listener_->get_capabilities();
+    }
 
 protected:
     void update_configs(

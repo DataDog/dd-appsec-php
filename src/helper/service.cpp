@@ -5,10 +5,6 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 
 #include "service.hpp"
-#include "remote_config/asm_data_listener.hpp"
-#include "remote_config/asm_dd_listener.hpp"
-#include "remote_config/asm_features_listener.hpp"
-#include "remote_config/asm_listener.hpp"
 
 namespace dds {
 
@@ -49,29 +45,16 @@ service::ptr service::from_settings(const service_identifier &id,
     const remote_config::settings &rc_settings,
     std::map<std::string_view, std::string> &meta,
     std::map<std::string_view, double> &metrics,
-    std::vector<remote_config::protocol::capabilities_e> &&capabilities)
+    std::optional<bool> client_enable_configuration)
 {
     auto engine_ptr = engine::from_settings(eng_settings, meta, metrics);
 
     std::chrono::milliseconds const poll_interval{rc_settings.poll_interval};
-
-    // Create remote configs stuff
     auto service_config = std::make_shared<dds::service_config>();
-    auto asm_features_listener =
-        std::make_shared<remote_config::asm_features_listener>(service_config);
-    auto asm_data_listener =
-        std::make_shared<remote_config::asm_data_listener>(engine_ptr);
-    auto asm_dd_listener = std::make_shared<remote_config::asm_dd_listener>(
-        engine_ptr, dds::engine_settings::default_rules_file());
-    auto asm_listener =
-        std::make_shared<remote_config::asm_listener>(engine_ptr);
-    std::vector<remote_config::product> products = {
-        {"ASM_FEATURES", asm_features_listener},
-        {"ASM_DATA", asm_data_listener}, {"ASM_DD", asm_dd_listener},
-        {"ASM", asm_listener}};
 
-    auto rc_client = remote_config::client::from_settings(
-        id, rc_settings, std::move(products), std::move(capabilities));
+    auto rc_client = remote_config::client::from_settings(id, rc_settings,
+        client_enable_configuration, service_config, engine_ptr,
+        !eng_settings.rules_file.empty());
 
     return std::make_shared<service>(id, engine_ptr, std::move(rc_client),
         std::move(service_config),

@@ -195,5 +195,4 @@ TEST(ServiceTest, ItKeepsPollingWhileNoError)
     second_call_future.wait_for(1.2s);
     third_call_future.wait_for(1.8s);
 }
-
 } // namespace dds

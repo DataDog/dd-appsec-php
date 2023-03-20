@@ -12,7 +12,7 @@ std::shared_ptr<service> service_manager::create_service(
     const remote_config::settings &rc_settings,
     std::map<std::string_view, std::string> &meta,
     std::map<std::string_view, double> &metrics,
-    std::vector<remote_config::protocol::capabilities_e> &&capabilities)
+    std::optional<bool> client_enable_configuration)
 {
     const std::lock_guard guard{mutex_};
 
@@ -25,7 +25,7 @@ std::shared_ptr<service> service_manager::create_service(
     }
 
     auto service_ptr = service::from_settings(
-        id, settings, rc_settings, meta, metrics, std::move(capabilities));
+        id, settings, rc_settings, meta, metrics, client_enable_configuration);
     cache_.emplace(id, std::move(service_ptr));
     last_service_ = service_ptr;
 

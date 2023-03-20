@@ -21,6 +21,14 @@ public:
         : engine_(std::move(engine)){};
     void on_update(const config &config) override;
     void on_unapply(const config & /*config*/) override{};
+    remote_config::protocol::capabilities_e get_capabilities() override
+    {
+        return remote_config::protocol::capabilities_e::ASM_EXCLUSIONS |
+               remote_config::protocol::capabilities_e::
+                   ASM_CUSTOM_BLOCKING_RESPONSE |
+               remote_config::protocol::capabilities_e::ASM_REQUEST_BLOCKING |
+               remote_config::protocol::capabilities_e::ASM_RESPONSE_BLOCKING;
+    }
 
     void init() override;
     void commit() override;

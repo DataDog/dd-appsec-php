@@ -6,6 +6,7 @@
 
 #include "../common.hpp"
 #include "remote_config/config.hpp"
+#include "remote_config/exception.hpp"
 #include "remote_config/listener.hpp"
 #include "remote_config/product.hpp"
 
@@ -27,6 +28,8 @@ public:
         void, on_update, ((const remote_config::config &config)), (override));
     MOCK_METHOD(
         void, on_unapply, ((const remote_config::config &config)), (override));
+    MOCK_METHOD((remote_config::protocol::capabilities_e), get_capabilities, (),
+        (override));
     MOCK_METHOD(void, init, (), (override));
     MOCK_METHOD(void, commit, (), (override));
 };
