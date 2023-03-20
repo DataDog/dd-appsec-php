@@ -24,7 +24,7 @@
  - ([#184](https://github.com/DataDog/dd-appsec-php/pull/184)) Support actions and refactor
  - ([#186](https://github.com/DataDog/dd-appsec-php/pull/186)) Update `engine::subscriber` rule data
  - ([#187](https://github.com/DataDog/dd-appsec-php/pull/187)) Blocking templates, missing traces fix and set blocking parameters
- - ([#193](https://github.com/DataDog/dd-appsec-php/pull/193)) Upgrade tracer to v0.85.0
+ - ([#193](https://github.com/DataDog/dd-appsec-php/pull/193)) Upgrade tracer to v0.84.0
  - ([#202](https://github.com/DataDog/dd-appsec-php/pull/202)) Upgrade WAF 1.8.2
  - ([#208](https://github.com/DataDog/dd-appsec-php/pull/208)) Add init / commit stage to listeners
  - ([#213](https://github.com/DataDog/dd-appsec-php/pull/213)) Ruleset 1.5.2
