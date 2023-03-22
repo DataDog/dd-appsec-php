@@ -47,13 +47,12 @@ public:
 
     static client::ptr from_settings(const service_identifier &sid,
         const remote_config::settings &settings,
-        std::optional<bool> client_enable_configuration,
         const std::shared_ptr<dds::service_config> &service_config,
-        const std::shared_ptr<dds::engine> &engine_ptr, bool rules_file_set);
+        const std::shared_ptr<dds::engine> &engine_ptr);
 
     virtual bool poll();
     virtual bool is_remote_config_available();
-    [[nodiscard]] virtual const std::unordered_map<std::string, product>
+    [[nodiscard]] virtual const std::unordered_map<std::string, product>&
     get_products()
     {
         return products_;

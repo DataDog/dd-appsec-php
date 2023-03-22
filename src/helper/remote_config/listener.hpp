@@ -22,7 +22,8 @@ public:
 
     virtual void on_update(const config &config) = 0;
     virtual void on_unapply(const config &config) = 0;
-    virtual protocol::capabilities_e get_capabilities() = 0;
+    [[nodiscard]] virtual const protocol::capabilities_e get_capabilities() = 0;
+    [[nodiscard]] virtual const std::string_view get_name() = 0;
 
     // Stateful listeners need to override these methods
     virtual void init() = 0;

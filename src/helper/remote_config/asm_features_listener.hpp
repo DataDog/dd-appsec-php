@@ -21,10 +21,12 @@ public:
     {
         service_config_->unset_asm();
     }
-    remote_config::protocol::capabilities_e get_capabilities() override
+    const protocol::capabilities_e get_capabilities() override
     {
-        return remote_config::protocol::capabilities_e::ASM_ACTIVATION;
+        return protocol::capabilities_e::ASM_ACTIVATION;
     }
+
+    const std::string_view get_name() override { return "ASM_FEATURES"; }
 
     void init() override {}
     void commit() override {}

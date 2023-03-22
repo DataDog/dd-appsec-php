@@ -59,7 +59,7 @@ client::ptr client::from_settings(const service_identifier &sid,
         auto asm_features_listener =
             std::make_shared<remote_config::asm_features_listener>(
                 service_config);
-        products.emplace_back("ASM_FEATURES", asm_features_listener);
+        products.emplace_back(asm_features_listener);
     }
     if (!rules_file_set) {
         auto asm_data_listener =
@@ -69,9 +69,9 @@ client::ptr client::from_settings(const service_identifier &sid,
         auto asm_listener =
             std::make_shared<remote_config::asm_listener>(engine_ptr);
 
-        products.emplace_back("ASM_DATA", asm_data_listener);
-        products.emplace_back("ASM_DD", asm_dd_listener);
-        products.emplace_back("ASM", asm_listener);
+        products.emplace_back(asm_data_listener);
+        products.emplace_back(asm_dd_listener);
+        products.emplace_back(asm_listener);
     }
 
     if (products.empty()) {

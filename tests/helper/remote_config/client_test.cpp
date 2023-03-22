@@ -16,6 +16,7 @@
 #include "../common.hpp"
 #include "base64.h"
 #include "json_helper.hpp"
+#include "remote_config/asm_features_listener.hpp"
 #include "remote_config/client.hpp"
 #include "remote_config/exception.hpp"
 #include "remote_config/product.hpp"
@@ -32,15 +33,16 @@ namespace dds {
 class asm_features_listener_dummy
     : public remote_config::product_listener_base {
 public:
-    asm_features_listener_dummy() = default;
+    std::string name = {"MOCK_PRODUCT"};
     void on_update(const remote_config::config &config) override {}
     void on_unapply(const remote_config::config &config) override {}
-    remote_config::protocol::capabilities_e get_capabilities() override
+    void init() override {}
+    void commit() override {}
+    const remote_config::protocol::capabilities_e get_capabilities() override
     {
         return remote_config::protocol::capabilities_e::ASM_ACTIVATION;
     }
-    void init() override {}
-    void commit() override {}
+    const std::string_view get_name() override { return name; }
 };
 
 namespace mock {
@@ -67,12 +69,14 @@ public:
         void, on_update, ((const remote_config::config &config)), (override));
     MOCK_METHOD(
         void, on_unapply, ((const remote_config::config &config)), (override));
-    remote_config::protocol::capabilities_e get_capabilities() override
+    const remote_config::protocol::capabilities_e get_capabilities() override
     {
         return remote_config::protocol::capabilities_e::ASM_ACTIVATION;
     }
+    const std::string_view get_name() override { return name; }
     MOCK_METHOD(void, init, (), (override));
     MOCK_METHOD(void, commit, (), (override));
+    std::string name = {"MOCK_PRODUCT"};
 };
 } // namespace mock
 
@@ -161,9 +165,8 @@ public:
     void generate_products()
     {
         for (const std::string &p_str : products_str) {
-            std::string product_name(p_str);
-            remote_config::product _p(
-                std::move(product_name), this->dummy_asm_features_listener);
+            this->dummy_asm_features_listener->name = p_str;
+            remote_config::product _p(this->dummy_asm_features_listener);
             _products.push_back(_p);
         }
     }
@@ -686,8 +689,8 @@ TEST_F(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
     EXPECT_CALL(*listener01, on_update(expected_config)).Times(1);
     EXPECT_CALL(*listener01, on_unapply(_)).Times(0);
     EXPECT_CALL(*listener01, commit()).Times(1);
-    remote_config::product product(
-        std::move(first_product_product), listener01);
+    listener01->name = first_product_product;
+    remote_config::product product(listener01);
 
     // Product on response
     auto listener_called_no_configs01 = std::make_shared<mock::listener_mock>();
@@ -696,8 +699,9 @@ TEST_F(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
     EXPECT_CALL(*listener_called_no_configs01, on_unapply(_)).Times(0);
     EXPECT_CALL(*listener_called_no_configs01, commit()).Times(1);
     std::string product_str_not_in_response = "NOT_IN_RESPONSE";
+    listener_called_no_configs01->name = product_str_not_in_response;
     remote_config::product product_not_in_response(
-        std::move(product_str_not_in_response), listener_called_no_configs01);
+        listener_called_no_configs01);
 
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
@@ -763,8 +767,8 @@ TEST_F(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
         .RetiresOnSaturation();
     EXPECT_CALL(*listener01, commit()).Times(2);
     // First poll expectations
-    remote_config::product product(
-        std::move(first_product_product), listener01);
+    listener01->name = first_product_product;
+    remote_config::product product(listener01);
 
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
@@ -867,7 +871,8 @@ TEST_F(
         .RetiresOnSaturation();
     EXPECT_CALL(*listener01, on_unapply(_)).Times(0);
     EXPECT_CALL(*listener01, commit()).Times(2);
-    remote_config::product product(std::move(apm_sampling), listener01);
+    listener01->name = apm_sampling;
+    remote_config::product product(listener01);
 
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
@@ -1146,8 +1151,7 @@ TEST_F(RemoteConfigClient, ProductsWithAListenerAcknowledgeUpdates)
         .WillRepeatedly(
             DoAll(testing::SaveArg<0>(&request_sent), Return(response01)));
 
-    remote_config::product p(
-        std::string(first_product_product), this->dummy_asm_features_listener);
+    remote_config::product p(this->dummy_asm_features_listener);
     std::vector<remote_config::product> products = {p};
 
     service_identifier sid{
@@ -1189,7 +1193,8 @@ TEST_F(RemoteConfigClient, WhenAListerCanProccesAnUpdateTheConfigStateGetsError)
         .WillRepeatedly(mock::ThrowErrorApplyingConfig());
     EXPECT_CALL(*listener, commit()).Times(2);
 
-    remote_config::product p(std::string(first_product_product), listener);
+    listener->name = first_product_product;
+    remote_config::product p(listener);
     std::vector<remote_config::product> products = {p};
 
     service_identifier sid{
@@ -1224,8 +1229,7 @@ TEST_F(RemoteConfigClient, OneClickActivationIsSetAsCapability)
         .WillRepeatedly(
             DoAll(testing::SaveArg<0>(&request_sent), Return(response01)));
 
-    remote_config::product p(
-        std::string(first_product_product), this->dummy_asm_features_listener);
+    remote_config::product p(this->dummy_asm_features_listener);
     std::vector<remote_config::product> products = {p};
 
     service_identifier sid{

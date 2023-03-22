@@ -18,13 +18,13 @@ namespace dds::remote_config {
 
 class product {
 public:
-    product(std::string &&name,
-        std::shared_ptr<dds::remote_config::product_listener_base> listener)
-        : name_(std::move(name)), listener_(std::move(listener))
+    product(std::shared_ptr<dds::remote_config::product_listener_base> listener)
+        : listener_(std::move(listener))
     {
         if (listener_ == nullptr) {
-            throw std::runtime_error("invalid listener " + name);
+            throw std::runtime_error("invalid listener");
         }
+        name_ = listener_->get_name();
     }
 
     void assign_configs(const std::unordered_map<std::string, config> &configs);
