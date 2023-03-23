@@ -126,7 +126,8 @@ bool client::handle_command(const network::client_init::request &command)
 
     try {
         service_ = service_manager_->create_service(service_id, eng_settings,
-            command.rc_settings, meta, metrics, client_enabled_conf);
+            command.rc_settings, meta, metrics,
+            !client_enabled_conf.has_value());
     } catch (std::system_error &e) {
         // TODO: logging should happen at WAF impl
         DD_STDLOG(DD_STDLOG_RULES_FILE_NOT_FOUND,

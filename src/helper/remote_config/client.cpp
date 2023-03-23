@@ -46,22 +46,21 @@ client::client(std::unique_ptr<http_api> &&arg_api, service_identifier sid,
 
 client::ptr client::from_settings(const service_identifier &sid,
     const remote_config::settings &settings,
-    std::optional<bool> client_enable_configuration,
     const std::shared_ptr<dds::service_config> &service_config,
-    const std::shared_ptr<dds::engine> &engine_ptr, bool rules_file_set)
+    const std::shared_ptr<dds::engine> &engine_ptr)
 {
     if (!settings.enabled) {
         return {};
     }
 
     std::vector<remote_config::product> products = {};
-    if (!client_enable_configuration.has_value()) {
+    if (service_config->dynamic_enablement) {
         auto asm_features_listener =
             std::make_shared<remote_config::asm_features_listener>(
                 service_config);
         products.emplace_back(asm_features_listener);
     }
-    if (!rules_file_set) {
+    if (service_config->dynamic_engine) {
         auto asm_data_listener =
             std::make_shared<remote_config::asm_data_listener>(engine_ptr);
         auto asm_dd_listener = std::make_shared<remote_config::asm_dd_listener>(

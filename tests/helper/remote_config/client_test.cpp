@@ -1255,10 +1255,11 @@ TEST_F(RemoteConfigClient, RuntimeIdIsNotGeneratedIfProvided)
     settings.enabled = true;
 
     auto service_config = std::make_shared<dds::service_config>();
+    service_config->dynamic_enablement = true;
     std::shared_ptr<engine> engine{engine::create()};
 
     auto client = remote_config::client::from_settings(
-        sid, settings, std::nullopt, service_config, engine, true);
+        sid, settings, service_config, engine);
 
     EXPECT_STREQ(
         runtime_id, client->get_service_identifier().runtime_id.c_str());
@@ -1273,10 +1274,11 @@ TEST_F(RemoteConfigClient, RuntimeIdIsGeneratedWhenNotProvided)
     settings.enabled = true;
 
     auto service_config = std::make_shared<dds::service_config>();
+    service_config->dynamic_enablement = true;
     std::shared_ptr<engine> engine{engine::create()};
 
     auto client = remote_config::client::from_settings(
-        sid, settings, std::nullopt, service_config, engine, true);
+        sid, settings, service_config, engine);
 
     EXPECT_FALSE(client->get_service_identifier().runtime_id.empty());
     EXPECT_TRUE(sid.runtime_id.empty());
@@ -1290,15 +1292,16 @@ TEST_F(RemoteConfigClient, ItdoesNotGenerateClientIfRCNotEnabled)
     settings.enabled = false;
 
     auto service_config = std::make_shared<dds::service_config>();
+    service_config->dynamic_enablement = true;
     std::shared_ptr<engine> engine{engine::create()};
 
     auto client = remote_config::client::from_settings(
-        sid, settings, std::nullopt, service_config, engine, true);
+        sid, settings, service_config, engine);
 
     EXPECT_FALSE(client);
 }
 
-TEST_F(RemoteConfigClient, AsmFeatureProductIsAddeWhenEnabledNotConfigured)
+TEST_F(RemoteConfigClient, AsmFeatureProductIsAddeWhenDynamicEnablement)
 {
     service_identifier sid = {
         "service", "env", "tracer_version", "app_version", "runtime_id"};
@@ -1306,16 +1309,18 @@ TEST_F(RemoteConfigClient, AsmFeatureProductIsAddeWhenEnabledNotConfigured)
     settings.enabled = true;
 
     auto service_config = std::make_shared<dds::service_config>();
+    service_config->dynamic_enablement = true;
     std::shared_ptr<engine> engine{engine::create()};
 
     auto client = remote_config::client::from_settings(
-        sid, settings, std::nullopt, service_config, engine, false);
+        sid, settings, service_config, engine);
 
     EXPECT_TRUE(client->get_products().find("ASM_FEATURES") !=
                 client->get_products().end());
 }
 
-TEST_F(RemoteConfigClient, AsmFeatureProductIsNotAddeWhenEnabledConfigured)
+TEST_F(
+    RemoteConfigClient, AsmFeatureProductIsNotAddeWhenDynamicEnablementDisabled)
 {
     service_identifier sid = {
         "service", "env", "tracer_version", "app_version", "runtime_id"};
@@ -1323,24 +1328,18 @@ TEST_F(RemoteConfigClient, AsmFeatureProductIsNotAddeWhenEnabledConfigured)
     settings.enabled = true;
 
     auto service_config = std::make_shared<dds::service_config>();
+    service_config->dynamic_enablement = false;
+    service_config->dynamic_engine =
+        true; // Setting this to true so at least there is a product
     std::shared_ptr<engine> engine{engine::create()};
 
-    { // When enabled
-        auto client = remote_config::client::from_settings(
-            sid, settings, true, service_config, engine, false);
-        EXPECT_TRUE(client->get_products().find("ASM_FEATURES") ==
-                    client->get_products().end());
-    }
-
-    { // When disabled
-        auto client = remote_config::client::from_settings(
-            sid, settings, true, service_config, engine, false);
-        EXPECT_TRUE(client->get_products().find("ASM_FEATURES") ==
-                    client->get_products().end());
-    }
+    auto client = remote_config::client::from_settings(
+        sid, settings, service_config, engine);
+    EXPECT_TRUE(client->get_products().find("ASM_FEATURES") ==
+                client->get_products().end());
 }
 
-TEST_F(RemoteConfigClient, SomeProductsDependOnRulesFilesBeingSet)
+TEST_F(RemoteConfigClient, SomeProductsDependOnDynamicEngineBeingSet)
 {
     service_identifier sid = {
         "service", "env", "tracer_version", "app_version", "runtime_id"};
@@ -1348,12 +1347,14 @@ TEST_F(RemoteConfigClient, SomeProductsDependOnRulesFilesBeingSet)
     settings.enabled = true;
 
     auto service_config = std::make_shared<dds::service_config>();
+    // Set this to true so at least there is a product
+    service_config->dynamic_enablement = true;
     std::shared_ptr<engine> engine{engine::create()};
 
     { // When rules file is not set, products are added
-        bool is_rules_file_set = false;
-        auto client = remote_config::client::from_settings(sid, settings,
-            std::nullopt, service_config, engine, is_rules_file_set);
+        service_config->dynamic_engine = true;
+        auto client = remote_config::client::from_settings(
+            sid, settings, service_config, engine);
         EXPECT_TRUE(client->get_products().find("ASM_DATA") !=
                     client->get_products().end());
         EXPECT_TRUE(client->get_products().find("ASM_DD") !=
@@ -1363,9 +1364,9 @@ TEST_F(RemoteConfigClient, SomeProductsDependOnRulesFilesBeingSet)
     }
 
     { // When rules file is set, products are not added
-        bool is_rules_file_set = true;
-        auto client = remote_config::client::from_settings(sid, settings,
-            std::nullopt, service_config, engine, is_rules_file_set);
+        service_config->dynamic_engine = false;
+        auto client = remote_config::client::from_settings(
+            sid, settings, service_config, engine);
         EXPECT_TRUE(client->get_products().find("ASM_DATA") ==
                     client->get_products().end());
         EXPECT_TRUE(client->get_products().find("ASM_DD") ==
@@ -1383,12 +1384,12 @@ TEST_F(RemoteConfigClient, IfNoProductsAreRequiredRemoteClientIsNotGenerated)
     settings.enabled = true;
 
     auto service_config = std::make_shared<dds::service_config>();
+    service_config->dynamic_enablement = false;
+    service_config->dynamic_engine = false;
     std::shared_ptr<engine> engine{engine::create()};
 
-    bool is_rules_file_set = true;
-    auto enabled_configuration = true;
-    auto client = remote_config::client::from_settings(sid, settings,
-        enabled_configuration, service_config, engine, is_rules_file_set);
+    auto client = remote_config::client::from_settings(
+        sid, settings, service_config, engine);
 
     EXPECT_FALSE(client);
 }

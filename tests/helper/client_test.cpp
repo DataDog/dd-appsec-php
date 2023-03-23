@@ -31,10 +31,9 @@ public:
             const dds::remote_config::settings &rc_settings,
             (std::map<std::string_view, std::string> & meta),
             (std::map<std::string_view, double> & metrics),
-            std::optional<bool> client_enable_configuration),
+            bool dynamic_enablement),
         (override));
 };
-
 } // namespace mock
 
 constexpr auto EXTENSION_CONFIGURATION_NOT_SET = std::nullopt;
@@ -2066,6 +2065,61 @@ TEST(ClientTest, RequestExecDisabledClient)
             .WillOnce(Return(true));
 
         EXPECT_FALSE(c.run_request());
+    }
+}
+
+TEST(ClientTest, ServiceIsCreatedDependingOnEnabledConfigurationValue)
+{
+    std::shared_ptr<service> service;
+    std::shared_ptr<network::base_response> res;
+
+    { // Not configured
+        auto smanager = std::make_shared<mock::service_manager>();
+        auto broker = new mock::broker();
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillRepeatedly(Return(true));
+
+        EXPECT_CALL(*smanager, create_service(_, _, _, _, _, true))
+            .Times(1)
+            .WillOnce(Return(service));
+        client c(smanager, std::unique_ptr<mock::broker>(broker));
+        network::client_init::request msg;
+        msg.enabled_configuration = std::nullopt;
+        c.handle_command(msg);
+    }
+
+    { // Enabled by conf
+        auto smanager = std::make_shared<mock::service_manager>();
+        auto broker = new mock::broker();
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillRepeatedly(Return(true));
+        EXPECT_CALL(*smanager, create_service(_, _, _, _, _, false))
+            .Times(1)
+            .WillOnce(Return(service));
+        client c(smanager, std::unique_ptr<mock::broker>(broker));
+        network::client_init::request msg;
+        msg.enabled_configuration = true;
+        c.handle_command(msg);
+    }
+
+    { // Disabled by conf
+        auto smanager = std::make_shared<mock::service_manager>();
+        auto broker = new mock::broker();
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillRepeatedly(Return(true));
+        EXPECT_CALL(*smanager, create_service(_, _, _, _, _, false))
+            .Times(1)
+            .WillOnce(Return(service));
+        client c(smanager, std::unique_ptr<mock::broker>(broker));
+        network::client_init::request msg;
+        msg.enabled_configuration = false;
+        c.handle_command(msg);
     }
 }
 } // namespace dds

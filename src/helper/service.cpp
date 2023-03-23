@@ -44,17 +44,17 @@ service::ptr service::from_settings(const service_identifier &id,
     const dds::engine_settings &eng_settings,
     const remote_config::settings &rc_settings,
     std::map<std::string_view, std::string> &meta,
-    std::map<std::string_view, double> &metrics,
-    std::optional<bool> client_enable_configuration)
+    std::map<std::string_view, double> &metrics, bool dynamic_enablement)
 {
     auto engine_ptr = engine::from_settings(eng_settings, meta, metrics);
 
     std::chrono::milliseconds const poll_interval{rc_settings.poll_interval};
     auto service_config = std::make_shared<dds::service_config>();
+    service_config->dynamic_enablement = dynamic_enablement;
+    service_config->dynamic_engine = eng_settings.rules_file.empty();
 
-    auto rc_client = remote_config::client::from_settings(id, rc_settings,
-        client_enable_configuration, service_config, engine_ptr,
-        !eng_settings.rules_file.empty());
+    auto rc_client = remote_config::client::from_settings(
+        id, rc_settings, service_config, engine_ptr);
 
     return std::make_shared<service>(id, engine_ptr, std::move(rc_client),
         std::move(service_config),

@@ -11,8 +11,7 @@ std::shared_ptr<service> service_manager::create_service(
     const service_identifier &id, const engine_settings &settings,
     const remote_config::settings &rc_settings,
     std::map<std::string_view, std::string> &meta,
-    std::map<std::string_view, double> &metrics,
-    std::optional<bool> client_enable_configuration)
+    std::map<std::string_view, double> &metrics, bool dynamic_enablement)
 {
     const std::lock_guard guard{mutex_};
 
@@ -25,7 +24,7 @@ std::shared_ptr<service> service_manager::create_service(
     }
 
     auto service_ptr = service::from_settings(
-        id, settings, rc_settings, meta, metrics, client_enable_configuration);
+        id, settings, rc_settings, meta, metrics, dynamic_enablement);
     cache_.emplace(id, std::move(service_ptr));
     last_service_ = service_ptr;
 

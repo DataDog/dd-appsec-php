@@ -52,7 +52,7 @@ public:
 
     virtual bool poll();
     virtual bool is_remote_config_available();
-    [[nodiscard]] virtual const std::unordered_map<std::string, product>&
+    [[nodiscard]] virtual const std::unordered_map<std::string, product> &
     get_products()
     {
         return products_;
