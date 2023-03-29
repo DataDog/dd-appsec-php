@@ -4,6 +4,7 @@
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #include <SAPI.h>
+#include <ext/standard/url.h>
 #include <php.h>
 
 #include "../commands_helpers.h"
@@ -113,11 +114,34 @@ static dd_result _pack_command(
     dd_mpack_write_lstr(w, "enabled");
     mpack_write_bool(w, get_DD_REMOTE_CONFIG_ENABLED());
 
-    dd_mpack_write_lstr(w, "host");
-    dd_mpack_write_nullable_cstr(w, ZSTR_VAL(get_DD_AGENT_HOST()));
+    zend_string *agent_host = get_global_DD_AGENT_HOST();
+    zend_string *agent_url = get_global_DD_TRACE_AGENT_URL();
+    uint64_t port = get_global_DD_TRACE_AGENT_PORT();
+    char *host = NULL;
 
+    if (agent_host && ZSTR_LEN(agent_host) > 0) {
+        host = ZSTR_VAL(agent_host);
+    } else if (agent_url && ZSTR_LEN(agent_url) > 0) {
+        php_url *parsed_url = php_url_parse(ZSTR_VAL(agent_url));
+        if (parsed_url) {
+            if (parsed_url->host && ZSTR_LEN(parsed_url->host) > 0) {
+                host = ZSTR_VAL(parsed_url->host);
+            }
+            port = parsed_url->port;
+        }
+    }
+
+    if (!host) {
+        host = "127.0.0.1";
+    }
+    if (port <= 0 || port > 65535) {
+        port = 8126;
+    }
+
+    dd_mpack_write_lstr(w, "host");
+    dd_mpack_write_nullable_cstr(w, host);
     dd_mpack_write_lstr(w, "port");
-    mpack_write_uint(w, get_DD_TRACE_AGENT_PORT());
+    mpack_write_uint(w, port);
 
     dd_mpack_write_lstr(w, "poll_interval");
     mpack_write_u32(w, get_DD_REMOTE_CONFIG_POLL_INTERVAL());
