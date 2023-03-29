@@ -5,6 +5,10 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 
 #include "service_handler.hpp"
+#include "remote_config/asm_data_listener.hpp"
+#include "remote_config/asm_dd_listener.hpp"
+#include "remote_config/asm_features_listener.hpp"
+#include "remote_config/asm_listener.hpp"
 
 namespace dds::remote_config {
 
@@ -36,11 +40,43 @@ service_handler::ptr service_handler::from_settings(
     const remote_config::settings &rc_settings, engine::ptr engine_ptr,
     bool dynamic_enablement)
 {
-    service_config->dynamic_enablement = dynamic_enablement;
-    service_config->dynamic_engine = eng_settings.rules_file.empty();
+    if (!rc_settings.enabled) {
+        return {};
+    }
 
-    auto rc_client = remote_config::client::from_settings(
-        id, rc_settings, service_config, engine_ptr);
+    // TODO runtime_id will be send by the extension when the extension can get
+    // it from the profiler. When that happen, this wont be needed
+    auto id_copy = id;
+    if (id_copy.runtime_id.empty()) {
+        id_copy.runtime_id = generate_random_uuid();
+    }
+
+    std::vector<remote_config::product> products = {};
+    if (dynamic_enablement) {
+        auto asm_features_listener =
+            std::make_shared<remote_config::asm_features_listener>(
+                service_config);
+        products.emplace_back(asm_features_listener);
+    }
+    if (eng_settings.rules_file.empty()) {
+        auto asm_data_listener =
+            std::make_shared<remote_config::asm_data_listener>(engine_ptr);
+        auto asm_dd_listener = std::make_shared<remote_config::asm_dd_listener>(
+            engine_ptr, dds::engine_settings::default_rules_file());
+        auto asm_listener =
+            std::make_shared<remote_config::asm_listener>(engine_ptr);
+
+        products.emplace_back(asm_data_listener);
+        products.emplace_back(asm_dd_listener);
+        products.emplace_back(asm_listener);
+    }
+
+    if (products.empty()) {
+        return {};
+    }
+
+    auto rc_client =
+        remote_config::client::from_settings(id_copy, rc_settings, products);
 
     return std::make_shared<service_handler>(std::move(rc_client),
         std::move(service_config),
