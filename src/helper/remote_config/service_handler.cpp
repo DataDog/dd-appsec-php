@@ -35,7 +35,7 @@ service_handler::~service_handler()
 }
 
 service_handler::ptr service_handler::from_settings(
-    const service_identifier &id, const dds::engine_settings &eng_settings,
+    const dds::engine_settings &eng_settings,
     std::shared_ptr<dds::service_config> service_config,
     const remote_config::settings &rc_settings, engine::ptr engine_ptr,
     bool dynamic_enablement)
@@ -44,11 +44,14 @@ service_handler::ptr service_handler::from_settings(
         return {};
     }
 
+    if (!service_config) {
+        return {};
+    }
+
     // TODO runtime_id will be send by the extension when the extension can get
     // it from the profiler. When that happen, this wont be needed
-    auto id_copy = id;
-    if (id_copy.runtime_id.empty()) {
-        id_copy.runtime_id = generate_random_uuid();
+    if (service_config->sid.runtime_id.empty()) {
+        service_config->sid.runtime_id = generate_random_uuid();
     }
 
     std::vector<remote_config::product> products = {};
@@ -75,8 +78,8 @@ service_handler::ptr service_handler::from_settings(
         return {};
     }
 
-    auto rc_client =
-        remote_config::client::from_settings(id_copy, rc_settings, products);
+    auto rc_client = remote_config::client::from_settings(
+        service_config->sid, rc_settings, products);
 
     return std::make_shared<service_handler>(std::move(rc_client),
         std::move(service_config),

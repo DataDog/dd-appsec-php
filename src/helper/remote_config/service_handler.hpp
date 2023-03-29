@@ -36,21 +36,15 @@ public:
     service_handler(service_handler &&) = delete;
     service_handler &operator=(service_handler &&) = delete;
 
-    static service_handler::ptr from_settings(const service_identifier &id,
+    static service_handler::ptr from_settings(
         const dds::engine_settings &eng_settings,
         std::shared_ptr<dds::service_config> service_config,
         const remote_config::settings &rc_settings, engine::ptr engine_ptr,
         bool dynamic_enablement);
 
-    [[nodiscard]] std::shared_ptr<service_config> get_service_config() const
-    {
-        // TODO make access atomic?
-        return service_config_;
-    }
-
-    [[nodiscard]] bool running() const { return handler_.joinable(); }
-
     void start();
+
+    remote_config::client *get_client() { return rc_client_.get(); }
 
 protected:
     void run(std::future<bool> &&exit_signal);

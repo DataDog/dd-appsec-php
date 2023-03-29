@@ -24,7 +24,7 @@ class service {
 public:
     using ptr = std::shared_ptr<service>;
 
-    service(service_identifier id, std::shared_ptr<engine> engine,
+    service(std::shared_ptr<engine> engine,
         std::shared_ptr<service_config> service_config,
         dds::remote_config::service_handler::ptr service_handler);
 
@@ -52,10 +52,7 @@ public:
         return service_config_;
     }
 
-    [[nodiscard]] service_identifier get_id() const { return id_; }
-
 protected:
-    service_identifier id_;
     std::shared_ptr<engine> engine_;
     std::shared_ptr<service_config> service_config_;
     dds::remote_config::service_handler::ptr service_handler_;

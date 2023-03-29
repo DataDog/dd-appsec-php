@@ -8,11 +8,10 @@
 
 namespace dds {
 
-service::service(service_identifier id, std::shared_ptr<engine> engine,
+service::service(std::shared_ptr<engine> engine,
     std::shared_ptr<service_config> service_config,
     dds::remote_config::service_handler::ptr service_handler)
-    : id_(std::move(id)), engine_(std::move(engine)),
-      service_config_(std::move(service_config)),
+    : engine_(std::move(engine)), service_config_(std::move(service_config)),
       service_handler_(service_handler)
 {
     // The engine should always be valid
@@ -34,12 +33,13 @@ service::ptr service::from_settings(const service_identifier &id,
     auto engine_ptr = engine::from_settings(eng_settings, meta, metrics);
 
     auto service_config = std::make_shared<dds::service_config>();
+    service_config->sid = id;
 
     auto service_handler =
-        remote_config::service_handler::from_settings(id, eng_settings,
+        remote_config::service_handler::from_settings(eng_settings,
             service_config, rc_settings, engine_ptr, dynamic_enablement);
 
     return std::make_shared<service>(
-        id, engine_ptr, std::move(service_config), std::move(service_handler));
+        engine_ptr, std::move(service_config), std::move(service_handler));
 }
 } // namespace dds
