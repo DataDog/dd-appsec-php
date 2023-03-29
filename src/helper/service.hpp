@@ -7,13 +7,11 @@
 
 #include "engine.hpp"
 #include "exception.hpp"
-#include "remote_config/client.hpp"
-#include "remote_config/settings.hpp"
+#include "remote_config/service_handler.hpp"
 #include "service_config.hpp"
 #include "service_identifier.hpp"
 #include "std_logging.hpp"
 #include "utils.hpp"
-#include <future>
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <unordered_map>
@@ -27,10 +25,8 @@ public:
     using ptr = std::shared_ptr<service>;
 
     service(service_identifier id, std::shared_ptr<engine> engine,
-        remote_config::client::ptr &&rc_client,
         std::shared_ptr<service_config> service_config,
-        const std::chrono::milliseconds &poll_interval = 1s);
-    ~service();
+        dds::remote_config::service_handler::ptr service_handler);
 
     service(const service &) = delete;
     service &operator=(const service &) = delete;
@@ -56,28 +52,13 @@ public:
         return service_config_;
     }
 
-    [[nodiscard]] bool running() const { return handler_.joinable(); }
     [[nodiscard]] service_identifier get_id() const { return id_; }
 
 protected:
-    void run(std::future<bool> &&exit_signal);
-    void handle_error();
-
     service_identifier id_;
     std::shared_ptr<engine> engine_;
-    remote_config::client::ptr rc_client_;
     std::shared_ptr<service_config> service_config_;
-
-    std::chrono::milliseconds poll_interval_;
-    std::chrono::milliseconds interval_;
-    void poll();
-    void discover();
-    std::function<void()> rc_action_;
-
-    std::uint16_t errors_ = {0};
-
-    std::promise<bool> exit_;
-    std::thread handler_;
+    dds::remote_config::service_handler::ptr service_handler_;
 };
 
 } // namespace dds
