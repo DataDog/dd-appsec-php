@@ -42,7 +42,7 @@ public:
         const remote_config::settings &rc_settings, engine::ptr engine_ptr,
         bool dynamic_enablement);
 
-    void start();
+    bool start();
 
     remote_config::client *get_client() { return rc_client_.get(); }
 

@@ -86,11 +86,14 @@ service_handler::ptr service_handler::from_settings(
         std::chrono::milliseconds{rc_settings.poll_interval});
 }
 
-void service_handler::start()
+bool service_handler::start()
 {
     if (rc_client_) {
         handler_ = std::thread(&service_handler::run, this, exit_.get_future());
+        return true;
     }
+
+    return false;
 }
 
 void service_handler::handle_error()
