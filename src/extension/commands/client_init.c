@@ -20,6 +20,9 @@
 #include "mpack-node.h"
 #include "mpack-writer.h"
 
+static const unsigned int DEFAULT_AGENT_PORT = 8126;
+static const unsigned int MAX_TCP_PORT_ALLOWED = 65535;
+
 static dd_result _pack_command(mpack_writer_t *nonnull w, void *nullable ctx);
 static dd_result _process_response(mpack_node_t root, void *nullable ctx);
 static void _process_meta_and_metrics(mpack_node_t root);
@@ -32,6 +35,45 @@ static const dd_command_spec _spec = {
     .incoming_cb = _process_response,
     .config_features_cb = dd_command_process_config_features_unexpected,
 };
+
+typedef struct url {
+    char *host;
+    unsigned int port;
+} url;
+
+void extract_url(url *out)
+{
+    zend_string *agent_host = get_global_DD_AGENT_HOST();
+    zend_string *agent_url = get_global_DD_TRACE_AGENT_URL();
+    out->port = get_global_DD_TRACE_AGENT_PORT();
+
+    if (agent_host && ZSTR_LEN(agent_host) > 0) {
+        out->host = ZSTR_VAL(agent_host);
+    } else if (agent_url && ZSTR_LEN(agent_url) > 0) {
+        php_url *parsed_url = php_url_parse(ZSTR_VAL(agent_url));
+        if (parsed_url) {
+#if PHP_VERSION_ID < 70300
+            if (parsed_url->host && strlen(parsed_url->host) > 0) {
+                out->host = strdup(parsed_url->host);
+            }
+#else
+            if (parsed_url->host && ZSTR_LEN(parsed_url->host) > 0) {
+                out->host = strdup(ZSTR_VAL(parsed_url->host));
+            }
+#endif
+            out->port = parsed_url->port;
+
+            php_url_free(parsed_url);
+        }
+    }
+
+    if (!out->host) {
+        out->host = "127.0.0.1";
+    }
+    if (out->port <= 0 || out->port > MAX_TCP_PORT_ALLOWED) {
+        out->port = DEFAULT_AGENT_PORT;
+    }
+}
 
 dd_result dd_client_init(dd_conn *nonnull conn)
 {
@@ -114,40 +156,13 @@ static dd_result _pack_command(
     dd_mpack_write_lstr(w, "enabled");
     mpack_write_bool(w, get_DD_REMOTE_CONFIG_ENABLED());
 
-    zend_string *agent_host = get_global_DD_AGENT_HOST();
-    zend_string *agent_url = get_global_DD_TRACE_AGENT_URL();
-    uint64_t port = get_global_DD_TRACE_AGENT_PORT();
-    char *host = NULL;
-
-    if (agent_host && ZSTR_LEN(agent_host) > 0) {
-        host = ZSTR_VAL(agent_host);
-    } else if (agent_url && ZSTR_LEN(agent_url) > 0) {
-        php_url *parsed_url = php_url_parse(ZSTR_VAL(agent_url));
-        if (parsed_url) {
-#if PHP_VERSION_ID < 73000
-            if (parsed_url->host && strlen(parsed_url->host) > 0) {
-                host = parsed_url->host;
-            }
-#else
-            if (parsed_url->host && ZSTR_LEN(parsed_url->host) > 0) {
-                host = ZSTR_VAL(parsed_url->host);
-            }
-#endif
-            port = parsed_url->port;
-        }
-    }
-
-    if (!host) {
-        host = "127.0.0.1";
-    }
-    if (port <= 0 || port > 65535) {
-        port = 8126;
-    }
+    url extracted_url = {NULL, 0};
+    extract_url(&extracted_url);
 
     dd_mpack_write_lstr(w, "host");
-    dd_mpack_write_nullable_cstr(w, host);
+    dd_mpack_write_nullable_cstr(w, extracted_url.host);
     dd_mpack_write_lstr(w, "port");
-    mpack_write_uint(w, port);
+    mpack_write_uint(w, extracted_url.port);
 
     dd_mpack_write_lstr(w, "poll_interval");
     mpack_write_u32(w, get_DD_REMOTE_CONFIG_POLL_INTERVAL());
