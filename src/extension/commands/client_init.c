@@ -41,6 +41,14 @@ typedef struct url {
     unsigned int port;
 } url;
 
+void free_url(url *out)
+{
+    if (out && out->host) {
+        free(out->host);
+        out->host = NULL;
+    }
+}
+
 void extract_url(url *out)
 {
     zend_string *agent_host = get_global_DD_AGENT_HOST();
@@ -48,7 +56,7 @@ void extract_url(url *out)
     out->port = get_global_DD_TRACE_AGENT_PORT();
 
     if (agent_host && ZSTR_LEN(agent_host) > 0) {
-        out->host = ZSTR_VAL(agent_host);
+        out->host = strdup(ZSTR_VAL(agent_host));
     } else if (agent_url && ZSTR_LEN(agent_url) > 0) {
         php_url *parsed_url = php_url_parse(ZSTR_VAL(agent_url));
         if (parsed_url) {
@@ -68,7 +76,7 @@ void extract_url(url *out)
     }
 
     if (!out->host) {
-        out->host = "127.0.0.1";
+        out->host = strdup("127.0.0.1");
     }
     if (out->port <= 0 || out->port > MAX_TCP_PORT_ALLOWED) {
         out->port = DEFAULT_AGENT_PORT;
@@ -163,6 +171,8 @@ static dd_result _pack_command(
     dd_mpack_write_nullable_cstr(w, extracted_url.host);
     dd_mpack_write_lstr(w, "port");
     mpack_write_uint(w, extracted_url.port);
+
+    free_url(&extracted_url);
 
     dd_mpack_write_lstr(w, "poll_interval");
     mpack_write_u32(w, get_DD_REMOTE_CONFIG_POLL_INTERVAL());
