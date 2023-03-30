@@ -124,9 +124,15 @@ static dd_result _pack_command(
     } else if (agent_url && ZSTR_LEN(agent_url) > 0) {
         php_url *parsed_url = php_url_parse(ZSTR_VAL(agent_url));
         if (parsed_url) {
+#if PHP_VERSION_ID < 73000
+            if (parsed_url->host && strlen(parsed_url->host) > 0) {
+                host = parsed_url->host;
+            }
+#else
             if (parsed_url->host && ZSTR_LEN(parsed_url->host) > 0) {
                 host = ZSTR_VAL(parsed_url->host);
             }
+#endif
             port = parsed_url->port;
         }
     }

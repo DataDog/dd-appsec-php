@@ -3,6 +3,8 @@ Agent host and port are taken from INI
 --INI--
 datadog.agent_host=1.2.3.4
 datadog.trace.agent_port=567
+--ENV--
+DD_TRACE_AGENT_PORT=
 --FILE--
 <?php
 use function datadog\appsec\testing\{rinit,rshutdown};

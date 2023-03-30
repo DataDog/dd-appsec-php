@@ -2,6 +2,7 @@
 Agent host and port fallback to default when agent url ones are not valid
 --ENV--
 DD_TRACE_AGENT_URL=http://:99999
+DD_TRACE_AGENT_PORT=
 --FILE--
 <?php
 use function datadog\appsec\testing\{rinit,rshutdown};
