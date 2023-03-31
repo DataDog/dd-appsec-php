@@ -39,8 +39,8 @@ public:
     static service_handler::ptr from_settings(
         const dds::engine_settings &eng_settings,
         std::shared_ptr<dds::service_config> service_config,
-        const remote_config::settings &rc_settings, engine::ptr engine_ptr,
-        bool dynamic_enablement);
+        const remote_config::settings &rc_settings,
+        const engine::ptr &engine_ptr, bool dynamic_enablement);
 
     bool start();
 

@@ -31,7 +31,7 @@ public:
     dds::engine_settings settings;
     remote_config::settings rc_settings;
     std::shared_ptr<dds::service_config> service_config;
-    std::shared_ptr<engine> engine;
+    std::shared_ptr<dds::engine> engine;
 
     void SetUp()
     {
