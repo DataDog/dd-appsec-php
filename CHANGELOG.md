@@ -1,4 +1,9 @@
 # Datadog AppSec for PHP Release
+### v0.7.1
+#### Fixes
+- ([#231](https://github.com/DataDog/dd-appsec-php/pull/231)) Fallback to default agent host and port.
+- ([#231](https://github.com/DataDog/dd-appsec-php/pull/231)) Support `DD_TRACE_AGENT_URL`
+
 ### v0.7.0
 #### Breaking Changes
  - ([#182](https://github.com/DataDog/dd-appsec-php/pull/182)) Delete `enabled_on_cli` ini setting
