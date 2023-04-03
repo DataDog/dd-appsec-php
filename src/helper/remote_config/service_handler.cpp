@@ -79,7 +79,8 @@ service_handler::ptr service_handler::from_settings(
     }
 
     auto rc_client = remote_config::client::from_settings(
-        service_config->sid, rc_settings, products);
+        dds::service_identifier(service_config->sid),
+        remote_config::settings(rc_settings), products);
 
     return std::make_shared<service_handler>(std::move(rc_client),
         std::move(service_config),

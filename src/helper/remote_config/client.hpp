@@ -35,8 +35,8 @@ class client {
 public:
     using ptr = std::unique_ptr<client>;
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    client(std::unique_ptr<http_api> &&arg_api, service_identifier sid,
-        remote_config::settings settings,
+    client(std::unique_ptr<http_api> &&arg_api, service_identifier &&sid,
+        remote_config::settings &&settings,
         const std::vector<product> &products = {});
     virtual ~client() = default;
 
@@ -45,8 +45,8 @@ public:
     client &operator=(const client &) = delete;
     client &operator=(client &&) = delete;
 
-    static client::ptr from_settings(const service_identifier &sid,
-        const remote_config::settings &settings,
+    static client::ptr from_settings(service_identifier &&sid,
+        remote_config::settings &&settings,
         const std::vector<remote_config::product> &products);
 
     virtual bool poll();

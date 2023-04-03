@@ -12,8 +12,8 @@ namespace dds {
 namespace mock {
 class client : public remote_config::client {
 public:
-    client(const service_identifier &sid)
-        : remote_config::client(nullptr, sid, {})
+    client(service_identifier &&sid)
+        : remote_config::client(nullptr, std::move(sid), {})
     {}
     ~client() = default;
     MOCK_METHOD0(poll, bool());
@@ -148,7 +148,7 @@ TEST_F(ServiceHandlerTest, ValidateRCThread)
     std::promise<bool> available_call_promise;
     auto available_call_future = available_call_promise.get_future();
 
-    auto rc_client = std::make_unique<mock::client>(sid);
+    auto rc_client = std::make_unique<mock::client>(std::move(sid));
     EXPECT_CALL(*rc_client, is_remote_config_available)
         .Times(1)
         .WillOnce(DoAll(SignalCall(&available_call_promise), Return(true)));
@@ -173,7 +173,7 @@ TEST_F(ServiceHandlerTest, WhenRcNotAvailableItKeepsDiscovering)
     auto first_call_future = first_call_promise.get_future();
     auto second_call_future = second_call_promise.get_future();
 
-    auto rc_client = std::make_unique<mock::client>(sid);
+    auto rc_client = std::make_unique<mock::client>(std::move(sid));
     EXPECT_CALL(*rc_client, is_remote_config_available)
         .Times(2)
         .WillOnce(DoAll(SignalCall(&first_call_promise), Return(false)))
@@ -200,7 +200,7 @@ TEST_F(ServiceHandlerTest, WhenPollFailsItGoesBackToDiscovering)
     auto second_call_future = second_call_promise.get_future();
     auto third_call_future = third_call_promise.get_future();
 
-    auto rc_client = std::make_unique<mock::client>(sid);
+    auto rc_client = std::make_unique<mock::client>(std::move(sid));
     EXPECT_CALL(*rc_client, is_remote_config_available)
         .Times(2)
         .WillOnce(DoAll(SignalCall(&first_call_promise), Return(true)))
@@ -230,7 +230,7 @@ TEST_F(ServiceHandlerTest, WhenDiscoverFailsItStaysOnDiscovering)
     auto second_call_future = second_call_promise.get_future();
     auto third_call_future = third_call_promise.get_future();
 
-    auto rc_client = std::make_unique<mock::client>(sid);
+    auto rc_client = std::make_unique<mock::client>(std::move(sid));
     EXPECT_CALL(*rc_client, is_remote_config_available)
         .Times(3)
         .WillOnce(DoAll(SignalCall(&first_call_promise), Return(false)))
@@ -259,7 +259,7 @@ TEST_F(ServiceHandlerTest, ItKeepsPollingWhileNoError)
     auto second_call_future = second_call_promise.get_future();
     auto third_call_future = third_call_promise.get_future();
 
-    auto rc_client = std::make_unique<mock::client>(sid);
+    auto rc_client = std::make_unique<mock::client>(std::move(sid));
     EXPECT_CALL(*rc_client, is_remote_config_available)
         .Times(1)
         .WillOnce(DoAll(SignalCall(&first_call_promise), Return(true)));

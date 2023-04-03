@@ -26,7 +26,7 @@ public:
 
     service(std::shared_ptr<engine> engine,
         std::shared_ptr<service_config> service_config,
-        dds::remote_config::service_handler::ptr service_handler);
+        dds::remote_config::service_handler::ptr &&service_handler);
 
     service(const service &) = delete;
     service &operator=(const service &) = delete;

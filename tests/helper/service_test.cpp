@@ -13,8 +13,8 @@ namespace dds {
 namespace mock {
 class client : public remote_config::client {
 public:
-    client(const service_identifier &sid)
-        : remote_config::client(nullptr, sid, {})
+    client(service_identifier &&sid)
+        : remote_config::client(nullptr, std::move(sid), {})
     {}
     ~client() = default;
     MOCK_METHOD0(poll, bool());
@@ -27,14 +27,15 @@ TEST(ServiceTest, NullEngine)
     service_identifier sid{
         "service", "env", "tracer_version", "app_version", "runtime_id"};
     std::shared_ptr<engine> engine;
-    auto client = std::make_unique<mock::client>(sid);
+    auto client = std::make_unique<mock::client>(std::move(sid));
     EXPECT_CALL(*client, poll).Times(0);
 
     auto service_config = std::make_shared<dds::service_config>();
     auto service_handler = std::make_shared<remote_config::service_handler>(
         std::move(client), service_config, 1s);
 
-    EXPECT_THROW(auto s = service(engine, service_config, service_handler),
+    EXPECT_THROW(
+        auto s = service(engine, service_config, std::move(service_handler)),
         std::runtime_error);
 }
 

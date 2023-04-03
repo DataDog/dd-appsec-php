@@ -10,9 +10,9 @@ namespace dds {
 
 service::service(std::shared_ptr<engine> engine,
     std::shared_ptr<service_config> service_config,
-    dds::remote_config::service_handler::ptr service_handler)
+    dds::remote_config::service_handler::ptr &&service_handler)
     : engine_(std::move(engine)), service_config_(std::move(service_config)),
-      service_handler_(service_handler)
+      service_handler_(std::move(service_handler))
 {
     // The engine should always be valid
     if (!engine_) {
