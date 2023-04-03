@@ -4,6 +4,7 @@
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #include "socket.hpp"
+#include <array>
 #include <cerrno>
 #include <chrono>
 #include <spdlog/spdlog.h>

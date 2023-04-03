@@ -53,11 +53,19 @@ bool maybe_exec_cmd_M(client &client, network::request &msg)
     return false;
 }
 
-void send_error_response(const network::base_broker &broker)
+bool send_error_response(const network::base_broker &broker)
 {
-    if (!broker.send(std::make_shared<network::error::response>())) {
-        SPDLOG_WARN("Failed to send error response");
+    try {
+        if (!broker.send(std::make_shared<network::error::response>())) {
+            SPDLOG_WARN("Failed to send error response");
+            return false;
+        }
+    } catch (const std::exception &e) {
+        SPDLOG_WARN("Failed to send error response: {}", e.what());
+        return false;
     }
+
+    return true;
 }
 
 template <typename... Ms>
@@ -114,9 +122,9 @@ bool handle_message(client &client, const network::base_broker &broker,
     }
 
     if (send_error) {
-        // This can happen due to a valid error, let's continue handling
-        // the client as this might just happen spuriously.
-        send_error_response(broker);
+        if (!send_error_response(broker)) {
+            return false;
+        }
     }
 
     // If we reach this point, there was a problem handling the message
