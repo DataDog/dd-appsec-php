@@ -39,7 +39,7 @@ public:
 
     std::size_t discard(std::size_t len) override
     {
-        return r.read_bytes(nullptr, size);
+        return r.read_bytes(nullptr, len);
     }
 
     void set_send_timeout(std::chrono::milliseconds timeout) override {}
