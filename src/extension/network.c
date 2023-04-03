@@ -157,7 +157,6 @@ dd_result dd_conn_sendv(dd_conn *nonnull conn, zend_llist *nonnull iovecs)
     ssize_t sent_bytes = writev(conn->socket, iovs, (int)iovecs_count + 1);
     efree(iovs);
     if (sent_bytes == -1) {
-        // TODO: Check for EAGAIN
         mlog_err(dd_log_info, "Error writing %zu bytes to helper", total);
         return dd_network;
     }
