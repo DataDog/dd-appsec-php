@@ -16,6 +16,7 @@ on:
       - src/extension/**
       - tests/extension/**
       - tests/mock_helper/**
+      - tests/integration/**
       - examples/**
       - valgrind.supp
       - run-tests.php

@@ -6,6 +6,11 @@ on:
       - master
       - dd-appsec-php-**
   pull_request:
+    paths-ignore:
+      - 'LICENSE**'
+      - NOTICE
+      - '**.md'
+      - tests/integration/**
     branches:
       - master
       - develop**
