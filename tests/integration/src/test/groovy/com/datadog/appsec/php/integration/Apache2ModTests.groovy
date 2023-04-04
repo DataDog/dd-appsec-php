@@ -15,6 +15,8 @@ import static org.testcontainers.containers.Container.ExecResult
 @Testcontainers
 @Slf4j
 class Apache2ModTests implements CommonTests {
+    static boolean zts = variant.contains('zts')
+
     @Container
     @FailOnUnmatchedTraces
     public static final AppSecContainer CONTAINER =
@@ -26,6 +28,7 @@ class Apache2ModTests implements CommonTests {
             )
 
     @Test
+    @DisabledIf('isZts')
     void 'trace without attack after soft restart'() {
         ExecResult res = CONTAINER.execInContainer('service', 'apache2', 'reload')
         if (res.exitCode != 0) {
