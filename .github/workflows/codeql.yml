@@ -11,6 +11,13 @@ on:
       - NOTICE
       - '**.md'
       - tests/integration/**
+      - .github/workflows/extension.yml
+      - .github/workflows/helper.yml
+      - .github/workflows/integration.yml
+      - .github/workflows/package.yml
+      - .github/workflows/release.yml
+      - .github/workflows/system-tests.yml
+      - .github/workflows/release/**
     branches:
       - master
       - develop**
