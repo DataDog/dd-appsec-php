@@ -1,4 +1,8 @@
 # Datadog AppSec for PHP Release
+### v0.7.2
+#### Fixes
+- ([#233](https://github.com/DataDog/dd-appsec-php/pull/233)) Flush socket on body limit
+
 ### v0.7.1
 #### Fixes
 - ([#231](https://github.com/DataDog/dd-appsec-php/pull/231)) Fallback to default agent host and port.
