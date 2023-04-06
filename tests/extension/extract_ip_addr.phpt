@@ -47,10 +47,30 @@ test('x_forwarded', '   for=127.0.0.1,for= for=,for=;"for = for="" ,; for=8.8.8.
 
 test('forwarded_for', '::1, 127.0.0.1, 2001::1');
 
+test('fastly_client_ip', '2.2.2.2');
+test('fastly_client_ip', '2.2.2.2, 3.3.3.3');
+test('fastly_client_ip', '127.0.0.1');
+test('fastly_client_ip', '::ffff:4.4.4.4');
+test('fastly_client_ip', '::ffff:127.0.0.1');
+test('fastly_client_ip', 42);
+test('fastly_client_ip', 'fec0::1');
+test('fastly_client_ip', 'fe80::1');
+test('fastly_client_ip', 'fd00::1');
+test('fastly_client_ip', 'fc22:11:22:33::1');
+test('fastly_client_ip', 'fd12:3456:789a:1::1');
 
-test('fastly_client_ip', '7.7.7.2');
-test('cf_connecting_ip', '7.7.7.3');
-test('cf_connecting_ipv6', '2001::1');
+test('cf_connecting_ip', '2.2.2.2');
+test('cf_connecting_ip', '2.2.2.2, 3.3.3.3');
+test('cf_connecting_ip', '127.0.0.1');
+
+test('cf_connecting_ipv6', '::ffff:4.4.4.4');
+test('cf_connecting_ipv6', '::ffff:127.0.0.1');
+test('cf_connecting_ipv6', 42);
+test('cf_connecting_ipv6', 'fec0::1');
+test('cf_connecting_ipv6', 'fe80::1');
+test('cf_connecting_ipv6', 'fd00::1');
+test('cf_connecting_ipv6', 'fc22:11:22:33::1');
+test('cf_connecting_ipv6', 'fd12:3456:789a:1::1');
 
 echo "remote address fallback: 8.8.8.8\n";
 var_dump(extract_ip_addr(['REMOTE_ADDR' => '8.8.8.8']));
@@ -162,14 +182,75 @@ string(7) "8.8.8.8"
 forwarded_for: ::1, 127.0.0.1, 2001::1
 string(7) "2001::1"
 
-fastly_client_ip: 7.7.7.2
-string(7) "7.7.7.2"
+fastly_client_ip: 2.2.2.2
+string(7) "2.2.2.2"
 
-cf_connecting_ip: 7.7.7.3
-string(7) "7.7.7.3"
+fastly_client_ip: 2.2.2.2, 3.3.3.3
 
-cf_connecting_ipv6: 2001::1
-string(7) "2001::1"
+Notice: datadog\appsec\testing\extract_ip_addr(): [ddappsec] Not recognized as IP address: "2.2.2.2, 3.3.3.3" in %s on line %d
+NULL
+
+fastly_client_ip: 127.0.0.1
+NULL
+
+fastly_client_ip: ::ffff:4.4.4.4
+string(7) "4.4.4.4"
+
+fastly_client_ip: ::ffff:127.0.0.1
+NULL
+
+fastly_client_ip: 42
+NULL
+
+fastly_client_ip: fec0::1
+NULL
+
+fastly_client_ip: fe80::1
+NULL
+
+fastly_client_ip: fd00::1
+NULL
+
+fastly_client_ip: fc22:11:22:33::1
+NULL
+
+fastly_client_ip: fd12:3456:789a:1::1
+NULL
+
+cf_connecting_ip: 2.2.2.2
+string(7) "2.2.2.2"
+
+cf_connecting_ip: 2.2.2.2, 3.3.3.3
+
+Notice: datadog\appsec\testing\extract_ip_addr(): [ddappsec] Not recognized as IP address: "2.2.2.2, 3.3.3.3" in %s on line %d
+NULL
+
+cf_connecting_ip: 127.0.0.1
+NULL
+
+cf_connecting_ipv6: ::ffff:4.4.4.4
+string(7) "4.4.4.4"
+
+cf_connecting_ipv6: ::ffff:127.0.0.1
+NULL
+
+cf_connecting_ipv6: 42
+NULL
+
+cf_connecting_ipv6: fec0::1
+NULL
+
+cf_connecting_ipv6: fe80::1
+NULL
+
+cf_connecting_ipv6: fd00::1
+NULL
+
+cf_connecting_ipv6: fc22:11:22:33::1
+NULL
+
+cf_connecting_ipv6: fd12:3456:789a:1::1
+NULL
 
 remote address fallback: 8.8.8.8
 string(7) "8.8.8.8"
