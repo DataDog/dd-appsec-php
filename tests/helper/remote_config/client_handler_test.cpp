@@ -5,7 +5,7 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 
 #include "../common.hpp"
-#include "remote_config/service_handler.hpp"
+#include "remote_config/client_handler.hpp"
 
 namespace dds {
 
@@ -24,7 +24,7 @@ public:
 
 ACTION_P(SignalCall, promise) { promise->set_value(true); }
 
-class ServiceHandlerTest : public ::testing::Test {
+class ClientHandlerTest : public ::testing::Test {
 public:
     service_identifier sid{
         "service", "env", "tracer_version", "app_version", "runtime_id"};
@@ -42,78 +42,78 @@ public:
     }
 };
 
-TEST_F(ServiceHandlerTest, IfRemoteConfigDisabledItDoesNotGenerateHandler)
+TEST_F(ClientHandlerTest, IfRemoteConfigDisabledItDoesNotGenerateHandler)
 {
     rc_settings.enabled = false;
 
-    auto service_handler = remote_config::service_handler::from_settings(
+    auto client_handler = remote_config::client_handler::from_settings(
         settings, service_config, rc_settings, engine, false);
 
-    EXPECT_FALSE(service_handler);
+    EXPECT_FALSE(client_handler);
 }
 
-TEST_F(ServiceHandlerTest, IfNoServiceConfigProvidedItDoesNotGenerateHandler)
+TEST_F(ClientHandlerTest, IfNoServiceConfigProvidedItDoesNotGenerateHandler)
 {
     std::shared_ptr<dds::service_config> null_service_config = {};
-    auto service_handler = remote_config::service_handler::from_settings(
+    auto client_handler = remote_config::client_handler::from_settings(
         settings, null_service_config, rc_settings, engine, false);
 
-    EXPECT_FALSE(service_handler);
+    EXPECT_FALSE(client_handler);
 }
 
-TEST_F(ServiceHandlerTest, RuntimeIdIsNotGeneratedIfProvided)
+TEST_F(ClientHandlerTest, RuntimeIdIsNotGeneratedIfProvided)
 {
     const char *runtime_id = "some runtime id";
     service_config->sid.runtime_id = runtime_id;
 
-    auto service_handler = remote_config::service_handler::from_settings(
+    auto client_handler = remote_config::client_handler::from_settings(
         settings, service_config, rc_settings, engine, false);
 
     EXPECT_STREQ(runtime_id, service_config->sid.runtime_id.c_str());
 }
 
-TEST_F(ServiceHandlerTest, RuntimeIdIsGeneratedWhenNotProvided)
+TEST_F(ClientHandlerTest, RuntimeIdIsGeneratedWhenNotProvided)
 {
     service_config->sid.runtime_id.clear();
 
     EXPECT_TRUE(service_config->sid.runtime_id.empty());
-    remote_config::service_handler::from_settings(
+    remote_config::client_handler::from_settings(
         settings, service_config, rc_settings, engine, false);
     EXPECT_FALSE(service_config->sid.runtime_id.empty());
 }
 
-TEST_F(ServiceHandlerTest, AsmFeatureProductIsAddeWhenDynamicEnablement)
+TEST_F(ClientHandlerTest, AsmFeatureProductIsAddeWhenDynamicEnablement)
 {
     auto dynamic_enablement = true;
-    auto service_handler = remote_config::service_handler::from_settings(
+    auto client_handler = remote_config::client_handler::from_settings(
         settings, service_config, rc_settings, engine, dynamic_enablement);
 
-    auto products_list = service_handler->get_client()->get_products();
+    auto products_list = client_handler->get_client()->get_products();
     EXPECT_TRUE(products_list.find("ASM_FEATURES") != products_list.end());
 }
 
 TEST_F(
-    ServiceHandlerTest, AsmFeatureProductIsNotAddeWhenDynamicEnablementDisabled)
+    ClientHandlerTest, AsmFeatureProductIsNotAddeWhenDynamicEnablementDisabled)
 {
     auto dynamic_enablement = false;
 
     // Clear rules file so at least some other products are added
     settings.rules_file.clear();
-    auto service_handler = remote_config::service_handler::from_settings(
+    auto client_handler = remote_config::client_handler::from_settings(
         settings, service_config, rc_settings, engine, dynamic_enablement);
 
-    auto products_list = service_handler->get_client()->get_products();
+    auto products_list = client_handler->get_client()->get_products();
     EXPECT_TRUE(products_list.find("ASM_FEATURES") == products_list.end());
 }
 
-TEST_F(ServiceHandlerTest, SomeProductsDependOnDynamicEngineBeingSet)
+TEST_F(ClientHandlerTest, SomeProductsDependOnDynamicEngineBeingSet)
 {
     { // When rules file is not set, products are added
         settings.rules_file.clear();
-        auto service_handler = remote_config::service_handler::from_settings(
+        auto client_handler = remote_config::client_handler::from_settings(
             settings, service_config, rc_settings, engine, true);
 
-        auto products_list = service_handler->get_client()->get_products();
+        auto products_list = client_handler->get_client()->get_products();
         EXPECT_TRUE(products_list.find("ASM_DATA") != products_list.end());
         EXPECT_TRUE(products_list.find("ASM_DD") != products_list.end());
         EXPECT_TRUE(products_list.find("ASM") != products_list.end());
@@ -121,27 +121,27 @@ TEST_F(ServiceHandlerTest, SomeProductsDependOnDynamicEngineBeingSet)
 
     { // When rules file is set, products not are added
         settings.rules_file = "/some/file";
-        auto service_handler = remote_config::service_handler::from_settings(
+        auto client_handler = remote_config::client_handler::from_settings(
             settings, service_config, rc_settings, engine, true);
 
-        auto products_list = service_handler->get_client()->get_products();
+        auto products_list = client_handler->get_client()->get_products();
         EXPECT_TRUE(products_list.find("ASM_DATA") == products_list.end());
         EXPECT_TRUE(products_list.find("ASM_DD") == products_list.end());
         EXPECT_TRUE(products_list.find("ASM") == products_list.end());
     }
 }
 
-TEST_F(ServiceHandlerTest, IfNoProductsAreRequiredRemoteClientIsNotGenerated)
+TEST_F(ClientHandlerTest, IfNoProductsAreRequiredRemoteClientIsNotGenerated)
 {
     settings.rules_file = "/some/file";
     auto dynamic_enablement = false;
-    auto service_handler = remote_config::service_handler::from_settings(
+    auto client_handler = remote_config::client_handler::from_settings(
         settings, service_config, rc_settings, engine, dynamic_enablement);
 
-    EXPECT_FALSE(service_handler);
+    EXPECT_FALSE(client_handler);
 }
 
-TEST_F(ServiceHandlerTest, ValidateRCThread)
+TEST_F(ClientHandlerTest, ValidateRCThread)
 {
     std::promise<bool> poll_call_promise;
     auto poll_call_future = poll_call_promise.get_future();
@@ -156,17 +156,17 @@ TEST_F(ServiceHandlerTest, ValidateRCThread)
         .Times(1)
         .WillOnce(DoAll(SignalCall(&poll_call_promise), Return(true)));
 
-    auto service_handler = remote_config::service_handler(
+    auto client_handler = remote_config::client_handler(
         std::move(rc_client), service_config, 500ms);
 
-    service_handler.start();
+    client_handler.start();
 
     // wait a little bit - this might end up being flaky
     poll_call_future.wait_for(1s);
     available_call_future.wait_for(500ms);
 }
 
-TEST_F(ServiceHandlerTest, WhenRcNotAvailableItKeepsDiscovering)
+TEST_F(ClientHandlerTest, WhenRcNotAvailableItKeepsDiscovering)
 {
     std::promise<bool> first_call_promise;
     std::promise<bool> second_call_promise;
@@ -180,10 +180,10 @@ TEST_F(ServiceHandlerTest, WhenRcNotAvailableItKeepsDiscovering)
         .WillOnce(DoAll(SignalCall(&second_call_promise), Return(false)));
     EXPECT_CALL(*rc_client, poll).Times(0);
 
-    auto service_handler = remote_config::service_handler(
+    auto client_handler = remote_config::client_handler(
         std::move(rc_client), service_config, 500ms);
 
-    service_handler.start();
+    client_handler.start();
     ;
 
     // wait a little bit - this might end up being flaky
@@ -191,7 +191,7 @@ TEST_F(ServiceHandlerTest, WhenRcNotAvailableItKeepsDiscovering)
     second_call_future.wait_for(1.2s);
 }
 
-TEST_F(ServiceHandlerTest, WhenPollFailsItGoesBackToDiscovering)
+TEST_F(ClientHandlerTest, WhenPollFailsItGoesBackToDiscovering)
 {
     std::promise<bool> first_call_promise;
     std::promise<bool> second_call_promise;
@@ -210,9 +210,9 @@ TEST_F(ServiceHandlerTest, WhenPollFailsItGoesBackToDiscovering)
         .WillOnce(DoAll(SignalCall(&second_call_promise),
             Throw(dds::remote_config::network_exception("some"))));
 
-    auto service_handler = remote_config::service_handler(
+    auto client_handler = remote_config::client_handler(
         std::move(rc_client), service_config, 500ms);
-    service_handler.start();
+    client_handler.start();
     ;
 
     // wait a little bit - this might end up being flaky
@@ -221,7 +221,7 @@ TEST_F(ServiceHandlerTest, WhenPollFailsItGoesBackToDiscovering)
     third_call_future.wait_for(1.8s);
 }
 
-TEST_F(ServiceHandlerTest, WhenDiscoverFailsItStaysOnDiscovering)
+TEST_F(ClientHandlerTest, WhenDiscoverFailsItStaysOnDiscovering)
 {
     std::promise<bool> first_call_promise;
     std::promise<bool> second_call_promise;
@@ -240,9 +240,9 @@ TEST_F(ServiceHandlerTest, WhenDiscoverFailsItStaysOnDiscovering)
             Throw(dds::remote_config::network_exception("some"))));
     EXPECT_CALL(*rc_client, poll).Times(0);
 
-    auto service_handler = remote_config::service_handler(
+    auto client_handler = remote_config::client_handler(
         std::move(rc_client), service_config, 500ms);
-    service_handler.start();
+    client_handler.start();
 
     // wait a little bit - this might end up being flaky
     first_call_future.wait_for(600ms);
@@ -250,7 +250,7 @@ TEST_F(ServiceHandlerTest, WhenDiscoverFailsItStaysOnDiscovering)
     third_call_future.wait_for(1.8s);
 }
 
-TEST_F(ServiceHandlerTest, ItKeepsPollingWhileNoError)
+TEST_F(ClientHandlerTest, ItKeepsPollingWhileNoError)
 {
     std::promise<bool> first_call_promise;
     std::promise<bool> second_call_promise;
@@ -268,9 +268,9 @@ TEST_F(ServiceHandlerTest, ItKeepsPollingWhileNoError)
         .WillOnce(DoAll(SignalCall(&second_call_promise), Return(true)))
         .WillOnce(DoAll(SignalCall(&third_call_promise), Return(true)));
 
-    auto service_handler = remote_config::service_handler(
+    auto client_handler = remote_config::client_handler(
         std::move(rc_client), service_config, 500ms);
-    service_handler.start();
+    client_handler.start();
 
     // wait a little bit - this might end up being flaky
     first_call_future.wait_for(600ms);
@@ -278,13 +278,13 @@ TEST_F(ServiceHandlerTest, ItKeepsPollingWhileNoError)
     third_call_future.wait_for(1.8s);
 }
 
-TEST_F(ServiceHandlerTest, ItDoesNotStartIfNoRcClientGiven)
+TEST_F(ClientHandlerTest, ItDoesNotStartIfNoRcClientGiven)
 {
     auto rc_client = nullptr;
-    auto service_handler =
-        remote_config::service_handler(rc_client, service_config, 500ms);
+    auto client_handler =
+        remote_config::client_handler(rc_client, service_config, 500ms);
 
-    EXPECT_FALSE(service_handler.start());
+    EXPECT_FALSE(client_handler.start());
 }
 
 } // namespace dds

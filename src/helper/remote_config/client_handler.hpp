@@ -21,22 +21,22 @@ namespace dds::remote_config {
 
 using namespace std::chrono_literals;
 
-class service_handler {
+class client_handler {
 public:
-    using ptr = std::shared_ptr<service_handler>;
+    using ptr = std::shared_ptr<client_handler>;
 
-    service_handler(remote_config::client::ptr &&rc_client,
+    client_handler(remote_config::client::ptr &&rc_client,
         std::shared_ptr<service_config> service_config,
         const std::chrono::milliseconds &poll_interval = 1s);
-    ~service_handler();
+    ~client_handler();
 
-    service_handler(const service_handler &) = delete;
-    service_handler &operator=(const service_handler &) = delete;
+    client_handler(const client_handler &) = delete;
+    client_handler &operator=(const client_handler &) = delete;
 
-    service_handler(service_handler &&) = delete;
-    service_handler &operator=(service_handler &&) = delete;
+    client_handler(client_handler &&) = delete;
+    client_handler &operator=(client_handler &&) = delete;
 
-    static service_handler::ptr from_settings(
+    static client_handler::ptr from_settings(
         const dds::engine_settings &eng_settings,
         std::shared_ptr<dds::service_config> service_config,
         const remote_config::settings &rc_settings,

@@ -30,8 +30,8 @@ config_path config_path::from_path(const std::string &path)
 
 client::client(std::unique_ptr<http_api> &&arg_api, service_identifier &&sid,
     remote_config::settings &&settings, const std::vector<product> &products)
-    : api_(std::move(arg_api)), id_(dds::generate_random_uuid()), sid_(sid),
-      settings_(settings)
+    : api_(std::move(arg_api)), id_(dds::generate_random_uuid()),
+      sid_(std::move(sid)), settings_(std::move(settings))
 {
     for (auto const &product : products) {
         products_.insert(std::pair<std::string, remote_config::product>(

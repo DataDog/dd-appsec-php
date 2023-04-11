@@ -10,17 +10,17 @@ namespace dds {
 
 service::service(std::shared_ptr<engine> engine,
     std::shared_ptr<service_config> service_config,
-    dds::remote_config::service_handler::ptr &&service_handler)
+    dds::remote_config::client_handler::ptr &&client_handler)
     : engine_(std::move(engine)), service_config_(std::move(service_config)),
-      service_handler_(std::move(service_handler))
+      client_handler_(std::move(client_handler))
 {
     // The engine should always be valid
     if (!engine_) {
         throw std::runtime_error("invalid engine");
     }
 
-    if (service_handler_) {
-        service_handler_->start();
+    if (client_handler_) {
+        client_handler_->start();
     }
 }
 
@@ -35,11 +35,11 @@ service::ptr service::from_settings(const service_identifier &id,
     auto service_config = std::make_shared<dds::service_config>();
     service_config->sid = id;
 
-    auto service_handler =
-        remote_config::service_handler::from_settings(eng_settings,
+    auto client_handler =
+        remote_config::client_handler::from_settings(eng_settings,
             service_config, rc_settings, engine_ptr, dynamic_enablement);
 
     return std::make_shared<service>(
-        engine_ptr, std::move(service_config), std::move(service_handler));
+        engine_ptr, std::move(service_config), std::move(client_handler));
 }
 } // namespace dds

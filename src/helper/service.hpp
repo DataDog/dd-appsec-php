@@ -7,7 +7,7 @@
 
 #include "engine.hpp"
 #include "exception.hpp"
-#include "remote_config/service_handler.hpp"
+#include "remote_config/client_handler.hpp"
 #include "service_config.hpp"
 #include "service_identifier.hpp"
 #include "std_logging.hpp"
@@ -26,7 +26,7 @@ public:
 
     service(std::shared_ptr<engine> engine,
         std::shared_ptr<service_config> service_config,
-        dds::remote_config::service_handler::ptr &&service_handler);
+        dds::remote_config::client_handler::ptr &&client_handler);
 
     service(const service &) = delete;
     service &operator=(const service &) = delete;
@@ -55,7 +55,7 @@ public:
 protected:
     std::shared_ptr<engine> engine_;
     std::shared_ptr<service_config> service_config_;
-    dds::remote_config::service_handler::ptr service_handler_;
+    dds::remote_config::client_handler::ptr client_handler_;
 };
 
 } // namespace dds

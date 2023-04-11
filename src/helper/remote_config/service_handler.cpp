@@ -4,7 +4,7 @@
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 
-#include "service_handler.hpp"
+#include "client_handler.hpp"
 #include "remote_config/asm_data_listener.hpp"
 #include "remote_config/asm_dd_listener.hpp"
 #include "remote_config/asm_features_listener.hpp"
@@ -15,7 +15,7 @@ namespace dds::remote_config {
 // This will limit the max increase to 4.266666667 minutes
 static constexpr std::uint16_t max_increment = 8;
 
-service_handler::service_handler(remote_config::client::ptr &&rc_client,
+client_handler::client_handler(remote_config::client::ptr &&rc_client,
     std::shared_ptr<service_config> service_config,
     const std::chrono::milliseconds &poll_interval)
     : service_config_(std::move(service_config)),
@@ -26,7 +26,7 @@ service_handler::service_handler(remote_config::client::ptr &&rc_client,
     rc_action_ = [this] { discover(); };
 }
 
-service_handler::~service_handler()
+client_handler::~client_handler()
 {
     if (handler_.joinable()) {
         exit_.set_value(true);
@@ -34,7 +34,7 @@ service_handler::~service_handler()
     }
 }
 
-service_handler::ptr service_handler::from_settings(
+client_handler::ptr client_handler::from_settings(
     const dds::engine_settings &eng_settings,
     std::shared_ptr<dds::service_config> service_config,
     const remote_config::settings &rc_settings, const engine::ptr &engine_ptr,
@@ -82,22 +82,22 @@ service_handler::ptr service_handler::from_settings(
         dds::service_identifier(service_config->sid),
         remote_config::settings(rc_settings), products);
 
-    return std::make_shared<service_handler>(std::move(rc_client),
+    return std::make_shared<client_handler>(std::move(rc_client),
         std::move(service_config),
         std::chrono::milliseconds{rc_settings.poll_interval});
 }
 
-bool service_handler::start()
+bool client_handler::start()
 {
     if (rc_client_) {
-        handler_ = std::thread(&service_handler::run, this, exit_.get_future());
+        handler_ = std::thread(&client_handler::run, this, exit_.get_future());
         return true;
     }
 
     return false;
 }
 
-void service_handler::handle_error()
+void client_handler::handle_error()
 {
     rc_action_ = [this] { discover(); };
     interval_ = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -107,7 +107,7 @@ void service_handler::handle_error()
     }
 }
 
-void service_handler::poll()
+void client_handler::poll()
 {
     try {
         rc_client_->poll();
@@ -115,7 +115,7 @@ void service_handler::poll()
         handle_error();
     }
 }
-void service_handler::discover()
+void client_handler::discover()
 {
     try {
         if (rc_client_->is_remote_config_available()) {
@@ -129,7 +129,7 @@ void service_handler::discover()
     handle_error();
 }
 
-void service_handler::run(std::future<bool> &&exit_signal)
+void client_handler::run(std::future<bool> &&exit_signal)
 {
     std::chrono::time_point<std::chrono::steady_clock> before{0s};
     std::future_status fs = exit_signal.wait_for(0s);
