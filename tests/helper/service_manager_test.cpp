@@ -33,14 +33,15 @@ TEST(ServiceManagerTest, LoadRulesOK)
     dds::engine_settings engine_settings;
     engine_settings.rules_file = fn;
     engine_settings.waf_timeout_us = 42;
-    auto service = manager.create_service(
-        {"service", "env", "", "", ""}, engine_settings, {}, meta, metrics, {});
+    dds::service_identifier id = {"service", "env", "", "", ""};
+    auto service =
+        manager.create_service(id, engine_settings, {}, meta, metrics, {});
     EXPECT_EQ(manager.get_cache().size(), 1);
     EXPECT_EQ(metrics[tag::event_rules_loaded], 3);
 
     // loading again should take from the cache
-    auto service2 = manager.create_service(
-        {"service", "env", "", "", ""}, engine_settings, {}, meta, metrics, {});
+    auto service2 =
+        manager.create_service(id, engine_settings, {}, meta, metrics, {});
     EXPECT_EQ(manager.get_cache().size(), 1);
 
     // destroying the services should expire the cache ptr
@@ -55,15 +56,16 @@ TEST(ServiceManagerTest, LoadRulesOK)
     // the last one should be kept by the manager
     ASSERT_FALSE(weak_ptr.expired());
 
+    dds::service_identifier id2 = {"service2", "env"};
     // loading another service should cleanup the cache
-    auto service3 = manager.create_service(
-        {"service2", "env"}, engine_settings, {}, meta, metrics, {});
+    auto service3 =
+        manager.create_service(id2, engine_settings, {}, meta, metrics, {});
     ASSERT_TRUE(weak_ptr.expired());
     EXPECT_EQ(manager.get_cache().size(), 1);
 
     // another service identifier should result in another service
-    auto service4 = manager.create_service(
-        {"service", "env", "", "", ""}, engine_settings, {}, meta, metrics, {});
+    auto service4 =
+        manager.create_service(id, engine_settings, {}, meta, metrics, {});
     EXPECT_EQ(manager.get_cache().size(), 2);
 }
 
@@ -71,6 +73,7 @@ TEST(ServiceManagerTest, LoadRulesFileNotFound)
 {
     std::map<std::string_view, std::string> meta;
     std::map<std::string_view, double> metrics;
+    dds::service_identifier id = {"s", "e"};
 
     service_manager_exp manager;
     EXPECT_THROW(
@@ -78,8 +81,7 @@ TEST(ServiceManagerTest, LoadRulesFileNotFound)
             dds::engine_settings engine_settings;
             engine_settings.rules_file = "/file/that/does/not/exist";
             engine_settings.waf_timeout_us = 42;
-            manager.create_service(
-                {"s", "e"}, engine_settings, {}, meta, metrics, {});
+            manager.create_service(id, engine_settings, {}, meta, metrics, {});
         },
         std::runtime_error);
 }
@@ -88,6 +90,7 @@ TEST(ServiceManagerTest, BadRulesFile)
 {
     std::map<std::string_view, std::string> meta;
     std::map<std::string_view, double> metrics;
+    dds::service_identifier id = {"s", "e"};
 
     service_manager_exp manager;
     EXPECT_THROW(
@@ -95,8 +98,7 @@ TEST(ServiceManagerTest, BadRulesFile)
             dds::engine_settings engine_settings;
             engine_settings.rules_file = "/dev/null";
             engine_settings.waf_timeout_us = 42;
-            manager.create_service(
-                {"s", "e"}, engine_settings, {}, meta, metrics, {});
+            manager.create_service(id, engine_settings, {}, meta, metrics, {});
         },
         dds::parsing_error);
 }

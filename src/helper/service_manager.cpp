@@ -7,16 +7,14 @@
 
 namespace dds {
 
-std::shared_ptr<service> service_manager::create_service(
-    service_identifier &&id, const engine_settings &settings,
-    const remote_config::settings &rc_settings,
+std::shared_ptr<service> service_manager::create_service(service_identifier &id,
+    const engine_settings &settings, const remote_config::settings &rc_settings,
     std::map<std::string_view, std::string> &meta,
     std::map<std::string_view, double> &metrics, bool dynamic_enablement)
 {
     const std::lock_guard guard{mutex_};
 
-    auto sid = std::move(id);
-    auto hit = cache_.find(sid);
+    auto hit = cache_.find(id);
     if (hit != cache_.end()) {
         auto service_ptr = hit->second.lock();
         if (service_ptr) { // not expired
@@ -25,7 +23,7 @@ std::shared_ptr<service> service_manager::create_service(
     }
 
     auto service_ptr = service::from_settings(
-        sid, settings, rc_settings, meta, metrics, dynamic_enablement);
+        id, settings, rc_settings, meta, metrics, dynamic_enablement);
     cache_.emplace(id, std::move(service_ptr));
     last_service_ = service_ptr;
 
