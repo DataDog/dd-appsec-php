@@ -7,8 +7,9 @@
 
 namespace dds {
 
-std::shared_ptr<service> service_manager::create_service(service_identifier &id,
-    const engine_settings &settings, const remote_config::settings &rc_settings,
+std::shared_ptr<service> service_manager::create_service(
+    service_identifier &&id, const engine_settings &settings,
+    const remote_config::settings &rc_settings,
     std::map<std::string_view, std::string> &meta,
     std::map<std::string_view, double> &metrics, bool dynamic_enablement)
 {
@@ -22,8 +23,8 @@ std::shared_ptr<service> service_manager::create_service(service_identifier &id,
         }
     }
 
-    auto service_ptr = service::from_settings(
-        id, settings, rc_settings, meta, metrics, dynamic_enablement);
+    auto service_ptr = service::from_settings(service_identifier(id), settings,
+        rc_settings, meta, metrics, dynamic_enablement);
     cache_.emplace(id, std::move(service_ptr));
     last_service_ = service_ptr;
 

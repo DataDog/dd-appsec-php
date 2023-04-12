@@ -34,7 +34,7 @@ client_handler::~client_handler()
     }
 }
 
-client_handler::ptr client_handler::from_settings(service_identifier &id,
+client_handler::ptr client_handler::from_settings(service_identifier &&id,
     const dds::engine_settings &eng_settings,
     std::shared_ptr<dds::service_config> service_config,
     const remote_config::settings &rc_settings, const engine::ptr &engine_ptr,
@@ -79,7 +79,7 @@ client_handler::ptr client_handler::from_settings(service_identifier &id,
     }
 
     auto rc_client = remote_config::client::from_settings(
-        id, remote_config::settings(rc_settings), products);
+        std::move(id), remote_config::settings(rc_settings), products);
 
     return std::make_shared<client_handler>(std::move(rc_client),
         std::move(service_config),

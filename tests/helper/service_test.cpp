@@ -13,7 +13,9 @@ namespace dds {
 namespace mock {
 class client : public remote_config::client {
 public:
-    client(service_identifier &sid) : remote_config::client(nullptr, sid, {}) {}
+    client(service_identifier &sid)
+        : remote_config::client(nullptr, std::move(sid), {})
+    {}
     ~client() = default;
     MOCK_METHOD0(poll, bool());
     MOCK_METHOD0(is_remote_config_available, bool());
