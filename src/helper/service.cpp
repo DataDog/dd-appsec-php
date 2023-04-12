@@ -24,7 +24,7 @@ service::service(std::shared_ptr<engine> engine,
     }
 }
 
-service::ptr service::from_settings(const service_identifier &id,
+service::ptr service::from_settings(service_identifier &id,
     const dds::engine_settings &eng_settings,
     const remote_config::settings &rc_settings,
     std::map<std::string_view, std::string> &meta,
@@ -33,10 +33,9 @@ service::ptr service::from_settings(const service_identifier &id,
     auto engine_ptr = engine::from_settings(eng_settings, meta, metrics);
 
     auto service_config = std::make_shared<dds::service_config>();
-    service_config->sid = id;
 
     auto client_handler =
-        remote_config::client_handler::from_settings(eng_settings,
+        remote_config::client_handler::from_settings(id, eng_settings,
             service_config, rc_settings, engine_ptr, dynamic_enablement);
 
     return std::make_shared<service>(

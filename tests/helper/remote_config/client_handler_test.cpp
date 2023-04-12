@@ -12,9 +12,7 @@ namespace dds {
 namespace mock {
 class client : public remote_config::client {
 public:
-    client(service_identifier &&sid)
-        : remote_config::client(nullptr, std::move(sid), {})
-    {}
+    client(service_identifier &sid) : remote_config::client(nullptr, sid, {}) {}
     ~client() = default;
     MOCK_METHOD0(poll, bool());
     MOCK_METHOD0(is_remote_config_available, bool());
@@ -31,12 +29,13 @@ public:
     dds::engine_settings settings;
     remote_config::settings rc_settings;
     std::shared_ptr<dds::service_config> service_config;
+    service_identifier id;
     std::shared_ptr<dds::engine> engine;
 
     void SetUp()
     {
         service_config = std::make_shared<dds::service_config>();
-        service_config->sid = sid;
+        id = sid;
         engine = engine::create();
         rc_settings.enabled = true;
     }
@@ -47,7 +46,7 @@ TEST_F(ClientHandlerTest, IfRemoteConfigDisabledItDoesNotGenerateHandler)
     rc_settings.enabled = false;
 
     auto client_handler = remote_config::client_handler::from_settings(
-        settings, service_config, rc_settings, engine, false);
+        id, settings, service_config, rc_settings, engine, false);
 
     EXPECT_FALSE(client_handler);
 }
@@ -56,7 +55,7 @@ TEST_F(ClientHandlerTest, IfNoServiceConfigProvidedItDoesNotGenerateHandler)
 {
     std::shared_ptr<dds::service_config> null_service_config = {};
     auto client_handler = remote_config::client_handler::from_settings(
-        settings, null_service_config, rc_settings, engine, false);
+        id, settings, null_service_config, rc_settings, engine, false);
 
     EXPECT_FALSE(client_handler);
 }
@@ -64,29 +63,29 @@ TEST_F(ClientHandlerTest, IfNoServiceConfigProvidedItDoesNotGenerateHandler)
 TEST_F(ClientHandlerTest, RuntimeIdIsNotGeneratedIfProvided)
 {
     const char *runtime_id = "some runtime id";
-    service_config->sid.runtime_id = runtime_id;
+    id.runtime_id = runtime_id;
 
     auto client_handler = remote_config::client_handler::from_settings(
-        settings, service_config, rc_settings, engine, false);
+        id, settings, service_config, rc_settings, engine, false);
 
-    EXPECT_STREQ(runtime_id, service_config->sid.runtime_id.c_str());
+    EXPECT_STREQ(runtime_id, id.runtime_id.c_str());
 }
 
 TEST_F(ClientHandlerTest, RuntimeIdIsGeneratedWhenNotProvided)
 {
-    service_config->sid.runtime_id.clear();
+    id.runtime_id.clear();
 
-    EXPECT_TRUE(service_config->sid.runtime_id.empty());
+    EXPECT_TRUE(id.runtime_id.empty());
     remote_config::client_handler::from_settings(
-        settings, service_config, rc_settings, engine, false);
-    EXPECT_FALSE(service_config->sid.runtime_id.empty());
+        id, settings, service_config, rc_settings, engine, false);
+    EXPECT_FALSE(id.runtime_id.empty());
 }
 
 TEST_F(ClientHandlerTest, AsmFeatureProductIsAddeWhenDynamicEnablement)
 {
     auto dynamic_enablement = true;
     auto client_handler = remote_config::client_handler::from_settings(
-        settings, service_config, rc_settings, engine, dynamic_enablement);
+        id, settings, service_config, rc_settings, engine, dynamic_enablement);
 
     auto products_list = client_handler->get_client()->get_products();
     EXPECT_TRUE(products_list.find("ASM_FEATURES") != products_list.end());
@@ -100,7 +99,7 @@ TEST_F(
     // Clear rules file so at least some other products are added
     settings.rules_file.clear();
     auto client_handler = remote_config::client_handler::from_settings(
-        settings, service_config, rc_settings, engine, dynamic_enablement);
+        id, settings, service_config, rc_settings, engine, dynamic_enablement);
 
     auto products_list = client_handler->get_client()->get_products();
     EXPECT_TRUE(products_list.find("ASM_FEATURES") == products_list.end());
@@ -111,7 +110,7 @@ TEST_F(ClientHandlerTest, SomeProductsDependOnDynamicEngineBeingSet)
     { // When rules file is not set, products are added
         settings.rules_file.clear();
         auto client_handler = remote_config::client_handler::from_settings(
-            settings, service_config, rc_settings, engine, true);
+            id, settings, service_config, rc_settings, engine, true);
 
         auto products_list = client_handler->get_client()->get_products();
         EXPECT_TRUE(products_list.find("ASM_DATA") != products_list.end());
@@ -122,7 +121,7 @@ TEST_F(ClientHandlerTest, SomeProductsDependOnDynamicEngineBeingSet)
     { // When rules file is set, products not are added
         settings.rules_file = "/some/file";
         auto client_handler = remote_config::client_handler::from_settings(
-            settings, service_config, rc_settings, engine, true);
+            id, settings, service_config, rc_settings, engine, true);
 
         auto products_list = client_handler->get_client()->get_products();
         EXPECT_TRUE(products_list.find("ASM_DATA") == products_list.end());
@@ -136,7 +135,7 @@ TEST_F(ClientHandlerTest, IfNoProductsAreRequiredRemoteClientIsNotGenerated)
     settings.rules_file = "/some/file";
     auto dynamic_enablement = false;
     auto client_handler = remote_config::client_handler::from_settings(
-        settings, service_config, rc_settings, engine, dynamic_enablement);
+        id, settings, service_config, rc_settings, engine, dynamic_enablement);
 
     EXPECT_FALSE(client_handler);
 }
@@ -148,7 +147,7 @@ TEST_F(ClientHandlerTest, ValidateRCThread)
     std::promise<bool> available_call_promise;
     auto available_call_future = available_call_promise.get_future();
 
-    auto rc_client = std::make_unique<mock::client>(std::move(sid));
+    auto rc_client = std::make_unique<mock::client>(sid);
     EXPECT_CALL(*rc_client, is_remote_config_available)
         .Times(1)
         .WillOnce(DoAll(SignalCall(&available_call_promise), Return(true)));
@@ -173,7 +172,7 @@ TEST_F(ClientHandlerTest, WhenRcNotAvailableItKeepsDiscovering)
     auto first_call_future = first_call_promise.get_future();
     auto second_call_future = second_call_promise.get_future();
 
-    auto rc_client = std::make_unique<mock::client>(std::move(sid));
+    auto rc_client = std::make_unique<mock::client>(sid);
     EXPECT_CALL(*rc_client, is_remote_config_available)
         .Times(2)
         .WillOnce(DoAll(SignalCall(&first_call_promise), Return(false)))
@@ -200,7 +199,7 @@ TEST_F(ClientHandlerTest, WhenPollFailsItGoesBackToDiscovering)
     auto second_call_future = second_call_promise.get_future();
     auto third_call_future = third_call_promise.get_future();
 
-    auto rc_client = std::make_unique<mock::client>(std::move(sid));
+    auto rc_client = std::make_unique<mock::client>(sid);
     EXPECT_CALL(*rc_client, is_remote_config_available)
         .Times(2)
         .WillOnce(DoAll(SignalCall(&first_call_promise), Return(true)))
@@ -230,7 +229,7 @@ TEST_F(ClientHandlerTest, WhenDiscoverFailsItStaysOnDiscovering)
     auto second_call_future = second_call_promise.get_future();
     auto third_call_future = third_call_promise.get_future();
 
-    auto rc_client = std::make_unique<mock::client>(std::move(sid));
+    auto rc_client = std::make_unique<mock::client>(sid);
     EXPECT_CALL(*rc_client, is_remote_config_available)
         .Times(3)
         .WillOnce(DoAll(SignalCall(&first_call_promise), Return(false)))
@@ -259,7 +258,7 @@ TEST_F(ClientHandlerTest, ItKeepsPollingWhileNoError)
     auto second_call_future = second_call_promise.get_future();
     auto third_call_future = third_call_promise.get_future();
 
-    auto rc_client = std::make_unique<mock::client>(std::move(sid));
+    auto rc_client = std::make_unique<mock::client>(sid);
     EXPECT_CALL(*rc_client, is_remote_config_available)
         .Times(1)
         .WillOnce(DoAll(SignalCall(&first_call_promise), Return(true)));

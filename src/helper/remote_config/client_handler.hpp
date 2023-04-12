@@ -36,7 +36,7 @@ public:
     client_handler(client_handler &&) = delete;
     client_handler &operator=(client_handler &&) = delete;
 
-    static client_handler::ptr from_settings(
+    static client_handler::ptr from_settings(service_identifier &id,
         const dds::engine_settings &eng_settings,
         std::shared_ptr<dds::service_config> service_config,
         const remote_config::settings &rc_settings,

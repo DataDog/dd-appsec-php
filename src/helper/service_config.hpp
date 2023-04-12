@@ -5,7 +5,6 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #pragma once
 
-#include "service_identifier.hpp"
 #include <atomic>
 #include <map>
 #include <optional>
@@ -16,7 +15,6 @@ namespace dds {
 enum class enable_asm_status : unsigned { NOT_SET = 0, ENABLED, DISABLED };
 
 struct service_config {
-    dds::service_identifier sid;
     void enable_asm() { asm_enabled = enable_asm_status::ENABLED; }
     void disable_asm() { asm_enabled = enable_asm_status::DISABLED; }
     void unset_asm() { asm_enabled = enable_asm_status::NOT_SET; }

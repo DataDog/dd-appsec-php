@@ -7,9 +7,8 @@
 
 namespace dds {
 
-std::shared_ptr<service> service_manager::create_service(
-    const service_identifier &id, const engine_settings &settings,
-    const remote_config::settings &rc_settings,
+std::shared_ptr<service> service_manager::create_service(service_identifier &id,
+    const engine_settings &settings, const remote_config::settings &rc_settings,
     std::map<std::string_view, std::string> &meta,
     std::map<std::string_view, double> &metrics, bool dynamic_enablement)
 {

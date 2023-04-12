@@ -95,10 +95,10 @@ class test_client : public remote_config::client {
 public:
     test_client(std::string id,
         std::unique_ptr<remote_config::http_api> &&arg_api,
-        service_identifier &&sid, remote_config::settings &&settings,
+        service_identifier &sid, remote_config::settings &&settings,
         const std::vector<remote_config::product> &products = {})
         : remote_config::client(
-              std::move(arg_api), std::move(sid), std::move(settings), products)
+              std::move(arg_api), sid, std::move(settings), products)
     {
         id_ = std::move(id);
     }
@@ -363,7 +363,7 @@ TEST_F(RemoteConfigClient, OnNetworkApiErrorTheExceptionsFlows)
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
     dds::test_client api_client(
-        id, std::move(api), std::move(sid), std::move(settings), _products);
+        id, std::move(api), sid, std::move(settings), _products);
 
     try {
         api_client.poll();
@@ -433,7 +433,7 @@ TEST_F(RemoteConfigClient, ItCallsToApiOnPoll)
         service, env, tracer_version, app_version, runtime_id};
 
     dds::test_client api_client(
-        id, std::move(api), std::move(sid), std::move(settings), _products);
+        id, std::move(api), sid, std::move(settings), _products);
 
     EXPECT_TRUE(api_client.poll());
     EXPECT_EQ(sort_arrays(generate_request_serialized(false, false)),
@@ -445,7 +445,7 @@ TEST_F(RemoteConfigClient, ItReturnErrorWhenApiNotProvided)
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
     dds::test_client api_client(
-        id, nullptr, std::move(sid), std::move(settings), _products);
+        id, nullptr, sid, std::move(settings), _products);
 
     EXPECT_FALSE(api_client.poll());
 }
@@ -458,7 +458,7 @@ TEST_F(RemoteConfigClient, ItReturnErrorWhenResponseIsInvalidJson)
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
     dds::test_client api_client(
-        id, std::move(api), std::move(sid), std::move(settings), _products);
+        id, std::move(api), sid, std::move(settings), _products);
 
     EXPECT_FALSE(api_client.poll());
 }
@@ -477,7 +477,7 @@ TEST_F(RemoteConfigClient,
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
     dds::test_client api_client(
-        id, std::move(api), std::move(sid), std::move(settings), _products);
+        id, std::move(api), sid, std::move(settings), _products);
 
     // Validate first request does not contain any error
     EXPECT_FALSE(api_client.poll());
@@ -505,7 +505,7 @@ TEST_F(RemoteConfigClient,
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
     dds::test_client api_client(
-        id, std::move(api), std::move(sid), std::move(settings), _products);
+        id, std::move(api), sid, std::move(settings), _products);
 
     // Validate first request does not contain any error
     EXPECT_FALSE(api_client.poll());
@@ -602,7 +602,7 @@ TEST_F(RemoteConfigClient, ItReturnsErrorWhenClientConfigPathCantBeParsed)
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
     dds::test_client api_client(
-        id, std::move(api), std::move(sid), std::move(settings), _products);
+        id, std::move(api), sid, std::move(settings), _products);
 
     // Validate first request does not contain any error
     EXPECT_FALSE(api_client.poll());
@@ -629,8 +629,7 @@ TEST_F(RemoteConfigClient, ItReturnsErrorIfProductOnPathNotRequested)
 
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
-    dds::test_client api_client(
-        id, std::move(api), std::move(sid), std::move(settings));
+    dds::test_client api_client(id, std::move(api), sid, std::move(settings));
 
     // Validate first request does not contain any error
     EXPECT_FALSE(api_client.poll());
@@ -662,7 +661,7 @@ TEST_F(RemoteConfigClient, ItGeneratesClientStateAndCacheFromResponse)
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
     dds::test_client api_client(
-        id, std::move(api), std::move(sid), std::move(settings), _products);
+        id, std::move(api), sid, std::move(settings), _products);
 
     EXPECT_TRUE(api_client.poll());
     EXPECT_TRUE(api_client.poll());
@@ -715,8 +714,8 @@ TEST_F(RemoteConfigClient, WhenANewConfigIsAddedItCallsOnUpdateOnPoll)
 
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
-    dds::test_client api_client(id, std::move(api), std::move(sid),
-        std::move(settings), {product, product_not_in_response});
+    dds::test_client api_client(id, std::move(api), sid, std::move(settings),
+        {product, product_not_in_response});
 
     EXPECT_TRUE(api_client.poll());
 }
@@ -783,7 +782,7 @@ TEST_F(RemoteConfigClient, WhenAConfigDissapearOnFollowingPollsItCallsToUnApply)
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
     dds::test_client api_client(
-        id, std::move(api), std::move(sid), std::move(settings), {product});
+        id, std::move(api), sid, std::move(settings), {product});
 
     EXPECT_TRUE(api_client.poll());
     EXPECT_TRUE(api_client.poll());
@@ -888,7 +887,7 @@ TEST_F(
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
     dds::test_client api_client(
-        id, std::move(api), std::move(sid), std::move(settings), {product});
+        id, std::move(api), sid, std::move(settings), {product});
 
     EXPECT_TRUE(api_client.poll());
     EXPECT_TRUE(api_client.poll());
@@ -915,7 +914,7 @@ TEST_F(RemoteConfigClient, FilesThatAreInCacheAreUsedWhenNotInTargetFiles)
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
     dds::test_client api_client(
-        id, std::move(api), std::move(sid), std::move(settings), _products);
+        id, std::move(api), sid, std::move(settings), _products);
 
     EXPECT_TRUE(api_client.poll());
     EXPECT_TRUE(api_client.poll());
@@ -949,7 +948,7 @@ TEST_F(RemoteConfigClient, NotTrackedFilesAreDeletedFromCache)
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
     dds::test_client api_client(
-        id, std::move(api), std::move(sid), std::move(settings), _products);
+        id, std::move(api), sid, std::move(settings), _products);
 
     EXPECT_TRUE(api_client.poll());
     EXPECT_TRUE(api_client.poll());
@@ -1039,7 +1038,7 @@ TEST_F(RemoteConfigClient, TestHashIsDifferentFromTheCache)
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
     dds::test_client api_client(
-        id, std::move(api), std::move(sid), std::move(settings), _products);
+        id, std::move(api), sid, std::move(settings), _products);
 
     EXPECT_TRUE(api_client.poll());
     EXPECT_FALSE(api_client.poll());
@@ -1123,7 +1122,7 @@ TEST_F(RemoteConfigClient, TestWhenFileGetsFromCacheItsCachedLenUsed)
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
     dds::test_client api_client(
-        id, std::move(api), std::move(sid), std::move(settings), _products);
+        id, std::move(api), sid, std::move(settings), _products);
 
     EXPECT_TRUE(api_client.poll());
     EXPECT_TRUE(api_client.poll());
@@ -1173,7 +1172,7 @@ TEST_F(RemoteConfigClient, ProductsWithAListenerAcknowledgeUpdates)
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
     dds::test_client api_client(
-        id, std::move(api), std::move(sid), std::move(settings), _products);
+        id, std::move(api), sid, std::move(settings), _products);
 
     EXPECT_TRUE(api_client.poll());
     EXPECT_TRUE(api_client.poll());
@@ -1217,7 +1216,7 @@ TEST_F(RemoteConfigClient, WhenAListerCanProccesAnUpdateTheConfigStateGetsError)
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
     dds::test_client api_client(
-        id, std::move(api), std::move(sid), std::move(settings), products);
+        id, std::move(api), sid, std::move(settings), products);
 
     EXPECT_TRUE(api_client.poll());
     EXPECT_TRUE(api_client.poll());
@@ -1253,7 +1252,7 @@ TEST_F(RemoteConfigClient, OneClickActivationIsSetAsCapability)
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
     dds::test_client api_client(
-        id, std::move(api), std::move(sid), std::move(settings), _products);
+        id, std::move(api), sid, std::move(settings), _products);
 
     EXPECT_TRUE(api_client.poll());
 
