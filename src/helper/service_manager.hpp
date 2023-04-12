@@ -23,7 +23,7 @@ class service_manager {
 public:
     service_manager() = default;
 
-    virtual std::shared_ptr<service> create_service(service_identifier &id,
+    virtual std::shared_ptr<service> create_service(service_identifier &&id,
         const engine_settings &settings,
         const remote_config::settings &rc_settings,
         std::map<std::string_view, std::string> &meta,
