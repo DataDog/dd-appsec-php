@@ -33,6 +33,7 @@ public:
     std::shared_ptr<dds::service_config> service_config;
     service_identifier id;
     std::shared_ptr<dds::engine> engine;
+    dds::scheduler scheduler{500ms, 5min};
 
     void SetUp()
     {
@@ -172,7 +173,7 @@ TEST_F(ClientHandlerTest, ValidateRCThread)
         .WillOnce(DoAll(SignalCall(&poll_call_promise), Return(true)));
 
     auto client_handler = remote_config::client_handler(
-        std::move(rc_client), service_config, 500ms);
+        std::move(rc_client), service_config, std::move(scheduler));
 
     client_handler.start();
 
@@ -197,7 +198,7 @@ TEST_F(ClientHandlerTest, WhenRcNotAvailableItKeepsDiscovering)
     EXPECT_CALL(*rc_client, poll).Times(0);
 
     auto client_handler = remote_config::client_handler(
-        std::move(rc_client), service_config, 500ms);
+        std::move(rc_client), service_config, std::move(scheduler));
 
     client_handler.start();
     ;
@@ -228,7 +229,7 @@ TEST_F(ClientHandlerTest, WhenPollFailsItGoesBackToDiscovering)
             Throw(dds::remote_config::network_exception("some"))));
 
     auto client_handler = remote_config::client_handler(
-        std::move(rc_client), service_config, 500ms);
+        std::move(rc_client), service_config, std::move(scheduler));
     client_handler.start();
     ;
 
@@ -259,7 +260,7 @@ TEST_F(ClientHandlerTest, WhenDiscoverFailsItStaysOnDiscovering)
     EXPECT_CALL(*rc_client, poll).Times(0);
 
     auto client_handler = remote_config::client_handler(
-        std::move(rc_client), service_config, 500ms);
+        std::move(rc_client), service_config, std::move(scheduler));
     client_handler.start();
 
     // wait a little bit - this might end up being flaky
@@ -288,7 +289,7 @@ TEST_F(ClientHandlerTest, ItKeepsPollingWhileNoError)
         .WillOnce(DoAll(SignalCall(&third_call_promise), Return(true)));
 
     auto client_handler = remote_config::client_handler(
-        std::move(rc_client), service_config, 500ms);
+        std::move(rc_client), service_config, std::move(scheduler));
     client_handler.start();
 
     // wait a little bit - this might end up being flaky
@@ -300,8 +301,8 @@ TEST_F(ClientHandlerTest, ItKeepsPollingWhileNoError)
 TEST_F(ClientHandlerTest, ItDoesNotStartIfNoRcClientGiven)
 {
     auto rc_client = nullptr;
-    auto client_handler =
-        remote_config::client_handler(rc_client, service_config, 500ms);
+    auto client_handler = remote_config::client_handler(
+        rc_client, service_config, std::move(scheduler));
 
     EXPECT_FALSE(client_handler.start());
 }

@@ -12,26 +12,13 @@
 
 namespace dds::remote_config {
 
-// This will limit the max increase to 4.266666667 minutes
-static constexpr std::uint16_t max_increment = 8;
-
 client_handler::client_handler(remote_config::client::ptr &&rc_client,
-    std::shared_ptr<service_config> service_config,
-    const std::chrono::milliseconds &poll_interval)
+    std::shared_ptr<service_config> service_config, dds::scheduler &&scheduler)
     : service_config_(std::move(service_config)),
-      rc_client_(std::move(rc_client)), poll_interval_(poll_interval),
-      interval_(poll_interval)
+      rc_client_(std::move(rc_client)), scheduler_(std::move(scheduler))
 {
     // It starts checking if rc is available
-    rc_action_ = [this] { discover(); };
-}
-
-client_handler::~client_handler()
-{
-    if (handler_.joinable()) {
-        exit_.set_value(true);
-        handler_.join();
-    }
+    rc_action_ = [this]() -> bool { return discover(); };
 }
 
 client_handler::ptr client_handler::from_settings(service_identifier &&id,
@@ -81,67 +68,51 @@ client_handler::ptr client_handler::from_settings(service_identifier &&id,
     auto rc_client = remote_config::client::from_settings(
         std::move(id), remote_config::settings(rc_settings), products);
 
-    return std::make_shared<client_handler>(std::move(rc_client),
-        std::move(service_config),
-        std::chrono::milliseconds{rc_settings.poll_interval});
+    auto scheduler = dds::scheduler(1s, 5min);
+
+    return std::make_shared<client_handler>(
+        std::move(rc_client), std::move(service_config), std::move(scheduler));
 }
 
 bool client_handler::start()
 {
     if (rc_client_) {
-        handler_ = std::thread(&client_handler::run, this, exit_.get_future());
+        scheduler_.start(this);
         return true;
     }
 
     return false;
 }
 
+bool client_handler::act() { return rc_action_(); }
+
 void client_handler::handle_error()
 {
-    rc_action_ = [this] { discover(); };
-    interval_ = std::chrono::duration_cast<std::chrono::milliseconds>(
-        poll_interval_ * pow(2, std::min(errors_, max_increment)));
-    if (errors_ < std::numeric_limits<std::uint16_t>::max() - 1) {
-        errors_++;
-    }
+    rc_action_ = [this]() -> bool { return discover(); };
 }
 
-void client_handler::poll()
+bool client_handler::poll()
 {
     try {
         rc_client_->poll();
+        return true;
     } catch (dds::remote_config::network_exception & /** e */) {
         handle_error();
     }
+    return false;
 }
-void client_handler::discover()
+bool client_handler::discover()
 {
     try {
         if (rc_client_->is_remote_config_available()) {
             // Remote config is available. Start polls
-            rc_action_ = [this] { poll(); };
-            errors_ = 0;
-            interval_ = poll_interval_;
-            return;
+            rc_action_ = [this]() -> bool { return poll(); };
+            return true;
         }
     } catch (dds::remote_config::network_exception & /** e */) {}
     handle_error();
+
+    return false;
 }
 
-void client_handler::run(std::future<bool> &&exit_signal)
-{
-    std::chrono::time_point<std::chrono::steady_clock> before{0s};
-    std::future_status fs = exit_signal.wait_for(0s);
-    while (fs == std::future_status::timeout) {
-        // If the thread is interrupted somehow, make sure to check that
-        // the polling interval has actually elapsed.
-        auto now = std::chrono::steady_clock::now();
-        if ((now - before) >= interval_) {
-            rc_action_();
-            before = now;
-        }
-
-        fs = exit_signal.wait_for(interval_);
-    }
-}
 } // namespace dds::remote_config

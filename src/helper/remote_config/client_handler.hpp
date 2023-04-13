@@ -8,6 +8,7 @@
 #include "engine.hpp"
 #include "remote_config/client.hpp"
 #include "remote_config/settings.hpp"
+#include "scheduler.hpp"
 #include "service_config.hpp"
 #include "service_identifier.hpp"
 #include "std_logging.hpp"
@@ -21,14 +22,13 @@ namespace dds::remote_config {
 
 using namespace std::chrono_literals;
 
-class client_handler {
+class client_handler : public scheduler::action {
 public:
     using ptr = std::shared_ptr<client_handler>;
 
     client_handler(remote_config::client::ptr &&rc_client,
         std::shared_ptr<service_config> service_config,
-        const std::chrono::milliseconds &poll_interval = 1s);
-    ~client_handler();
+        dds::scheduler &&scheduler);
 
     client_handler(const client_handler &) = delete;
     client_handler &operator=(const client_handler &) = delete;
@@ -44,6 +44,8 @@ public:
 
     bool start();
 
+    bool act();
+
     remote_config::client *get_client() { return rc_client_.get(); }
 
 protected:
@@ -52,17 +54,12 @@ protected:
 
     remote_config::client::ptr rc_client_;
     std::shared_ptr<service_config> service_config_;
-
-    std::chrono::milliseconds poll_interval_;
-    std::chrono::milliseconds interval_;
-    void poll();
-    void discover();
-    std::function<void()> rc_action_;
+    dds::scheduler scheduler_;
+    bool poll();
+    bool discover();
+    std::function<bool()> rc_action_;
 
     std::uint16_t errors_ = {0};
-
-    std::promise<bool> exit_;
-    std::thread handler_;
 };
 
 } // namespace dds::remote_config

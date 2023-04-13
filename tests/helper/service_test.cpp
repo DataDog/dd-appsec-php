@@ -31,8 +31,9 @@ TEST(ServiceTest, NullEngine)
     EXPECT_CALL(*client, poll).Times(0);
 
     auto service_config = std::make_shared<dds::service_config>();
+    auto scheduler = dds::scheduler(1s, 2s);
     auto client_handler = std::make_shared<remote_config::client_handler>(
-        std::move(client), service_config, 1s);
+        std::move(client), service_config, std::move(scheduler));
 
     EXPECT_THROW(
         auto s = service(engine, service_config, std::move(client_handler)),
