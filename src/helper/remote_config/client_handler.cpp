@@ -94,11 +94,12 @@ void client_handler::handle_error()
 bool client_handler::poll()
 {
     try {
-        rc_client_->poll();
-        return true;
-    } catch (dds::remote_config::network_exception & /** e */) {
-        handle_error();
-    }
+        if (rc_client_->poll()) {
+            return true;
+        }
+    } catch (dds::remote_config::network_exception & /** e */) {}
+    handle_error();
+
     return false;
 }
 bool client_handler::discover()

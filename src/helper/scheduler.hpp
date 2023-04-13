@@ -38,6 +38,7 @@ public:
 protected:
     bool is_time();
     void error();
+    virtual void tick(scheduler::action *action);
     void reset()
     {
         errors_ = 0;

@@ -5,6 +5,7 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 
 #include "scheduler.hpp"
+#include <iostream>
 
 namespace dds {
 
@@ -29,34 +30,51 @@ scheduler::~scheduler()
 
 void scheduler::error()
 {
+    if (errors_ < std::numeric_limits<std::uint16_t>::max() - 1) {
+        errors_++;
+    }
+
     if (interval_ < max_allowed_interval_) {
         auto new_interval =
             std::chrono::duration_cast<std::chrono::milliseconds>(
                 poll_interval_ * pow(2, errors_));
         interval_ = std::min(max_allowed_interval_, new_interval);
     }
-    if (errors_ < std::numeric_limits<std::uint16_t>::max() - 1) {
-        errors_++;
-    }
 }
 
 void scheduler::start(scheduler::action *action)
 {
+    if (!action) {
+        return;
+    }
     handler_ = std::thread(&scheduler::run, this, exit_.get_future(), action);
+}
+
+void scheduler::tick(scheduler::action *action)
+{
+    if (!action) {
+        return;
+    }
+
+    if (!action->act()) {
+        error();
+    } else {
+        reset();
+    }
 }
 
 void scheduler::run(std::future<bool> &&exit_signal, scheduler::action *action)
 {
+    if (!action) {
+        return;
+    }
+
     std::future_status fs = exit_signal.wait_for(0s);
     while (fs == std::future_status::timeout) {
         // If the thread is interrupted somehow, make sure to check that
         // the polling interval has actually elapsed.
         if (is_time()) {
-            if (!action->act()) {
-                error();
-            } else {
-                reset();
-            }
+            tick(action);
         }
 
         fs = exit_signal.wait_for(interval_);

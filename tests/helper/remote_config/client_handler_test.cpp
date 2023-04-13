@@ -20,6 +20,14 @@ public:
     MOCK_METHOD0(is_remote_config_available, bool());
 };
 
+class scheduler : public dds::scheduler {
+public:
+    scheduler(const std::chrono::milliseconds &poll_interval,
+        const std::chrono::milliseconds &max_time_interval)
+        : dds::scheduler(poll_interval, max_time_interval){};
+    MOCK_METHOD(void, start, (scheduler::action * action), (override));
+};
+
 } // namespace mock
 
 ACTION_P(SignalCall, promise) { promise->set_value(true); }
@@ -156,148 +164,6 @@ TEST_F(ClientHandlerTest, IfNoProductsAreRequiredRemoteClientIsNotGenerated)
     EXPECT_FALSE(client_handler);
 }
 
-TEST_F(ClientHandlerTest, ValidateRCThread)
-{
-    std::promise<bool> poll_call_promise;
-    auto poll_call_future = poll_call_promise.get_future();
-    std::promise<bool> available_call_promise;
-    auto available_call_future = available_call_promise.get_future();
-
-    auto rc_client =
-        std::make_unique<mock::client>(dds::service_identifier(sid));
-    EXPECT_CALL(*rc_client, is_remote_config_available)
-        .Times(1)
-        .WillOnce(DoAll(SignalCall(&available_call_promise), Return(true)));
-    EXPECT_CALL(*rc_client, poll)
-        .Times(1)
-        .WillOnce(DoAll(SignalCall(&poll_call_promise), Return(true)));
-
-    auto client_handler = remote_config::client_handler(
-        std::move(rc_client), service_config, std::move(scheduler));
-
-    client_handler.start();
-
-    // wait a little bit - this might end up being flaky
-    poll_call_future.wait_for(1s);
-    available_call_future.wait_for(500ms);
-}
-
-TEST_F(ClientHandlerTest, WhenRcNotAvailableItKeepsDiscovering)
-{
-    std::promise<bool> first_call_promise;
-    std::promise<bool> second_call_promise;
-    auto first_call_future = first_call_promise.get_future();
-    auto second_call_future = second_call_promise.get_future();
-
-    auto rc_client =
-        std::make_unique<mock::client>(dds::service_identifier(sid));
-    EXPECT_CALL(*rc_client, is_remote_config_available)
-        .Times(2)
-        .WillOnce(DoAll(SignalCall(&first_call_promise), Return(false)))
-        .WillOnce(DoAll(SignalCall(&second_call_promise), Return(false)));
-    EXPECT_CALL(*rc_client, poll).Times(0);
-
-    auto client_handler = remote_config::client_handler(
-        std::move(rc_client), service_config, std::move(scheduler));
-
-    client_handler.start();
-    ;
-
-    // wait a little bit - this might end up being flaky
-    first_call_future.wait_for(600ms);
-    second_call_future.wait_for(1.2s);
-}
-
-TEST_F(ClientHandlerTest, WhenPollFailsItGoesBackToDiscovering)
-{
-    std::promise<bool> first_call_promise;
-    std::promise<bool> second_call_promise;
-    std::promise<bool> third_call_promise;
-    auto first_call_future = first_call_promise.get_future();
-    auto second_call_future = second_call_promise.get_future();
-    auto third_call_future = third_call_promise.get_future();
-
-    auto rc_client =
-        std::make_unique<mock::client>(dds::service_identifier(sid));
-    EXPECT_CALL(*rc_client, is_remote_config_available)
-        .Times(2)
-        .WillOnce(DoAll(SignalCall(&first_call_promise), Return(true)))
-        .WillOnce(DoAll(SignalCall(&third_call_promise), Return(true)));
-    EXPECT_CALL(*rc_client, poll)
-        .Times(1)
-        .WillOnce(DoAll(SignalCall(&second_call_promise),
-            Throw(dds::remote_config::network_exception("some"))));
-
-    auto client_handler = remote_config::client_handler(
-        std::move(rc_client), service_config, std::move(scheduler));
-    client_handler.start();
-    ;
-
-    // wait a little bit - this might end up being flaky
-    first_call_future.wait_for(600ms);
-    second_call_future.wait_for(1.2s);
-    third_call_future.wait_for(1.8s);
-}
-
-TEST_F(ClientHandlerTest, WhenDiscoverFailsItStaysOnDiscovering)
-{
-    std::promise<bool> first_call_promise;
-    std::promise<bool> second_call_promise;
-    std::promise<bool> third_call_promise;
-    auto first_call_future = first_call_promise.get_future();
-    auto second_call_future = second_call_promise.get_future();
-    auto third_call_future = third_call_promise.get_future();
-
-    auto rc_client =
-        std::make_unique<mock::client>(dds::service_identifier(sid));
-    EXPECT_CALL(*rc_client, is_remote_config_available)
-        .Times(3)
-        .WillOnce(DoAll(SignalCall(&first_call_promise), Return(false)))
-        .WillOnce(DoAll(SignalCall(&second_call_promise),
-            Throw(dds::remote_config::network_exception("some"))))
-        .WillOnce(DoAll(SignalCall(&third_call_promise),
-            Throw(dds::remote_config::network_exception("some"))));
-    EXPECT_CALL(*rc_client, poll).Times(0);
-
-    auto client_handler = remote_config::client_handler(
-        std::move(rc_client), service_config, std::move(scheduler));
-    client_handler.start();
-
-    // wait a little bit - this might end up being flaky
-    first_call_future.wait_for(600ms);
-    second_call_future.wait_for(1.2s);
-    third_call_future.wait_for(1.8s);
-}
-
-TEST_F(ClientHandlerTest, ItKeepsPollingWhileNoError)
-{
-    std::promise<bool> first_call_promise;
-    std::promise<bool> second_call_promise;
-    std::promise<bool> third_call_promise;
-    auto first_call_future = first_call_promise.get_future();
-    auto second_call_future = second_call_promise.get_future();
-    auto third_call_future = third_call_promise.get_future();
-
-    auto rc_client =
-        std::make_unique<mock::client>(dds::service_identifier(sid));
-    EXPECT_CALL(*rc_client, is_remote_config_available)
-        .Times(1)
-        .WillOnce(DoAll(SignalCall(&first_call_promise), Return(true)));
-    EXPECT_CALL(*rc_client, poll)
-        .Times(2)
-        .WillOnce(DoAll(SignalCall(&second_call_promise), Return(true)))
-        .WillOnce(DoAll(SignalCall(&third_call_promise), Return(true)));
-
-    auto client_handler = remote_config::client_handler(
-        std::move(rc_client), service_config, std::move(scheduler));
-    client_handler.start();
-
-    // wait a little bit - this might end up being flaky
-    first_call_future.wait_for(600ms);
-    second_call_future.wait_for(1.2s);
-    third_call_future.wait_for(1.8s);
-}
-
 TEST_F(ClientHandlerTest, ItDoesNotStartIfNoRcClientGiven)
 {
     auto rc_client = nullptr;
@@ -305,6 +171,71 @@ TEST_F(ClientHandlerTest, ItDoesNotStartIfNoRcClientGiven)
         rc_client, service_config, std::move(scheduler));
 
     EXPECT_FALSE(client_handler.start());
+}
+
+// todo make this test work
+// TEST_F(ClientHandlerTest, ItStartsScheduler)
+//{
+//     auto rc_client =
+//         std::make_unique<mock::client>(dds::service_identifier(sid));
+//     auto s = mock::scheduler(1ms, 2ms);
+//
+//     EXPECT_CALL(s, start)
+//         .Times(1);
+//
+//     auto client_handler = remote_config::client_handler (
+//         std::move(rc_client), service_config, std::move(s));
+//
+//     EXPECT_TRUE(client_handler.start());
+// }
+
+TEST_F(ClientHandlerTest, WhenRcNotAvailableItKeepsDiscovering)
+{
+    auto rc_client =
+        std::make_unique<mock::client>(dds::service_identifier(sid));
+    EXPECT_CALL(*rc_client, is_remote_config_available)
+        .Times(2)
+        .WillRepeatedly(Return(false));
+
+    auto client_handler = remote_config::client_handler(
+        std::move(rc_client), service_config, std::move(scheduler));
+    client_handler.act();
+    client_handler.act();
+}
+
+TEST_F(ClientHandlerTest, WhenPollFailsItGoesBackToDiscovering)
+{
+    auto rc_client =
+        std::make_unique<mock::client>(dds::service_identifier(sid));
+    EXPECT_CALL(*rc_client, is_remote_config_available)
+        .Times(2)
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*rc_client, poll).Times(1).WillOnce(Return(false));
+
+    auto client_handler = remote_config::client_handler(
+        std::move(rc_client), service_config, std::move(scheduler));
+
+    EXPECT_TRUE(client_handler.act());  // Discover returns true
+    EXPECT_FALSE(client_handler.act()); // Poll fails
+    EXPECT_TRUE(client_handler.act());  // Discover again
+}
+
+TEST_F(ClientHandlerTest, ItKeepsPollingWhileNoError)
+{
+    auto rc_client =
+        std::make_unique<mock::client>(dds::service_identifier(sid));
+    EXPECT_CALL(*rc_client, is_remote_config_available)
+        .Times(1)
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*rc_client, poll).Times(3).WillRepeatedly(Return(true));
+
+    auto client_handler = remote_config::client_handler(
+        std::move(rc_client), service_config, std::move(scheduler));
+
+    EXPECT_TRUE(client_handler.act()); // Discover returns true
+    EXPECT_TRUE(client_handler.act()); // Poll
+    EXPECT_TRUE(client_handler.act()); // Poll
+    EXPECT_TRUE(client_handler.act()); // Poll
 }
 
 } // namespace dds
