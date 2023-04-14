@@ -18,7 +18,7 @@
 static int (*_orig_ddtrace_shutdown)(SHUTDOWN_FUNC_ARGS);
 static int _mod_type;
 static int _mod_number;
-static const char *_mod_version;
+static const char *_mod_version = NULL;
 static zend_string *_ddtrace_root_span_fname;
 static zend_string *_meta_propname;
 static zend_string *_metrics_propname;
@@ -120,6 +120,8 @@ static int _ddtrace_rshutdown_testing(SHUTDOWN_FUNC_ARGS)
 }
 
 const char *nullable dd_trace_version() { return _mod_version; }
+
+bool dd_trace_is_loaded() { return _mod_version != NULL; }
 
 bool dd_trace_root_span_add_tag(zend_string *nonnull tag, zval *nonnull value)
 {
