@@ -12,8 +12,7 @@
 
 namespace dds::remote_config {
 
-// This will limit the max increase to 4.266666667 minutes
-static constexpr std::uint16_t max_increment = 8;
+static constexpr std::chrono::milliseconds default_max_interval = 5min;
 
 client_handler::client_handler(remote_config::client::ptr &&rc_client,
     std::shared_ptr<service_config> service_config,
@@ -24,6 +23,7 @@ client_handler::client_handler(remote_config::client::ptr &&rc_client,
 {
     // It starts checking if rc is available
     rc_action_ = [this] { discover(); };
+    max_interval = default_max_interval;
 }
 
 client_handler::~client_handler()
@@ -99,10 +99,16 @@ bool client_handler::start()
 void client_handler::handle_error()
 {
     rc_action_ = [this] { discover(); };
-    interval_ = std::chrono::duration_cast<std::chrono::milliseconds>(
-        poll_interval_ * pow(2, std::min(errors_, max_increment)));
+
     if (errors_ < std::numeric_limits<std::uint16_t>::max() - 1) {
         errors_++;
+    }
+
+    if (interval_ < max_interval) {
+        auto new_interval =
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                poll_interval_ * pow(2, errors_));
+        interval_ = std::min(max_interval, new_interval);
     }
 }
 
