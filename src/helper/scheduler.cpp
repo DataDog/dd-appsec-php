@@ -44,7 +44,7 @@ void scheduler::error()
 
 void scheduler::start(scheduler::action *action)
 {
-    if (!action) {
+    if (action == nullptr) {
         return;
     }
     handler_ = std::thread(&scheduler::run, this, exit_.get_future(), action);
@@ -52,7 +52,7 @@ void scheduler::start(scheduler::action *action)
 
 void scheduler::tick(scheduler::action *action)
 {
-    if (!action) {
+    if (action == nullptr) {
         return;
     }
 
@@ -65,7 +65,7 @@ void scheduler::tick(scheduler::action *action)
 
 void scheduler::run(std::future<bool> &&exit_signal, scheduler::action *action)
 {
-    if (!action) {
+    if (action == nullptr) {
         return;
     }
 
