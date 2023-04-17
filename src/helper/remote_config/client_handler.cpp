@@ -19,11 +19,10 @@ client_handler::client_handler(remote_config::client::ptr &&rc_client,
     const std::chrono::milliseconds &poll_interval)
     : service_config_(std::move(service_config)),
       rc_client_(std::move(rc_client)), poll_interval_(poll_interval),
-      interval_(poll_interval)
+      interval_(poll_interval), max_interval(default_max_interval)
 {
     // It starts checking if rc is available
     rc_action_ = [this] { discover(); };
-    max_interval = default_max_interval;
 }
 
 client_handler::~client_handler()
@@ -134,6 +133,8 @@ void client_handler::discover()
     handle_error();
 }
 
+void client_handler::tick() { rc_action_(); }
+
 void client_handler::run(std::future<bool> &&exit_signal)
 {
     std::chrono::time_point<std::chrono::steady_clock> before{0s};
@@ -143,7 +144,7 @@ void client_handler::run(std::future<bool> &&exit_signal)
         // the polling interval has actually elapsed.
         auto now = std::chrono::steady_clock::now();
         if ((now - before) >= interval_) {
-            rc_action_();
+            tick();
             before = now;
         }
 
