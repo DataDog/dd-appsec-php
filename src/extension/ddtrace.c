@@ -63,8 +63,6 @@ static void dd_trace_load_symbols(void)
 
 void dd_trace_startup()
 {
-    dd_trace_load_symbols();
-
     _ddtrace_root_span_fname = zend_string_init_interned(
         LSTRARG("ddtrace\\root_span"), 1 /* permanent */);
     _meta_propname = zend_string_init_interned(LSTRARG("meta"), 1);
@@ -82,6 +80,8 @@ void dd_trace_startup()
     _mod_type = mod->type;
     _mod_number = mod->module_number;
     _mod_version = mod->version;
+
+    dd_trace_load_symbols();
 
     if (get_global_DD_APPSEC_TESTING()) {
         _orig_ddtrace_shutdown = mod->request_shutdown_func;
