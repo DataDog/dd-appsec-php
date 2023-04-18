@@ -66,7 +66,7 @@ protected:
     uint32_t version{};
     network::base_broker::ptr broker_;
     std::shared_ptr<service_manager> service_manager_;
-    std::shared_ptr<service> service_;
+    std::shared_ptr<service> service_{nullptr};
     std::optional<engine::context> context_;
     std::optional<bool> client_enabled_conf;
 };
