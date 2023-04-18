@@ -1231,6 +1231,8 @@ TEST(ClientTest,
         network::config_sync::request msg;
 
         network::request req(std::move(msg));
+        req.enabled = msg.enabled;
+        req.disabled = msg.disabled;
 
         std::shared_ptr<network::base_response> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
@@ -1328,6 +1330,8 @@ TEST(ClientTest,
         network::config_sync::request msg;
 
         network::request req(std::move(msg));
+        req.enabled = msg.enabled;
+        req.disabled = msg.disabled;
 
         std::shared_ptr<network::base_response> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
@@ -1363,6 +1367,8 @@ TEST(ClientTest,
         network::config_sync::request msg;
 
         network::request req(std::move(msg));
+        req.enabled = msg.enabled;
+        req.disabled = msg.disabled;
 
         std::shared_ptr<network::base_response> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
@@ -1398,6 +1404,8 @@ TEST(
         network::config_sync::request msg;
 
         network::request req(std::move(msg));
+        req.enabled = msg.enabled;
+        req.disabled = msg.disabled;
 
         std::shared_ptr<network::base_response> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
@@ -1556,6 +1564,8 @@ TEST(ClientTest,
         msg.data = parameter::map();
 
         network::request req(std::move(msg));
+        req.enabled = msg.enabled;
+        req.disabled = msg.disabled;
 
         std::shared_ptr<network::base_response> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
@@ -1588,6 +1598,8 @@ TEST(ClientTest,
         msg.data = parameter::map();
 
         network::request req(std::move(msg));
+        req.enabled = msg.enabled;
+        req.disabled = msg.disabled;
 
         std::shared_ptr<network::base_response> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
@@ -1714,6 +1726,8 @@ TEST(ClientTest,
         msg.data = parameter::map();
 
         network::request req(std::move(msg));
+        req.enabled = msg.enabled;
+        req.disabled = msg.disabled;
 
         std::shared_ptr<network::base_response> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
@@ -1750,6 +1764,8 @@ TEST(ClientTest,
         msg.data = parameter::map();
 
         network::request req(std::move(msg));
+        req.enabled = msg.enabled;
+        req.disabled = msg.disabled;
 
         std::shared_ptr<network::base_response> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
@@ -1786,6 +1802,8 @@ TEST(ClientTest,
         msg.data = parameter::map();
 
         network::request req(std::move(msg));
+        req.enabled = msg.enabled;
+        req.disabled = msg.disabled;
 
         std::shared_ptr<network::base_response> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));

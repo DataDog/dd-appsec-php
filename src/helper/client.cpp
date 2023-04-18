@@ -89,6 +89,13 @@ bool handle_message(client &client, const network::base_broker &broker,
         if (id_computed == network::response_id::error) {
             send_error = true;
             result = false;
+        } else if (id_computed == network::response_id::config_features) {
+            auto response =
+                std::make_shared<network::config_features::response>();
+            response->enabled = enabled;
+
+            SPDLOG_DEBUG("sending config_features to {}", msg.method);
+            return broker.send(response);
         } else {
             return maybe_exec_cmd_M<Ms...>(client, msg);
         }
@@ -208,21 +215,6 @@ bool client::handle_command(network::request_init::request &command)
         SPDLOG_DEBUG("no service available on request_init");
         send_error_response(*broker_);
         return false;
-    }
-
-    if (!compute_client_status()) {
-        auto response_cf =
-            std::make_shared<network::config_features::response>();
-        response_cf->enabled = false;
-
-        SPDLOG_DEBUG("sending config_features to request_init");
-        try {
-            return broker_->send(response_cf);
-        } catch (std::exception &e) {
-            SPDLOG_ERROR(e.what());
-        }
-
-        return true;
     }
 
     // During request init we initialize the engine context
@@ -371,21 +363,6 @@ bool client::handle_command(network::config_sync::request & /* command */)
     }
 
     SPDLOG_DEBUG("received command config_sync");
-
-    if (compute_client_status()) {
-        auto response_cf =
-            std::make_shared<network::config_features::response>();
-        response_cf->enabled = true;
-
-        SPDLOG_DEBUG("sending config_features to config_sync");
-        try {
-            return broker_->send(response_cf);
-        } catch (std::exception &e) {
-            SPDLOG_ERROR(e.what());
-        }
-
-        return true;
-    }
 
     SPDLOG_DEBUG("sending config_sync to config_sync");
     try {
