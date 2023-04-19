@@ -57,6 +57,8 @@ struct base_request {
     base_request &operator=(const base_request &) = default;
     base_request(base_request &&) = default;
     base_request &operator=(base_request &&) = default;
+    static constexpr response_id on_enabled = response_id::unknown;
+    static constexpr response_id on_disabled = response_id::unknown;
 
     virtual ~base_request() = default;
 };
@@ -89,31 +91,13 @@ template <typename T> struct base_response_generic : public base_response {
     }
 };
 
-// Response to be used if the incoming message could not be parsed, this
-// response ensures that the extension will not be blocked waiting for a
-// message.
-struct error {
-    static constexpr const char *name = "error";
-
-    struct response : base_response_generic<response> {
-        static constexpr response_id id = response_id::error;
-
-        [[nodiscard]] std::string_view get_type() const override
-        {
-            return error::name;
-        };
-
-        MSGPACK_DEFINE();
-    };
-};
-
 struct client_init {
     static constexpr const char *name = "client_init";
     struct request : base_request {
         static constexpr const char *name = client_init::name;
         static constexpr request_id id = request_id::client_init;
-        static constexpr response_id enabled = response_id::client_init;
-        static constexpr response_id disabled = response_id::client_init;
+        static constexpr response_id on_enabled = response_id::client_init;
+        static constexpr response_id on_disabled = response_id::client_init;
 
         unsigned pid{0};
         std::string client_version;
@@ -159,8 +143,8 @@ struct request_init {
     struct request : base_request {
         static constexpr const char *name = request_init::name;
         static constexpr request_id id = request_id::request_init;
-        static constexpr response_id enabled = response_id::request_init;
-        static constexpr response_id disabled = response_id::config_features;
+        static constexpr response_id on_enabled = response_id::request_init;
+        static constexpr response_id on_disabled = response_id::config_features;
 
         dds::parameter data;
 
@@ -195,8 +179,8 @@ struct request_exec {
     struct request : base_request {
         static constexpr const char *name = request_exec::name;
         static constexpr request_id id = request_id::request_exec;
-        static constexpr response_id enabled = response_id::request_exec;
-        static constexpr response_id disabled = response_id::error;
+        static constexpr response_id on_enabled = response_id::request_exec;
+        static constexpr response_id on_disabled = response_id::error;
 
         dds::parameter data;
 
@@ -223,9 +207,6 @@ struct request_exec {
 
         MSGPACK_DEFINE(verdict, parameters, triggers);
     };
-
-    static constexpr const response_id enabled = request_exec::response::id;
-    static constexpr const response_id disabled = network::error::response::id;
 };
 
 struct config_sync {
@@ -233,8 +214,8 @@ struct config_sync {
     struct request : base_request {
         static constexpr request_id id = request_id::config_sync;
         static constexpr const char *name = config_sync::name;
-        static constexpr response_id enabled = response_id::config_features;
-        static constexpr response_id disabled = response_id::config_sync;
+        static constexpr response_id on_enabled = response_id::config_features;
+        static constexpr response_id on_disabled = response_id::config_sync;
 
         request() = default;
         request(const request &) = delete;
@@ -277,8 +258,8 @@ struct request_shutdown {
     struct request : base_request {
         static constexpr const char *name = request_shutdown::name;
         static constexpr request_id id = request_id::request_shutdown;
-        static constexpr response_id enabled = response_id::request_shutdown;
-        static constexpr response_id disabled = response_id::error;
+        static constexpr response_id on_enabled = response_id::request_shutdown;
+        static constexpr response_id on_disabled = response_id::error;
 
         dds::parameter data;
 
@@ -310,10 +291,29 @@ struct request_shutdown {
     };
 };
 
+// Response to be used if the incoming message could not be parsed, this
+// response ensures that the extension will not be blocked waiting for a
+// message.
+struct error {
+    static constexpr const char *name = "error";
+
+    struct response : base_response_generic<response> {
+        static constexpr response_id id = response_id::error;
+
+        [[nodiscard]] std::string_view get_type() const override
+        {
+            return error::name;
+        };
+
+        MSGPACK_DEFINE();
+    };
+};
+
 struct request {
     request_id id{request_id::unknown};
-    response_id enabled{response_id::unknown};
-    response_id disabled{response_id::unknown};;
+    response_id on_enabled{response_id::unknown};
+    response_id on_disabled{response_id::unknown};
+    ;
     std::string method;
     std::shared_ptr<base_request> arguments;
 
@@ -327,7 +327,8 @@ struct request {
     template <typename T,
         typename = std::enable_if_t<std::is_base_of<base_request, T>::value>>
     explicit request(T &&msg)
-        : id(T::id), method(T::name),
+        : id(T::id), method(T::name), on_enabled(T::on_enabled),
+          on_disabled(T::on_disabled),
           arguments(std::make_shared<T>(std::forward<T>(msg)))
     {}
 

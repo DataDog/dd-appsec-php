@@ -38,6 +38,8 @@ public:
     client(client &&) = delete;
     client &operator=(client &&) = delete;
 
+    template<typename T>
+    bool handle_commands(T &command);
     bool handle_command(const network::client_init::request &);
     // NOLINTNEXTLINE(google-runtime-references)
     bool handle_command(network::request_init::request &);

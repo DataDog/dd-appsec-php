@@ -40,7 +40,7 @@ bool maybe_exec_cmd_M(client &client, network::request &msg)
     }
 
     try {
-        return client.handle_command(msg.as<M>());
+        return client.handle_commands(msg.as<M>());
     } catch (const std::bad_cast &e) {
         SPDLOG_WARN("invalid client message for command type {}: {}",
             msg.method, e.what());
@@ -71,7 +71,7 @@ bool send_error_response(const network::base_broker &broker)
 template <typename... Ms>
 // NOLINTNEXTLINE(google-runtime-references)
 bool handle_message(client &client, const network::base_broker &broker,
-    std::chrono::milliseconds initial_timeout, bool enabled)
+    std::chrono::milliseconds initial_timeout)
 {
     if (spdlog::should_log(spdlog::level::debug)) {
         std::array names{Ms::request::name...};
@@ -85,20 +85,7 @@ bool handle_message(client &client, const network::base_broker &broker,
     bool result = true;
     try {
         auto msg = broker.recv(initial_timeout);
-        auto id_computed = enabled ? msg.enabled : msg.disabled;
-        if (id_computed == network::response_id::error) {
-            send_error = true;
-            result = false;
-        } else if (id_computed == network::response_id::config_features) {
-            auto response =
-                std::make_shared<network::config_features::response>();
-            response->enabled = enabled;
-
-            SPDLOG_DEBUG("sending config_features to {}", msg.method);
-            return broker.send(response);
-        } else {
-            return maybe_exec_cmd_M<Ms...>(client, msg);
-        }
+        return maybe_exec_cmd_M<Ms...>(client, msg);
     } catch (const client_disconnect &) {
         SPDLOG_INFO("Client has disconnected");
         // When this exception has been received, we should stop hadling this
@@ -206,6 +193,27 @@ bool client::handle_command(const network::client_init::request &command)
     }
 
     return !has_errors;
+}
+
+template <typename T> bool client::handle_commands(T &command)
+{
+    const bool enabled = compute_client_status();
+
+    auto id_computed = enabled ? command.on_enabled : command.on_disabled;
+    if (id_computed == network::response_id::error) {
+        send_error_response(*broker_);
+        return false;
+    }
+
+    if (service_ != nullptr &&
+        id_computed == network::response_id::config_features) {
+        auto response = std::make_shared<network::config_features::response>();
+        response->enabled = enabled;
+        SPDLOG_DEBUG("sending config_features");
+        return broker_->send(response);
+    }
+
+    return handle_command(command);
 }
 
 bool client::handle_command(network::request_init::request &command)
@@ -451,17 +459,16 @@ bool client::run_client_init()
 {
     static constexpr auto client_init_timeout{std::chrono::milliseconds{500}};
     return handle_message<network::client_init>(
-        *this, *broker_, client_init_timeout, false);
+        *this, *broker_, client_init_timeout);
 }
 
 bool client::run_request()
 {
-    const bool enabled = compute_client_status();
     // TODO: figure out how to handle errors which require sending an error
     //       response to ensure the extension doesn't hang.
     return handle_message<network::request_init, network::request_exec,
-        network::config_sync, network::request_shutdown>(*this, *broker_,
-        std::chrono::milliseconds{0} /* no initial timeout */, enabled);
+        network::config_sync, network::request_shutdown>(
+        *this, *broker_, std::chrono::milliseconds{0} /* no initial timeout */);
 }
 
 void client::run(worker::queue_consumer &q)

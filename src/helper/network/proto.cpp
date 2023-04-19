@@ -57,28 +57,28 @@ request as<request>::operator()(const msgpack::object &o) const
     switch (r.id) {
     case client_init::request::id:
         r.arguments = msgpack_to_request<client_init>(o.via.array.ptr[1]);
-        r.enabled = client_init::request::enabled;
-        r.disabled = client_init::request::disabled;
+        r.on_enabled = client_init::request::on_enabled;
+        r.on_disabled = client_init::request::on_disabled;
         break;
     case request_init::request::id:
         r.arguments = msgpack_to_request<request_init>(o.via.array.ptr[1]);
-        r.enabled = request_init::request::enabled;
-        r.disabled = request_init::request::disabled;
+        r.on_enabled = request_init::request::on_enabled;
+        r.on_disabled = request_init::request::on_disabled;
         break;
     case request_exec::request::id:
         r.arguments = msgpack_to_request<request_exec>(o.via.array.ptr[1]);
-        r.enabled = request_exec::request::enabled;
-        r.disabled = request_exec::request::disabled;
+        r.on_enabled = request_exec::request::on_enabled;
+        r.on_disabled = request_exec::request::on_disabled;
         break;
     case config_sync::request::id:
         r.arguments = msgpack_to_request<config_sync>(o.via.array.ptr[1]);
-        r.enabled = config_sync::request::enabled;
-        r.disabled = config_sync::request::disabled;
+        r.on_enabled = config_sync::request::on_enabled;
+        r.on_disabled = config_sync::request::on_disabled;
         break;
     case request_shutdown::request::id:
         r.arguments = msgpack_to_request<request_shutdown>(o.via.array.ptr[1]);
-        r.enabled = request_shutdown::request::enabled;
-        r.disabled = request_shutdown::request::disabled;
+        r.on_enabled = request_shutdown::request::on_enabled;
+        r.on_disabled = request_shutdown::request::on_disabled;
         break;
     default:
         break;
