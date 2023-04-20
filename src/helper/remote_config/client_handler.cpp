@@ -9,6 +9,7 @@
 #include "remote_config/asm_dd_listener.hpp"
 #include "remote_config/asm_features_listener.hpp"
 #include "remote_config/asm_listener.hpp"
+#include "remote_config/listener.hpp"
 
 namespace dds::remote_config {
 
@@ -53,12 +54,12 @@ client_handler::ptr client_handler::from_settings(service_identifier &&id,
         id.runtime_id = generate_random_uuid();
     }
 
-    std::vector<remote_config::product> products = {};
+    std::vector<remote_config::product_listener_base::shared_ptr> listeners = {};
     if (dynamic_enablement) {
         auto asm_features_listener =
             std::make_shared<remote_config::asm_features_listener>(
                 service_config);
-        products.emplace_back(asm_features_listener);
+        listeners.emplace_back(asm_features_listener);
     }
     if (eng_settings.rules_file.empty()) {
         auto asm_data_listener =
@@ -68,17 +69,17 @@ client_handler::ptr client_handler::from_settings(service_identifier &&id,
         auto asm_listener =
             std::make_shared<remote_config::asm_listener>(engine_ptr);
 
-        products.emplace_back(asm_data_listener);
-        products.emplace_back(asm_dd_listener);
-        products.emplace_back(asm_listener);
+        listeners.emplace_back(asm_data_listener);
+        listeners.emplace_back(asm_dd_listener);
+        listeners.emplace_back(asm_listener);
     }
 
-    if (products.empty()) {
+    if (listeners.empty()) {
         return {};
     }
 
     auto rc_client = remote_config::client::from_settings(
-        std::move(id), remote_config::settings(rc_settings), products);
+        std::move(id), remote_config::settings(rc_settings), std::move(listeners));
 
     return std::make_shared<client_handler>(std::move(rc_client),
         std::move(service_config),

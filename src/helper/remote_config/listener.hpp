@@ -6,6 +6,7 @@
 #pragma once
 
 #include "protocol/client.hpp"
+#include "remote_config/config.hpp"
 #include <memory>
 #include <vector>
 
@@ -13,6 +14,8 @@ namespace dds::remote_config {
 
 class product_listener_base {
 public:
+    using shared_ptr = std::shared_ptr<product_listener_base>;
+
     product_listener_base() = default;
     product_listener_base(const product_listener_base &) = default;
     product_listener_base(product_listener_base &&) = default;
@@ -22,8 +25,8 @@ public:
 
     virtual void on_update(const config &config) = 0;
     virtual void on_unapply(const config &config) = 0;
-    [[nodiscard]] virtual const protocol::capabilities_e get_capabilities() = 0;
-    [[nodiscard]] virtual const std::string_view get_name() = 0;
+    [[nodiscard]] virtual protocol::capabilities_e get_capabilities() = 0;
+    [[nodiscard]] virtual std::string_view get_name() = 0;
 
     // Stateful listeners need to override these methods
     virtual void init() = 0;

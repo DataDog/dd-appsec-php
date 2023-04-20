@@ -18,7 +18,7 @@ namespace dds::remote_config {
 
 class product {
 public:
-    product(std::shared_ptr<dds::remote_config::product_listener_base> listener)
+    explicit product(std::shared_ptr<dds::remote_config::product_listener_base> listener)
         : listener_(std::move(listener))
     {
         if (listener_ == nullptr) {
@@ -28,8 +28,7 @@ public:
     }
 
     void assign_configs(const std::unordered_map<std::string, config> &configs);
-    [[nodiscard]] const std::unordered_map<std::string, config> &
-    get_configs() const
+    [[nodiscard]] const std::unordered_map<std::string, config> & get_configs() const
     {
         return configs_;
     };
@@ -38,7 +37,7 @@ public:
         return name_ == b.name_ && configs_ == b.configs_;
     }
     [[nodiscard]] const std::string &get_name() const { return name_; }
-    [[nodiscard]] const protocol::capabilities_e get_capabilities() const
+    [[nodiscard]] protocol::capabilities_e get_capabilities() const
     {
         return listener_->get_capabilities();
     }

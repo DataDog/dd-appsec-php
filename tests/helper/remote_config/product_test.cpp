@@ -34,12 +34,11 @@ public:
     MOCK_METHOD(void, init, (), (override));
     MOCK_METHOD(void, commit, (), (override));
 
-    [[nodiscard]] virtual const remote_config::protocol::capabilities_e
-    get_capabilities() override
+    [[nodiscard]] virtual remote_config::protocol::capabilities_e get_capabilities() override
     {
         return capability_; // For example
     };
-    [[nodiscard]] virtual const std::string_view get_name() override
+    [[nodiscard]] virtual std::string_view get_name() override
     {
         return name_;
     };

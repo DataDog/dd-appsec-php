@@ -29,24 +29,24 @@ config_path config_path::from_path(const std::string &path)
 }
 
 client::client(std::unique_ptr<http_api> &&arg_api, service_identifier &&sid,
-    remote_config::settings settings, const std::vector<product> &products)
+    remote_config::settings settings,
+    std::vector<product_listener_base::shared_ptr> listeners)
     : api_(std::move(arg_api)), id_(dds::generate_random_uuid()),
-      sid_(std::move(sid)), settings_(std::move(settings))
+      sid_(std::move(sid)), settings_(std::move(settings)), listeners_(std::move(listeners))
 {
-    for (auto const &product : products) {
+    for (auto const &listener : listeners_) {
         products_.insert(std::pair<std::string, remote_config::product>(
-            product.get_name(), product));
-        capabilities_ |= product.get_capabilities();
+            listener->get_name(), product(listener)));
+        capabilities_ |= listener->get_capabilities();
     }
 }
 
 client::ptr client::from_settings(service_identifier &&sid,
     const remote_config::settings &settings,
-    const std::vector<remote_config::product> &products)
+    std::vector<product_listener_base::shared_ptr> listeners)
 {
     return std::make_unique<client>(std::make_unique<http_api>(settings.host,
-                                        std::to_string(settings.port)),
-        std::move(sid), settings, products);
+        std::to_string(settings.port)), std::move(sid), settings, std::move(listeners));
 }
 
 [[nodiscard]] protocol::get_configs_request client::generate_request() const

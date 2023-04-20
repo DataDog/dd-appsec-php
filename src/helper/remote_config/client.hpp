@@ -18,6 +18,7 @@
 #include "protocol/client.hpp"
 #include "protocol/tuf/get_configs_request.hpp"
 #include "protocol/tuf/get_configs_response.hpp"
+#include "remote_config/listener.hpp"
 #include "service_config.hpp"
 #include "settings.hpp"
 #include "utils.hpp"
@@ -37,7 +38,7 @@ public:
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     client(std::unique_ptr<http_api> &&arg_api, service_identifier &&sid,
         remote_config::settings settings,
-        const std::vector<product> &products = {});
+        std::vector<product_listener_base::shared_ptr> listeners = {});
     virtual ~client() = default;
 
     client(const client &) = delete;
@@ -47,12 +48,11 @@ public:
 
     static client::ptr from_settings(service_identifier &&sid,
         const remote_config::settings &settings,
-        const std::vector<remote_config::product> &products);
+        std::vector<product_listener_base::shared_ptr> listeners);
 
     virtual bool poll();
     virtual bool is_remote_config_available();
-    [[nodiscard]] virtual const std::unordered_map<std::string, product> &
-    get_products()
+    [[nodiscard]] virtual const std::unordered_map<std::string, product> &get_products()
     {
         return products_;
     }
@@ -61,7 +61,6 @@ public:
     {
         return sid_;
     }
-
 protected:
     [[nodiscard]] protocol::get_configs_request generate_request() const;
     bool process_response(const protocol::get_configs_response &response);
@@ -78,6 +77,7 @@ protected:
     int targets_version_{0};
 
     // supported products
+    std::vector<product_listener_base::shared_ptr> listeners_;
     std::unordered_map<std::string, product> products_;
 
     protocol::capabilities_e capabilities_ = {protocol::capabilities_e::NONE};
