@@ -25,8 +25,9 @@ public:
 
     virtual void on_update(const config &config) = 0;
     virtual void on_unapply(const config &config) = 0;
-    [[nodiscard]] virtual protocol::capabilities_e get_capabilities() = 0;
-    [[nodiscard]] virtual std::string_view get_name() = 0;
+    [[nodiscard]] virtual std::unordered_map<std::string_view,
+        protocol::capabilities_e>
+    get_supported_products() = 0;
 
     // Stateful listeners need to override these methods
     virtual void init() = 0;

@@ -21,7 +21,7 @@ namespace dds {
 
 class service_manager {
 public:
-virtual ~service_manager() = default;
+    virtual ~service_manager() = default;
     service_manager() = default;
 
     virtual std::shared_ptr<service> create_service(service_identifier &&id,

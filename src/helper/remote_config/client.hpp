@@ -52,7 +52,8 @@ public:
 
     virtual bool poll();
     virtual bool is_remote_config_available();
-    [[nodiscard]] virtual const std::unordered_map<std::string, product> &get_products()
+    [[nodiscard]] virtual const std::unordered_map<std::string, product> &
+    get_products()
     {
         return products_;
     }
@@ -61,6 +62,7 @@ public:
     {
         return sid_;
     }
+
 protected:
     [[nodiscard]] protocol::get_configs_request generate_request() const;
     bool process_response(const protocol::get_configs_response &response);

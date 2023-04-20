@@ -7,6 +7,7 @@
 
 #include "config.hpp"
 #include "listener.hpp"
+#include "remote_config/protocol/client.hpp"
 #include <algorithm>
 #include <iostream>
 #include <memory>
@@ -18,17 +19,18 @@ namespace dds::remote_config {
 
 class product {
 public:
-    explicit product(std::shared_ptr<dds::remote_config::product_listener_base> listener)
-        : listener_(std::move(listener))
+    explicit product(
+        std::string_view name, product_listener_base::shared_ptr listener)
+        : name_(name), listener_(std::move(listener))
     {
         if (listener_ == nullptr) {
             throw std::runtime_error("invalid listener");
         }
-        name_ = listener_->get_name();
     }
 
     void assign_configs(const std::unordered_map<std::string, config> &configs);
-    [[nodiscard]] const std::unordered_map<std::string, config> & get_configs() const
+    [[nodiscard]] const std::unordered_map<std::string, config> &
+    get_configs() const
     {
         return configs_;
     };
@@ -37,10 +39,6 @@ public:
         return name_ == b.name_ && configs_ == b.configs_;
     }
     [[nodiscard]] const std::string &get_name() const { return name_; }
-    [[nodiscard]] protocol::capabilities_e get_capabilities() const
-    {
-        return listener_->get_capabilities();
-    }
 
 protected:
     void update_configs(

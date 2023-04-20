@@ -54,7 +54,8 @@ client_handler::ptr client_handler::from_settings(service_identifier &&id,
         id.runtime_id = generate_random_uuid();
     }
 
-    std::vector<remote_config::product_listener_base::shared_ptr> listeners = {};
+    std::vector<remote_config::product_listener_base::shared_ptr> listeners =
+        {};
     if (dynamic_enablement) {
         auto asm_features_listener =
             std::make_shared<remote_config::asm_features_listener>(
@@ -78,8 +79,8 @@ client_handler::ptr client_handler::from_settings(service_identifier &&id,
         return {};
     }
 
-    auto rc_client = remote_config::client::from_settings(
-        std::move(id), remote_config::settings(rc_settings), std::move(listeners));
+    auto rc_client = remote_config::client::from_settings(std::move(id),
+        remote_config::settings(rc_settings), std::move(listeners));
 
     return std::make_shared<client_handler>(std::move(rc_client),
         std::move(service_config),

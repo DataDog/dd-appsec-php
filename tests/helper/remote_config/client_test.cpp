@@ -30,19 +30,25 @@
 #include "service_identifier.hpp"
 #include "spdlog/fmt/bundled/core.h"
 
+using capabilities_e = dds::remote_config::protocol::capabilities_e;
+
 namespace dds {
 class dummy_listener : public remote_config::product_listener_base {
 public:
-    explicit dummy_listener(std::string_view name_ = "MOCK_PRODUCT"): name(name_) {}
+    explicit dummy_listener(std::string_view name_ = "MOCK_PRODUCT")
+        : name(name_)
+    {}
     void on_update(const remote_config::config &config) override {}
     void on_unapply(const remote_config::config &config) override {}
     void init() override {}
     void commit() override {}
-    remote_config::protocol::capabilities_e get_capabilities() override
+
+    [[nodiscard]] std::unordered_map<std::string_view, capabilities_e>
+    get_supported_products() override
     {
-        return remote_config::protocol::capabilities_e::ASM_ACTIVATION;
+        return {
+            {name, remote_config::protocol::capabilities_e::ASM_ACTIVATION}};
     }
-    std::string_view get_name() override { return name; }
 
     std::string name;
 };
@@ -66,17 +72,19 @@ public:
 class listener_mock : public remote_config::product_listener_base {
 public:
     listener_mock() = default;
-    listener_mock(std::string_view name_): name(name_) {}
+    listener_mock(std::string_view name_) : name(name_) {}
     ~listener_mock() override = default;
     MOCK_METHOD(
         void, on_update, ((const remote_config::config &config)), (override));
     MOCK_METHOD(
         void, on_unapply, ((const remote_config::config &config)), (override));
-    remote_config::protocol::capabilities_e get_capabilities() override
+    [[nodiscard]] std::unordered_map<std::string_view, capabilities_e>
+    get_supported_products() override
     {
-        return remote_config::protocol::capabilities_e::ASM_ACTIVATION;
+        return {
+            {name, remote_config::protocol::capabilities_e::ASM_ACTIVATION}};
     }
-    std::string_view get_name() override { return name; }
+
     MOCK_METHOD(void, init, (), (override));
     MOCK_METHOD(void, commit, (), (override));
     std::string name{"MOCK_PRODUCT"};
@@ -99,9 +107,10 @@ public:
     test_client(std::string id,
         std::unique_ptr<remote_config::http_api> &&arg_api,
         service_identifier &&sid, remote_config::settings &&settings,
-        std::vector<remote_config::product_listener_base::shared_ptr> listeners = {})
-        : remote_config::client(
-              std::move(arg_api), std::move(sid), std::move(settings), listeners)
+        std::vector<remote_config::product_listener_base::shared_ptr>
+            listeners = {})
+        : remote_config::client(std::move(arg_api), std::move(sid),
+              std::move(settings), listeners)
     {
         id_ = std::move(id);
     }
@@ -1200,12 +1209,13 @@ TEST_F(RemoteConfigClient, WhenAListerCanProccesAnUpdateTheConfigStateGetsError)
     EXPECT_CALL(*listener, commit()).Times(2);
 
     listener->name = first_product_product;
-    std::vector<remote_config::product_listener_base::shared_ptr> listeners = {listener};
+    std::vector<remote_config::product_listener_base::shared_ptr> listeners = {
+        listener};
 
     service_identifier sid{
         service, env, tracer_version, app_version, runtime_id};
-    dds::test_client api_client(
-        id, std::move(api), std::move(sid), std::move(settings), std::move(listeners));
+    dds::test_client api_client(id, std::move(api), std::move(sid),
+        std::move(settings), std::move(listeners));
 
     EXPECT_TRUE(api_client.poll());
     EXPECT_TRUE(api_client.poll());

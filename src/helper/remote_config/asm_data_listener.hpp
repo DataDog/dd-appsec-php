@@ -32,12 +32,13 @@ public:
         : engine_(std::move(engine)){};
     void on_update(const config &config) override;
     void on_unapply(const config & /*config*/) override{};
-    protocol::capabilities_e get_capabilities() override
+
+    [[nodiscard]] std::unordered_map<std::string_view, protocol::capabilities_e>
+    get_supported_products() override
     {
-        return protocol::capabilities_e::ASM_IP_BLOCKING |
-               protocol::capabilities_e::ASM_USER_BLOCKING;
+        return {{"ASM_DATA", protocol::capabilities_e::ASM_IP_BLOCKING |
+                                 protocol::capabilities_e::ASM_USER_BLOCKING}};
     }
-    std::string_view get_name() override { return "ASM_DATA"; }
 
     void init() override { rules_data_.clear(); }
     void commit() override;

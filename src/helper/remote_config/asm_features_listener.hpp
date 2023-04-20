@@ -21,12 +21,12 @@ public:
     {
         service_config_->unset_asm();
     }
-    protocol::capabilities_e get_capabilities() override
-    {
-        return protocol::capabilities_e::ASM_ACTIVATION;
-    }
 
-    std::string_view get_name() override { return "ASM_FEATURES"; }
+    [[nodiscard]] std::unordered_map<std::string_view, protocol::capabilities_e>
+    get_supported_products() override
+    {
+        return {{"ASM_FEATURES", protocol::capabilities_e::ASM_ACTIVATION}};
+    }
 
     void init() override {}
     void commit() override {}
