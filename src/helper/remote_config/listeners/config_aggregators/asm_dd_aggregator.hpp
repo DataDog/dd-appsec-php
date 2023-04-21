@@ -16,6 +16,7 @@ namespace dds::remote_config {
 
 class asm_dd_aggregator : public config_aggregator_base {
 public:
+    asm_dd_aggregator() = default;
     explicit asm_dd_aggregator(std::string fallback_rules_file)
         : fallback_rules_file_(std::move(fallback_rules_file))
     {}

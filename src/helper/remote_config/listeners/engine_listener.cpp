@@ -30,7 +30,7 @@ engine_listener::engine_listener(
 
 void engine_listener::init()
 {
-    ruleset_ = rapidjson::Document();
+    ruleset_ = rapidjson::Document(rapidjson::kObjectType);
     for (auto &[product, aggregator] : aggregators_) {
         aggregator->init(&ruleset_.GetAllocator());
     }
