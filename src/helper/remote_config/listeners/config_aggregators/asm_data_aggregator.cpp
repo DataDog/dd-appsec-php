@@ -136,8 +136,6 @@ void asm_data_aggregator::aggregate(rapidjson::Document &doc)
 {
     rapidjson::Document::AllocatorType &alloc = doc.GetAllocator();
 
-    doc.SetObject();
-
     rapidjson::Value rules_data(rapidjson::kArrayType);
     for (const auto &[key, rule] : rules_data_) {
         rapidjson::Value parameter_rule(rapidjson::kObjectType);
