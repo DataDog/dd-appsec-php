@@ -217,4 +217,23 @@ bool json_helper::get_json_base64_encoded_content(
 
     return true;
 }
+
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+void json_helper::merge_arrays(rapidjson::Value &destination,
+    rapidjson::Value &source, rapidjson::Value::AllocatorType &allocator)
+{
+    for (auto *it = source.Begin(); it != source.End(); ++it) {
+        destination.PushBack(*it, allocator);
+    }
+}
+
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+void json_helper::merge_objects(rapidjson::Value &destination,
+    rapidjson::Value &source, rapidjson::Value::AllocatorType &allocator)
+{
+    for (auto it = source.MemberBegin(); it != source.MemberEnd(); ++it) {
+        destination.AddMember(it->name, it->value, allocator);
+    }
+}
+
 } // namespace dds

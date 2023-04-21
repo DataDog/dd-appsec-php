@@ -5,37 +5,34 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #pragma once
 
-#include "../engine.hpp"
 #include "config.hpp"
 #include "listener.hpp"
-#include "parameter.hpp"
-#include <optional>
-#include <rapidjson/document.h>
-#include <utility>
+#include "service_config.hpp"
 
 namespace dds::remote_config {
 
-class asm_dd_listener : public product_listener_base {
+class asm_features_listener : public listener_base {
 public:
-    explicit asm_dd_listener(
-        std::shared_ptr<dds::engine> engine, std::string fallback_rules_file)
-        : engine_(std::move(engine)),
-          fallback_rules_file_(std::move(fallback_rules_file)){};
+    explicit asm_features_listener(
+        std::shared_ptr<dds::service_config> service_config)
+        : service_config_(std::move(service_config)){};
     void on_update(const config &config) override;
-    void on_unapply(const config & /*config*/) override;
+    void on_unapply(const config & /*config*/) override
+    {
+        service_config_->unset_asm();
+    }
 
     [[nodiscard]] std::unordered_map<std::string_view, protocol::capabilities_e>
     get_supported_products() override
     {
-        return {{"ASM_DD", protocol::capabilities_e::ASM_DD_RULES}};
+        return {{"ASM_FEATURES", protocol::capabilities_e::ASM_ACTIVATION}};
     }
 
     void init() override {}
     void commit() override {}
 
 protected:
-    std::shared_ptr<dds::engine> engine_;
-    std::string fallback_rules_file_;
+    std::shared_ptr<service_config> service_config_;
 };
 
 } // namespace dds::remote_config

@@ -6,7 +6,7 @@
 #pragma once
 
 #include "config.hpp"
-#include "listener.hpp"
+#include "listeners/listener.hpp"
 #include "remote_config/protocol/client.hpp"
 #include <algorithm>
 #include <iostream>
@@ -19,8 +19,7 @@ namespace dds::remote_config {
 
 class product {
 public:
-    explicit product(
-        std::string_view name, product_listener_base::shared_ptr listener)
+    explicit product(std::string_view name, listener_base::shared_ptr listener)
         : name_(name), listener_(std::move(listener))
     {
         if (listener_ == nullptr) {
@@ -49,7 +48,7 @@ protected:
 
     std::string name_;
     std::unordered_map<std::string, config> configs_;
-    std::shared_ptr<product_listener_base> listener_;
+    std::shared_ptr<listener_base> listener_;
 };
 
 } // namespace dds::remote_config

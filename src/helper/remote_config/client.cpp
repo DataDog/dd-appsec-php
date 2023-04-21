@@ -30,7 +30,7 @@ config_path config_path::from_path(const std::string &path)
 
 client::client(std::unique_ptr<http_api> &&arg_api, service_identifier &&sid,
     remote_config::settings settings,
-    std::vector<product_listener_base::shared_ptr> listeners)
+    std::vector<listener_base::shared_ptr> listeners)
     : api_(std::move(arg_api)), id_(dds::generate_random_uuid()),
       sid_(std::move(sid)), settings_(std::move(settings)),
       listeners_(std::move(listeners))
@@ -47,7 +47,7 @@ client::client(std::unique_ptr<http_api> &&arg_api, service_identifier &&sid,
 
 client::ptr client::from_settings(service_identifier &&sid,
     const remote_config::settings &settings,
-    std::vector<product_listener_base::shared_ptr> listeners)
+    std::vector<listener_base::shared_ptr> listeners)
 {
     return std::make_unique<client>(std::make_unique<http_api>(settings.host,
                                         std::to_string(settings.port)),
