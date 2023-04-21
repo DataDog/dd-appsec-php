@@ -7,7 +7,7 @@
 #include "../common.hpp"
 #include "remote_config/config.hpp"
 #include "remote_config/exception.hpp"
-#include "remote_config/listener.hpp"
+#include "remote_config/listeners/listener.hpp"
 #include "remote_config/product.hpp"
 
 using capabilities_e = dds::remote_config::protocol::capabilities_e;
@@ -21,7 +21,7 @@ ACTION(ThrowErrorApplyingConfig)
     throw remote_config::error_applying_config("some error");
 };
 
-class listener_mock : public remote_config::product_listener_base {
+class listener_mock : public remote_config::listener_base {
 public:
     listener_mock(std::string name = "MOCK_PRODUCT",
         remote_config::protocol::capabilities_e capability =

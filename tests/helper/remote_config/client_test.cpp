@@ -16,10 +16,9 @@
 #include "../common.hpp"
 #include "base64.h"
 #include "json_helper.hpp"
-#include "remote_config/asm_features_listener.hpp"
 #include "remote_config/client.hpp"
 #include "remote_config/exception.hpp"
-#include "remote_config/listener.hpp"
+#include "remote_config/listeners/listener.hpp"
 #include "remote_config/product.hpp"
 #include "remote_config/protocol/client.hpp"
 #include "remote_config/protocol/client_state.hpp"
@@ -33,7 +32,7 @@
 using capabilities_e = dds::remote_config::protocol::capabilities_e;
 
 namespace dds {
-class dummy_listener : public remote_config::product_listener_base {
+class dummy_listener : public remote_config::listener_base {
 public:
     explicit dummy_listener(std::string_view name_ = "MOCK_PRODUCT")
         : name(name_)
@@ -69,7 +68,7 @@ public:
     MOCK_METHOD(std::string, get_configs, (std::string && request), (const));
 };
 
-class listener_mock : public remote_config::product_listener_base {
+class listener_mock : public remote_config::listener_base {
 public:
     listener_mock() = default;
     listener_mock(std::string_view name_) : name(name_) {}
@@ -107,8 +106,7 @@ public:
     test_client(std::string id,
         std::unique_ptr<remote_config::http_api> &&arg_api,
         service_identifier &&sid, remote_config::settings &&settings,
-        std::vector<remote_config::product_listener_base::shared_ptr>
-            listeners = {})
+        std::vector<remote_config::listener_base::shared_ptr> listeners = {})
         : remote_config::client(std::move(arg_api), std::move(sid),
               std::move(settings), listeners)
     {
@@ -130,7 +128,7 @@ public:
     std::string asm_dd;
     std::string apm_sampling;
     std::vector<std::string> products_str;
-    std::vector<remote_config::product_listener_base::shared_ptr> listeners_;
+    std::vector<remote_config::listener_base::shared_ptr> listeners_;
     std::string first_product_product;
     std::string first_product_id;
     std::string second_product_product;
@@ -1209,7 +1207,7 @@ TEST_F(RemoteConfigClient, WhenAListerCanProccesAnUpdateTheConfigStateGetsError)
     EXPECT_CALL(*listener, commit()).Times(2);
 
     listener->name = first_product_product;
-    std::vector<remote_config::product_listener_base::shared_ptr> listeners = {
+    std::vector<remote_config::listener_base::shared_ptr> listeners = {
         listener};
 
     service_identifier sid{
