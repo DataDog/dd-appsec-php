@@ -30,10 +30,8 @@ struct test_rule_data {
 
 remote_config::config get_rules_data(std::vector<test_rule_data> data)
 {
-    rapidjson::Document document;
+    rapidjson::Document document(rapidjson::kObjectType);
     rapidjson::Document::AllocatorType &alloc = document.GetAllocator();
-
-    document.SetObject();
 
     rapidjson::Value rules_json(rapidjson::kArrayType);
 
@@ -76,7 +74,7 @@ TEST(RemoteConfigAsmDataAggregator, ParseRulesData)
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
     aggregator.add(get_rules_data(rules_data));
     aggregator.aggregate(doc);
@@ -117,7 +115,7 @@ TEST(RemoteConfigAsmDataAggregator, ItMergesValuesWhenIdIsTheSame)
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
     aggregator.add(get_rules_data(rules_data));
     aggregator.aggregate(doc);
@@ -146,7 +144,7 @@ TEST(RemoteConfigAsmDataAggregator, WhenIdMatchesTypeIsSecondTypeIsIgnored)
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
     aggregator.add(get_rules_data(rules_data));
     aggregator.aggregate(doc);
@@ -171,7 +169,7 @@ TEST(RemoteConfigAsmDataAggregator,
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
     aggregator.add(get_rules_data(rules_data));
     aggregator.aggregate(doc);
@@ -198,7 +196,7 @@ TEST(RemoteConfigAsmDataAggregator,
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
     aggregator.add(get_rules_data(rules_data));
     aggregator.aggregate(doc);
@@ -226,7 +224,7 @@ TEST(RemoteConfigAsmDataAggregator,
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
     aggregator.add(get_rules_data(rules_data));
     aggregator.aggregate(doc);
@@ -250,7 +248,7 @@ TEST(RemoteConfigAsmDataAggregator, ParseMultipleConfigurations)
 {
     auto engine = mock::engine::create();
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
 
     remote_config::asm_data_aggregator aggregator;
 
@@ -314,7 +312,7 @@ TEST(RemoteConfigAsmDataAggregator, EmptyUpdate)
 {
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
     aggregator.aggregate(doc);
 
@@ -329,7 +327,7 @@ TEST(RemoteConfigAsmDataAggregator, IfDataIsEmptyItDoesNotAddAnyRule)
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
     aggregator.add(get_rules_data(rules_data));
     aggregator.aggregate(doc);
@@ -347,7 +345,7 @@ TEST(RemoteConfigAsmDataAggregator, IgnoreUnknownRuleDataType)
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
     aggregator.add(get_rules_data(rules_data));
     aggregator.aggregate(doc);
@@ -372,7 +370,7 @@ TEST(RemoteConfigAsmDataAggregator, ThrowsAnErrorIfContentNotInBase64)
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
 
     EXPECT_THROW(
@@ -395,7 +393,7 @@ TEST(RemoteConfigAsmDataAggregator, ThrowsAnErrorIfContentNotValidJsonContent)
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
 
     EXPECT_THROW(
@@ -420,7 +418,7 @@ TEST(RemoteConfigAsmDataAggregator, ThrowsAnErrorIfNoRulesDataKey)
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
 
     EXPECT_THROW(
@@ -445,7 +443,7 @@ TEST(RemoteConfigAsmDataAggregator, ThrowsAnErrorIfRulesDataNotArray)
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
 
     EXPECT_THROW(
@@ -469,7 +467,7 @@ TEST(RemoteConfigAsmDataAggregator, ThrowsAnErrorIfRulesDataEntryNotObject)
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
 
     EXPECT_THROW(
@@ -496,7 +494,7 @@ TEST(RemoteConfigAsmDataAggregator, ThrowsAnErrorIfNoId)
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
 
     EXPECT_THROW(
@@ -523,7 +521,7 @@ TEST(RemoteConfigAsmDataAggregator, ThrowsAnErrorIfIdNotString)
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
 
     EXPECT_THROW(
@@ -550,7 +548,7 @@ TEST(RemoteConfigAsmDataAggregator, ThrowsAnErrorIfNoType)
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
 
     EXPECT_THROW(
@@ -577,7 +575,7 @@ TEST(RemoteConfigAsmDataAggregator, ThrowsAnErrorIfTypeNotString)
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
 
     EXPECT_THROW(
@@ -603,7 +601,7 @@ TEST(RemoteConfigAsmDataAggregator, ThrowsAnErrorIfNoData)
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
 
     EXPECT_THROW(
@@ -630,7 +628,7 @@ TEST(RemoteConfigAsmDataAggregator, ThrowsAnErrorIfDataNotArray)
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
 
     EXPECT_THROW(
@@ -655,7 +653,7 @@ TEST(RemoteConfigAsmDataAggregator, ThrowsAnErrorIfDataEntryNotObject)
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
 
     EXPECT_THROW(
@@ -679,7 +677,7 @@ TEST(RemoteConfigAsmDataAggregator, ThrowsAnErrorIfDataExpirationHasInvalidType)
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
 
     EXPECT_THROW(
@@ -704,7 +702,7 @@ TEST(RemoteConfigAsmDataAggregator, ThrowsAnErrorIfDataValueMissing)
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
 
     EXPECT_THROW(
@@ -730,7 +728,7 @@ TEST(RemoteConfigAsmDataAggregator, ThrowsAnErrorIfDataValueHasInvalidType)
 
     remote_config::asm_data_aggregator aggregator;
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(rapidjson::kObjectType);
     aggregator.init(&doc.GetAllocator());
 
     EXPECT_THROW(

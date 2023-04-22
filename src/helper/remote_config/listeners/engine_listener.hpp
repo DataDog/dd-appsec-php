@@ -19,7 +19,8 @@ namespace dds::remote_config {
 //// ENGINE PROXY LISTENER
 class engine_listener : public listener_base {
 public:
-    explicit engine_listener(engine::ptr engine, const std::string &rules_file = {});
+    explicit engine_listener(
+        engine::ptr engine, const std::string &rules_file = {});
     engine_listener(const engine_listener &) = delete;
     engine_listener(engine_listener &&) = default;
     engine_listener &operator=(const engine_listener &) = delete;

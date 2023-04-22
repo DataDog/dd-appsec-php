@@ -464,4 +464,4 @@ TEST(RemoteConfigEngineListener, UpdateEngine)
 /*}*/
 /*}*/
 
-} // namespace dds
+} // namespace dds::remote_config
