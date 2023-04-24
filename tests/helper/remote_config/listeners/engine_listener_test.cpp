@@ -23,58 +23,685 @@ using mock::generate_config;
 
 namespace {
 
-struct test_rule_data_data {
-    std::optional<uint64_t> expiration;
-    std::string value;
-};
-
-struct test_rule_data {
-    std::string id;
-    std::string type;
-    std::vector<test_rule_data_data> data;
-};
-
-remote_config::config get_rules_data(std::vector<test_rule_data> data)
+ACTION_P(SaveDocument, param)
 {
-    rapidjson::Document document;
-    rapidjson::Document::AllocatorType &alloc = document.GetAllocator();
+    rapidjson::Document &document =
+        *reinterpret_cast<rapidjson::Document *>(param);
 
-    document.SetObject();
-
-    rapidjson::Value rules_json(rapidjson::kArrayType);
-
-    for (const auto &rule_data : data) {
-        rapidjson::Value rule_data_entry(rapidjson::kObjectType);
-
-        // Generate data on entry
-        rapidjson::Value data_json(rapidjson::kArrayType);
-        for (const auto &data_entry : rule_data.data) {
-            rapidjson::Value data_json_entry(rapidjson::kObjectType);
-            data_json_entry.AddMember("value", data_entry.value, alloc);
-            if (data_entry.expiration) {
-                data_json_entry.AddMember(
-                    "expiration", data_entry.expiration.value(), alloc);
-            }
-            data_json.PushBack(data_json_entry, alloc);
-        }
-
-        rule_data_entry.AddMember("id", rule_data.id, alloc);
-        rule_data_entry.AddMember("type", rule_data.type, alloc);
-        rule_data_entry.AddMember("data", data_json, alloc);
-        rules_json.PushBack(rule_data_entry, alloc);
-    }
-
-    document.AddMember("rules_data", rules_json, alloc);
-
-    dds::string_buffer buffer;
-    rapidjson::Writer<decltype(buffer)> writer(buffer);
-    document.Accept(writer);
-
-    return generate_config("ASM_DATA", buffer.get_string_ref());
+    arg0.copy(document);
 }
 } // namespace
 
+// RulesUpdate
+//
+// RulesOverrideUpdate
+// ExclusionsUpdate
+// ActionsUpdate
+// CustomRulesUpdate
+//
+// RulesDataUpdate
+//
+// Multiple combinations of them
+
 TEST(RemoteConfigEngineListener, RuleUpdate)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(1)
+        .WillOnce(DoAll(SaveDocument(&doc)));
+
+    remote_config::engine_listener listener(engine);
+    listener.init();
+    listener.on_update(generate_config("ASM_DD", waf_rule));
+    listener.commit();
+
+    {
+        const auto &it = doc.FindMember("rules");
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_GT(it->value.Size(), 0);
+    }
+
+    std::array<std::string_view, 5> keys = {"rules_override", "exclusions",
+        "actions", "custom_rules", "rules_data"};
+    for (auto key : keys) {
+        const auto &it = doc.FindMember(StringRef(key));
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_EQ(it->value.Size(), 0);
+    }
+}
+
+TEST(RemoteConfigEngineListener, RuleUpdateFallback)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(1)
+        .WillOnce(DoAll(SaveDocument(&doc)));
+
+    remote_config::engine_listener listener(engine, create_sample_rules_ok());
+    listener.init();
+    listener.on_unapply(generate_config("ASM_DD", waf_rule));
+    listener.commit();
+
+    {
+        const auto &it = doc.FindMember("rules");
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_GT(it->value.Size(), 0);
+    }
+
+    std::array<std::string_view, 5> keys = {"rules_override", "exclusions",
+        "actions", "custom_rules", "rules_data"};
+    for (auto key : keys) {
+        const auto &it = doc.FindMember(StringRef(key));
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_EQ(it->value.Size(), 0);
+    }
+}
+
+TEST(RemoteConfigEngineListener, RulesOverrideUpdate)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(1)
+        .WillOnce(DoAll(SaveDocument(&doc)));
+
+    const std::string update =
+        R"({"rules_override": [{"rules_target": [{"rule_id": "1"}], "enabled":"false"}]})";
+
+    remote_config::engine_listener listener(engine);
+    listener.init();
+    listener.on_update(generate_config("ASM", update));
+    listener.commit();
+
+    {
+        const auto &it = doc.FindMember("rules_override");
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_GT(it->value.Size(), 0);
+    }
+
+    // Rules aren't present if there are no updates
+    std::array<std::string_view, 4> keys = {
+        "exclusions", "actions", "custom_rules", "rules_data"};
+    for (auto key : keys) {
+        const auto &it = doc.FindMember(StringRef(key));
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_EQ(it->value.Size(), 0);
+    }
+}
+
+TEST(RemoteConfigEngineListener, RulesAndRulesOverrideUpdate)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(1)
+        .WillOnce(DoAll(SaveDocument(&doc)));
+
+    const std::string update =
+        R"({"rules_override": [{"rules_target": [{"rule_id": "1"}], "enabled":"false"}]})";
+
+    remote_config::engine_listener listener(engine);
+    listener.init();
+    listener.on_update(generate_config("ASM_DD", waf_rule));
+    listener.on_update(generate_config("ASM", update));
+    listener.commit();
+
+    {
+        const auto &it = doc.FindMember("rules");
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_GT(it->value.Size(), 0);
+    }
+
+    {
+        const auto &it = doc.FindMember("rules_override");
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_GT(it->value.Size(), 0);
+    }
+
+    std::array<std::string_view, 4> keys = {
+        "exclusions", "actions", "custom_rules", "rules_data"};
+    for (auto key : keys) {
+        const auto &it = doc.FindMember(StringRef(key));
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_EQ(it->value.Size(), 0);
+    }
+}
+
+TEST(RemoteConfigEngineListener, ExclusionsUpdate)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(1)
+        .WillOnce(DoAll(SaveDocument(&doc)));
+
+    const std::string update =
+        R"({"exclusions":[{"id":1,"rules_target":[{"rule_id":1}]}]})";
+
+    remote_config::engine_listener listener(engine);
+    listener.init();
+    listener.on_update(generate_config("ASM", update));
+    listener.commit();
+
+    {
+        const auto &it = doc.FindMember("exclusions");
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_GT(it->value.Size(), 0);
+    }
+
+    // Rules aren't present if there are no updates
+    std::array<std::string_view, 4> keys = {
+        "rules_override", "actions", "custom_rules", "rules_data"};
+    for (auto key : keys) {
+        const auto &it = doc.FindMember(StringRef(key));
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_EQ(it->value.Size(), 0);
+    }
+}
+
+TEST(RemoteConfigEngineListener, RulesAndExclusionsUpdate)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(1)
+        .WillOnce(DoAll(SaveDocument(&doc)));
+
+    const std::string update =
+        R"({"exclusions":[{"id":1,"rules_target":[{"rule_id":1}]}]})";
+
+    remote_config::engine_listener listener(engine);
+    listener.init();
+    listener.on_update(generate_config("ASM_DD", waf_rule));
+    listener.on_update(generate_config("ASM", update));
+    listener.commit();
+
+    {
+        const auto &it = doc.FindMember("rules");
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_GT(it->value.Size(), 0);
+    }
+
+    {
+        const auto &it = doc.FindMember("exclusions");
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_GT(it->value.Size(), 0);
+    }
+
+    std::array<std::string_view, 4> keys = {
+        "rules_override", "actions", "custom_rules", "rules_data"};
+    for (auto key : keys) {
+        const auto &it = doc.FindMember(StringRef(key));
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_EQ(it->value.Size(), 0);
+    }
+}
+
+TEST(RemoteConfigEngineListener, ActionsUpdate)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(1)
+        .WillOnce(DoAll(SaveDocument(&doc)));
+
+    const std::string update =
+        R"({"actions": [{"id": "redirect", "type": "redirect_request", "parameters":
+            {"status_code": "303", "location": "localhost"}}]})";
+
+    remote_config::engine_listener listener(engine);
+    listener.init();
+    listener.on_update(generate_config("ASM", update));
+    listener.commit();
+
+    {
+        const auto &it = doc.FindMember("actions");
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_GT(it->value.Size(), 0);
+    }
+
+    // Rules aren't present if there are no updates
+    std::array<std::string_view, 4> keys = {
+        "rules_override", "exclusions", "custom_rules", "rules_data"};
+    for (auto key : keys) {
+        const auto &it = doc.FindMember(StringRef(key));
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_EQ(it->value.Size(), 0);
+    }
+}
+
+TEST(RemoteConfigEngineListener, RulesAndActionsUpdate)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(1)
+        .WillOnce(DoAll(SaveDocument(&doc)));
+
+    const std::string update =
+        R"({"actions": [{"id": "redirect", "type": "redirect_request", "parameters":
+            {"status_code": "303", "location": "localhost"}}]})";
+
+    remote_config::engine_listener listener(engine);
+    listener.init();
+    listener.on_update(generate_config("ASM_DD", waf_rule));
+    listener.on_update(generate_config("ASM", update));
+    listener.commit();
+
+    {
+        const auto &it = doc.FindMember("rules");
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_GT(it->value.Size(), 0);
+    }
+
+    {
+        const auto &it = doc.FindMember("actions");
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_GT(it->value.Size(), 0);
+    }
+
+    std::array<std::string_view, 4> keys = {
+        "rules_override", "exclusions", "custom_rules", "rules_data"};
+    for (auto key : keys) {
+        const auto &it = doc.FindMember(StringRef(key));
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_EQ(it->value.Size(), 0);
+    }
+}
+
+TEST(RemoteConfigEngineListener, CustomRulesUpdate)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(1)
+        .WillOnce(DoAll(SaveDocument(&doc)));
+
+    const std::string update =
+        R"({"custom_rules":[{"id":"1","name":"custom_rule1","tags":{"type":"custom",
+            "category":"custom"},"conditions":[{"operator":"match_regex","parameters":
+            {"inputs":[{"address":"arg3","key_path":[]}],"regex":"^custom.*"}}],
+            "on_match":["block"]}]})";
+
+    remote_config::engine_listener listener(engine);
+    listener.init();
+    listener.on_update(generate_config("ASM", update));
+    listener.commit();
+
+    {
+        const auto &it = doc.FindMember("custom_rules");
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_GT(it->value.Size(), 0);
+    }
+
+    // Rules aren't present if there are no updates
+    std::array<std::string_view, 4> keys = {
+        "rules_override", "exclusions", "actions", "rules_data"};
+    for (auto key : keys) {
+        const auto &it = doc.FindMember(StringRef(key));
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_EQ(it->value.Size(), 0);
+    }
+}
+
+TEST(RemoteConfigEngineListener, RulesAndCustomRulesUpdate)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(1)
+        .WillOnce(DoAll(SaveDocument(&doc)));
+
+    const std::string update =
+        R"({"custom_rules":[{"id":"1","name":"custom_rule1","tags":{"type":"custom",
+            "category":"custom"},"conditions":[{"operator":"match_regex","parameters":
+            {"inputs":[{"address":"arg3","key_path":[]}],"regex":"^custom.*"}}],
+            "on_match":["block"]}]})";
+
+    remote_config::engine_listener listener(engine);
+    listener.init();
+    listener.on_update(generate_config("ASM_DD", waf_rule));
+    listener.on_update(generate_config("ASM", update));
+    listener.commit();
+
+    {
+        const auto &it = doc.FindMember("rules");
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_GT(it->value.Size(), 0);
+    }
+
+    {
+        const auto &it = doc.FindMember("custom_rules");
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_GT(it->value.Size(), 0);
+    }
+
+    std::array<std::string_view, 4> keys = {
+        "rules_override", "exclusions", "actions", "rules_data"};
+    for (auto key : keys) {
+        const auto &it = doc.FindMember(StringRef(key));
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_EQ(it->value.Size(), 0);
+    }
+}
+
+TEST(RemoteConfigEngineListener, RulesDataUpdate)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(1)
+        .WillOnce(DoAll(SaveDocument(&doc)));
+
+    const std::string update =
+        R"({"rules_data":[{"id":"blocked_ips","type":"ip_with_expiration","data":[{"value":"1.2.3.4","expiration":0}]}]})";
+
+    remote_config::engine_listener listener(engine);
+    listener.init();
+    listener.on_update(generate_config("ASM_DATA", update));
+    listener.commit();
+
+    {
+        const auto &it = doc.FindMember("rules_data");
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_GT(it->value.Size(), 0);
+    }
+
+    // Rules aren't present if there are no updates
+    std::array<std::string_view, 4> keys = {
+        "rules_override", "exclusions", "actions", "custom_rules"};
+    for (auto key : keys) {
+        const auto &it = doc.FindMember(StringRef(key));
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_EQ(it->value.Size(), 0);
+    }
+}
+
+TEST(RemoteConfigEngineListener, RulesAndRuleDataUpdate)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(1)
+        .WillOnce(DoAll(SaveDocument(&doc)));
+
+    const std::string update =
+        R"({"rules_data":[{"id":"blocked_ips","type":"ip_with_expiration","data":[{"value":"1.2.3.4","expiration":0}]}]})";
+
+    remote_config::engine_listener listener(engine);
+    listener.init();
+    listener.on_update(generate_config("ASM_DD", waf_rule));
+    listener.on_update(generate_config("ASM_DATA", update));
+    listener.commit();
+
+    {
+        const auto &it = doc.FindMember("rules");
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_GT(it->value.Size(), 0);
+    }
+
+    {
+        const auto &it = doc.FindMember("rules_data");
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_GT(it->value.Size(), 0);
+    }
+
+    std::array<std::string_view, 4> keys = {
+        "rules_override", "exclusions", "actions", "custom_rules"};
+    for (auto key : keys) {
+        const auto &it = doc.FindMember(StringRef(key));
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_EQ(it->value.Size(), 0);
+    }
+}
+
+TEST(RemoteConfigEngineListener, FullUpdate)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(1)
+        .WillOnce(DoAll(SaveDocument(&doc)));
+
+    remote_config::engine_listener listener(engine);
+    listener.init();
+    listener.on_update(generate_config("ASM_DD", waf_rule));
+    {
+        const std::string update =
+            R"({"rules_data":[{"id":"blocked_ips","type":"ip_with_expiration","data":[{"value":"1.2.3.4","expiration":0}]}]})";
+        listener.on_update(generate_config("ASM_DATA", update));
+    }
+    {
+        const std::string update =
+            R"({"custom_rules":[{"id":"1","name":"custom_rule1","tags":{"type":"custom",
+                "category":"custom"},"conditions":[{"operator":"match_regex","parameters":
+                {"inputs":[{"address":"arg3","key_path":[]}],"regex":"^custom.*"}}],
+                "on_match":["block"]}]})";
+
+        listener.on_update(generate_config("ASM", update));
+    }
+    {
+        const std::string update =
+            R"({"exclusions":[{"id":1,"rules_target":[{"rule_id":1}]}]})";
+        listener.on_update(generate_config("ASM", update));
+    }
+    {
+        const std::string update =
+            R"({"actions": [{"id": "redirect", "type": "redirect_request", "parameters":
+                {"status_code": "303", "location": "localhost"}}]})";
+        listener.on_update(generate_config("ASM", update));
+    }
+    {
+        const std::string update =
+            R"({"rules_override": [{"rules_target": [{"rule_id": "1"}], "enabled":"false"}]})";
+        listener.on_update(generate_config("ASM", update));
+    }
+    listener.commit();
+
+    std::array<std::string_view, 6> keys = {"rules", "rules_override",
+        "exclusions", "actions", "custom_rules", "rules_data"};
+    for (auto key : keys) {
+        const auto &it = doc.FindMember(StringRef(key));
+        ASSERT_NE(it, doc.MemberEnd());
+        EXPECT_TRUE(it->value.IsArray());
+        EXPECT_GT(it->value.Size(), 0);
+    }
+}
+
+TEST(RemoteConfigEngineListener, MultipleInitCommitUpdates)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _))
+        .Times(3)
+        .WillRepeatedly(DoAll(SaveDocument(&doc)));
+
+    remote_config::engine_listener listener(engine, create_sample_rules_ok());
+
+    listener.init();
+    listener.on_update(generate_config("ASM_DD", waf_rule));
+    {
+        const std::string update =
+            R"({"rules_data":[{"id":"blocked_ips","type":"ip_with_expiration","data":[{"value":"1.2.3.4","expiration":0}]}]})";
+        listener.on_update(generate_config("ASM_DATA", update));
+    }
+    listener.commit();
+
+    {
+        {
+            const auto &it = doc.FindMember("rules");
+            ASSERT_NE(it, doc.MemberEnd());
+            EXPECT_TRUE(it->value.IsArray());
+            EXPECT_GT(it->value.Size(), 0);
+        }
+
+        {
+            const auto &it = doc.FindMember("rules_data");
+            ASSERT_NE(it, doc.MemberEnd());
+            EXPECT_TRUE(it->value.IsArray());
+            EXPECT_GT(it->value.Size(), 0);
+        }
+
+        std::array<std::string_view, 4> keys = {
+            "rules_override", "exclusions", "actions", "custom_rules"};
+        for (auto key : keys) {
+            const auto &it = doc.FindMember(StringRef(key));
+            ASSERT_NE(it, doc.MemberEnd());
+            EXPECT_TRUE(it->value.IsArray());
+            EXPECT_EQ(it->value.Size(), 0);
+        }
+    }
+
+    listener.init();
+    {
+        const std::string update =
+            R"({"custom_rules":[{"id":"1","name":"custom_rule1","tags":{"type":"custom",
+                "category":"custom"},"conditions":[{"operator":"match_regex","parameters":
+                {"inputs":[{"address":"arg3","key_path":[]}],"regex":"^custom.*"}}],
+                "on_match":["block"]}]})";
+
+        listener.on_update(generate_config("ASM", update));
+    }
+    {
+        const std::string update =
+            R"({"exclusions":[{"id":1,"rules_target":[{"rule_id":1}]}]})";
+        listener.on_update(generate_config("ASM", update));
+    }
+    listener.commit();
+
+    {
+        {
+            const auto &it = doc.FindMember("custom_rules");
+            ASSERT_NE(it, doc.MemberEnd());
+            EXPECT_TRUE(it->value.IsArray());
+            EXPECT_GT(it->value.Size(), 0);
+        }
+
+        {
+            const auto &it = doc.FindMember("exclusions");
+            ASSERT_NE(it, doc.MemberEnd());
+            EXPECT_TRUE(it->value.IsArray());
+            EXPECT_GT(it->value.Size(), 0);
+        }
+
+        std::array<std::string_view, 3> keys = {
+            "rules_override", "actions", "rules_data"};
+        for (auto key : keys) {
+            const auto &it = doc.FindMember(StringRef(key));
+            ASSERT_NE(it, doc.MemberEnd());
+            EXPECT_TRUE(it->value.IsArray());
+            EXPECT_EQ(it->value.Size(), 0);
+        }
+    }
+
+    listener.init();
+    listener.on_update(generate_config("ASM_DD", waf_rule));
+    {
+        const std::string update =
+            R"({"actions": [{"id": "redirect", "type": "redirect_request", "parameters":
+                {"status_code": "303", "location": "localhost"}}]})";
+        listener.on_update(generate_config("ASM", update));
+    }
+    {
+        const std::string update =
+            R"({"rules_override": [{"rules_target": [{"rule_id": "1"}], "enabled":"false"}]})";
+        listener.on_update(generate_config("ASM", update));
+    }
+    listener.commit();
+
+    {
+        {
+            const auto &it = doc.FindMember("rules");
+            ASSERT_NE(it, doc.MemberEnd());
+            EXPECT_TRUE(it->value.IsArray());
+            EXPECT_GT(it->value.Size(), 0);
+        }
+
+        {
+            const auto &it = doc.FindMember("rules_override");
+            ASSERT_NE(it, doc.MemberEnd());
+            EXPECT_TRUE(it->value.IsArray());
+            EXPECT_GT(it->value.Size(), 0);
+        }
+
+        {
+            const auto &it = doc.FindMember("actions");
+            ASSERT_NE(it, doc.MemberEnd());
+            EXPECT_TRUE(it->value.IsArray());
+            EXPECT_GT(it->value.Size(), 0);
+        }
+
+        std::array<std::string_view, 3> keys = {
+            "exclusions", "custom_rules", "rules_data"};
+        for (auto key : keys) {
+            const auto &it = doc.FindMember(StringRef(key));
+            ASSERT_NE(it, doc.MemberEnd());
+            EXPECT_TRUE(it->value.IsArray());
+            EXPECT_EQ(it->value.Size(), 0);
+        }
+    }
+}
+
+TEST(RemoteConfigEngineListener, EngineRuleUpdate)
 {
     const std::string rules =
         R"({"version": "2.2", "rules": [{"id": "some id", "name": "some name", "tags":
@@ -121,7 +748,7 @@ TEST(RemoteConfigEngineListener, RuleUpdate)
     }
 }
 
-TEST(RemoteConfigEngineListener, RuleUpdateFallback)
+TEST(RemoteConfigEngineListener, EngineRuleUpdateFallback)
 {
     const std::string rules =
         R"({"version": "2.2", "rules": [{"id": "some id", "name": "some name", "tags":
@@ -162,7 +789,7 @@ TEST(RemoteConfigEngineListener, RuleUpdateFallback)
     }
 }
 
-TEST(RemoteConfigEngineListener, RuleOverrideUpdateDisableRule)
+TEST(RemoteConfigEngineListener, EngineRuleOverrideUpdateDisableRule)
 {
     std::map<std::string_view, std::string> meta;
     std::map<std::string_view, double> metrics;
@@ -260,7 +887,7 @@ TEST(RemoteConfigEngineListener, RuleOverrideUpdateSetOnMatch)
     }
 }
 
-TEST(RemoteConfigEngineListener, RuleOverrideAndActionsUpdate)
+TEST(RemoteConfigEngineListener, EngineRuleOverrideAndActionsUpdate)
 {
     std::map<std::string_view, std::string> meta;
     std::map<std::string_view, double> metrics;
@@ -313,7 +940,7 @@ TEST(RemoteConfigEngineListener, RuleOverrideAndActionsUpdate)
     }
 }
 
-TEST(RemoteConfigEngineListener, ExclusionsUpdatePasslistRule)
+TEST(RemoteConfigEngineListener, EngineExclusionsUpdatePasslistRule)
 {
     std::map<std::string_view, std::string> meta;
     std::map<std::string_view, double> metrics;
@@ -361,7 +988,7 @@ TEST(RemoteConfigEngineListener, ExclusionsUpdatePasslistRule)
     }
 }
 
-TEST(RemoteConfigEngineListener, CustomRulesUpdate)
+TEST(RemoteConfigEngineListener, EngineCustomRulesUpdate)
 {
     std::map<std::string_view, std::string> meta;
     std::map<std::string_view, double> metrics;
@@ -466,9 +1093,8 @@ TEST(RemoteConfigEngineListener, CustomRulesUpdate)
     }
 }
 
-TEST(RemoteConfigEngineListener, RuleDataUpdate)
+TEST(RemoteConfigEngineListener, EngineRuleDataUpdate)
 {
-    std::string ip = "1.2.3.4";
     const std::string waf_rule_with_data =
         R"({"version":"2.1","rules":[{"id":"blk-001-001","name":"Block IP Addresses",
             "tags":{"type":"block_ip","category":"security_response"},"conditions":
@@ -480,9 +1106,6 @@ TEST(RemoteConfigEngineListener, RuleDataUpdate)
     auto e{engine::create()};
     e->subscribe(waf::instance::from_string(waf_rule_with_data, meta, metrics));
 
-    std::vector<test_rule_data> rules_data = {
-        {"blocked_ips", "data_with_expiration", {{std::nullopt, ip}}}};
-
     remote_config::engine_listener listener(e);
     listener.init();
 
@@ -490,18 +1113,20 @@ TEST(RemoteConfigEngineListener, RuleDataUpdate)
         auto ctx = e->get_context();
 
         auto p = parameter::map();
-        p.add("http.client_ip", parameter::string(ip));
+        p.add("http.client_ip", parameter::string("1.2.3.4"sv));
 
         auto res = ctx.publish(std::move(p));
         EXPECT_FALSE(res);
     }
 
-    listener.on_update(get_rules_data(rules_data));
+    const std::string update =
+        R"({"rules_data":[{"id":"blocked_ips","type":"ip_with_expiration","data":[{"value":"1.2.3.4","expiration":0}]}]})";
+    listener.on_update(generate_config("ASM_DATA", update));
     {
         auto ctx = e->get_context();
 
         auto p = parameter::map();
-        p.add("http.client_ip", parameter::string(ip));
+        p.add("http.client_ip", parameter::string("1.2.3.4"sv));
 
         auto res = ctx.publish(std::move(p));
         EXPECT_FALSE(res);
@@ -512,7 +1137,7 @@ TEST(RemoteConfigEngineListener, RuleDataUpdate)
         auto ctx = e->get_context();
 
         auto p = parameter::map();
-        p.add("http.client_ip", parameter::string(ip));
+        p.add("http.client_ip", parameter::string("1.2.3.4"sv));
 
         auto res = ctx.publish(std::move(p));
         EXPECT_TRUE(res);
