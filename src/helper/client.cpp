@@ -157,6 +157,7 @@ bool client::handle_command(const network::client_init::request &command)
     bool has_errors = false;
 
     client_enabled_conf = command.enabled_configuration;
+    compute_client_status();
 
     try {
         service_ = service_manager_->create_service(std::move(service_id),
@@ -209,7 +210,8 @@ bool client::handle_command(network::request_init::request &command)
         return false;
     }
 
-    if (!compute_client_status()) {
+    compute_client_status();
+    if (!request_enabled_) {
         auto response_cf =
             std::make_shared<network::config_features::response>();
         response_cf->enabled = false;
@@ -346,18 +348,21 @@ bool client::handle_command(network::request_exec::request &command)
     return false;
 }
 
-bool client::compute_client_status()
+void client::compute_client_status()
 {
     if (client_enabled_conf.has_value()) {
-        return client_enabled_conf.value();
+        request_enabled_ = client_enabled_conf.value();
+        return;
     }
 
     if (service_ == nullptr) {
-        return false;
+        request_enabled_ = false;
+        return;
     }
 
-    return service_->get_service_config()->get_asm_enabled_status() ==
-           enable_asm_status::ENABLED;
+    request_enabled_ =
+        service_->get_service_config()->get_asm_enabled_status() ==
+        enable_asm_status::ENABLED;
 }
 
 bool client::handle_command(network::config_sync::request & /* command */)
@@ -371,7 +376,8 @@ bool client::handle_command(network::config_sync::request & /* command */)
 
     SPDLOG_DEBUG("received command config_sync");
 
-    if (compute_client_status()) {
+    compute_client_status();
+    if (request_enabled_) {
         auto response_cf =
             std::make_shared<network::config_features::response>();
         response_cf->enabled = true;
@@ -478,8 +484,7 @@ bool client::run_client_init()
 
 bool client::run_request()
 {
-
-    if (!compute_client_status()) {
+    if (!request_enabled_) {
         return handle_message<network::request_init, network::config_sync>(
             *this, *broker_, std::chrono::milliseconds{0}
             /* no initial timeout */
@@ -504,6 +509,7 @@ void client::run(worker::queue_consumer &q)
         SPDLOG_DEBUG("Finished handling client (client_init succeded)");
     }
 
+    compute_client_status();
     while (q.running() && run_request()) {}
 
     SPDLOG_DEBUG("Finished handling client");

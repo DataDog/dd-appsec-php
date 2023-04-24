@@ -60,7 +60,7 @@ public:
     void run(worker::queue_consumer &q);
 
 protected:
-    bool compute_client_status();
+    void compute_client_status();
 
     bool initialised{false};
     uint32_t version{};
@@ -69,6 +69,7 @@ protected:
     std::shared_ptr<service> service_ = {nullptr};
     std::optional<engine::context> context_;
     std::optional<bool> client_enabled_conf;
+    bool request_enabled_ = {false};
 };
 
 } // namespace dds
