@@ -10,6 +10,7 @@
 #include "json_helper.hpp"
 #include "parameter.hpp"
 #include <rapidjson/document.h>
+#include <rapidjson/rapidjson.h>
 #include <utility>
 
 namespace dds::remote_config {
@@ -28,7 +29,7 @@ public:
 
     void init(rapidjson::Document::AllocatorType *allocator) override
     {
-        ruleset_ = rapidjson::Document(allocator);
+        ruleset_ = rapidjson::Document(rapidjson::kObjectType, allocator);
     }
 
     void add(const config &config) override;
