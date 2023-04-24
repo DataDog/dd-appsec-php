@@ -251,7 +251,13 @@ TEST(ClientTest, ClientInitAfterClientInit)
 
         std::shared_ptr<network::base_response> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
         EXPECT_FALSE(c.run_request());
+        EXPECT_EQ(std::string("error"), res->get_type());
     }
 }
 
@@ -1105,9 +1111,10 @@ TEST(ClientTest, RequestShutdownDisabledClient)
         EXPECT_CALL(*broker,
             send(
                 testing::An<const std::shared_ptr<network::base_response> &>()))
-            .WillOnce(Return(true));
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_FALSE(c.run_request());
+        EXPECT_EQ(std::string("error"), res->get_type());
     }
 }
 
@@ -2061,9 +2068,10 @@ TEST(ClientTest, RequestExecDisabledClient)
         EXPECT_CALL(*broker,
             send(
                 testing::An<const std::shared_ptr<network::base_response> &>()))
-            .WillOnce(Return(true));
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
         EXPECT_FALSE(c.run_request());
+        EXPECT_EQ(std::string("error"), res->get_type());
     }
 }
 

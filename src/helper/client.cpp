@@ -24,6 +24,8 @@ namespace dds {
 
 namespace {
 
+class unexpected_command : public std::exception {};
+
 template <typename M, typename... Mrest>
 // NOLINTNEXTLINE(google-runtime-references)
 bool maybe_exec_cmd_M(client &client, network::request &msg)
@@ -33,7 +35,7 @@ bool maybe_exec_cmd_M(client &client, network::request &msg)
             SPDLOG_WARN(
                 "a message of type {} ({}) was not expected at this point",
                 msg.id, msg.method);
-            return false;
+            throw unexpected_command();
         } else {
             return maybe_exec_cmd_M<Mrest...>(client, msg);
         }
@@ -86,6 +88,9 @@ bool handle_message(client &client, const network::base_broker &broker,
     try {
         auto msg = broker.recv(initial_timeout);
         return maybe_exec_cmd_M<Ms...>(client, msg);
+    } catch (const unexpected_command &) {
+        result = false;
+        send_error = true;
     } catch (const client_disconnect &) {
         SPDLOG_INFO("Client has disconnected");
         // When this exception has been received, we should stop hadling this
@@ -286,12 +291,6 @@ bool client::handle_command(network::request_exec::request &command)
             return false;
         }
 
-        if (!compute_client_status()) {
-            SPDLOG_DEBUG("request_exec received on disabled client");
-            send_error_response(*broker_);
-            return false;
-        }
-
         context_.emplace(*service_->get_engine());
     }
 
@@ -353,6 +352,10 @@ bool client::compute_client_status()
         return client_enabled_conf.value();
     }
 
+    if (service_ == nullptr) {
+        return false;
+    }
+
     return service_->get_service_config()->get_asm_enabled_status() ==
            enable_asm_status::ENABLED;
 }
@@ -402,12 +405,6 @@ bool client::handle_command(network::request_shutdown::request &command)
         if (!service_) {
             // This implies a failed client_init, we can't continue.
             SPDLOG_DEBUG("no service available on request_shutdown");
-            send_error_response(*broker_);
-            return false;
-        }
-
-        if (!compute_client_status()) {
-            SPDLOG_DEBUG("request_shutdown received on disabled client");
             send_error_response(*broker_);
             return false;
         }
@@ -481,6 +478,13 @@ bool client::run_client_init()
 
 bool client::run_request()
 {
+
+    if (!compute_client_status()) {
+        return handle_message<network::request_init, network::config_sync>(
+            *this, *broker_, std::chrono::milliseconds{0}
+            /* no initial timeout */
+        );
+    }
     // TODO: figure out how to handle errors which require sending an error
     //       response to ensure the extension doesn't hang.
     return handle_message<network::request_init, network::request_exec,
