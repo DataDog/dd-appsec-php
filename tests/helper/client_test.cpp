@@ -46,6 +46,7 @@ void set_extension_configuration_to(
     msg.runtime_version = "1.0";
     msg.client_version = "2.0";
     msg.engine_settings.rules_file = fn;
+    msg.engine_settings.waf_timeout_us = 1000000;
 
     network::request req(std::move(msg));
 

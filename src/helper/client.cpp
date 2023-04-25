@@ -209,8 +209,7 @@ bool client::handle_command(network::request_init::request &command)
         return false;
     }
 
-    compute_client_status();
-    if (!request_enabled_) {
+    if (!compute_client_status()) {
         auto response_cf =
             std::make_shared<network::config_features::response>();
         response_cf->enabled = false;
@@ -509,7 +508,6 @@ void client::run(worker::queue_consumer &q)
         SPDLOG_DEBUG("Finished handling client (client_init succeded)");
     }
 
-    compute_client_status();
     while (q.running() && run_request()) {}
 
     SPDLOG_DEBUG("Finished handling client");
