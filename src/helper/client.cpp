@@ -157,7 +157,6 @@ bool client::handle_command(const network::client_init::request &command)
     bool has_errors = false;
 
     client_enabled_conf = command.enabled_configuration;
-    compute_client_status();
 
     try {
         service_ = service_manager_->create_service(std::move(service_id),
@@ -348,21 +347,23 @@ bool client::handle_command(network::request_exec::request &command)
     return false;
 }
 
-void client::compute_client_status()
+bool client::compute_client_status()
 {
     if (client_enabled_conf.has_value()) {
         request_enabled_ = client_enabled_conf.value();
-        return;
+        return request_enabled_;
     }
 
     if (service_ == nullptr) {
         request_enabled_ = false;
-        return;
+        return request_enabled_;
     }
 
     request_enabled_ =
         service_->get_service_config()->get_asm_enabled_status() ==
         enable_asm_status::ENABLED;
+
+    return request_enabled_;
 }
 
 bool client::handle_command(network::config_sync::request & /* command */)
@@ -376,8 +377,7 @@ bool client::handle_command(network::config_sync::request & /* command */)
 
     SPDLOG_DEBUG("received command config_sync");
 
-    compute_client_status();
-    if (request_enabled_) {
+    if (compute_client_status()) {
         auto response_cf =
             std::make_shared<network::config_features::response>();
         response_cf->enabled = true;

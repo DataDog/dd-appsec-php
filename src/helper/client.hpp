@@ -60,7 +60,7 @@ public:
     void run(worker::queue_consumer &q);
 
 protected:
-    void compute_client_status();
+    bool compute_client_status();
 
     bool initialised{false};
     uint32_t version{};
