@@ -22,10 +22,11 @@ engine_listener::engine_listener(
     engine::ptr engine, const std::string &rules_file)
     : engine_(std::move(engine))
 {
-    aggregators_.emplace("ASM", std::make_unique<asm_aggregator>());
+    aggregators_.emplace(asm_product, std::make_unique<asm_aggregator>());
     aggregators_.emplace(
-        "ASM_DD", std::make_unique<asm_dd_aggregator>(rules_file));
-    aggregators_.emplace("ASM_DATA", std::make_unique<asm_data_aggregator>());
+        asm_dd_product, std::make_unique<asm_dd_aggregator>(rules_file));
+    aggregators_.emplace(
+        asm_data_product, std::make_unique<asm_data_aggregator>());
 }
 
 void engine_listener::init()

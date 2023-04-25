@@ -36,17 +36,22 @@ public:
     [[nodiscard]] std::unordered_map<std::string_view, protocol::capabilities_e>
     get_supported_products() override
     {
-        return {
-            {"ASM", protocol::capabilities_e::ASM_EXCLUSIONS |
+        return {{asm_product,
+                    protocol::capabilities_e::ASM_EXCLUSIONS |
                         protocol::capabilities_e::ASM_CUSTOM_BLOCKING_RESPONSE |
                         protocol::capabilities_e::ASM_REQUEST_BLOCKING |
                         protocol::capabilities_e::ASM_RESPONSE_BLOCKING},
-            {"ASM_DD", protocol::capabilities_e::ASM_DD_RULES},
-            {"ASM_DATA", protocol::capabilities_e::ASM_IP_BLOCKING |
-                             protocol::capabilities_e::ASM_USER_BLOCKING}};
+            {asm_dd_product, protocol::capabilities_e::ASM_DD_RULES},
+            {asm_data_product,
+                protocol::capabilities_e::ASM_IP_BLOCKING |
+                    protocol::capabilities_e::ASM_USER_BLOCKING}};
     }
 
 protected:
+    static constexpr std::string_view asm_product = "ASM";
+    static constexpr std::string_view asm_dd_product = "ASM_DD";
+    static constexpr std::string_view asm_data_product = "ASM_DATA";
+
     std::unordered_map<std::string_view, config_aggregator_base::unique_ptr>
         aggregators_;
     engine::ptr engine_;
