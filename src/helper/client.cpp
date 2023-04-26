@@ -88,9 +88,8 @@ bool handle_message(client &client, const network::base_broker &broker,
     try {
         auto msg = broker.recv(initial_timeout);
         return maybe_exec_cmd_M<Ms...>(client, msg);
-    } catch (const unexpected_command &) {
-        result = false;
-        send_error = true;
+    } catch (const unexpected_command &e) {
+        throw e;
     } catch (const client_disconnect &) {
         SPDLOG_INFO("Client has disconnected");
         // When this exception has been received, we should stop hadling this
@@ -127,7 +126,6 @@ bool handle_message(client &client, const network::base_broker &broker,
     }
 
     if (send_error) {
-        client.compute_client_status();
         if (!send_error_response(broker)) {
             return false;
         }
@@ -477,25 +475,39 @@ bool client::handle_command(network::request_shutdown::request &command)
 
 bool client::run_client_init()
 {
-    static constexpr auto client_init_timeout{std::chrono::milliseconds{500}};
-    return handle_message<network::client_init>(
-        *this, *broker_, client_init_timeout);
+    try {
+        static constexpr auto client_init_timeout{
+            std::chrono::milliseconds{500}};
+        return handle_message<network::client_init>(
+            *this, *broker_, client_init_timeout);
+    } catch (const unexpected_command &) {
+        send_error_response(*broker_);
+    }
+
+    return false;
 }
 
 bool client::run_request()
 {
-    if (!request_enabled_) {
-        return handle_message<network::request_init, network::config_sync>(
-            *this, *broker_, std::chrono::milliseconds{0}
-            /* no initial timeout */
+    try {
+        if (!request_enabled_) {
+            return handle_message<network::request_init, network::config_sync>(
+                *this, *broker_, std::chrono::milliseconds{0}
+                /* no initial timeout */
+            );
+        }
+        // TODO: figure out how to handle errors which require sending an error
+        //       response to ensure the extension doesn't hang.
+        return handle_message<network::request_init, network::request_exec,
+            network::config_sync, network::request_shutdown>(*this, *broker_,
+            std::chrono::milliseconds{0} /* no initial timeout */
         );
+    } catch (const unexpected_command &) {
+        compute_client_status();
+        send_error_response(*broker_);
     }
-    // TODO: figure out how to handle errors which require sending an error
-    //       response to ensure the extension doesn't hang.
-    return handle_message<network::request_init, network::request_exec,
-        network::config_sync, network::request_shutdown>(
-        *this, *broker_, std::chrono::milliseconds{0} /* no initial timeout */
-    );
+
+    return true;
 }
 
 void client::run(worker::queue_consumer &q)

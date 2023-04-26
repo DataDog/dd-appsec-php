@@ -281,7 +281,7 @@ TEST(ClientTest, ClientInitAfterClientInit)
                 testing::An<const std::shared_ptr<network::base_response> &>()))
             .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
-        EXPECT_FALSE(c.run_request());
+        EXPECT_TRUE(c.run_request());
         EXPECT_EQ(std::string("error"), res->get_type());
     }
 }
@@ -677,13 +677,15 @@ TEST(ClientTest, RequestShutdownNoClientInit)
 
         network::request req(std::move(msg));
 
+        std::shared_ptr<network::base_response> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
         EXPECT_CALL(*broker,
             send(
                 testing::An<const std::shared_ptr<network::base_response> &>()))
-            .WillOnce(Return(true));
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
-        EXPECT_FALSE(c.run_request());
+        EXPECT_TRUE(c.run_request());
+        EXPECT_EQ(std::string("error"), res->get_type());
     }
 }
 
@@ -710,7 +712,7 @@ TEST(ClientTest, RequestShutdownNoRequestInit)
                 testing::An<const std::shared_ptr<network::base_response> &>()))
             .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
-        EXPECT_FALSE(c.run_request());
+        EXPECT_TRUE(c.run_request());
         EXPECT_EQ(std::string("error"), res->get_type());
     }
 }
@@ -785,7 +787,7 @@ TEST(ClientTest, RequestShutdownDisabledClient)
                 testing::An<const std::shared_ptr<network::base_response> &>()))
             .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
-        EXPECT_FALSE(c.run_request());
+        EXPECT_TRUE(c.run_request());
         EXPECT_EQ(std::string("error"), res->get_type());
     }
 }
@@ -1551,13 +1553,15 @@ TEST(ClientTest, RequestExecWithoutClientInit)
 
         network::request req(std::move(msg));
 
+        std::shared_ptr<network::base_response> res;
         EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
         EXPECT_CALL(*broker,
             send(
                 testing::An<const std::shared_ptr<network::base_response> &>()))
-            .WillOnce(Return(true));
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
-        EXPECT_FALSE(c.run_request());
+        EXPECT_TRUE(c.run_request());
+        EXPECT_EQ(std::string("error"), res->get_type());
     }
 }
 
@@ -1585,7 +1589,7 @@ TEST(ClientTest, RequestExecDisabledClient)
                 testing::An<const std::shared_ptr<network::base_response> &>()))
             .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
-        EXPECT_FALSE(c.run_request());
+        EXPECT_TRUE(c.run_request());
         EXPECT_EQ(std::string("error"), res->get_type());
     }
 }
@@ -1745,7 +1749,7 @@ TEST(ClientTest, RequestCallsWontWorkIfRequestInitWasDisabled)
                     const std::shared_ptr<network::base_response> &>()))
                 .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
-            EXPECT_FALSE(c.run_request());
+            EXPECT_TRUE(c.run_request());
             EXPECT_EQ(std::string("error"), res->get_type());
         }
     }
@@ -1785,7 +1789,7 @@ TEST(ClientTest, RequestCallsWontWorkIfRequestInitWasDisabled)
                     const std::shared_ptr<network::base_response> &>()))
                 .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
-            EXPECT_FALSE(c.run_request());
+            EXPECT_TRUE(c.run_request());
             EXPECT_EQ(std::string("error"), res->get_type());
         }
     }
@@ -1836,7 +1840,7 @@ TEST(ClientTest, StatusGetsComputedOnError)
                 testing::An<const std::shared_ptr<network::base_response> &>()))
             .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
-        EXPECT_FALSE(c.run_request());
+        EXPECT_TRUE(c.run_request());
         EXPECT_EQ(std::string("error"), res->get_type());
     }
 
