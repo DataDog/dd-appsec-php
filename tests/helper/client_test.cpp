@@ -1708,6 +1708,98 @@ TEST(ClientTest, RequestCallsWontWorkIfRequestInitWasDisabled)
 
     set_extension_configuration_to(broker, c, EXTENSION_CONFIGURATION_NOT_SET);
 
+    {
+        c.get_service()->get_service_config()->disable_asm();
+        {
+            network::request_init::request msg;
+            msg.data = parameter::map();
+            msg.data.add("server.request.headers.no_cookies",
+                parameter::string("Arachni"sv));
+
+            network::request req(std::move(msg));
+
+            std::shared_ptr<network::base_response> res;
+            EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+            EXPECT_CALL(*broker,
+                send(testing::An<
+                    const std::shared_ptr<network::base_response> &>()))
+                .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+            EXPECT_TRUE(c.run_request());
+            EXPECT_EQ(std::string("config_features"), res->get_type());
+        }
+        c.get_service()->get_service_config()->enable_asm();
+
+        // Request Execution
+        {
+            network::request_exec::request msg;
+            msg.data = parameter::map();
+            msg.data.add("http.client_ip", parameter::string("192.168.1.1"sv));
+
+            network::request req(std::move(msg));
+
+            std::shared_ptr<network::base_response> res;
+            EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+            EXPECT_CALL(*broker,
+                send(testing::An<
+                    const std::shared_ptr<network::base_response> &>()))
+                .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+            EXPECT_FALSE(c.run_request());
+            EXPECT_EQ(std::string("error"), res->get_type());
+        }
+    }
+
+    {
+        c.get_service()->get_service_config()->disable_asm();
+        {
+            network::request_init::request msg;
+            msg.data = parameter::map();
+            msg.data.add("server.request.headers.no_cookies",
+                parameter::string("Arachni"sv));
+
+            network::request req(std::move(msg));
+
+            std::shared_ptr<network::base_response> res;
+            EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+            EXPECT_CALL(*broker,
+                send(testing::An<
+                    const std::shared_ptr<network::base_response> &>()))
+                .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+            EXPECT_TRUE(c.run_request());
+            EXPECT_EQ(std::string("config_features"), res->get_type());
+        }
+        c.get_service()->get_service_config()->enable_asm();
+
+        // Request Shutdown
+        {
+            network::request_shutdown::request msg;
+            msg.data = parameter::map();
+            network::request req(std::move(msg));
+
+            std::shared_ptr<network::base_response> res;
+            EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+            EXPECT_CALL(*broker,
+                send(testing::An<
+                    const std::shared_ptr<network::base_response> &>()))
+                .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+            EXPECT_FALSE(c.run_request());
+            EXPECT_EQ(std::string("error"), res->get_type());
+        }
+    }
+}
+
+TEST(ClientTest, StatusGetsComputedOnError)
+{
+    auto smanager = std::make_shared<service_manager>();
+    auto broker = new mock::broker();
+
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
+
+    set_extension_configuration_to(broker, c, EXTENSION_CONFIGURATION_NOT_SET);
+
     c.get_service()->get_service_config()->disable_asm();
     {
         network::request_init::request msg;
@@ -1729,7 +1821,7 @@ TEST(ClientTest, RequestCallsWontWorkIfRequestInitWasDisabled)
     }
     c.get_service()->get_service_config()->enable_asm();
 
-    // Request Execution
+    // Request Execution fails but computes new state
     {
         network::request_exec::request msg;
         msg.data = parameter::map();
@@ -1748,10 +1840,12 @@ TEST(ClientTest, RequestCallsWontWorkIfRequestInitWasDisabled)
         EXPECT_EQ(std::string("error"), res->get_type());
     }
 
-    // Request Shutdown
+    // Request Execution
     {
-        network::request_shutdown::request msg;
+        network::request_exec::request msg;
         msg.data = parameter::map();
+        msg.data.add("http.client_ip", parameter::string("192.168.1.1"sv));
+
         network::request req(std::move(msg));
 
         std::shared_ptr<network::base_response> res;
@@ -1761,8 +1855,8 @@ TEST(ClientTest, RequestCallsWontWorkIfRequestInitWasDisabled)
                 testing::An<const std::shared_ptr<network::base_response> &>()))
             .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
 
-        EXPECT_FALSE(c.run_request());
-        EXPECT_EQ(std::string("error"), res->get_type());
+        EXPECT_TRUE(c.run_request());
+        EXPECT_EQ(std::string("request_exec"), res->get_type());
     }
 }
 

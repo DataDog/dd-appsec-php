@@ -58,9 +58,9 @@ public:
 
     // NOLINTNEXTLINE(google-runtime-references)
     void run(worker::queue_consumer &q);
+    bool compute_client_status();
 
 protected:
-    bool compute_client_status();
 
     bool initialised{false};
     uint32_t version{};

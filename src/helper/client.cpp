@@ -127,6 +127,7 @@ bool handle_message(client &client, const network::base_broker &broker,
     }
 
     if (send_error) {
+        client.compute_client_status();
         if (!send_error_response(broker)) {
             return false;
         }
