@@ -186,6 +186,26 @@ TEST(RemoteConfigProduct, EvenIfJustOneKeyConfigIsDiferentItCallsToAllListeners)
     EXPECT_EQ(3, product.get_configs().size());
 }
 
+TEST(RemoteConfigProduct, WhenAConfigGetsDeletedItAlsoUpdateWaf)
+{
+    auto listener = std::make_shared<mock::listener_mock>();
+    remote_config::config config01 = get_config("id 01");
+    remote_config::config config02 = get_config("id 02");
+
+    EXPECT_CALL(*listener, on_update(unacknowledged(config01))).Times(1);
+    EXPECT_CALL(*listener, on_update(acknowledged(config01))).Times(1);
+    EXPECT_CALL(*listener, on_update(unacknowledged(config02))).Times(1);
+    EXPECT_CALL(*listener, on_unapply(acknowledged(config02))).Times(1);
+
+    remote_config::product product("MOCK_PRODUCT", listener);
+
+    product.assign_configs({{"config name 01", unacknowledged(config01)},
+        {"config name 02", unacknowledged(config02)}});
+    product.assign_configs({{"config name 01", unacknowledged(config01)}});
+
+    EXPECT_EQ(1, product.get_configs().size());
+}
+
 TEST(RemoteConfigProduct, WhenAConfigChangeItsHashItsListenerUpdateIsCalled)
 {
     auto listener = std::make_shared<mock::listener_mock>();
