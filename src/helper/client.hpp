@@ -61,7 +61,6 @@ public:
     bool compute_client_status();
 
 protected:
-
     bool initialised{false};
     uint32_t version{};
     network::base_broker::ptr broker_;

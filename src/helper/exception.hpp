@@ -99,4 +99,12 @@ public:
     }
 };
 
+class unexpected_command : public std::exception {
+public:
+    [[nodiscard]] const char *what() const noexcept override
+    {
+        return "unexpected command received";
+    }
+};
+
 } // namespace dds
