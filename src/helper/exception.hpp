@@ -101,10 +101,16 @@ public:
 
 class unexpected_command : public std::exception {
 public:
+    explicit unexpected_command(const std::string &command)
+        : what_("unexpected command received: '" + command)
+    {}
     [[nodiscard]] const char *what() const noexcept override
     {
-        return "unexpected command received";
+        return what_.c_str();
     }
+
+protected:
+    std::string what_;
 };
 
 } // namespace dds

@@ -29,7 +29,7 @@ bool maybe_exec_cmd_M(client &client, network::request &msg)
             SPDLOG_WARN(
                 "a message of type {} ({}) was not expected at this point",
                 msg.id, msg.method);
-            throw unexpected_command();
+            throw unexpected_command(msg.method);
         } else {
             return maybe_exec_cmd_M<Mrest...>(client, msg);
         }
