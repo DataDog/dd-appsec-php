@@ -10,6 +10,8 @@
 #include <chrono>
 #include <condition_variable>
 #include <functional>
+#include <future>
+#include <iostream>
 #include <mutex>
 #include <optional>
 #include <queue>
@@ -41,13 +43,7 @@ public:
 
     // NOLINTNEXTLINE(google-runtime-references)
     bool push(runnable &data);
-    void wait();
-
-    void stop()
-    {
-        running_.store(false, std::memory_order_relaxed);
-        wait();
-    }
+    void stop();
 
 protected:
     struct refcount {
@@ -85,7 +81,8 @@ public:
         }
 
         std::unique_lock<std::mutex> lock(rc_.mtx);
-        if (--rc_.count == 0 && !running()) {
+        --rc_.count;
+        if (!running()) {
             std::notify_all_at_thread_exit(rc_.cv, std::move(lock));
         }
     }
@@ -150,7 +147,6 @@ public:
 
     bool launch(runnable &&f);
 
-    void wait() { q_.wait(); }
     void stop() { q_.stop(); }
 
     [[nodiscard]] unsigned worker_count() const { return q_.ref_count(); }

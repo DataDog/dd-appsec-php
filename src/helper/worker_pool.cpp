@@ -25,7 +25,7 @@ void work_handler(queue_consumer &&q, std::optional<runnable> &&opt_r)
 bool queue_producer::push(runnable &data)
 {
     {
-        std::unique_lock<std::mutex> const lock(q_.mtx);
+        std::unique_lock<std::mutex> lock(q_.mtx);
         if (q_.pending > 0) {
             q_.data.push(std::move(data));
         } else {
@@ -37,9 +37,10 @@ bool queue_producer::push(runnable &data)
     return true;
 }
 
-void queue_producer::wait()
+void queue_producer::stop()
 {
     std::unique_lock<std::mutex> lock(rc_.mtx);
+    running_.store(false, std::memory_order_relaxed);
     while (rc_.count > 0) {
         q_.cv.notify_all();
         rc_.cv.wait_for(lock, 100us);

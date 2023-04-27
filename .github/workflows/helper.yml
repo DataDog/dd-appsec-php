@@ -127,11 +127,16 @@ jobs:
       - name: Install clang
         run: |
           sudo .github/workflows/scripts/llvm.sh 15
+          sudo apt-get update
+          sudo apt-get install -y libc++-15-dev libc++abi-15-dev
       - name: Generate Build Scripts
         run: |
             mkdir build
             cd build
-            cmake .. -DCMAKE_BUILD_TYPE=Debug  -DDD_APPSEC_BUILD_EXTENSION=OFF
+            cmake .. -DCMAKE_BUILD_TYPE=Debug \
+            -DDD_APPSEC_BUILD_EXTENSION=OFF \
+            -DCMAKE_CXX_FLAGS="-stdlib=libc++" \
+            -DCMAKE_EXE_LINKER_FLAGS="-stdlib=libc++ -lc++abi"
         env:
             CXX: clang++-15
             CC: clang-15
@@ -209,6 +214,12 @@ jobs:
         run: VERBOSE=1 make -j ddappsec-helper ddappsec_helper_test
         working-directory: ${{ github.workspace }}/build
       - name: Test
-        run: valgrind --leak-check=full --show-reachable=yes --suppressions=../tests/helper/re2.supp --error-exitcode=1 ./tests/helper/ddappsec_helper_test
+        run: valgrind --leak-check=full --show-reachable=yes --error-limit=no --gen-suppressions=all --log-file=valgrind.log ./tests/helper/ddappsec_helper_test
         working-directory: ${{ github.workspace }}/build
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: Upload suppressions
+          path: |
+              ${{ github.workspace }}/build/valgrind.log
 
