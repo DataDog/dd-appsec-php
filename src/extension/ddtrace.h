@@ -16,7 +16,7 @@ void dd_trace_shutdown(void);
 
 // Returns the tracer version
 const char *nullable dd_trace_version(void);
-bool dd_trace_is_loaded();
+bool dd_trace_is_loaded(void);
 
 // increases the refcount of tag, but not value (like zval_hash_add)
 // however, it destroy value if the operation fails (unlike zval_hash_add)
