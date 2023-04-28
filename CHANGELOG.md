@@ -23,6 +23,7 @@
 - ([#236](https://github.com/DataDog/dd-appsec-php/pull/236)) Disable apache2 restart test on ZTS
 - ([#239](https://github.com/DataDog/dd-appsec-php/pull/239)) Implement abstract methods of listener on test
 - ([#240](https://github.com/DataDog/dd-appsec-php/pull/240)) Add test to ensure path parser does not count on /config ending
+- ([#252](https://github.com/DataDog/dd-appsec-php/pull/252)) Update ruleset to 1.7.0
 
 ### v0.7.2
 #### Fixes
