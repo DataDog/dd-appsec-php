@@ -32,31 +32,49 @@ engine_listener::engine_listener(
 void engine_listener::init()
 {
     ruleset_ = rapidjson::Document(rapidjson::kObjectType);
-    for (auto &[product, aggregator] : aggregators_) {
-        aggregator->init(&ruleset_.GetAllocator());
-    }
+    seen_.clear();
 }
 
 void engine_listener::on_update(const config &config)
 {
+    SPDLOG_DEBUG("config product : {}", config.product);
     auto it = aggregators_.find(config.product);
-    if (it != aggregators_.end()) {
-        it->second->add(config);
+    if (it == aggregators_.end()) {
+        return;
     }
+
+    SPDLOG_DEBUG("Updating aggregator {}", config.product);
+    auto &aggregator = it->second;
+    if (seen_.find(aggregator.get()) == seen_.end()) {
+        aggregator->init(&ruleset_.GetAllocator());
+        seen_.emplace(aggregator.get());
+    }
+
+    aggregator->add(config);
 }
 
 void engine_listener::on_unapply(const config &config)
 {
     auto it = aggregators_.find(config.product);
-    if (it != aggregators_.end()) {
-        it->second->remove(config);
+    if (it == aggregators_.end()) {
+        return;
     }
+
+    auto &aggregator = it->second;
+    if (seen_.find(aggregator.get()) == seen_.end()) {
+        aggregator->init(&ruleset_.GetAllocator());
+        seen_.emplace(aggregator.get());
+    }
+
+    aggregator->remove(config);
 }
 
 void engine_listener::commit()
 {
     for (auto &[product, aggregator] : aggregators_) {
-        aggregator->aggregate(ruleset_);
+        if (seen_.find(aggregator.get()) != seen_.end()) {
+            aggregator->aggregate(ruleset_);
+        }
     }
 
     // TODO find a way to provide this information to the service
