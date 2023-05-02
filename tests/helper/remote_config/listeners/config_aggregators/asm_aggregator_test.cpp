@@ -233,6 +233,59 @@ TEST(RemoteConfigAsmAggregator, RulesOverrideMultipleConfigs)
     }
 }
 
+TEST(RemoteConfigAsmAggregator, RulesOverrideIgnoreInvalidConfigs)
+{
+    const std::string rule_override =
+        R"({"rules_override": [{"rules_target": [{"tags": {"confidence": "1"}}], "on_match": ["block"]}]})";
+
+    rapidjson::Document doc(rapidjson::kObjectType);
+    remote_config::asm_aggregator aggregator;
+    aggregator.init(&doc.GetAllocator());
+    aggregator.add(generate_config("ASM", rule_override));
+    aggregator.add(generate_config("ASM", rule_override));
+    {
+        const std::string invalid =
+            R"({"rules_override": {"rules_target": [{"tags": {"confidence": "1"}}], "on_match": ["block"]}})";
+        EXPECT_THROW(aggregator.add(generate_config("ASM", invalid)),
+            remote_config::error_applying_config);
+    }
+    aggregator.add(generate_config("ASM", rule_override));
+    aggregator.aggregate(doc);
+
+    const auto &overrides = doc["rules_override"];
+    EXPECT_TRUE(overrides.IsArray());
+    EXPECT_EQ(overrides.Size(), 3);
+
+    const auto &exclusions = doc["exclusions"];
+    EXPECT_TRUE(exclusions.IsArray());
+    EXPECT_EQ(exclusions.Size(), 0);
+
+    const auto &actions = doc["actions"];
+    EXPECT_TRUE(actions.IsArray());
+    EXPECT_EQ(actions.Size(), 0);
+
+    const auto &custom_rules = doc["custom_rules"];
+    EXPECT_TRUE(custom_rules.IsArray());
+    EXPECT_EQ(custom_rules.Size(), 0);
+
+    for (auto *it = overrides.Begin(); it != overrides.End(); ++it) {
+        const auto &ovrd = *it;
+        EXPECT_TRUE(ovrd.IsObject());
+
+        {
+            auto it = ovrd.FindMember("rules_target");
+            EXPECT_NE(it, ovrd.MemberEnd());
+            EXPECT_TRUE(it->value.IsArray());
+        }
+
+        {
+            auto it = ovrd.FindMember("on_match");
+            EXPECT_NE(it, ovrd.MemberEnd());
+            EXPECT_TRUE(it->value.IsArray());
+        }
+    }
+}
+
 TEST(RemoteConfigAsmAggregator, RulesOverridesConfigCycling)
 {
     remote_config::asm_aggregator aggregator;
@@ -382,6 +435,43 @@ TEST(RemoteConfigAsmAggregator, ActionsMultipleConfigs)
     EXPECT_EQ(custom_rules.Size(), 0);
 }
 
+TEST(RemoteConfigAsmAggregator, ActionsIgnoreInvalidConfigs)
+{
+    const std::string action_definitions =
+        R"({"actions": [{"id": "redirect", "type": "redirect_request", "parameters": {"status_code": "303", "location": "localhost"}}]})";
+
+    rapidjson::Document doc(rapidjson::kObjectType);
+    remote_config::asm_aggregator aggregator;
+
+    aggregator.init(&doc.GetAllocator());
+    aggregator.add(generate_config("ASM", action_definitions));
+    {
+        const std::string invalid =
+            R"({"actions": {"id": "redirect", "type": "redirect_request", "parameters": {"status_code": "303", "location": "localhost"}}})";
+        EXPECT_THROW(aggregator.add(generate_config("ASM", invalid)),
+            remote_config::error_applying_config);
+    }
+    aggregator.add(generate_config("ASM", action_definitions));
+    aggregator.add(generate_config("ASM", action_definitions));
+    aggregator.aggregate(doc);
+
+    const auto &overrides = doc["rules_override"];
+    EXPECT_TRUE(overrides.IsArray());
+    EXPECT_EQ(overrides.Size(), 0);
+
+    const auto &exclusions = doc["exclusions"];
+    EXPECT_TRUE(exclusions.IsArray());
+    EXPECT_EQ(exclusions.Size(), 0);
+
+    const auto &actions = doc["actions"];
+    EXPECT_TRUE(actions.IsArray());
+    EXPECT_EQ(actions.Size(), 3);
+
+    const auto &custom_rules = doc["custom_rules"];
+    EXPECT_TRUE(custom_rules.IsArray());
+    EXPECT_EQ(custom_rules.Size(), 0);
+}
+
 TEST(RemoteConfigAsmAggregator, ActionsConfigCycling)
 {
     const std::string action_definitions =
@@ -450,13 +540,13 @@ TEST(RemoteConfigAsmAggregator, ExclusionsSingleConfig)
     aggregator.add(generate_config("ASM", update));
     aggregator.aggregate(doc);
 
-    const auto &overrides = doc["exclusions"];
+    const auto &overrides = doc["rules_override"];
     EXPECT_TRUE(overrides.IsArray());
-    EXPECT_EQ(overrides.Size(), 1);
+    EXPECT_EQ(overrides.Size(), 0);
 
-    const auto &exclusions = doc["rules_override"];
+    const auto &exclusions = doc["exclusions"];
     EXPECT_TRUE(exclusions.IsArray());
-    EXPECT_EQ(exclusions.Size(), 0);
+    EXPECT_EQ(exclusions.Size(), 1);
 
     const auto &actions = doc["actions"];
     EXPECT_TRUE(actions.IsArray());
@@ -482,13 +572,50 @@ TEST(RemoteConfigAsmAggregator, ExclusionsMultipleConfigs)
     aggregator.add(generate_config("ASM", update));
     aggregator.aggregate(doc);
 
-    const auto &overrides = doc["exclusions"];
+    const auto &overrides = doc["rules_override"];
     EXPECT_TRUE(overrides.IsArray());
-    EXPECT_EQ(overrides.Size(), 4);
+    EXPECT_EQ(overrides.Size(), 0);
 
-    const auto &exclusions = doc["rules_override"];
+    const auto &exclusions = doc["exclusions"];
     EXPECT_TRUE(exclusions.IsArray());
-    EXPECT_EQ(exclusions.Size(), 0);
+    EXPECT_EQ(exclusions.Size(), 4);
+
+    const auto &actions = doc["actions"];
+    EXPECT_TRUE(actions.IsArray());
+    EXPECT_EQ(actions.Size(), 0);
+
+    const auto &custom_rules = doc["custom_rules"];
+    EXPECT_TRUE(custom_rules.IsArray());
+    EXPECT_EQ(custom_rules.Size(), 0);
+}
+
+TEST(RemoteConfigAsmAggregator, ExclusionsIgnoreInvalidConfigs)
+{
+    const std::string update =
+        R"({"exclusions":[{"id":1,"rules_target":[{"rule_id":1}]}]})";
+
+    rapidjson::Document doc(rapidjson::kObjectType);
+    remote_config::asm_aggregator aggregator;
+
+    aggregator.init(&doc.GetAllocator());
+    aggregator.add(generate_config("ASM", update));
+    {
+        const std::string invalid =
+            R"({"exclusions": {"id":1,"rules_target":[{"rule_id":1}]}})";
+        EXPECT_THROW(aggregator.add(generate_config("ASM", invalid)),
+            remote_config::error_applying_config);
+    }
+    aggregator.add(generate_config("ASM", update));
+    aggregator.add(generate_config("ASM", update));
+    aggregator.aggregate(doc);
+
+    const auto &overrides = doc["rules_override"];
+    EXPECT_TRUE(overrides.IsArray());
+    EXPECT_EQ(overrides.Size(), 0);
+
+    const auto &exclusions = doc["exclusions"];
+    EXPECT_TRUE(exclusions.IsArray());
+    EXPECT_EQ(exclusions.Size(), 3);
 
     const auto &actions = doc["actions"];
     EXPECT_TRUE(actions.IsArray());
@@ -515,13 +642,13 @@ TEST(RemoteConfigAsmAggregator, ExclusionsConfigCycling)
         aggregator.add(generate_config("ASM", update));
         aggregator.aggregate(doc);
 
-        const auto &overrides = doc["exclusions"];
+        const auto &overrides = doc["rules_override"];
         EXPECT_TRUE(overrides.IsArray());
-        EXPECT_EQ(overrides.Size(), 4);
+        EXPECT_EQ(overrides.Size(), 0);
 
-        const auto &exclusions = doc["rules_override"];
+        const auto &exclusions = doc["exclusions"];
         EXPECT_TRUE(exclusions.IsArray());
-        EXPECT_EQ(exclusions.Size(), 0);
+        EXPECT_EQ(exclusions.Size(), 4);
 
         const auto &actions = doc["actions"];
         EXPECT_TRUE(actions.IsArray());
@@ -538,13 +665,13 @@ TEST(RemoteConfigAsmAggregator, ExclusionsConfigCycling)
         aggregator.add(generate_config("ASM", update));
         aggregator.aggregate(doc);
 
-        const auto &overrides = doc["exclusions"];
+        const auto &overrides = doc["rules_override"];
         EXPECT_TRUE(overrides.IsArray());
-        EXPECT_EQ(overrides.Size(), 1);
+        EXPECT_EQ(overrides.Size(), 0);
 
-        const auto &exclusions = doc["rules_override"];
+        const auto &exclusions = doc["exclusions"];
         EXPECT_TRUE(exclusions.IsArray());
-        EXPECT_EQ(exclusions.Size(), 0);
+        EXPECT_EQ(exclusions.Size(), 1);
 
         const auto &actions = doc["actions"];
         EXPECT_TRUE(actions.IsArray());
@@ -568,11 +695,11 @@ TEST(RemoteConfigAsmAggregator, CustomRulesSingleConfig)
     aggregator.add(generate_config("ASM", update));
     aggregator.aggregate(doc);
 
-    const auto &overrides = doc["exclusions"];
+    const auto &overrides = doc["rules_override"];
     EXPECT_TRUE(overrides.IsArray());
     EXPECT_EQ(overrides.Size(), 0);
 
-    const auto &exclusions = doc["rules_override"];
+    const auto &exclusions = doc["exclusions"];
     EXPECT_TRUE(exclusions.IsArray());
     EXPECT_EQ(exclusions.Size(), 0);
 
@@ -595,16 +722,53 @@ TEST(RemoteConfigAsmAggregator, CustomRulesMultipleConfigs)
 
     aggregator.init(&doc.GetAllocator());
     aggregator.add(generate_config("ASM", update));
+    {
+        const std::string invalid =
+            R"({"custom_rules": {"id":"1","name":"custom_rule1","tags":{"type":"custom","category":"custom"},"conditions":[{"operator":"match_regex","parameters":{"inputs":[{"address":"arg3","key_path":[]}],"regex":"^custom.*"}}],"on_match":["block"]}})";
+        EXPECT_THROW(aggregator.add(generate_config("ASM", invalid)),
+            remote_config::error_applying_config);
+    }
+    aggregator.add(generate_config("ASM", update));
+    aggregator.add(generate_config("ASM", update));
+    aggregator.aggregate(doc);
+
+    const auto &overrides = doc["rules_override"];
+    EXPECT_TRUE(overrides.IsArray());
+    EXPECT_EQ(overrides.Size(), 0);
+
+    const auto &exclusions = doc["exclusions"];
+    EXPECT_TRUE(exclusions.IsArray());
+    EXPECT_EQ(exclusions.Size(), 0);
+
+    const auto &actions = doc["actions"];
+    EXPECT_TRUE(actions.IsArray());
+    EXPECT_EQ(actions.Size(), 0);
+
+    const auto &custom_rules = doc["custom_rules"];
+    EXPECT_TRUE(custom_rules.IsArray());
+    EXPECT_EQ(custom_rules.Size(), 3);
+}
+
+TEST(RemoteConfigAsmAggregator, CustomRulesIgnoreInvalidConfigs)
+{
+    const std::string update =
+        R"({"custom_rules":[{"id":"1","name":"custom_rule1","tags":{"type":"custom","category":"custom"},"conditions":[{"operator":"match_regex","parameters":{"inputs":[{"address":"arg3","key_path":[]}],"regex":"^custom.*"}}],"on_match":["block"]}]})";
+
+    rapidjson::Document doc(rapidjson::kObjectType);
+    remote_config::asm_aggregator aggregator;
+
+    aggregator.init(&doc.GetAllocator());
+    aggregator.add(generate_config("ASM", update));
     aggregator.add(generate_config("ASM", update));
     aggregator.add(generate_config("ASM", update));
     aggregator.add(generate_config("ASM", update));
     aggregator.aggregate(doc);
 
-    const auto &overrides = doc["exclusions"];
+    const auto &overrides = doc["rules_override"];
     EXPECT_TRUE(overrides.IsArray());
     EXPECT_EQ(overrides.Size(), 0);
 
-    const auto &exclusions = doc["rules_override"];
+    const auto &exclusions = doc["exclusions"];
     EXPECT_TRUE(exclusions.IsArray());
     EXPECT_EQ(exclusions.Size(), 0);
 
@@ -633,11 +797,11 @@ TEST(RemoteConfigAsmAggregator, CustomRulesConfigCycling)
         aggregator.add(generate_config("ASM", update));
         aggregator.aggregate(doc);
 
-        const auto &overrides = doc["exclusions"];
+        const auto &overrides = doc["rules_override"];
         EXPECT_TRUE(overrides.IsArray());
         EXPECT_EQ(overrides.Size(), 0);
 
-        const auto &exclusions = doc["rules_override"];
+        const auto &exclusions = doc["exclusions"];
         EXPECT_TRUE(exclusions.IsArray());
         EXPECT_EQ(exclusions.Size(), 0);
 
@@ -656,11 +820,11 @@ TEST(RemoteConfigAsmAggregator, CustomRulesConfigCycling)
         aggregator.add(generate_config("ASM", update));
         aggregator.aggregate(doc);
 
-        const auto &overrides = doc["exclusions"];
+        const auto &overrides = doc["rules_override"];
         EXPECT_TRUE(overrides.IsArray());
         EXPECT_EQ(overrides.Size(), 0);
 
-        const auto &exclusions = doc["rules_override"];
+        const auto &exclusions = doc["exclusions"];
         EXPECT_TRUE(exclusions.IsArray());
         EXPECT_EQ(exclusions.Size(), 0);
 
@@ -686,17 +850,110 @@ TEST(RemoteConfigAsmAggregator, AllSingleConfigs)
     aggregator.add(generate_config("ASM", update));
     aggregator.aggregate(doc);
 
-    const auto &overrides = doc["exclusions"];
+    const auto &overrides = doc["rules_override"];
     EXPECT_TRUE(overrides.IsArray());
     EXPECT_EQ(overrides.Size(), 1);
 
-    const auto &exclusions = doc["rules_override"];
+    const auto &exclusions = doc["exclusions"];
     EXPECT_TRUE(exclusions.IsArray());
     EXPECT_EQ(exclusions.Size(), 1);
 
     const auto &actions = doc["actions"];
     EXPECT_TRUE(actions.IsArray());
     EXPECT_EQ(actions.Size(), 1);
+
+    const auto &custom_rules = doc["custom_rules"];
+    EXPECT_TRUE(custom_rules.IsArray());
+    EXPECT_EQ(custom_rules.Size(), 1);
+}
+
+TEST(RemoteConfigAsmAggregator, IgnoreInvalidConfigs)
+{
+    rapidjson::Document doc(rapidjson::kObjectType);
+    remote_config::asm_aggregator aggregator;
+
+    aggregator.init(&doc.GetAllocator());
+    {
+        const std::string update =
+            R"({"rules_override": [{"rules_target": [{"tags": {"confidence": "1"}}], "on_match": ["block"]}]})";
+        aggregator.add(generate_config("ASM", update));
+    }
+    {
+        const std::string update =
+            R"({"exclusions":[{"id":1,"rules_target":[{"rule_id":1}]}]})";
+        aggregator.add(generate_config("ASM", update));
+    }
+    {
+        const std::string update =
+            R"({"actions": {"id": "redirect", "type": "redirect_request", "parameters": {"status_code": "303", "location": "localhost"}}})";
+        EXPECT_THROW(aggregator.add(generate_config("ASM", update)),
+            remote_config::error_applying_config);
+    }
+    {
+        const std::string update =
+            R"({"custom_rules":[{"id":"1","name":"custom_rule1","tags":{"type":"custom","category":"custom"},"conditions":[{"operator":"match_regex","parameters":{"inputs":[{"address":"arg3","key_path":[]}],"regex":"^custom.*"}}],"on_match":["block"]}]})";
+        aggregator.add(generate_config("ASM", update));
+    }
+    aggregator.aggregate(doc);
+
+    const auto &overrides = doc["rules_override"];
+    EXPECT_TRUE(overrides.IsArray());
+    EXPECT_EQ(overrides.Size(), 1);
+
+    const auto &exclusions = doc["exclusions"];
+    EXPECT_TRUE(exclusions.IsArray());
+    EXPECT_EQ(exclusions.Size(), 1);
+
+    const auto &actions = doc["actions"];
+    EXPECT_TRUE(actions.IsArray());
+    EXPECT_EQ(actions.Size(), 0);
+
+    const auto &custom_rules = doc["custom_rules"];
+    EXPECT_TRUE(custom_rules.IsArray());
+    EXPECT_EQ(custom_rules.Size(), 1);
+}
+
+TEST(RemoteConfigAsmAggregator, IgnoreInvalidOverlappingConfigs)
+{
+    rapidjson::Document doc(rapidjson::kObjectType);
+    remote_config::asm_aggregator aggregator;
+
+    aggregator.init(&doc.GetAllocator());
+    {
+        const std::string update =
+            R"({"rules_override": [{"rules_target": [{"tags": {"confidence": "1"}}], "on_match": ["block"]}],"exclusions":[{"id":1,"rules_target":[{"rule_id":1}]}]})";
+        aggregator.add(generate_config("ASM", update));
+    }
+    {
+        const std::string update =
+            R"({"exclusions":[{"id":1,"rules_target":[{"rule_id":1}]}],"custom_rules":[{"id":"1","name":"custom_rule1","tags":{"type":"custom","category":"custom"},"conditions":[{"operator":"match_regex","parameters":{"inputs":[{"address":"arg3","key_path":[]}],"regex":"^custom.*"}}],"on_match":["block"]}]})";
+        aggregator.add(generate_config("ASM", update));
+    }
+    {
+        const std::string update =
+            R"({"rules_override": [{"rules_target": [{"tags": {"confidence": "1"}}], "on_match": ["block"]}],"actions": {"id": "redirect", "type": "redirect_request", "parameters": {"status_code": "303", "location": "localhost"}}})";
+        EXPECT_THROW(aggregator.add(generate_config("ASM", update)),
+            remote_config::error_applying_config);
+    }
+    {
+        const std::string update =
+            R"({"custom_rules":{"id":"1","name":"custom_rule1","tags":{"type":"custom","category":"custom"},"conditions":[{"operator":"match_regex","parameters":{"inputs":[{"address":"arg3","key_path":[]}],"regex":"^custom.*"}}],"on_match":["block"]}})";
+        EXPECT_THROW(aggregator.add(generate_config("ASM", update)),
+            remote_config::error_applying_config);
+    }
+    aggregator.aggregate(doc);
+
+    const auto &overrides = doc["rules_override"];
+    EXPECT_TRUE(overrides.IsArray());
+    EXPECT_EQ(overrides.Size(), 1);
+
+    const auto &exclusions = doc["exclusions"];
+    EXPECT_TRUE(exclusions.IsArray());
+    EXPECT_EQ(exclusions.Size(), 2);
+
+    const auto &actions = doc["actions"];
+    EXPECT_TRUE(actions.IsArray());
+    EXPECT_EQ(actions.Size(), 0);
 
     const auto &custom_rules = doc["custom_rules"];
     EXPECT_TRUE(custom_rules.IsArray());

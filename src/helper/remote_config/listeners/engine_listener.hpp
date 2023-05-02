@@ -56,7 +56,7 @@ protected:
         aggregators_;
     engine::ptr engine_;
     rapidjson::Document ruleset_;
-    std::unordered_set<config_aggregator_base *> seen_;
+    std::unordered_set<config_aggregator_base *> to_commit_;
 };
 
 } // namespace dds::remote_config

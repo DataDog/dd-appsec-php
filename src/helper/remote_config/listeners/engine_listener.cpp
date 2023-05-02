@@ -32,20 +32,20 @@ engine_listener::engine_listener(
 void engine_listener::init()
 {
     ruleset_ = rapidjson::Document(rapidjson::kObjectType);
-    seen_.clear();
+    to_commit_.clear();
 }
 
 void engine_listener::on_update(const config &config)
 {
     auto it = aggregators_.find(config.product);
     if (it == aggregators_.end()) {
-        return;
+        throw error_applying_config("unknown product: " + config.product);
     }
 
     auto &aggregator = it->second;
-    if (seen_.find(aggregator.get()) == seen_.end()) {
+    if (to_commit_.find(aggregator.get()) == to_commit_.end()) {
         aggregator->init(&ruleset_.GetAllocator());
-        seen_.emplace(aggregator.get());
+        to_commit_.emplace(aggregator.get());
     }
 
     aggregator->add(config);
@@ -55,13 +55,13 @@ void engine_listener::on_unapply(const config &config)
 {
     auto it = aggregators_.find(config.product);
     if (it == aggregators_.end()) {
-        return;
+        throw error_applying_config("unknown product: " + config.product);
     }
 
     auto &aggregator = it->second;
-    if (seen_.find(aggregator.get()) == seen_.end()) {
+    if (to_commit_.find(aggregator.get()) == to_commit_.end()) {
         aggregator->init(&ruleset_.GetAllocator());
-        seen_.emplace(aggregator.get());
+        to_commit_.emplace(aggregator.get());
     }
 
     aggregator->remove(config);
@@ -69,8 +69,12 @@ void engine_listener::on_unapply(const config &config)
 
 void engine_listener::commit()
 {
+    if (to_commit_.empty()) {
+        return;
+    }
+
     for (auto &[product, aggregator] : aggregators_) {
-        if (seen_.find(aggregator.get()) != seen_.end()) {
+        if (to_commit_.find(aggregator.get()) != to_commit_.end()) {
             aggregator->aggregate(ruleset_);
         }
     }

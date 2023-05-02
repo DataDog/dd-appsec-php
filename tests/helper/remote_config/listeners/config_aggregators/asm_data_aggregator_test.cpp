@@ -320,6 +320,54 @@ TEST(RemoteConfigAsmDataAggregator, EmptyUpdate)
     EXPECT_EQ(0, rules.Size());
 }
 
+TEST(RemoteConfigAsmDataAggregator, IgnoreInvalidConfigs)
+{
+    std::vector<test_rule_data> rules_data = {
+        {"id01", "ip_with_expiration",
+            {{11, "1.2.3.4"}, {3657529743, "5.6.7.8"}}},
+        {"id02", "data_with_expiration", {{std::nullopt, "user1"}}}};
+
+    remote_config::asm_data_aggregator aggregator;
+
+    rapidjson::Document doc(rapidjson::kObjectType);
+    aggregator.init(&doc.GetAllocator());
+    aggregator.add(get_rules_data(rules_data));
+    {
+        const std::string &invalid =
+            R"({"rules_data": [{"id": "id01", "data": [{"expiration": 11, "value": "1.2.3.5"} ], "type": "ip_with_expiration"},{"data": [{"expiration": 11111, "value": "1.2.3.4"} ], "type": "ip_with_expiration"}]})";
+        EXPECT_THROW(aggregator.add(generate_config("ASM_DATA", invalid)),
+            remote_config::error_applying_config);
+    }
+    aggregator.aggregate(doc);
+
+    const auto &rules = doc["rules_data"];
+    const auto &first = rules[1];
+    EXPECT_STREQ("id02", first.FindMember("id")->value.GetString());
+    EXPECT_STREQ(
+        "data_with_expiration", first.FindMember("type")->value.GetString());
+    const auto &first_in_data = first.FindMember("data")->value.GetArray()[0];
+    EXPECT_STREQ("user1", first_in_data.FindMember("value")->value.GetString());
+    EXPECT_TRUE(
+        first_in_data.FindMember("expiration") == first_in_data.MemberEnd());
+
+    const auto &second = rules[0];
+    EXPECT_STREQ("id01", second.FindMember("id")->value.GetString());
+    EXPECT_STREQ(
+        "ip_with_expiration", second.FindMember("type")->value.GetString());
+    const auto &second_first_data =
+        second.FindMember("data")->value.GetArray()[0];
+    EXPECT_STREQ(
+        "1.2.3.4", second_first_data.FindMember("value")->value.GetString());
+    EXPECT_EQ(
+        11, second_first_data.FindMember("expiration")->value.GetUint64());
+    const auto &second_second_data =
+        second.FindMember("data")->value.GetArray()[1];
+    EXPECT_STREQ(
+        "5.6.7.8", second_second_data.FindMember("value")->value.GetString());
+    EXPECT_EQ(3657529743,
+        second_second_data.FindMember("expiration")->value.GetUint64());
+}
+
 TEST(RemoteConfigAsmDataAggregator, IfDataIsEmptyItDoesNotAddAnyRule)
 {
     std::vector<test_rule_data> rules_data = {

@@ -17,7 +17,7 @@ namespace {
 constexpr std::array<std::string_view, 4> expected_keys{
     "exclusions", "actions", "rules_override", "custom_rules"};
 } // namespace
-  //
+
 void asm_aggregator::init(rapidjson::Document::AllocatorType *allocator)
 {
     ruleset_ = rapidjson::Document(rapidjson::kObjectType, allocator);

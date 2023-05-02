@@ -32,6 +32,34 @@ ACTION_P(SaveDocument, param)
 }
 } // namespace
 
+TEST(RemoteConfigEngineListener, NoUpdates)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _)).Times(0);
+
+    remote_config::engine_listener listener(engine);
+    listener.init();
+    listener.commit();
+}
+
+TEST(RemoteConfigEngineListener, UnknownConfig)
+{
+    auto engine = mock::engine::create();
+
+    rapidjson::Document doc;
+
+    EXPECT_CALL(*engine, update(_, _, _)).Times(0);
+
+    remote_config::engine_listener listener(engine);
+    listener.init();
+    EXPECT_THROW(listener.on_update(generate_config("UNKNOWN", waf_rule)),
+        error_applying_config);
+    listener.commit();
+}
+
 TEST(RemoteConfigEngineListener, RuleUpdate)
 {
     auto engine = mock::engine::create();
