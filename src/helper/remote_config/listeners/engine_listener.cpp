@@ -37,13 +37,11 @@ void engine_listener::init()
 
 void engine_listener::on_update(const config &config)
 {
-    SPDLOG_DEBUG("config product : {}", config.product);
     auto it = aggregators_.find(config.product);
     if (it == aggregators_.end()) {
         return;
     }
 
-    SPDLOG_DEBUG("Updating aggregator {}", config.product);
     auto &aggregator = it->second;
     if (seen_.find(aggregator.get()) == seen_.end()) {
         aggregator->init(&ruleset_.GetAllocator());

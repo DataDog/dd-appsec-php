@@ -115,8 +115,7 @@ TEST(RemoteConfigAsmAggregator, IncorrectTypeThrows)
 
 TEST(RemoteConfigAsmAggregator, RulesOverrideEmpty)
 {
-    const std::string rule_override =
-        R"({"rules_override": []})";
+    const std::string rule_override = R"({"rules_override": []})";
 
     remote_config::asm_aggregator aggregator;
 
@@ -141,7 +140,6 @@ TEST(RemoteConfigAsmAggregator, RulesOverrideEmpty)
     EXPECT_TRUE(custom_rules.IsArray());
     EXPECT_EQ(custom_rules.Size(), 0);
 }
-
 
 TEST(RemoteConfigAsmAggregator, RulesOverrideSingleConfig)
 {

@@ -461,7 +461,6 @@ TEST(RemoteConfigEngineListener, RulesAndCustomRulesUpdate)
         const auto &it = doc.FindMember(StringRef(key));
         ASSERT_EQ(it, doc.MemberEnd());
     }
-
 }
 
 TEST(RemoteConfigEngineListener, RulesDataUpdate)
@@ -670,8 +669,7 @@ TEST(RemoteConfigEngineListener, MultipleInitCommitUpdates)
             EXPECT_GT(it->value.Size(), 0);
         }
 
-        std::array<std::string_view, 2> keys = {
-            "rules_override", "actions"};
+        std::array<std::string_view, 2> keys = {"rules_override", "actions"};
         for (auto key : keys) {
             const auto &it = doc.FindMember(StringRef(key));
             ASSERT_NE(it, doc.MemberEnd());
@@ -679,7 +677,8 @@ TEST(RemoteConfigEngineListener, MultipleInitCommitUpdates)
             EXPECT_EQ(it->value.Size(), 0);
         }
 
-        std::array<std::string_view, 2> unavailable_keys = {"rules", "rules_data"};
+        std::array<std::string_view, 2> unavailable_keys = {
+            "rules", "rules_data"};
         for (auto key : unavailable_keys) {
             const auto &it = doc.FindMember(StringRef(key));
             ASSERT_EQ(it, doc.MemberEnd());
@@ -723,8 +722,7 @@ TEST(RemoteConfigEngineListener, MultipleInitCommitUpdates)
             EXPECT_GT(it->value.Size(), 0);
         }
 
-        std::array<std::string_view, 2> keys = {
-            "exclusions", "custom_rules"};
+        std::array<std::string_view, 2> keys = {"exclusions", "custom_rules"};
         for (auto key : keys) {
             const auto &it = doc.FindMember(StringRef(key));
             ASSERT_NE(it, doc.MemberEnd());
@@ -737,7 +735,6 @@ TEST(RemoteConfigEngineListener, MultipleInitCommitUpdates)
             const auto &it = doc.FindMember(StringRef(key));
             ASSERT_EQ(it, doc.MemberEnd());
         }
-
     }
 }
 
@@ -1109,7 +1106,6 @@ TEST(RemoteConfigEngineListener, EngineCustomRulesUpdate)
     }
 
     listener.init();
-    SPDLOG_DEBUG("Calling listener");
     listener.on_update(generate_config("ASM", R"({"custom_rules":[]})"));
     listener.commit();
 

@@ -51,7 +51,8 @@ TEST(RemoteConfigAsmDdAggregator, AddConfigInvalidBase64Content)
     std::string invalid_content = "&&&";
     std::string error_message = "";
     std::string expected_error_message = "Invalid config contents";
-    remote_config::config config = generate_config("ASM_DD", invalid_content, false);
+    remote_config::config config =
+        generate_config("ASM_DD", invalid_content, false);
 
     remote_config::asm_dd_aggregator aggregator;
     rapidjson::Document doc(rapidjson::kObjectType);
@@ -74,7 +75,8 @@ TEST(RemoteConfigAsmDdAggregator, AddConfigInvalidJsonContent)
     std::string invalid_content = "InvalidJsonContent";
     std::string error_message = "";
     std::string expected_error_message = "Invalid config contents";
-    remote_config::config config = generate_config("ASM_DD", invalid_content, true);
+    remote_config::config config =
+        generate_config("ASM_DD", invalid_content, true);
 
     remote_config::asm_dd_aggregator aggregator;
     rapidjson::Document doc(rapidjson::kObjectType);
