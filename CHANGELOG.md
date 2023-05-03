@@ -15,6 +15,7 @@
 - ([#237](https://github.com/DataDog/dd-appsec-php/pull/237)) Update ip algorithm
 - ([#249](https://github.com/DataDog/dd-appsec-php/pull/249)) Handle request-lifecycle atomically
 - ([#248](https://github.com/DataDog/dd-appsec-php/pull/248)) Engine update batcher
+- ([#253](https://github.com/DataDog/dd-appsec-php/pull/253)) Update-only engine listener and atomic config handling 
 
 #### Miscellaneous Changes
 - ([#226](https://github.com/DataDog/dd-appsec-php/pull/226)) Upgrade tracer to 0.85.0
