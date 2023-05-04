@@ -25,6 +25,8 @@
 - ([#239](https://github.com/DataDog/dd-appsec-php/pull/239)) Implement abstract methods of listener on test
 - ([#240](https://github.com/DataDog/dd-appsec-php/pull/240)) Add test to ensure path parser does not count on /config ending
 - ([#252](https://github.com/DataDog/dd-appsec-php/pull/252)) Update ruleset to 1.7.0
+- ([#254](https://github.com/DataDog/dd-appsec-php/pull/254)) Update html blocked template
+- ([#255](https://github.com/DataDog/dd-appsec-php/pull/255)) Upgrade WAF to 1.10.0 and add custom_rules capability 
 
 ### v0.7.2
 #### Fixes
