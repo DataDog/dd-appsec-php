@@ -422,10 +422,9 @@ static PHP_MINFO_FUNCTION(ddappsec)
     }
 
     php_info_print_table_start();
-    php_info_print_table_row(2,
-        "Datadog AppSec status managed by remote config",
+    php_info_print_table_row(2, "State managed by remote config",
         DDAPPSEC_G(enabled_by_configuration) == NOT_CONFIGURED ? "Yes" : "No");
-    php_info_print_table_row(2, "Datadog AppSec state", state);
+    php_info_print_table_row(2, "Current state", state);
     php_info_print_table_row(2, "Version", PHP_DDAPPSEC_VERSION);
     php_info_print_table_end();
 

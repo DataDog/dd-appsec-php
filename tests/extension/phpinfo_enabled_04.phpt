@@ -15,20 +15,20 @@ $helper = Helper::createInitedRun([
 ]);
 
 //Enabled not configured
-var_dump(get_configuration_value("Datadog AppSec status managed by remote config"));
-var_dump(get_configuration_value("Datadog AppSec state"));
+var_dump(get_configuration_value("State managed by remote config"));
+var_dump(get_configuration_value("Current state"));
 rinit(); //On this rinit it gets enabled
-var_dump(get_configuration_value("Datadog AppSec status managed by remote config"));
-var_dump(get_configuration_value("Datadog AppSec state"));
+var_dump(get_configuration_value("State managed by remote config"));
+var_dump(get_configuration_value("Current state"));
 rshutdown();
 rinit(); //Second rinit. This time it got disabled
-var_dump(get_configuration_value("Datadog AppSec status managed by remote config"));
-var_dump(get_configuration_value("Datadog AppSec state"));
+var_dump(get_configuration_value("State managed by remote config"));
+var_dump(get_configuration_value("Current state"));
 rshutdown();
 rinit(); //Third rinit. Nothing changes
 rshutdown();
-var_dump(get_configuration_value("Datadog AppSec status managed by remote config"));
-var_dump(get_configuration_value("Datadog AppSec state"));
+var_dump(get_configuration_value("State managed by remote config"));
+var_dump(get_configuration_value("Current state"));
 --EXPECT--
 string(3) "Yes"
 string(14) "Not configured"

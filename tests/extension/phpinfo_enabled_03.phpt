@@ -6,8 +6,8 @@ datadog.appsec.enabled=0
 <?php
 include __DIR__ . '/inc/phpinfo.php';
 
-var_dump(get_configuration_value("Datadog AppSec status managed by remote config"));
-var_dump(get_configuration_value("Datadog AppSec state"));
+var_dump(get_configuration_value("State managed by remote config"));
+var_dump(get_configuration_value("Current state"));
 
 --EXPECT--
 string(2) "No"
