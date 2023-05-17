@@ -72,6 +72,10 @@ jobs:
             toolchain \
             /project/.github/workflows/release/build_package release \
             8.2.0 8.1.0 8.0.11 7.4.24 7.3.31 7.2.34 7.1.33 7.0.33
+      - uses: actions/upload-artifact@v3
+        with:
+          name: package
+          path: /tmp/out/*.tar.gz
       - name: Release
         uses: softprops/action-gh-release@v1
         with:

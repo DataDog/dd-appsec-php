@@ -105,6 +105,6 @@ find_extension_api(ZEND_EXT_API)
 message(STATUS "Zend API spec: ${ZEND_EXT_API}")
 
 install(TARGETS extension DESTINATION ${CMAKE_INSTALL_LIBDIR}/php/${ZEND_EXT_API})
-split_debug(extension ${CMAKE_INSTALL_LIBDIR}/php/${ZEND_EXT_API})
+#split_debug(extension ${CMAKE_INSTALL_LIBDIR}/php/${ZEND_EXT_API})
 
 # vim set: et:
