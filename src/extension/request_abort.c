@@ -65,7 +65,7 @@ static THREAD_LOCAL_ON_ZTS int _redirection_response_code =
 static THREAD_LOCAL_ON_ZTS zend_string *_redirection_location = NULL;
 
 static void _abort_prelude(void);
-void _request_abort_static_page(int response_code, int type);
+void _request_abort_static_page(int response_code, int type, bool error);
 ATTR_FORMAT(1, 2)
 static void _emit_error(const char *format, ...);
 
@@ -185,11 +185,11 @@ void dd_set_redirect_code_and_location(int code, zend_string *nullable location)
     _redirection_location = location;
 }
 
-void dd_request_abort_redirect()
+void dd_request_abort_redirect(bool error)
 {
     if (_redirection_location == NULL || ZSTR_LEN(_redirection_location) == 0) {
         _request_abort_static_page(
-            DEFAULT_BLOCKING_RESPONSE_CODE, DEFAULT_RESPONSE_TYPE);
+            DEFAULT_BLOCKING_RESPONSE_CODE, DEFAULT_RESPONSE_TYPE, error);
         return;
     }
     _abort_prelude();
@@ -213,12 +213,15 @@ void dd_request_abort_redirect()
         mlog(dd_log_warning, "Call to sapi_flush() failed");
     }
 
-    _emit_error("Datadog blocked the request and attempted a redirection to %s",
-        ZSTR_VAL(_redirection_location));
+    if (error) {
+        _emit_error(
+            "Datadog blocked the request and attempted a redirection to %s",
+            ZSTR_VAL(_redirection_location));
+    }
 }
 
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-void _request_abort_static_page(int response_code, int type)
+void _request_abort_static_page(int response_code, int type, bool error)
 {
     _abort_prelude();
 
@@ -251,13 +254,15 @@ void _request_abort_static_page(int response_code, int type)
         mlog(dd_log_info, "call to sapi_flush() failed");
     }
 
-    _emit_error(
-        "Datadog blocked the request and presented a static error page");
+    if (error) {
+        _emit_error(
+            "Datadog blocked the request and presented a static error page");
+    }
 }
 
-void dd_request_abort_static_page()
+void dd_request_abort_static_page(bool error)
 {
-    _request_abort_static_page(_response_code, _response_type);
+    _request_abort_static_page(_response_code, _response_type, error);
 }
 
 static void _force_destroy_output_handlers(void);
@@ -422,7 +427,7 @@ static PHP_FUNCTION(datadog_appsec_testing_abort_static_page)
     if (zend_parse_parameters_none() == FAILURE) {
         return;
     }
-    dd_request_abort_static_page();
+    dd_request_abort_static_page(true);
 }
 
 // clang-format off

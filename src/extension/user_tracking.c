@@ -103,8 +103,8 @@ void dd_find_and_apply_verdict_for_user(zend_string *nonnull user_id)
     dd_tags_set_event_user_id(user_id);
 
     if (res == dd_should_block) {
-        dd_request_abort_static_page();
+        dd_request_abort_static_page(true);
     } else if (res == dd_should_redirect) {
-        dd_request_abort_redirect();
+        dd_request_abort_redirect(true);
     }
 }

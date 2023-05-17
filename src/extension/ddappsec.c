@@ -263,7 +263,7 @@ static PHP_RINIT_FUNCTION(ddappsec)
         if (get_global_DD_APPSEC_TESTING_ABORT_RINIT()) {
             const char *pt = SG(request_info).path_translated;
             if (pt && !strstr(pt, "skip.php")) {
-                dd_request_abort_static_page();
+                dd_request_abort_static_page(true);
             }
         }
         return SUCCESS;
@@ -313,9 +313,9 @@ static int _do_rinit(INIT_FUNC_ARGS)
             "connection to helper");
         dd_helper_close_conn();
     } else if (res == dd_should_block) {
-        dd_request_abort_static_page();
+        dd_request_abort_static_page(true);
     } else if (res == dd_should_redirect) {
-        dd_request_abort_redirect();
+        dd_request_abort_redirect(true);
     } else if (res) {
         mlog_g(
             dd_log_info, "request init failed: %s", dd_result_to_string(res));
@@ -383,10 +383,10 @@ int dd_appsec_rshutdown(bool ignore_verdict)
     // TODO when blocking on shutdown, let the tracer handle flushing
     if (verdict == dd_should_block) {
         dd_trace_close_all_spans_and_flush();
-        dd_request_abort_static_page();
+        dd_request_abort_static_page(false);
     } else if (verdict == dd_should_redirect) {
         dd_trace_close_all_spans_and_flush();
-        dd_request_abort_redirect();
+        dd_request_abort_redirect(false);
     }
 
     return SUCCESS;
