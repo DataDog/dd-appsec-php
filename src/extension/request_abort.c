@@ -67,7 +67,6 @@ static THREAD_LOCAL_ON_ZTS zend_string *_redirection_location = NULL;
 static bool _abort_prelude(void);
 void _request_abort_static_page(int response_code, int type);
 ATTR_FORMAT(1, 2)
-
 static void _emit_error(const char *format, ...);
 
 zend_string *nullable read_file_contents(
