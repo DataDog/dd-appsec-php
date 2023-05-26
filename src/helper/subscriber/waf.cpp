@@ -102,7 +102,7 @@ void extract_tags_and_metrics(parameter_view diagnostics, std::string &version,
     std::map<std::string_view, std::string> &meta,
     std::map<std::string_view, double> &metrics)
 {
-    parameter_view diagnostics_view{diagnostics};
+    const parameter_view diagnostics_view{diagnostics};
     auto info = static_cast<parameter_view::map>(diagnostics_view);
 
     auto rules_it = info.find("rules");
