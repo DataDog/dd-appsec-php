@@ -29,12 +29,12 @@ dds::subscriber::event format_waf_result(ddwaf_result &res)
 {
     dds::subscriber::event output;
     try {
-        parameter_view actions{res.actions};
+        const parameter_view actions{res.actions};
         for (const auto &action : actions) {
             output.actions.emplace(std::string{action});
         }
 
-        parameter_view events{res.events};
+        const parameter_view events{res.events};
         for (const auto &event : events) {
             output.data.emplace_back(std::move(parameter_to_json(event)));
         }
@@ -182,16 +182,15 @@ std::optional<subscriber::event> instance::listener::call(
 
     if (spdlog::should_log(spdlog::level::debug)) {
         DD_STDLOG(DD_STDLOG_CALLING_WAF, data.debug_str());
-        auto start = std::chrono::steady_clock::now();
-
         run_waf();
 
-        auto elapsed = std::chrono::steady_clock::now() - start;
+        static constexpr unsigned millis = 1e6;
+        // This converts the events to JSON which is already done in the
+        // switch below so it's slightly inefficient, albeit since it's only
+        // done on debug, we can live with it...
         DD_STDLOG(DD_STDLOG_AFTER_WAF,
             parameter_to_json(parameter_view{res.events}),
-            std::chrono::duration_cast<
-                std::chrono::duration<double, std::milli>>(elapsed)
-                .count());
+            res.total_runtime / millis);
     } else {
         run_waf();
     }
