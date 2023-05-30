@@ -23,7 +23,6 @@ namespace dds {
 class parameter_view : public parameter_base {
 public:
     using map = std::unordered_map<std::string_view, parameter_view>;
-    using vector = std::vector<parameter_view>;
 
     class iterator {
     public:
@@ -105,18 +104,6 @@ public:
         }
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
         return static_cast<parameter_view &>(ddwaf_object::array[index]);
-    }
-
-    explicit operator vector() const
-    {
-        if (ddwaf_object::type != DDWAF_OBJ_ARRAY) {
-            throw bad_cast("parameter not an array");
-        }
-
-        if (array == nullptr || nbEntries == 0) {
-            return {};
-        }
-        return {array, array + nbEntries};
     }
 
     explicit operator map() const

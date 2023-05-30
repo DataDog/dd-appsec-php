@@ -28,19 +28,19 @@ namespace {
 dds::subscriber::event format_waf_result(ddwaf_result &res)
 {
     dds::subscriber::event output;
+    try {
+        parameter_view actions{res.actions};
+        for (const auto &action : actions) {
+            output.actions.emplace(std::string{action});
+        }
 
-    auto actions =
-        static_cast<parameter_view::vector>(parameter_view{res.actions});
-    for (auto &action : actions) {
-        output.actions.emplace(std::string{action});
+        parameter_view events{res.events};
+        for (const auto &event : events) {
+            output.data.emplace_back(std::move(parameter_to_json(event)));
+        }
+    } catch (const std::exception &e) {
+        SPDLOG_ERROR("failed to parse WAF output: {}", e.what());
     }
-
-    auto events =
-        static_cast<parameter_view::vector>(parameter_view{res.events});
-    for (auto &event : events) {
-        output.data.emplace_back(std::move(parameter_to_json(event)));
-    }
-
     return output;
 }
 
@@ -102,35 +102,39 @@ void extract_tags_and_metrics(parameter_view diagnostics, std::string &version,
     std::map<std::string_view, std::string> &meta,
     std::map<std::string_view, double> &metrics)
 {
-    const parameter_view diagnostics_view{diagnostics};
-    auto info = static_cast<parameter_view::map>(diagnostics_view);
+    try {
+        const parameter_view diagnostics_view{diagnostics};
+        auto info = static_cast<parameter_view::map>(diagnostics_view);
 
-    auto rules_it = info.find("rules");
-    if (rules_it != info.end()) {
-        auto rules = static_cast<parameter_view::map>(rules_it->second);
-        auto it = rules.find("loaded");
-        if (it != rules.end()) {
-            metrics[tag::event_rules_loaded] =
-                static_cast<double>(it->second.size());
+        auto rules_it = info.find("rules");
+        if (rules_it != info.end()) {
+            auto rules = static_cast<parameter_view::map>(rules_it->second);
+            auto it = rules.find("loaded");
+            if (it != rules.end()) {
+                metrics[tag::event_rules_loaded] =
+                    static_cast<double>(it->second.size());
+            }
+
+            it = rules.find("failed");
+            if (it != rules.end()) {
+                metrics[tag::event_rules_failed] =
+                    static_cast<double>(it->second.size());
+            }
+
+            it = rules.find("errors");
+            if (it != rules.end()) {
+                meta[tag::event_rules_errors] = parameter_to_json(it->second);
+            }
         }
 
-        it = rules.find("failed");
-        if (it != rules.end()) {
-            metrics[tag::event_rules_failed] =
-                static_cast<double>(it->second.size());
+        meta[tag::waf_version] = ddwaf_get_version();
+
+        auto version_it = info.find("ruleset_version");
+        if (version_it != info.end()) {
+            version = std::string(version_it->second);
         }
-
-        it = rules.find("errors");
-        if (it != rules.end()) {
-            meta[tag::event_rules_errors] = parameter_to_json(it->second);
-        }
-    }
-
-    meta[tag::waf_version] = ddwaf_get_version();
-
-    auto version_it = info.find("ruleset_version");
-    if (version_it != info.end()) {
-        version = std::string(version_it->second);
+    } catch (const std::exception &e) {
+        SPDLOG_ERROR("Failed to parse WAF tags and metrics: {}", e.what());
     }
 }
 
