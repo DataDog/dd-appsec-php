@@ -8,10 +8,6 @@ RUN apt-get update && apt-get install -y \
 	apache2 \
 	&& rm -rf /var/lib/apt/lists/*
 
-ARG TRACER_VERSION
-RUN curl -Lf -o /tmp/dd-library-php-setup.php https://raw.githubusercontent.com/DataDog/dd-appsec-php/installer/dd-library-php-setup.php && \
-    PHP_INI_SCAN_DIR=/etc/php/ php /tmp/dd-library-php-setup.php --no-appsec --tracer-version $TRACER_VERSION --php-bin all
-
 RUN rm -rf /var/www/html
 ADD --chown=www-data:www-data examples/webroot/ /var/www/html/
 
@@ -38,3 +34,16 @@ ENV DD_TRACE_GENERATE_ROOT_SPAN=true
 EXPOSE 80
 ENTRYPOINT ["/entrypoint.sh"]
 
+
+FROM ext-build as remote
+ARG TRACER_VERSION
+RUN curl -Lf -o /tmp/dd-library-php-setup.php https://raw.githubusercontent.com/DataDog/dd-appsec-php/installer/dd-library-php-setup.php && \
+    PHP_INI_SCAN_DIR=/etc/php/ php /tmp/dd-library-php-setup.php --no-appsec --tracer-version $TRACER_VERSION --php-bin all
+
+
+
+FROM dd-appsec-php-trace:$PHP_VERSION as trace
+FROM ext-build as local
+
+COPY --from=trace /opt/ /opt/
+RUN find /opt -name ddtrace.so -exec ln -s -v '{}' $(php -r 'echo ini_get("extension_dir");') \;
