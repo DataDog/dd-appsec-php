@@ -20,8 +20,8 @@ function main {
   if [ "$tracer_version" = "local" ]; then
     TRACE_TARGET="local"
     tracer_version="local"
-    if  ! image_exists dd-appsec-php-trace:$version-$variant; then
-        "$SCRIPT_DIR"/../trace/build_image.sh $version $variant
+    if  ! image_exists dd-appsec-php-trace:$version; then
+        "$SCRIPT_DIR"/../trace/build_image.sh $version $variant "normal"
     fi
   fi
   if ! image_exists dd-appsec-php-helper; then

@@ -1,6 +1,6 @@
 ARG PHP_MAJOR_VERSION
 ARG PHP_MINOR_VERSION
-FROM datadog/dd-trace-ci:php-$PHP_MAJOR_VERSION.$PHP_MINOR_VERSION_centos-6 as trace-build
+FROM datadog/dd-trace-ci:php-${PHP_MAJOR_VERSION}.${PHP_MINOR_VERSION}_centos-6 as trace-build
 
 RUN mkdir /trace
 COPY . /trace/

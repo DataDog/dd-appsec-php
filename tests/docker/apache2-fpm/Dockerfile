@@ -34,13 +34,10 @@ ENV DD_TRACE_GENERATE_ROOT_SPAN=true
 EXPOSE 80
 ENTRYPOINT ["/entrypoint.sh"]
 
-
 FROM ext-build as remote
 ARG TRACER_VERSION
 RUN curl -Lf -o /tmp/dd-library-php-setup.php https://raw.githubusercontent.com/DataDog/dd-appsec-php/installer/dd-library-php-setup.php && \
     PHP_INI_SCAN_DIR=/etc/php/ php /tmp/dd-library-php-setup.php --no-appsec --tracer-version $TRACER_VERSION --php-bin all
-
-
 
 FROM dd-appsec-php-trace:$PHP_VERSION as trace
 FROM ext-build as local
