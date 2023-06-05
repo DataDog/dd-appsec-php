@@ -16,7 +16,7 @@ trait CommonTests {
 
     @Test
     void 'user tracking'() {
-        def trace = container.traceFromRequest('/user_id.php') { HttpURLConnection conn ->
+        def trace = container.traceFromRequest('/plain/user_id.php') { HttpURLConnection conn ->
             assert conn.responseCode == 200
         }
 
@@ -30,7 +30,7 @@ trait CommonTests {
 
     @Test
     void 'user login success event'() {
-        def trace = container.traceFromRequest('/user_login_success.php') { HttpURLConnection conn ->
+        def trace = container.traceFromRequest('/plain/user_login_success.php') { HttpURLConnection conn ->
             assert conn.responseCode == 200
         }
 
@@ -44,7 +44,7 @@ trait CommonTests {
 
     @Test
     void 'user login failure event'() {
-        def trace = container.traceFromRequest('/user_login_failure.php') { HttpURLConnection conn ->
+        def trace = container.traceFromRequest('/plain/user_login_failure.php') { HttpURLConnection conn ->
             assert conn.responseCode == 200
         }
 
@@ -60,7 +60,7 @@ trait CommonTests {
 
     @Test
     void 'custom event'() {
-        def trace = container.traceFromRequest('/custom_event.php') { HttpURLConnection conn ->
+        def trace = container.traceFromRequest('/plain/custom_event.php') { HttpURLConnection conn ->
             assert conn.responseCode == 200
         }
 
@@ -81,7 +81,7 @@ trait CommonTests {
 
     @Test
     void 'trace without attack'() {
-        def trace = container.traceFromRequest('/phpinfo.php') { HttpURLConnection conn ->
+        def trace = container.traceFromRequest('/plain/phpinfo.php') { HttpURLConnection conn ->
             assert conn.responseCode == 200
             def content = conn.inputStream.text
             assert content.contains('module_ddtrace')
@@ -96,7 +96,7 @@ trait CommonTests {
 
     @Test
     void 'trace with an attack'() {
-        def trace = container.traceFromRequest('/hello.php') { HttpURLConnection conn ->
+        def trace = container.traceFromRequest('/plain/hello.php') { HttpURLConnection conn ->
             conn.setRequestProperty('User-Agent', 'Arachni/v1')
             conn.inputStream.text == 'Hello world!'
         }
@@ -139,7 +139,7 @@ trait CommonTests {
 
    @Test
     void 'test blocking'() {
-        def trace = container.traceFromRequest('/phpinfo.php') { HttpURLConnection conn ->
+        def trace = container.traceFromRequest('/plain/phpinfo.php') { HttpURLConnection conn ->
             //Set ip which is blocked
             conn.setRequestProperty('X-Forwarded-For', '80.80.80.80')
             assert conn.responseCode == 403
@@ -157,7 +157,7 @@ trait CommonTests {
 
     @Test
     void 'user blocking'() {
-        def trace = container.traceFromRequest('/user_id.php?id=user2020') { HttpURLConnection conn ->
+        def trace = container.traceFromRequest('/plain/user_id.php?id=user2020') { HttpURLConnection conn ->
             assert conn.responseCode == 403
 
             def content = (conn.errorStream ?: conn.inputStream).text
@@ -172,7 +172,7 @@ trait CommonTests {
 
     @Test
     void 'user login success blocking'() {
-        def trace = container.traceFromRequest('/user_login_success.php?id=user2020') { HttpURLConnection conn ->
+        def trace = container.traceFromRequest('/plain/user_login_success.php?id=user2020') { HttpURLConnection conn ->
             assert conn.responseCode == 403
 
             def content = (conn.errorStream ?: conn.inputStream).text
@@ -187,7 +187,7 @@ trait CommonTests {
 
     @Test
     void 'user redirecting'() {
-        def trace = container.traceFromRequest('/user_id.php?id=user2023') { HttpURLConnection conn ->
+        def trace = container.traceFromRequest('/plain/user_id.php?id=user2023') { HttpURLConnection conn ->
             conn.setInstanceFollowRedirects(false)
             assert conn.responseCode == 303
         }
@@ -200,7 +200,7 @@ trait CommonTests {
 
     @Test
     void 'user login success redirecting'() {
-        def trace = container.traceFromRequest('/user_login_success.php?id=user2023') { HttpURLConnection conn ->
+        def trace = container.traceFromRequest('/plain/user_login_success.php?id=user2023') { HttpURLConnection conn ->
             conn.setInstanceFollowRedirects(false)
             assert conn.responseCode == 303
         }
@@ -213,7 +213,7 @@ trait CommonTests {
 
   @Test
     void 'test redirecting'() {
-        def trace = container.traceFromRequest('/phpinfo.php') { HttpURLConnection conn ->
+        def trace = container.traceFromRequest('/plain/phpinfo.php') { HttpURLConnection conn ->
             conn.setInstanceFollowRedirects(false)
             //Set ip which is set to be redirected
             conn.setRequestProperty('X-Forwarded-For', '80.80.80.81')
