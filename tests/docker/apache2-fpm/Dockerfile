@@ -7,6 +7,7 @@ FROM datadog/dd-appsec-php-ci:php-$PHP_VERSION-$VARIANT as ext-build
 RUN apt-get update && apt-get install -y \
 	apache2 \
     zip \
+    sqlite3 \
 	&& rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer /usr/bin/composer /usr/bin/composer
@@ -23,6 +24,8 @@ RUN PHP_INI_DIR=$(php-config --include-dir) && cp /etc/php/php.ini $PHP_INI_DIR 
 ADD tests/docker/apache2-fpm/entrypoint.sh /
 
 RUN cd /var/www/html/laravel8x/ && php -d memory_limit=-1 /usr/bin/composer install --no-dev
+RUN cd /var/www/html/laravel8x/ && cp .env.example .env && php artisan key:generate
+RUN cd /var/www/html/laravel8x/ && touch /tmp/database.sqlite && php artisan migrate && php artisan db:seed
 
 ARG PHP_VERSION
 ARG VARIANT
