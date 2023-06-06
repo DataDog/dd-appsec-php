@@ -1,12 +1,15 @@
 ARG PHP_VERSION
 ARG VARIANT
 FROM dd-appsec-php-extension:$PHP_VERSION-$VARIANT as extension
-
+FROM composer:1.9.3 AS composer
 FROM datadog/dd-appsec-php-ci:php-$PHP_VERSION-$VARIANT as ext-build
 
 RUN apt-get update && apt-get install -y \
 	apache2 \
+    zip \
 	&& rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer /usr/bin/composer /usr/bin/composer
 
 RUN rm -rf /var/www/html
 ADD --chown=www-data:www-data examples/webroot/ /var/www/html/
@@ -16,7 +19,10 @@ RUN find /opt -name ddappsec.so -exec ln -s -v '{}' $(php -r 'echo ini_get("exte
 
 COPY --from=dd-appsec-php-helper /opt /opt
 ADD tests/docker/php.ini /etc/php/
+RUN PHP_INI_DIR=$(php-config --include-dir) && cp /etc/php/php.ini $PHP_INI_DIR && cp /etc/php/php.ini "/root/php/7.4.24-release/lib/"
 ADD tests/docker/apache2-fpm/entrypoint.sh /
+
+RUN cd /var/www/html/laravel8x/ && php -d memory_limit=-1 /usr/bin/composer install --no-dev
 
 ARG PHP_VERSION
 ARG VARIANT
@@ -27,6 +33,7 @@ ADD tests/docker/fpm-common/www.conf /etc/php-fpm.d/
 RUN a2enmod proxy_fcgi
 RUN a2dissite 000-default
 RUN a2ensite php-site
+RUN a2enmod rewrite
 
 ENV DD_TRACE_ENABLED=true
 ENV DD_TRACE_GENERATE_ROOT_SPAN=true

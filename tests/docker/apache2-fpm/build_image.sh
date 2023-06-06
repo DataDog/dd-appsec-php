@@ -28,7 +28,7 @@ function main {
     "$SCRIPT_DIR"/../helper/build_image.sh
   fi
 
-  docker build -t dd-appsec-php-apache2-fpm:$version-$variant-tracer$tracer_version \
+  docker build --progress=plain -t dd-appsec-php-apache2-fpm:$version-$variant-tracer$tracer_version \
     --build-arg PHP_VERSION=$version --build-arg VARIANT=$variant \
     --build-arg TRACER_VERSION=$tracer_version \
     --target $TRACE_TARGET \
