@@ -23,6 +23,12 @@ ADD tests/docker/php.ini /etc/php/
 RUN PHP_INI_DIR=$(php-config --include-dir) && cp /etc/php/php.ini $PHP_INI_DIR && cp /etc/php/php.ini "/root/php/7.4.24-release/lib/"
 ADD tests/docker/apache2-fpm/entrypoint.sh /
 
+#Laravel 58
+RUN cd /var/www/html/laravel58/ && php -d memory_limit=-1 /usr/bin/composer install --no-dev
+RUN cd /var/www/html/laravel58/ && cp .env.example .env && php artisan key:generate
+RUN cd /var/www/html/laravel58/ && touch /tmp/database58.sqlite && php artisan migrate && php artisan db:seed
+
+#Laravel 8x
 RUN cd /var/www/html/laravel8x/ && php -d memory_limit=-1 /usr/bin/composer install --no-dev
 RUN cd /var/www/html/laravel8x/ && cp .env.example .env && php artisan key:generate
 RUN cd /var/www/html/laravel8x/ && touch /tmp/database.sqlite && php artisan migrate && php artisan db:seed
@@ -52,5 +58,7 @@ RUN curl -Lf -o /tmp/dd-library-php-setup.php https://raw.githubusercontent.com/
 FROM dd-appsec-php-trace:$PHP_VERSION as trace
 FROM ext-build as local
 
-COPY --from=trace /opt/ /opt/
+COPY --from=trace /opt/trace/bridge/ /opt/trace/bridge/
+COPY --from=trace /opt/ddtrace.so /opt/
+
 RUN find /opt -name ddtrace.so -exec ln -s -v '{}' $(php -r 'echo ini_get("extension_dir");') \;
