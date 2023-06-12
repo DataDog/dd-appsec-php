@@ -18,4 +18,4 @@ Route::get('/', function () {
 });
 
 
-Route::post('/authenticate', '\App\Http\Controllers\LoginController@authenticate');
+Route::get('/authenticate', '\App\Http\Controllers\LoginController@authenticate');
