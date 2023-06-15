@@ -25,6 +25,7 @@
 #define DD_TAG_HTTP_USER_AGENT "http.useragent"
 #define DD_TAG_HTTP_STATUS_CODE "http.status_code"
 #define DD_TAG_HTTP_URL "http.url"
+#define DD_TAG_MANUAL_KEEP "manual.keep"
 #define DD_TAG_NETWORK_CLIENT_IP "network.client.ip"
 #define DD_PREFIX_TAG_REQUEST_HEADER "http.request.headers."
 #define DD_TAG_HTTP_RH_CONTENT_LENGTH "http.response.headers.content-length"
@@ -48,6 +49,7 @@ static zend_string *_dd_tag_http_method_zstr;
 static zend_string *_dd_tag_http_user_agent_zstr;
 static zend_string *_dd_tag_http_status_code_zstr;
 static zend_string *_dd_tag_http_url_zstr;
+static zend_string *_dd_tag_manual_keep_zstr;
 static zend_string *_dd_tag_network_client_ip_zstr;
 static zend_string *_dd_tag_http_client_ip_zstr;
 static zend_string *_dd_tag_rh_content_length;   // response
@@ -109,6 +111,8 @@ void dd_tags_startup()
         zend_string_init_interned(LSTRARG(DD_TAG_HTTP_STATUS_CODE), 1);
     _dd_tag_http_url_zstr =
         zend_string_init_interned(LSTRARG(DD_TAG_HTTP_URL), 1);
+    _dd_tag_manual_keep_zstr =
+        zend_string_init_interned(LSTRARG(DD_TAG_MANUAL_KEEP), 1);
     _dd_tag_network_client_ip_zstr =
         zend_string_init_interned(LSTRARG(DD_TAG_NETWORK_CLIENT_IP), 1);
     _dd_tag_http_client_ip_zstr =
@@ -802,6 +806,9 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
     // usr.id = <user_id>
     _add_new_zstr_to_meta(meta_ht, _dd_tag_user_id, user_id, true);
 
+    // manual.keep = true
+    _add_new_zstr_to_meta(meta_ht, _dd_tag_manual_keep_zstr, _true_zstr, true);
+
     // appsec.events.users.login.success.track = true
     _add_custom_event_keyval(
         meta_ht, _dd_login_success_event, _track_zstr, _true_zstr, true);
@@ -850,6 +857,9 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_failure_event)
     // appsec.events.users.login.failure.track = true
     _add_custom_event_keyval(
         meta_ht, _dd_login_failure_event, _track_zstr, _true_zstr, true);
+
+    // manual.keep = true
+    _add_new_zstr_to_meta(meta_ht, _dd_tag_manual_keep_zstr, _true_zstr, true);
 
     // appsec.events.users.login.failure.usr.exists = <exists>
     _add_custom_event_keyval(meta_ht, _dd_login_failure_event, _usr_exists_zstr,

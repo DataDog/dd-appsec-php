@@ -28,6 +28,7 @@ Array
 (
     [appsec.events.users.login.failure.usr.id] => Admin
     [appsec.events.users.login.failure.track] => true
+    [manual.keep] => true
     [appsec.events.users.login.failure.usr.exists] => false
     [appsec.events.users.login.failure.value] => something
     [appsec.events.users.login.failure.metadata] => some other metadata
