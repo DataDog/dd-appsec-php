@@ -840,10 +840,16 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
             return;
         }
 
-        if (strcmp("safe", ZSTR_VAL(mode)) == 0 &&
-            is_user_id_sensitive(user_id)) {
-            zend_string_release(user_id);
-            user_id = ZSTR_EMPTY_ALLOC();
+        if (strcmp("safe", ZSTR_VAL(mode)) == 0) {
+            if (is_user_id_sensitive(user_id)) {
+                zend_string_release(user_id);
+                user_id = ZSTR_EMPTY_ALLOC();
+            }
+
+            if (metadata) {
+                zend_hash_destroy(metadata);
+                metadata = NULL;
+            }
         }
     } else {
         if (user_id == NULL || ZSTR_LEN(user_id) == 0) {
@@ -915,10 +921,16 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_failure_event)
             return;
         }
 
-        if (strcmp("safe", ZSTR_VAL(mode)) == 0 &&
-            is_user_id_sensitive(user_id)) {
-            zend_string_release(user_id);
-            user_id = ZSTR_EMPTY_ALLOC();
+        if (strcmp("safe", ZSTR_VAL(mode)) == 0) {
+            if (is_user_id_sensitive(user_id)) {
+                zend_string_release(user_id);
+                user_id = ZSTR_EMPTY_ALLOC();
+            }
+
+            if (metadata) {
+                zend_hash_destroy(metadata);
+                metadata = NULL;
+            }
         }
     }
 
