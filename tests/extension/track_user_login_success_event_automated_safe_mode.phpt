@@ -13,7 +13,7 @@ include __DIR__ . '/inc/ddtrace_version.php';
 
 ddtrace_version_at_least('0.79.0');
 
-track_user_login_success_event("Admin",
+track_user_login_success_event("1234",
 [
     "value" => "something",
     "metadata" => "some other metadata",
@@ -28,7 +28,7 @@ print_r(root_span_get_meta());
 root_span_get_meta():
 Array
 (
-    [usr.id] => Admin
+    [usr.id] => 1234
     [manual.keep] => true
     [_dd.appsec.events.users.login.success.auto.mode] => safe
     [appsec.events.users.login.success.track] => true
