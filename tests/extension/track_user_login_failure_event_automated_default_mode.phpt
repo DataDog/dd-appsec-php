@@ -1,5 +1,5 @@
 --TEST--
-Track a user login failure event and verify the tags in the root span
+Track automated user login failure without specifying a mode event and verify the tags in the root span
 --INI--
 extension=ddtrace.so
 --ENV--
@@ -17,7 +17,7 @@ track_user_login_failure_event("Admin", true,
     "value" => "something",
     "metadata" => "some other metadata",
     "email" => "noneofyour@business.com"
-]);
+], true);
 
 echo "root_span_get_meta():\n";
 print_r(root_span_get_meta());
@@ -29,7 +29,7 @@ Array
     [appsec.events.users.login.failure.usr.id] => Admin
     [appsec.events.users.login.failure.track] => true
     [manual.keep] => true
-    [_dd.appsec.events.users.login.failure.sdk] => true
+    [_dd.appsec.events.users.login.failure.auto.mode] => safe
     [appsec.events.users.login.failure.usr.exists] => true
     [appsec.events.users.login.failure.value] => something
     [appsec.events.users.login.failure.metadata] => some other metadata

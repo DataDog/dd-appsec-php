@@ -40,6 +40,14 @@
 #define DD_APPSEC_EVENTS_PREFIX "appsec.events."
 #define DD_LOGIN_SUCCESS_EVENT DD_APPSEC_EVENTS_PREFIX "users.login.success"
 #define DD_LOGIN_FAILURE_EVENT DD_APPSEC_EVENTS_PREFIX "users.login.failure"
+#define DD_EVENTS_USER_LOGIN_SUCCESS_AUTO_MODE                                 \
+    "_dd.appsec.events.users.login.success.auto.mode"
+#define DD_EVENTS_USER_LOGIN_FAILURE_AUTO_MODE                                 \
+    "_dd.appsec.events.users.login.failure.auto.mode"
+#define DD_EVENTS_USER_LOGIN_SUCCESS_SDK                                       \
+    "_dd.appsec.events.users.login.success.sdk"
+#define DD_EVENTS_USER_LOGIN_FAILURE_SDK                                       \
+    "_dd.appsec.events.users.login.failure.sdk"
 #define DD_SAMPLING_PRIORITY_USER_KEEP 2
 
 static zend_string *_dd_tag_data_zstr;
@@ -63,6 +71,10 @@ static zend_string *_dd_metric_sampling_prio_zstr;
 static zend_string *_dd_login_success_event;
 static zend_string *_dd_login_failure_event;
 static zend_string *_dd_login_failure_event;
+static zend_string *_dd_login_success_event_auto_mode;
+static zend_string *_dd_login_failure_event_auto_mode;
+static zend_string *_dd_login_success_event_sdk;
+static zend_string *_dd_login_failure_event_sdk;
 static zend_string *_key_request_uri_zstr;
 static zend_string *_key_http_host_zstr;
 static zend_string *_key_server_name_zstr;
@@ -153,6 +165,14 @@ void dd_tags_startup()
         zend_string_init_interned(LSTRARG(DD_LOGIN_SUCCESS_EVENT), 1);
     _dd_login_failure_event =
         zend_string_init_interned(LSTRARG(DD_LOGIN_FAILURE_EVENT), 1);
+    _dd_login_success_event_auto_mode = zend_string_init_interned(
+        LSTRARG(DD_EVENTS_USER_LOGIN_SUCCESS_AUTO_MODE), 1);
+    _dd_login_failure_event_auto_mode = zend_string_init_interned(
+        LSTRARG(DD_EVENTS_USER_LOGIN_FAILURE_AUTO_MODE), 1);
+    _dd_login_success_event_sdk =
+        zend_string_init_interned(LSTRARG(DD_EVENTS_USER_LOGIN_SUCCESS_SDK), 1);
+    _dd_login_failure_event_sdk =
+        zend_string_init_interned(LSTRARG(DD_EVENTS_USER_LOGIN_FAILURE_SDK), 1);
     _usr_exists_zstr =
         zend_string_init_interned(LSTRARG("usr.exists"), 1 /* permanent */);
 
@@ -782,10 +802,17 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
 
     zend_string *user_id = NULL;
     HashTable *metadata = NULL;
-    if (zend_parse_parameters(ZEND_NUM_ARGS(), "S|h", &user_id, &metadata) ==
-        FAILURE) {
+    zend_bool automated = false; // Don't document. Only internal usage
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "S|hb", &user_id, &metadata,
+            &automated) == FAILURE) {
         mlog(dd_log_warning, "Unexpected parameter combination, expected "
                              "(user_id, metadata)");
+        return;
+    }
+
+    if (automated &&
+        strcmp("disabled",
+            ZSTR_VAL(get_DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING())) == 0) {
         return;
     }
 
@@ -809,6 +836,17 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
     // manual.keep = true
     _add_new_zstr_to_meta(meta_ht, _dd_tag_manual_keep_zstr, _true_zstr, true);
 
+    if (automated) {
+        // _dd.appsec.events.users.login.success.auto.mode =
+        // <DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING>
+        _add_new_zstr_to_meta(meta_ht, _dd_login_success_event_auto_mode,
+            get_DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING(), true);
+    } else {
+        // _dd.appsec.events.users.login.success.sdk = true
+        _add_new_zstr_to_meta(
+            meta_ht, _dd_login_success_event_sdk, _true_zstr, true);
+    }
+
     // appsec.events.users.login.success.track = true
     _add_custom_event_keyval(
         meta_ht, _dd_login_success_event, _track_zstr, _true_zstr, true);
@@ -831,10 +869,17 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_failure_event)
     zend_string *user_id = NULL;
     zend_bool exists = false;
     HashTable *metadata = NULL;
-    if (zend_parse_parameters(
-            ZEND_NUM_ARGS(), "Sb|h", &user_id, &exists, &metadata) == FAILURE) {
+    zend_bool automated = false; // Don't document. Only internal usage
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "Sb|hb", &user_id, &exists,
+            &metadata, &automated) == FAILURE) {
         mlog(dd_log_warning, "Unexpected parameter combination, expected "
                              "(user_id, exists, metadata)");
+        return;
+    }
+
+    if (automated &&
+        strcmp("disabled",
+            ZSTR_VAL(get_DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING())) == 0) {
         return;
     }
 
@@ -860,6 +905,17 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_failure_event)
 
     // manual.keep = true
     _add_new_zstr_to_meta(meta_ht, _dd_tag_manual_keep_zstr, _true_zstr, true);
+
+    if (automated) {
+        // _dd.appsec.events.users.login.failure.auto.mode =
+        // <DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING>
+        _add_new_zstr_to_meta(meta_ht, _dd_login_failure_event_auto_mode,
+            get_DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING(), true);
+    } else {
+        // _dd.appsec.events.users.login.success.sdk = true
+        _add_new_zstr_to_meta(
+            meta_ht, _dd_login_failure_event_sdk, _true_zstr, true);
+    }
 
     // appsec.events.users.login.failure.usr.exists = <exists>
     _add_custom_event_keyval(meta_ht, _dd_login_failure_event, _usr_exists_zstr,
@@ -927,6 +983,30 @@ static bool _set_appsec_enabled(zval *metrics_zv)
     ZVAL_LONG(&zv, DDAPPSEC_G(enabled) == ENABLED ? 1 : 0);
     return zend_hash_add(Z_ARRVAL_P(metrics_zv), _dd_metric_enabled, &zv) !=
            NULL;
+}
+
+bool dd_parse_automated_user_events_tracking(
+    zai_string_view value, zval *nonnull decoded_value, bool persistent)
+{
+    if (!value.len) {
+        return false;
+    }
+
+    bool result = false;
+    size_t len = strlen((const char *)value.ptr);
+    if (dd_string_equals_lc(value.ptr, len, ZEND_STRL("safe"))) {
+        result = true;
+    } else if (dd_string_equals_lc(value.ptr, len, ZEND_STRL("disabled"))) {
+        result = true;
+    }
+
+    if (result) {
+        ZVAL_STR(decoded_value, zend_string_alloc(value.len, persistent));
+        char *out = Z_STRVAL_P(decoded_value);
+        memcpy(out, value.ptr, value.len);
+    }
+
+    return result;
 }
 
 static void _set_sampling_priority(zval *metrics_zv)
