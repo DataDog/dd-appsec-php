@@ -1062,11 +1062,9 @@ bool dd_parse_automated_user_events_tracking(
 
     bool result = false;
     size_t len = strlen((const char *)value.ptr);
-    if (dd_string_equals_lc(value.ptr, len, ZEND_STRL(MODE_SAFE))) {
-        result = true;
-    } else if (dd_string_equals_lc(value.ptr, len, ZEND_STRL(MODE_EXTENDED))) {
-        result = true;
-    } else if (dd_string_equals_lc(value.ptr, len, ZEND_STRL(MODE_DISABLED))) {
+    if (dd_string_equals_lc(value.ptr, len, ZEND_STRL(MODE_SAFE)) ||
+        dd_string_equals_lc(value.ptr, len, ZEND_STRL(MODE_EXTENDED)) ||
+        dd_string_equals_lc(value.ptr, len, ZEND_STRL(MODE_DISABLED))) {
         result = true;
     }
 
