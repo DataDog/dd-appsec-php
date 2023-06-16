@@ -51,6 +51,10 @@
     "_dd.appsec.events.users.login.failure.sdk"
 #define DD_SAMPLING_PRIORITY_USER_KEEP 2
 
+#define MODE_DISABLED "disabled"
+#define MODE_SAFE "safe"
+#define MODE_EXTENDED "extended"
+
 static zend_string *_dd_tag_data_zstr;
 static zend_string *_dd_tag_event_zstr;
 static zend_string *_dd_tag_blocked_zstr;
@@ -849,11 +853,11 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
     }
     zend_string *mode = get_DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING();
     if (automated) {
-        if (strcmp("disabled", ZSTR_VAL(mode)) == 0) {
+        if (strcmp(MODE_DISABLED, ZSTR_VAL(mode)) == 0) {
             return;
         }
 
-        if (strcmp("safe", ZSTR_VAL(mode)) == 0) {
+        if (strcmp(MODE_SAFE, ZSTR_VAL(mode)) == 0) {
             if (user_id != NULL && is_user_id_sensitive(user_id)) {
                 zend_string_release(user_id);
                 user_id = ZSTR_EMPTY_ALLOC();
@@ -932,11 +936,11 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_failure_event)
 
     zend_string *mode = get_DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING();
     if (automated) {
-        if (strcmp("disabled", ZSTR_VAL(mode)) == 0) {
+        if (strcmp(MODE_DISABLED, ZSTR_VAL(mode)) == 0) {
             return;
         }
 
-        if (strcmp("safe", ZSTR_VAL(mode)) == 0) {
+        if (strcmp(MODE_SAFE, ZSTR_VAL(mode)) == 0) {
             if (is_user_id_sensitive(user_id)) {
                 zend_string_release(user_id);
                 user_id = ZSTR_EMPTY_ALLOC();
@@ -1058,9 +1062,11 @@ bool dd_parse_automated_user_events_tracking(
 
     bool result = false;
     size_t len = strlen((const char *)value.ptr);
-    if (dd_string_equals_lc(value.ptr, len, ZEND_STRL("safe"))) {
+    if (dd_string_equals_lc(value.ptr, len, ZEND_STRL(MODE_SAFE))) {
         result = true;
-    } else if (dd_string_equals_lc(value.ptr, len, ZEND_STRL("disabled"))) {
+    } else if (dd_string_equals_lc(value.ptr, len, ZEND_STRL(MODE_EXTENDED))) {
+        result = true;
+    } else if (dd_string_equals_lc(value.ptr, len, ZEND_STRL(MODE_DISABLED))) {
         result = true;
     }
 
