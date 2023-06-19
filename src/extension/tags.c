@@ -853,7 +853,8 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
     }
     zend_string *mode = get_DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING();
     if (automated) {
-        if (mode && strcmp(MODE_DISABLED, ZSTR_VAL(mode)) == 0) {
+        if (mode && ZSTR_LEN(mode) > 0 &&
+            strcmp(MODE_DISABLED, ZSTR_VAL(mode)) == 0) {
             return;
         }
 
