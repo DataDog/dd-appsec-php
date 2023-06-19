@@ -27,12 +27,8 @@ print_r(root_span_get_meta());
 root_span_get_meta():
 Array
 (
-    [appsec.events.users.login.failure.usr.id] => Admin
     [appsec.events.users.login.failure.track] => true
     [manual.keep] => true
     [_dd.appsec.events.users.login.failure.auto.mode] => safe
     [appsec.events.users.login.failure.usr.exists] => true
-    [appsec.events.users.login.failure.value] => something
-    [appsec.events.users.login.failure.metadata] => some other metadata
-    [appsec.events.users.login.failure.email] => noneofyour@business.com
 )

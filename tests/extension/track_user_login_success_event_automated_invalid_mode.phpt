@@ -28,11 +28,7 @@ print_r(root_span_get_meta());
 root_span_get_meta():
 Array
 (
-    [usr.id] => Admin
     [manual.keep] => true
     [_dd.appsec.events.users.login.success.auto.mode] => safe
     [appsec.events.users.login.success.track] => true
-    [appsec.events.users.login.success.value] => something
-    [appsec.events.users.login.success.metadata] => some other metadata
-    [appsec.events.users.login.success.email] => noneofyour@business.com
 )

@@ -853,12 +853,11 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
     }
     zend_string *mode = get_DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING();
     if (automated) {
-        if (mode && ZSTR_LEN(mode) > 0 &&
-            strcmp(MODE_DISABLED, ZSTR_VAL(mode)) == 0) {
+        if (mode && strncmp(ZSTR_VAL(mode), LSTRARG(MODE_DISABLED)) == 0) {
             return;
         }
 
-        if (mode && strcmp(MODE_SAFE, ZSTR_VAL(mode)) == 0) {
+        if (mode && strncmp(ZSTR_VAL(mode), LSTRARG(MODE_SAFE)) == 0) {
             if (user_id != NULL && is_user_id_sensitive(user_id)) {
                 zend_string_release(user_id);
                 user_id = ZSTR_EMPTY_ALLOC();
@@ -937,11 +936,11 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_failure_event)
 
     zend_string *mode = get_DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING();
     if (automated) {
-        if (mode && strcmp(MODE_DISABLED, ZSTR_VAL(mode)) == 0) {
+        if (mode && strncmp(ZSTR_VAL(mode), LSTRARG(MODE_DISABLED)) == 0) {
             return;
         }
 
-        if (mode && strcmp(MODE_SAFE, ZSTR_VAL(mode)) == 0) {
+        if (mode && strncmp(ZSTR_VAL(mode), LSTRARG(MODE_SAFE)) == 0) {
             if (is_user_id_sensitive(user_id)) {
                 zend_string_release(user_id);
                 user_id = ZSTR_EMPTY_ALLOC();
