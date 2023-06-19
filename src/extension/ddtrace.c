@@ -94,9 +94,8 @@ void dd_trace_rinit()
         return;
     }
 
-    _span_meta =  _root_span_get_prop(_meta_propname);
+    _span_meta = _root_span_get_prop(_meta_propname);
     _span_metrics = _root_span_get_prop(_metrics_propname);
-
 }
 
 static zend_module_entry *_find_ddtrace_module()
@@ -206,7 +205,6 @@ void dd_trace_close_all_spans_and_flush()
 
     (*_ddtrace_close_all_spans_and_flush)();
 }
-
 
 zval *nullable dd_trace_root_span_get_meta()
 {
