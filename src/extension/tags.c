@@ -895,8 +895,13 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
     if (automated) {
         // _dd.appsec.events.users.login.success.auto.mode =
         // <DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING>
-        _add_new_zstr_to_meta(
-            meta_ht, _dd_login_success_event_auto_mode, mode, true, !automated);
+        if (mode) {
+            zend_string *mode_dup;
+            mode_dup = zend_string_init(ZSTR_VAL(mode), ZSTR_LEN(mode), 0);
+            _add_new_zstr_to_meta(meta_ht, _dd_login_success_event_auto_mode,
+                mode_dup, true, !automated);
+            zend_string_release(mode_dup);
+        }
     } else {
         // _dd.appsec.events.users.login.success.sdk = true
         _add_new_zstr_to_meta(
@@ -976,8 +981,13 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_failure_event)
     if (automated) {
         // _dd.appsec.events.users.login.failure.auto.mode =
         // <DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING>
-        _add_new_zstr_to_meta(meta_ht, _dd_login_failure_event_auto_mode,
-            get_DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING(), true, !automated);
+        if (mode) {
+            zend_string *mode_dup;
+            mode_dup = zend_string_init(ZSTR_VAL(mode), ZSTR_LEN(mode), 0);
+            _add_new_zstr_to_meta(meta_ht, _dd_login_failure_event_auto_mode,
+                mode_dup, true, !automated);
+            zend_string_release(mode_dup);
+        }
     } else {
         // _dd.appsec.events.users.login.success.sdk = true
         _add_new_zstr_to_meta(
