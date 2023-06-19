@@ -246,6 +246,7 @@ static PHP_RINIT_FUNCTION(ddappsec)
 
     pthread_once(&_rinit_once_control, _rinit_once);
     zai_config_rinit();
+    dd_trace_rinit();
 
     //_check_enabled should be run only once. However, pthread_once approach
     // does not work with ZTS.
