@@ -6,6 +6,7 @@
 #include "tags.h"
 #include "ddappsec.h"
 #include "ddtrace.h"
+#include "ext/pcre/php_pcre.h"
 #include "ip_extraction.h"
 #include "logging.h"
 #include "php_compat.h"
@@ -14,7 +15,6 @@
 #include "string_helpers.h"
 #include "user_tracking.h"
 #include <SAPI.h>
-#include <regex.h>
 #include <zend_smart_str.h>
 #include <zend_types.h>
 
@@ -90,14 +90,14 @@ static zend_string *_true_zstr;
 static zend_string *_false_zstr;
 static zend_string *_track_zstr;
 static zend_string *_usr_exists_zstr;
+static zend_string *_uuid_zstr;
+static zend_string *_id_zstr;
 static HashTable _relevant_headers;
 static HashTable _relevant_ip_headers;
 static THREAD_LOCAL_ON_ZTS bool _appsec_json_frags_inited;
 static THREAD_LOCAL_ON_ZTS zend_llist _appsec_json_frags;
 static THREAD_LOCAL_ON_ZTS zend_string *nullable _event_user_id;
 static THREAD_LOCAL_ON_ZTS bool _blocked;
-static regex_t id_re;
-static regex_t uuid_re;
 
 static void _init_relevant_headers(void);
 static zend_string *_concat_json_fragments(void);
@@ -183,10 +183,12 @@ void dd_tags_startup()
     _usr_exists_zstr =
         zend_string_init_interned(LSTRARG("usr.exists"), 1 /* permanent */);
 
-    regcomp(&uuid_re,
-        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
-        REG_EXTENDED);
-    regcomp(&id_re, "[0-9]+", REG_EXTENDED);
+    _uuid_zstr = zend_string_init_interned(
+        LSTRARG(
+            "/^[\\da-f]{8}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{12}$/"),
+        1 /* permanent */);
+    _id_zstr =
+        zend_string_init_interned(LSTRARG("/^\\d+$/"), 1 /* permanent */);
 
     _init_relevant_headers();
 
@@ -251,9 +253,6 @@ void dd_tags_shutdown()
 
     zend_hash_destroy(&_relevant_ip_headers);
     _relevant_ip_headers = (HashTable){0};
-
-    regfree(&uuid_re);
-    regfree(&id_re);
 }
 
 void dd_tags_rinit()
@@ -820,17 +819,29 @@ static void _add_custom_event_metadata(zend_array *nonnull meta_ht,
     ZEND_HASH_FOREACH_END();
 }
 
+bool match_regex(zend_string *pattern, zend_string *subject)
+{
+    if (ZSTR_LEN(pattern) == 0) {
+        return false;
+    }
+
+    zend_string *regex = zend_strpprintf(0, "%s", ZSTR_VAL(pattern));
+    pcre_cache_entry *pce = pcre_get_compiled_regex_cache(regex);
+    zval ret;
+#if PHP_VERSION_ID < 70400
+    php_pcre_match_impl(
+        pce, ZSTR_VAL(subject), ZSTR_LEN(subject), &ret, NULL, 0, 0, 0, 0);
+#else
+    php_pcre_match_impl(pce, subject, &ret, NULL, 0, 0, 0, 0);
+#endif
+    zend_string_release(regex);
+    return Z_TYPE(ret) == IS_LONG && Z_LVAL(ret) > 0;
+}
+
 bool is_user_id_sensitive(zend_string *user_id)
 {
-    if (regexec(&id_re, ZSTR_VAL(user_id), 0, NULL, 0) == 0) {
-        return false;
-    }
-
-    if (regexec(&uuid_re, ZSTR_VAL(user_id), 0, NULL, 0) == 0) {
-        return false;
-    }
-
-    return true;
+    return !(
+        match_regex(_uuid_zstr, user_id) || match_regex(_id_zstr, user_id));
 }
 
 static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
