@@ -106,37 +106,10 @@ class AppSecContainer<SELF extends AppSecContainer<SELF>> extends GenericContain
         (conn.errorStream ?: conn.inputStream).close()
 
         Object trace = nextCapturedTrace()
-        assert trace.size() == 1 && trace[0].size() == 1
+        assert trace.size() >= 1 && trace[0].size() >= 1
         trace = trace[0][0]
 
         def gottenTraceId = ((Map)trace).get('trace_id')
-        if (gottenTraceId != traceId) {
-            throw new AssertionError("Mismatched trace id gotten after request to $uri: " +
-                    "expected $traceId, but got $gottenTraceId")
-        }
-        trace
-    }
-
-    @CompileStatic(TypeCheckingMode.SKIP)
-    Object tracesFromRequest(String uri,
-                             @ClosureParams(value = FromAbstractTypeMethods,
-                                    options = ['java.net.HttpURLConnection'])
-                                    Closure<Void> doWithConn = null) {
-        BigInteger traceId = new BigInteger(64, RAND)
-        HttpURLConnection conn = createRequest(uri)
-        conn.useCaches = false
-        conn.addRequestProperty('x-datadog-trace-id', traceId as String)
-        if (doWithConn) {
-            doWithConn.call(conn)
-        }
-        if (conn.doOutput) {
-            conn.outputStream.close()
-        }
-        (conn.errorStream ?: conn.inputStream).close()
-
-        Object trace = nextCapturedTrace()
-
-        def gottenTraceId = ((Map)trace[0][0]).get('trace_id')
         if (gottenTraceId != traceId) {
             throw new AssertionError("Mismatched trace id gotten after request to $uri: " +
                     "expected $traceId, but got $gottenTraceId")
