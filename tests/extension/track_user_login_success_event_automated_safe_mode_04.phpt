@@ -23,7 +23,6 @@ root_span_get_meta():
 Array
 (
     [usr.id] => 85e37758-0b85-11ee-be56-0242ac120002
-    [manual.keep] => true
     [_dd.appsec.events.users.login.success.auto.mode] => safe
     [appsec.events.users.login.success.track] => true
 )

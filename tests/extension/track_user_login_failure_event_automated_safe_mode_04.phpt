@@ -24,7 +24,6 @@ Array
 (
     [appsec.events.users.login.failure.usr.id] => 85e37758-0b85-11ee-be56-0242ac120002
     [appsec.events.users.login.failure.track] => true
-    [manual.keep] => true
     [_dd.appsec.events.users.login.failure.auto.mode] => safe
     [appsec.events.users.login.failure.usr.exists] => true
 )

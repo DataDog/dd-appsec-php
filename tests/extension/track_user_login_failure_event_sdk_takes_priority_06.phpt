@@ -27,7 +27,6 @@ Array
 (
     [appsec.events.users.login.failure.usr.id] => Other
     [appsec.events.users.login.failure.track] => true
-    [manual.keep] => true
     [_dd.appsec.events.users.login.failure.auto.mode] => extended
     [appsec.events.users.login.failure.usr.exists] => true
     [appsec.events.users.login.failure.value] => something-from-sdk-2

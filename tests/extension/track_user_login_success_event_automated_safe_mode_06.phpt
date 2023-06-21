@@ -29,7 +29,6 @@ root_span_get_meta():
 Array
 (
     [usr.id] => 1234
-    [manual.keep] => true
     [_dd.appsec.events.users.login.success.auto.mode] => safe
     [appsec.events.users.login.success.track] => true
 )

@@ -25,7 +25,6 @@ root_span_get_meta():
 Array
 (
     [usr.id] => OtherUser
-    [manual.keep] => true
     [_dd.appsec.events.users.login.success.auto.mode] => safe
     [appsec.events.users.login.success.track] => true
     [_dd.appsec.events.users.login.success.sdk] => true

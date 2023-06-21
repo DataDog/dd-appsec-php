@@ -24,7 +24,6 @@ Array
 (
     [appsec.events.users.login.failure.usr.id] => 1234
     [appsec.events.users.login.failure.track] => true
-    [manual.keep] => true
     [_dd.appsec.events.users.login.failure.auto.mode] => safe
     [appsec.events.users.login.failure.usr.exists] => true
 )

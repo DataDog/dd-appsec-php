@@ -23,7 +23,6 @@ root_span_get_meta():
 Array
 (
     [usr.id] => 1234
-    [manual.keep] => true
     [_dd.appsec.events.users.login.success.auto.mode] => extended
     [appsec.events.users.login.success.track] => true
     [appsec.events.users.login.success.email] => some@email.com

@@ -27,7 +27,6 @@ root_span_get_meta():
 Array
 (
     [usr.id] => Admin
-    [manual.keep] => true
     [_dd.appsec.events.users.login.success.sdk] => true
     [appsec.events.users.login.success.track] => true
     [appsec.events.users.login.success.value] => something

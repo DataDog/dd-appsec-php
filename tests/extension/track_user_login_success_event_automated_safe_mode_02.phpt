@@ -22,7 +22,6 @@ print_r(root_span_get_meta());
 root_span_get_meta():
 Array
 (
-    [manual.keep] => true
     [_dd.appsec.events.users.login.success.auto.mode] => safe
     [appsec.events.users.login.success.track] => true
 )

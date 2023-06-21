@@ -28,7 +28,6 @@ Array
 (
     [appsec.events.users.login.failure.usr.id] => Admin
     [appsec.events.users.login.failure.track] => true
-    [manual.keep] => true
     [_dd.appsec.events.users.login.failure.sdk] => true
     [appsec.events.users.login.failure.usr.exists] => false
     [appsec.events.users.login.failure.value] => something
