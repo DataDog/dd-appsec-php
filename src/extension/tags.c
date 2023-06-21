@@ -15,8 +15,13 @@
 #include "string_helpers.h"
 #include "user_tracking.h"
 #include <SAPI.h>
+#include <Zend/zend.h>
 #include <zend_smart_str.h>
 #include <zend_types.h>
+
+#if PHP_VERSION_ID < 70200
+#    define zend_strpprintf strpprintf
+#endif
 
 #define DD_TAG_DATA "_dd.appsec.json"
 #define DD_TAG_EVENT "appsec.event"
@@ -819,6 +824,7 @@ static void _add_custom_event_metadata(zend_array *nonnull meta_ht,
     ZEND_HASH_FOREACH_END();
 }
 
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 bool match_regex(zend_string *pattern, zend_string *subject)
 {
     if (ZSTR_LEN(pattern) == 0) {
