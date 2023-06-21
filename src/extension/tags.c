@@ -498,21 +498,20 @@ static void _add_new_zstr_to_meta(zend_array *meta_ht, zend_string *key,
             ZSTR_VAL(val));
     }
 
-    zval *previous = zend_hash_find(meta_ht, key);
-    if (previous && !override) {
-        return;
-    }
-
     if (copy) {
         zend_string_copy(val);
     }
-
-    if (previous) {
-        ZVAL_STR(previous, val);
+    zval *added = NULL;
+    zval zv;
+    ZVAL_STR(&zv, val);
+    if (override) {
+        added = zend_hash_update(meta_ht, key, &zv);
     } else {
-        zval zv;
-        ZVAL_STR(&zv, val);
-        zend_hash_add_new(meta_ht, key, &zv);
+        added = zend_hash_add(meta_ht, key, &zv);
+    }
+
+    if (copy && added == NULL) {
+        zend_string_release(val);
     }
 }
 static void _dd_http_method(zend_array *meta_ht)
@@ -526,7 +525,7 @@ static void _dd_http_method(zend_array *meta_ht)
     }
     zend_string *method_zstr = zend_string_init(method, strlen(method), 0);
     _add_new_zstr_to_meta(
-        meta_ht, _dd_tag_http_method_zstr, method_zstr, false, true);
+        meta_ht, _dd_tag_http_method_zstr, method_zstr, false, false);
 }
 static void _dd_http_url(zend_array *meta_ht, zval *_server)
 {
@@ -576,7 +575,7 @@ static void _dd_http_url(zend_array *meta_ht, zval *_server)
     smart_str_0(&url_str);
 
     _add_new_zstr_to_meta(
-        meta_ht, _dd_tag_http_url_zstr, url_str.s, false, true);
+        meta_ht, _dd_tag_http_url_zstr, url_str.s, false, false);
 }
 
 static void _dd_http_user_agent(zend_array *meta_ht, zval *_server)
@@ -591,7 +590,7 @@ static void _dd_http_user_agent(zend_array *meta_ht, zval *_server)
     }
 
     _add_new_zstr_to_meta(meta_ht, _dd_tag_http_user_agent_zstr,
-        http_user_agent_zstr, true, true);
+        http_user_agent_zstr, true, false);
 }
 
 static void _dd_http_status_code(zend_array *meta_ht)
@@ -610,7 +609,7 @@ static void _dd_http_status_code(zend_array *meta_ht)
     convert_to_string(&zv);
 
     _add_new_zstr_to_meta(
-        meta_ht, _dd_tag_http_status_code_zstr, Z_STR(zv), false, true);
+        meta_ht, _dd_tag_http_status_code_zstr, Z_STR(zv), false, false);
 }
 
 static void _dd_http_network_client_ip(zend_array *meta_ht, zval *_server)
@@ -625,7 +624,7 @@ static void _dd_http_network_client_ip(zend_array *meta_ht, zval *_server)
     }
 
     _add_new_zstr_to_meta(
-        meta_ht, _dd_tag_network_client_ip_zstr, remote_addr_zstr, true, true);
+        meta_ht, _dd_tag_network_client_ip_zstr, remote_addr_zstr, true, false);
 }
 
 static void _dd_http_client_ip(zend_array *meta_ht)
@@ -637,7 +636,7 @@ static void _dd_http_client_ip(zend_array *meta_ht)
     zend_string *client_ip = dd_ip_extraction_get_ip();
     if (client_ip) {
         _add_new_zstr_to_meta(
-            meta_ht, _dd_tag_http_client_ip_zstr, client_ip, true, true);
+            meta_ht, _dd_tag_http_client_ip_zstr, client_ip, true, false);
     }
 }
 
@@ -740,7 +739,7 @@ static void _dd_event_user_id(zend_array *meta_ht)
 {
     if (_event_user_id) {
         _add_new_zstr_to_meta(
-            meta_ht, _dd_tag_user_id, _event_user_id, true, true);
+            meta_ht, _dd_tag_user_id, _event_user_id, true, false);
     }
 }
 
@@ -748,7 +747,7 @@ static void _dd_appsec_blocked(zend_array *meta_ht)
 {
     if (_blocked) {
         _add_new_zstr_to_meta(
-            meta_ht, _dd_tag_blocked_zstr, _true_zstr, true, true);
+            meta_ht, _dd_tag_blocked_zstr, _true_zstr, true, false);
     }
 }
 
@@ -831,8 +830,7 @@ bool match_regex(zend_string *pattern, zend_string *subject)
         return false;
     }
 
-    zend_string *regex = zend_strpprintf(0, "%s", ZSTR_VAL(pattern));
-    pcre_cache_entry *pce = pcre_get_compiled_regex_cache(regex);
+    pcre_cache_entry *pce = pcre_get_compiled_regex_cache(pattern);
     zval ret;
 #if PHP_VERSION_ID < 70400
     php_pcre_match_impl(
@@ -840,7 +838,6 @@ bool match_regex(zend_string *pattern, zend_string *subject)
 #else
     php_pcre_match_impl(pce, subject, &ret, NULL, 0, 0, 0, 0);
 #endif
-    zend_string_release(regex);
     return Z_TYPE(ret) == IS_LONG && Z_LVAL(ret) > 0;
 }
 
@@ -897,41 +894,39 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
         return;
     }
     zend_array *meta_ht = Z_ARRVAL_P(meta);
+    bool override = !automated;
 
     if (user_id && ZSTR_LEN(user_id) > 0) {
         dd_find_and_apply_verdict_for_user(user_id);
         // usr.id = <user_id>
         _add_new_zstr_to_meta(
-            meta_ht, _dd_tag_user_id, user_id, true, !automated);
+            meta_ht, _dd_tag_user_id, user_id, true, override);
     }
 
     // manual.keep = true
     _add_new_zstr_to_meta(
-        meta_ht, _dd_tag_manual_keep_zstr, _true_zstr, true, !automated);
+        meta_ht, _dd_tag_manual_keep_zstr, _true_zstr, true, override);
 
     if (automated) {
         // _dd.appsec.events.users.login.success.auto.mode =
         // <DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING>
         if (mode) {
-            zend_string *mode_dup;
-            mode_dup = zend_string_init(ZSTR_VAL(mode), ZSTR_LEN(mode), 0);
             _add_new_zstr_to_meta(meta_ht, _dd_login_success_event_auto_mode,
-                mode_dup, true, !automated);
-            zend_string_release(mode_dup);
+                mode, true, override);
         }
     } else {
         // _dd.appsec.events.users.login.success.sdk = true
         _add_new_zstr_to_meta(
-            meta_ht, _dd_login_success_event_sdk, _true_zstr, true, !automated);
+            meta_ht, _dd_login_success_event_sdk, _true_zstr, true, override);
     }
 
     // appsec.events.users.login.success.track = true
     _add_custom_event_keyval(meta_ht, _dd_login_success_event, _track_zstr,
-        _true_zstr, true, !automated);
+        _true_zstr, true, override);
 
     // appsec.events.users.login.success.<key> = <value>
     _add_custom_event_metadata(
-        meta_ht, _dd_login_success_event, metadata, !automated);
+        meta_ht, _dd_login_success_event, metadata, override);
 
     dd_tags_set_sampling_priority();
 }
@@ -980,44 +975,42 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_failure_event)
         return;
     }
     zend_array *meta_ht = Z_ARRVAL_P(meta);
+    bool override = !automated;
 
     if (user_id != NULL && ZSTR_LEN(user_id) > 0) {
         // appsec.events.users.login.failure.usr.id = <user_id>
         _add_custom_event_keyval(meta_ht, _dd_login_failure_event,
-            _dd_tag_user_id, user_id, true, !automated);
+            _dd_tag_user_id, user_id, true, override);
     }
 
     // appsec.events.users.login.failure.track = true
     _add_custom_event_keyval(meta_ht, _dd_login_failure_event, _track_zstr,
-        _true_zstr, true, !automated);
+        _true_zstr, true, override);
 
     // manual.keep = true
     _add_new_zstr_to_meta(
-        meta_ht, _dd_tag_manual_keep_zstr, _true_zstr, true, !automated);
+        meta_ht, _dd_tag_manual_keep_zstr, _true_zstr, true, override);
 
     if (automated) {
         // _dd.appsec.events.users.login.failure.auto.mode =
         // <DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING>
         if (mode) {
-            zend_string *mode_dup;
-            mode_dup = zend_string_init(ZSTR_VAL(mode), ZSTR_LEN(mode), 0);
             _add_new_zstr_to_meta(meta_ht, _dd_login_failure_event_auto_mode,
-                mode_dup, true, !automated);
-            zend_string_release(mode_dup);
+                mode, true, override);
         }
     } else {
         // _dd.appsec.events.users.login.success.sdk = true
         _add_new_zstr_to_meta(
-            meta_ht, _dd_login_failure_event_sdk, _true_zstr, true, !automated);
+            meta_ht, _dd_login_failure_event_sdk, _true_zstr, true, override);
     }
 
     // appsec.events.users.login.failure.usr.exists = <exists>
     _add_custom_event_keyval(meta_ht, _dd_login_failure_event, _usr_exists_zstr,
-        exists ? _true_zstr : _false_zstr, true, !automated);
+        exists ? _true_zstr : _false_zstr, true, override);
 
     // appsec.events.users.login.failure.<key> = <value>
     _add_custom_event_metadata(
-        meta_ht, _dd_login_failure_event, metadata, !automated);
+        meta_ht, _dd_login_failure_event, metadata, override);
 
     dd_tags_set_sampling_priority();
 }
