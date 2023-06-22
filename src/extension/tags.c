@@ -62,6 +62,9 @@ typedef enum _automated_user_events_tracking_mode {
 } automated_user_events_tracking_mode;
 static THREAD_LOCAL_ON_ZTS automated_user_events_tracking_mode
     automated_user_events_tracking = SAFE;
+static zend_string *_mode_safe_cstr;
+static zend_string *_mode_extended_cstr;
+static THREAD_LOCAL_ON_ZTS zend_string *_mode_cstr;
 
 static zend_string *_dd_tag_data_zstr;
 static zend_string *_dd_tag_event_zstr;
@@ -194,6 +197,12 @@ void dd_tags_startup()
         1 /* permanent */);
     _id_zstr =
         zend_string_init_interned(LSTRARG("/^\\d+$/"), 1 /* permanent */);
+
+    _mode_safe_cstr =
+        zend_string_init_interned(LSTRARG("safe"), 1 /* permanent */);
+    _mode_extended_cstr =
+        zend_string_init_interned(LSTRARG("extended"), 1 /* permanent */);
+    _mode_cstr = _mode_safe_cstr; // default
 
     _init_relevant_headers();
 
@@ -865,7 +874,6 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
                              "(user_id, metadata)");
         return;
     }
-    zend_string *mode = get_DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING();
     if (automated) {
         if (automated_user_events_tracking == NOT_ENABLED) {
             return;
@@ -906,9 +914,9 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
     if (automated) {
         // _dd.appsec.events.users.login.success.auto.mode =
         // <DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING>
-        if (mode) {
+        if (_mode_cstr && automated_user_events_tracking != NOT_ENABLED) {
             _add_new_zstr_to_meta(meta_ht, _dd_login_success_event_auto_mode,
-                mode, true, override);
+                _mode_cstr, true, override);
         }
     } else {
         // _dd.appsec.events.users.login.success.sdk = true
@@ -947,7 +955,6 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_failure_event)
         return;
     }
 
-    zend_string *mode = get_DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING();
     if (automated) {
         if (automated_user_events_tracking == NOT_ENABLED) {
             return;
@@ -986,9 +993,9 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_failure_event)
     if (automated) {
         // _dd.appsec.events.users.login.failure.auto.mode =
         // <DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING>
-        if (mode) {
+        if (_mode_cstr && automated_user_events_tracking != NOT_ENABLED) {
             _add_new_zstr_to_meta(meta_ht, _dd_login_failure_event_auto_mode,
-                mode, true, override);
+                _mode_cstr, true, override);
         }
     } else {
         // _dd.appsec.events.users.login.success.sdk = true
@@ -1077,12 +1084,15 @@ bool dd_parse_automated_user_events_tracking(
     if (dd_string_equals_lc(value.ptr, len, ZEND_STRL("safe"))) {
         automated_user_events_tracking = SAFE;
         result = true;
+        _mode_cstr = _mode_safe_cstr;
     } else if (dd_string_equals_lc(value.ptr, len, ZEND_STRL("extended"))) {
         automated_user_events_tracking = EXTENDED;
         result = true;
+        _mode_cstr = _mode_extended_cstr;
     } else if (dd_string_equals_lc(value.ptr, len, ZEND_STRL("disabled"))) {
         automated_user_events_tracking = NOT_ENABLED;
         result = true;
+        _mode_cstr = NULL;
     }
 
     if (result) {
