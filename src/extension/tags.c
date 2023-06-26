@@ -893,12 +893,11 @@ static PHP_FUNCTION(datadog_appsec_track_user_signup_event)
 
         if (automated_user_events_tracking == SAFE) {
             if (user_id != NULL && is_user_id_sensitive(user_id)) {
-                zend_string_release(user_id);
-                user_id = ZSTR_EMPTY_ALLOC();
+                user_id = NULL;
             }
 
             if (metadata != NULL && zend_array_count(metadata) > 0) {
-                zend_hash_clean(metadata);
+                metadata = NULL;
             }
         }
     } else {
@@ -968,12 +967,11 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
 
         if (automated_user_events_tracking == SAFE) {
             if (user_id != NULL && is_user_id_sensitive(user_id)) {
-                zend_string_release(user_id);
-                user_id = ZSTR_EMPTY_ALLOC();
+                user_id = NULL;
             }
 
             if (metadata != NULL && zend_array_count(metadata) > 0) {
-                zend_hash_clean(metadata);
+                metadata = NULL;
             }
         }
     } else {
@@ -1049,12 +1047,11 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_failure_event)
 
         if (automated_user_events_tracking == SAFE) {
             if (is_user_id_sensitive(user_id)) {
-                zend_string_release(user_id);
-                user_id = ZSTR_EMPTY_ALLOC();
+                user_id = NULL;
             }
 
             if (metadata != NULL && zend_array_count(metadata) > 0) {
-                zend_hash_clean(metadata);
+                metadata = NULL;
             }
         }
     }
