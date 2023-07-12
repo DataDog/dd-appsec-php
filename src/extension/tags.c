@@ -38,6 +38,7 @@
 #define DD_TAG_HTTP_RH_CONTENT_ENCODING "http.response.headers.content-encoding"
 #define DD_TAG_HTTP_RH_CONTENT_LANGUAGE "http.response.headers.content-language"
 #define DD_TAG_HTTP_CLIENT_IP "http.client_ip"
+#define DD_TAG_USER "usr"
 #define DD_TAG_USER_ID "usr.id"
 #define DD_MULTIPLE_IP_HEADERS "_dd.multiple-ip-headers"
 #define DD_METRIC_ENABLED "_dd.appsec.enabled"
@@ -83,6 +84,7 @@ static zend_string *_dd_tag_rh_content_length;   // response
 static zend_string *_dd_tag_rh_content_type;     // response
 static zend_string *_dd_tag_rh_content_encoding; // response
 static zend_string *_dd_tag_rh_content_language; // response
+static zend_string *_dd_tag_user;
 static zend_string *_dd_tag_user_id;
 static zend_string *_dd_multiple_ip_headers;
 static zend_string *_dd_metric_enabled;
@@ -160,6 +162,7 @@ void dd_tags_startup()
         zend_string_init_interned(LSTRARG(DD_TAG_HTTP_RH_CONTENT_ENCODING), 1);
     _dd_tag_rh_content_language =
         zend_string_init_interned(LSTRARG(DD_TAG_HTTP_RH_CONTENT_LANGUAGE), 1);
+    _dd_tag_user = zend_string_init_interned(LSTRARG(DD_TAG_USER), 1);
     _dd_tag_user_id = zend_string_init_interned(LSTRARG(DD_TAG_USER_ID), 1);
 
     _dd_multiple_ip_headers =
@@ -1013,9 +1016,14 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
     _add_custom_event_keyval(meta_ht, _dd_login_success_event, _track_zstr,
         _true_zstr, true, override);
 
-    // appsec.events.users.login.success.<key> = <value>
-    _add_custom_event_metadata(
-        meta_ht, _dd_login_success_event, metadata, override);
+    if (!automated) {
+        // appsec.events.users.login.success.<key> = <value>
+        _add_custom_event_metadata(
+            meta_ht, _dd_login_success_event, metadata, override);
+    } else {
+        // usr.<key> = <value>
+        _add_custom_event_metadata(meta_ht, _dd_tag_user, metadata, override);
+    }
 
     dd_tags_set_sampling_priority();
 }
