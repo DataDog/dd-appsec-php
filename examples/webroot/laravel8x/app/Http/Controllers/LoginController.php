@@ -2,8 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\Response;
 
 class LoginController extends Controller
 {
@@ -27,5 +32,26 @@ class LoginController extends Controller
         }
 
         return response('Invalid credentials', 403);
+    }
+
+    public function register(Request $request): Response
+    {
+        $request->validate([
+            'name' => ['required'],
+            'email' => ['required'],
+            'password' => ['required'],
+        ]);
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
+
+        event(new Registered($user));
+
+        Auth::login($user);
+
+        return response('User created', 200);
     }
 }

@@ -12,6 +12,7 @@ ARG TRACER_VERSION
 RUN curl -Lf -o /tmp/dd-library-php-setup.php https://raw.githubusercontent.com/DataDog/dd-appsec-php/installer/dd-library-php-setup.php && \
     PHP_INI_SCAN_DIR=/etc/php/ php /tmp/dd-library-php-setup.php --no-appsec --tracer-version $TRACER_VERSION --php-bin all
 
+
 RUN rm -rf /var/www/html
 ADD --chown=www-data:www-data examples/webroot/ /var/www/html/
 
@@ -20,11 +21,15 @@ RUN find /opt -name ddappsec.so -exec ln -s -v '{}' $(php -r 'echo ini_get("exte
 
 COPY --from=dd-appsec-php-helper /opt /opt
 ADD tests/docker/php.ini /etc/php/
+RUN echo "datadog.trace.request_init_hook=/opt/datadog/dd-library/$TRACER_VERSION/dd-trace-sources/bridge/dd_wrap_autoloader.php" >> /etc/php/php.ini
+RUN cp /etc/php/php.ini $(php-config --ini-path)
 ADD tests/docker/apache2-fpm/entrypoint.sh /
 
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 #Laravel 58
 RUN cd /var/www/html/laravel58/ && php -d memory_limit=-1 /usr/bin/composer install --no-dev
 RUN cd /var/www/html/laravel58/ && cp .env.example .env && php artisan key:generate
+RUN touch /tmp/database.sqlite && chown www-data.www-data /tmp/database.sqlite
 RUN cd /var/www/html/laravel58/ && touch /tmp/database58.sqlite && php artisan migrate && php artisan db:seed
 
 #Laravel 8x

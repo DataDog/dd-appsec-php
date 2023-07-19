@@ -19,3 +19,4 @@ Route::get('/', function () {
 
 
 Route::get('/authenticate', '\App\Http\Controllers\LoginController@authenticate');
+Route::get('/register', '\App\Http\Controllers\LoginController@register');
