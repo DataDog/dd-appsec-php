@@ -3,6 +3,7 @@ ARG VARIANT
 FROM dd-appsec-php-extension:$PHP_VERSION-$VARIANT as extension
 
 FROM datadog/dd-appsec-php-ci:php-$PHP_VERSION-$VARIANT as ext-build
+ARG PHP_VERSION
 
 RUN apt-get update && apt-get install -y \
 	apache2 \
@@ -26,18 +27,14 @@ RUN cp /etc/php/php.ini $(php-config --ini-path)
 ADD tests/docker/apache2-fpm/entrypoint.sh /
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-#Laravel 58
-RUN cd /var/www/html/laravel58/ && php -d memory_limit=-1 /usr/bin/composer install --no-dev
-RUN cd /var/www/html/laravel58/ && cp .env.example .env && php artisan key:generate
-RUN touch /tmp/database.sqlite && chown www-data.www-data /tmp/database.sqlite
-RUN cd /var/www/html/laravel58/ && touch /tmp/database58.sqlite && php artisan migrate && php artisan db:seed
+RUN if [ "$PHP_VERSION" = "7.4" ]; then \
+    #Laravel 8x
+    cd /var/www/html/laravel8x/ && php -d memory_limit=-1 /usr/bin/composer install --no-dev && \
+    cp .env.example .env && php artisan key:generate && \
+    touch /tmp/database.sqlite && chown www-data.www-data /tmp/database.sqlite && \
+    php artisan migrate && php artisan db:seed; \
+fi
 
-#Laravel 8x
-RUN cd /var/www/html/laravel8x/ && php -d memory_limit=-1 /usr/bin/composer install --no-dev
-RUN cd /var/www/html/laravel8x/ && cp .env.example .env && php artisan key:generate
-RUN cd /var/www/html/laravel8x/ && touch /tmp/database.sqlite && php artisan migrate && php artisan db:seed
-
-ARG PHP_VERSION
 ARG VARIANT
 ADD tests/docker/apache2-fpm/php-site.conf /etc/apache2/sites-available/
 ADD tests/docker/fpm-common/php-fpm.conf /etc/
