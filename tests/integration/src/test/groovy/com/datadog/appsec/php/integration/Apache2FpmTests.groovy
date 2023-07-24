@@ -20,6 +20,7 @@ import static org.testcontainers.containers.Container.ExecResult
 class Apache2FpmTests implements CommonTests {
     static boolean zts = variant.contains('zts')
     static boolean laravel8Version = phpVersion.contains('7.4')
+    static boolean symfony62Version = phpVersion.contains('8.1')
     @Container
     @FailOnUnmatchedTraces
     public static final AppSecContainer CONTAINER =
@@ -111,5 +112,16 @@ class Apache2FpmTests implements CommonTests {
       assert trace.meta."usr.id" == "2"
       assert trace.meta."_dd.appsec.events.users.signup.auto.mode" == "safe"
       assert trace.meta."appsec.events.users.signup.track" == "true"
+    }
+
+    @Test
+    @EnabledIf('isSymfony62Version')
+    void 'Symfony 6 2 - login failure automated event'() {
+      def trace = container.traceFromRequest('/symfony62/public/login', 'POST', '_username=aa&_password=ee') { HttpURLConnection conn ->
+                  assert conn.responseCode == 302
+              }
+      assert trace.meta."appsec.events.users.login.failure.track" == 'true'
+      assert trace.meta."_dd.appsec.events.users.login.failure.auto.mode" == 'safe'
+      assert trace.meta."appsec.events.users.login.failure.usr.exists" == 'false'
     }
 }

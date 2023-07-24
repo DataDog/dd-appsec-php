@@ -89,7 +89,7 @@ class AppSecContainer<SELF extends AppSecContainer<SELF>> extends GenericContain
     }
 
     @CompileStatic(TypeCheckingMode.SKIP)
-    Object traceFromRequest(String uri,
+    Object traceFromRequest(String uri, String method = 'GET', String body = null,
                             @ClosureParams(value = FromAbstractTypeMethods,
                                     options = ['java.net.HttpURLConnection'])
                                     Closure<Void> doWithConn = null) {
@@ -97,18 +97,27 @@ class AppSecContainer<SELF extends AppSecContainer<SELF>> extends GenericContain
         HttpURLConnection conn = createRequest(uri)
         conn.useCaches = false
         conn.addRequestProperty('x-datadog-trace-id', traceId as String)
+        conn.setRequestMethod(method);
+        conn.setInstanceFollowRedirects(false);
+        if (method == "POST") {
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+        }
+        if (body != null) {
+            conn.setDoOutput(true);
+            try(OutputStream os = conn.getOutputStream()) {
+                byte[] input = body.getBytes("utf-8");
+                os.write(input, 0, input.length);
+            }
+        }
         if (doWithConn) {
             doWithConn.call(conn)
-        }
-        if (conn.doOutput) {
-            conn.outputStream.close()
         }
         (conn.errorStream ?: conn.inputStream).close()
 
         Object trace = nextCapturedTrace()
         assert trace.size() >= 1 && trace[0].size() >= 1
-        trace = trace[0][0]
 
+        trace = trace[0][0]
         def gottenTraceId = ((Map)trace).get('trace_id')
         if (gottenTraceId != traceId) {
             throw new AssertionError("Mismatched trace id gotten after request to $uri: " +

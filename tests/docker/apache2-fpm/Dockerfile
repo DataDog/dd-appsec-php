@@ -33,7 +33,12 @@ RUN if [ "$PHP_VERSION" = "7.4" ]; then \
     cp .env.example .env && php artisan key:generate && \
     touch /tmp/database.sqlite && chown www-data.www-data /tmp/database.sqlite && \
     php artisan migrate && php artisan db:seed; \
+elif [ "$PHP_VERSION" = "8.1" ]; then \
+    #Symfony 6.2
+    cd /var/www/html/symfony62/ && php -d memory_limit=-1 /usr/bin/composer install; \
 fi
+
+RUN touch /tmp/appsec.log && chown www-data.www-data /tmp/appsec.log
 
 ARG VARIANT
 ADD tests/docker/apache2-fpm/php-site.conf /etc/apache2/sites-available/
