@@ -136,4 +136,16 @@ class Apache2FpmTests implements CommonTests {
       assert trace.meta."_dd.appsec.events.users.login.failure.auto.mode" == 'safe'
       assert trace.meta."appsec.events.users.login.failure.usr.exists" == 'false'
     }
+
+    @Test
+    @EnabledIf('isSymfony62Version')
+    void 'Symfony 6 2 - sign up automated event'() {
+      def trace = container.traceFromRequest(
+      '/symfony62/public/register', 'POST', 'registration_form[email]=some@email.com&registration_form[plainPassword]=somepassword&registration_form[agreeTerms]=1'
+      ) { HttpURLConnection conn ->
+                  assert conn.responseCode == 302
+              }
+      assert trace.meta."_dd.appsec.events.users.signup.auto.mode" == "safe"
+      assert trace.meta."appsec.events.users.signup.track" == "true"
+    }
 }

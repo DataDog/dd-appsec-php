@@ -39,7 +39,8 @@ elif [ "$PHP_VERSION" = "8.1" ]; then \
     php bin/console doctrine:database:drop --force && \
     php bin/console doctrine:database:create && \
     php bin/console doctrine:migrations:migrate -n && \
-    php bin/console doctrine:fixtures:load -n; \
+    php bin/console doctrine:fixtures:load -n && \
+    chown www-data.www-data var/app.db; \
 fi
 
 RUN touch /tmp/appsec.log && chown www-data.www-data /tmp/appsec.log
