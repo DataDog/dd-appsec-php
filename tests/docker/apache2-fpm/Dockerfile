@@ -35,7 +35,11 @@ RUN if [ "$PHP_VERSION" = "7.4" ]; then \
     php artisan migrate && php artisan db:seed; \
 elif [ "$PHP_VERSION" = "8.1" ]; then \
     #Symfony 6.2
-    cd /var/www/html/symfony62/ && php -d memory_limit=-1 /usr/bin/composer install; \
+    cd /var/www/html/symfony62/ && php -d memory_limit=-1 /usr/bin/composer install && \
+    php bin/console doctrine:database:drop --force && \
+    php bin/console doctrine:database:create && \
+    php bin/console doctrine:migrations:migrate -n && \
+    php bin/console doctrine:fixtures:load -n; \
 fi
 
 RUN touch /tmp/appsec.log && chown www-data.www-data /tmp/appsec.log

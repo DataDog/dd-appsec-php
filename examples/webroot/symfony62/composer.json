@@ -66,10 +66,7 @@
         ],
         "post-autoload-dump": [
             "rm -rf var/cache/dev/*",
-            "rm -rf var/cache/prod/*",
-            "@php bin/console doctrine:database:drop --force",
-            "@php bin/console doctrine:database:create",
-            "@php bin/console doctrine:migrations:migrate -n"
+            "rm -rf var/cache/prod/*"
         ]
     },
     "conflict": {
@@ -82,6 +79,7 @@
         }
     },
     "require-dev": {
+        "doctrine/doctrine-fixtures-bundle": "^3.4",
         "symfony/maker-bundle": "^1.49"
     }
 }

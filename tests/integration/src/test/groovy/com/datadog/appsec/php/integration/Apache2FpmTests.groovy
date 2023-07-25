@@ -116,6 +116,18 @@ class Apache2FpmTests implements CommonTests {
 
     @Test
     @EnabledIf('isSymfony62Version')
+    void 'Symfony 6 2 - login success automated event'() {
+      //The user ciuser@example.com is already on the DB
+      def trace = container.traceFromRequest('/symfony62/public/login', 'POST', '_username=test-user%40email.com&_password=test') { HttpURLConnection conn ->
+                  assert conn.responseCode == 302
+              }
+
+     assert trace.meta."_dd.appsec.events.users.login.success.auto.mode" == "safe"
+     assert trace.meta."appsec.events.users.login.success.track" == "true"
+    }
+
+    @Test
+    @EnabledIf('isSymfony62Version')
     void 'Symfony 6 2 - login failure automated event'() {
       def trace = container.traceFromRequest('/symfony62/public/login', 'POST', '_username=aa&_password=ee') { HttpURLConnection conn ->
                   assert conn.responseCode == 302
