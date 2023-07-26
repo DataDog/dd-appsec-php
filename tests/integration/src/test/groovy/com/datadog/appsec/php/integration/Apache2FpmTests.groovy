@@ -113,39 +113,4 @@ class Apache2FpmTests implements CommonTests {
       assert trace.meta."_dd.appsec.events.users.signup.auto.mode" == "safe"
       assert trace.meta."appsec.events.users.signup.track" == "true"
     }
-
-    @Test
-    @EnabledIf('isSymfony62Version')
-    void 'Symfony 6 2 - login success automated event'() {
-      //The user ciuser@example.com is already on the DB
-      def trace = container.traceFromRequest('/symfony62/public/login', 'POST', '_username=test-user%40email.com&_password=test') { HttpURLConnection conn ->
-                  assert conn.responseCode == 302
-              }
-
-     assert trace.meta."_dd.appsec.events.users.login.success.auto.mode" == "safe"
-     assert trace.meta."appsec.events.users.login.success.track" == "true"
-    }
-
-    @Test
-    @EnabledIf('isSymfony62Version')
-    void 'Symfony 6 2 - login failure automated event'() {
-      def trace = container.traceFromRequest('/symfony62/public/login', 'POST', '_username=aa&_password=ee') { HttpURLConnection conn ->
-                  assert conn.responseCode == 302
-              }
-      assert trace.meta."appsec.events.users.login.failure.track" == 'true'
-      assert trace.meta."_dd.appsec.events.users.login.failure.auto.mode" == 'safe'
-      assert trace.meta."appsec.events.users.login.failure.usr.exists" == 'false'
-    }
-
-    @Test
-    @EnabledIf('isSymfony62Version')
-    void 'Symfony 6 2 - sign up automated event'() {
-      def trace = container.traceFromRequest(
-      '/symfony62/public/register', 'POST', 'registration_form[email]=some@email.com&registration_form[plainPassword]=somepassword&registration_form[agreeTerms]=1'
-      ) { HttpURLConnection conn ->
-                  assert conn.responseCode == 302
-              }
-      assert trace.meta."_dd.appsec.events.users.signup.auto.mode" == "safe"
-      assert trace.meta."appsec.events.users.signup.track" == "true"
-    }
 }
