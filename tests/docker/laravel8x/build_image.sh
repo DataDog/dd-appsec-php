@@ -11,7 +11,7 @@ function main {
     "$SCRIPT_DIR"/../apache2-fpm/build_image.sh $version $variant $tracer_version
   fi
 
-  docker build -t dd-appsec-php-symfony62:$version-$variant-tracer$tracer_version \
+  docker build -t dd-appsec-php-laravel8x:$version-$variant-tracer$tracer_version \
     --build-arg PHP_VERSION=$version --build-arg VARIANT=$variant \
     --build-arg TRACER_VERSION=$tracer_version \
     -f "$SCRIPT_DIR/Dockerfile" "$SCRIPT_DIR/../../.."

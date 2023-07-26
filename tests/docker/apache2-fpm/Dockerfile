@@ -26,23 +26,6 @@ RUN echo "datadog.trace.request_init_hook=/opt/datadog/dd-library/$TRACER_VERSIO
 RUN cp /etc/php/php.ini $(php-config --ini-path)
 ADD tests/docker/apache2-fpm/entrypoint.sh /
 
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-RUN if [ "$PHP_VERSION" = "7.4" ]; then \
-    #Laravel 8x
-    cd /var/www/html/laravel8x/ && php -d memory_limit=-1 /usr/bin/composer install --no-dev && \
-    cp .env.example .env && php artisan key:generate && \
-    touch /tmp/database.sqlite && chown www-data.www-data /tmp/database.sqlite && \
-    php artisan migrate && php artisan db:seed; \
-elif [ "$PHP_VERSION" = "8.1" ]; then \
-    #Symfony 6.2
-    cd /var/www/html/symfony62/ && php -d memory_limit=-1 /usr/bin/composer install && \
-    php bin/console doctrine:database:drop --force && \
-    php bin/console doctrine:database:create && \
-    php bin/console doctrine:migrations:migrate -n && \
-    php bin/console doctrine:fixtures:load -n && \
-    chown www-data.www-data var/app.db; \
-fi
-
 RUN touch /tmp/appsec.log && chown www-data.www-data /tmp/appsec.log
 
 ARG VARIANT
