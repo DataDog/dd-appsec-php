@@ -7,9 +7,9 @@ source "$SCRIPT_DIR"/../lib.sh
 
 function main {
   local -r version=$1 variant=$2 tracer_version=$3
-  if ! image_exists datadog/dd-appsec-php-ci:php-$version-$variant; then
+#    if ! image_exists datadog/dd-appsec-php-ci:php-$version-$variant; then
     "$SCRIPT_DIR"/../php/build_image.sh $version $variant
-  fi
+#  fi
   if ! image_exists dd-appsec-php-extension:$version-$variant; then
     "$SCRIPT_DIR"/../extension/build_image.sh $version $variant
   fi
