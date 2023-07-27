@@ -37,7 +37,17 @@ class Symfony62Tests {
     @Test
     void 'Login success automated event'() {
       //The user ciuser@example.com is already on the DB
-      def trace = container.traceFromRequest('/login', 'POST', '_username=test-user%40email.com&_password=test') { HttpURLConnection conn ->
+      def trace = container.traceFromRequest('/login') { HttpURLConnection conn ->
+                  conn.setRequestMethod('POST');
+                  conn.setInstanceFollowRedirects(false);
+                  conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                  conn.setDoOutput(true);
+                  String body = '_username=test-user%40email.com&_password=test'
+                  try(OutputStream os = conn.getOutputStream()) {
+                      byte[] input = body.getBytes("utf-8");
+                      os.write(input, 0, input.length);
+                  }
+
                   assert conn.responseCode == 302
               }
 
@@ -47,8 +57,18 @@ class Symfony62Tests {
 
     @Test
     void 'Login failure automated event'() {
-      def trace = container.traceFromRequest('/login', 'POST', '_username=aa&_password=ee') { HttpURLConnection conn ->
-                  assert conn.responseCode == 302
+      def trace = container.traceFromRequest('/login') { HttpURLConnection conn ->
+                    conn.setRequestMethod('POST');
+                    conn.setInstanceFollowRedirects(false);
+                    conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                    conn.setDoOutput(true);
+                    String body = '_username=aa&_password=ee'
+                    try(OutputStream os = conn.getOutputStream()) {
+                        byte[] input = body.getBytes("utf-8");
+                        os.write(input, 0, input.length);
+                    }
+
+                    assert conn.responseCode == 302
               }
       assert trace.meta."appsec.events.users.login.failure.track" == 'true'
       assert trace.meta."_dd.appsec.events.users.login.failure.auto.mode" == 'safe'
@@ -57,9 +77,17 @@ class Symfony62Tests {
 
     @Test
     void 'Sign up automated event'() {
-      def trace = container.traceFromRequest(
-      '/register', 'POST', 'registration_form[email]=some@email.com&registration_form[plainPassword]=somepassword&registration_form[agreeTerms]=1'
-      ) { HttpURLConnection conn ->
+      def trace = container.traceFromRequest( '/register' ) { HttpURLConnection conn ->
+                  conn.setRequestMethod('POST');
+                  conn.setInstanceFollowRedirects(false);
+                  conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                  conn.setDoOutput(true);
+                  String body = 'registration_form[email]=some@email.com&registration_form[plainPassword]=somepassword&registration_form[agreeTerms]=1'
+                  try(OutputStream os = conn.getOutputStream()) {
+                      byte[] input = body.getBytes("utf-8");
+                      os.write(input, 0, input.length);
+                  }
+
                   assert conn.responseCode == 302
               }
       assert trace.meta."_dd.appsec.events.users.signup.auto.mode" == "safe"

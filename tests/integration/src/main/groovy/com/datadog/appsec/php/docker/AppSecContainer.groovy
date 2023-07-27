@@ -89,7 +89,7 @@ class AppSecContainer<SELF extends AppSecContainer<SELF>> extends GenericContain
     }
 
     @CompileStatic(TypeCheckingMode.SKIP)
-    Object traceFromRequest(String uri, String method = 'GET', String body = null,
+    Object traceFromRequest(String uri,
                             @ClosureParams(value = FromAbstractTypeMethods,
                                     options = ['java.net.HttpURLConnection'])
                                     Closure<Void> doWithConn = null) {
@@ -97,18 +97,6 @@ class AppSecContainer<SELF extends AppSecContainer<SELF>> extends GenericContain
         HttpURLConnection conn = createRequest(uri)
         conn.useCaches = false
         conn.addRequestProperty('x-datadog-trace-id', traceId as String)
-        conn.setRequestMethod(method);
-        conn.setInstanceFollowRedirects(false);
-        if (method == "POST") {
-            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-        }
-        if (body != null) {
-            conn.setDoOutput(true);
-            try(OutputStream os = conn.getOutputStream()) {
-                byte[] input = body.getBytes("utf-8");
-                os.write(input, 0, input.length);
-            }
-        }
         if (doWithConn) {
             doWithConn.call(conn)
         }

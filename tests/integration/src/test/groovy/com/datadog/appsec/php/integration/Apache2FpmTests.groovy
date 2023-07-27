@@ -63,7 +63,7 @@ class Apache2FpmTests implements CommonTests {
 
     @Test
     void 'Pool environment'() {
-        def trace = container.traceFromRequest('/plain/poolenv.php') { HttpURLConnection conn ->
+        def trace = container.traceFromRequest('/poolenv.php') { HttpURLConnection conn ->
             assert conn.responseCode == 200
             def content = conn.inputStream.text
 

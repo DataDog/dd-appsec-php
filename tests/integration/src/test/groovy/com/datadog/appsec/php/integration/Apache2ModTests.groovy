@@ -37,7 +37,7 @@ class Apache2ModTests implements CommonTests {
         }
         log.info "Result of restart: STDOUT: $res.stdout , STDERR: $res.stderr"
 
-        def trace = CONTAINER.traceFromRequest('/plain/hello.php') {
+        def trace = CONTAINER.traceFromRequest('/hello.php') {
             assert it.inputStream.text == 'Hello world!'
         }
         assert trace.metrics."_dd.appsec.enabled" == 1.0d

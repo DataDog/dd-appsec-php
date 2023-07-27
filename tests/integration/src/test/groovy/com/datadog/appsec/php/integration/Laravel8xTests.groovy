@@ -36,7 +36,7 @@ class Laravel8xTests {
 
     @Test
     void 'Login failure automated event'() {
-      def trace = container.traceFromRequest('/authenticate?email=nonExisiting@email.com', 'GET', null) { HttpURLConnection conn ->
+      def trace = container.traceFromRequest('/authenticate?email=nonExisiting@email.com') { HttpURLConnection conn ->
                   assert conn.responseCode == 403
               }
 
@@ -48,7 +48,7 @@ class Laravel8xTests {
     @Test
     void 'Login success automated event'() {
       //The user ciuser@example.com is already on the DB
-      def trace = container.traceFromRequest('/authenticate?email=ciuser@example.com', 'GET', null) { HttpURLConnection conn ->
+      def trace = container.traceFromRequest('/authenticate?email=ciuser@example.com') { HttpURLConnection conn ->
                   assert conn.responseCode == 200
               }
 
@@ -62,7 +62,7 @@ class Laravel8xTests {
     @Test
     void 'Sign up automated event'() {
       def trace = container.traceFromRequest(
-      '/register?email=test-user-new@email.coms&name=somename&password=somepassword', 'GET', null
+        '/register?email=test-user-new@email.coms&name=somename&password=somepassword'
       ) { HttpURLConnection conn ->
                   assert conn.responseCode == 200
               }
