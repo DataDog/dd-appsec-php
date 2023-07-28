@@ -213,7 +213,7 @@ jobs:
       - name: Test
         run: valgrind --leak-check=full --show-reachable=yes --suppressions=../tests/helper/re2.supp --error-exitcode=1 ./tests/helper/ddappsec_helper_test
         working-directory: ${{ github.workspace }}/build
-  helper-test-gen-valgrind-suppressions:
+  helper-gen-suppressions:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
