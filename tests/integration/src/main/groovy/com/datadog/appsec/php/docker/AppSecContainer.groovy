@@ -100,12 +100,15 @@ class AppSecContainer<SELF extends AppSecContainer<SELF>> extends GenericContain
         if (doWithConn) {
             doWithConn.call(conn)
         }
+        if (conn.doOutput) {
+            conn.outputStream.close()
+        }
         (conn.errorStream ?: conn.inputStream).close()
 
         Object trace = nextCapturedTrace()
         assert trace.size() >= 1 && trace[0].size() >= 1
-
         trace = trace[0][0]
+
         def gottenTraceId = ((Map)trace).get('trace_id')
         if (gottenTraceId != traceId) {
             throw new AssertionError("Mismatched trace id gotten after request to $uri: " +

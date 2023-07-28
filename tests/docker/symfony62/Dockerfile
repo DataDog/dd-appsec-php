@@ -3,7 +3,10 @@ ARG VARIANT
 ARG TRACER_VERSION
 
 FROM dd-appsec-php-apache2-fpm:$PHP_VERSION-$VARIANT-tracer$TRACER_VERSION
-ARG PHP_VERSION
+ARG TRACER_VERSION
+
+RUN echo "datadog.trace.request_init_hook=/opt/datadog/dd-library/$TRACER_VERSION/dd-trace-sources/bridge/dd_wrap_autoloader.php" >> /etc/php/php.ini
+RUN cp /etc/php/php.ini $(php-config --ini-path)
 
 RUN rm -rf /var/www/html
 ADD --chown=www-data:www-data examples/symfony62/ /var/www/html/
@@ -22,3 +25,5 @@ php bin/console doctrine:fixtures:load -n && \
 chown www-data.www-data var/app.db
 
 ADD tests/docker/symfony62/entrypoint.sh /
+
+RUN a2enmod rewrite

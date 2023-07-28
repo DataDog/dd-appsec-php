@@ -5,7 +5,6 @@ import com.datadog.appsec.php.docker.FailOnUnmatchedTraces
 import groovy.util.logging.Slf4j
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.DisabledIf
-import org.junit.jupiter.api.condition.EnabledIf
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
@@ -19,6 +18,7 @@ import static org.testcontainers.containers.Container.ExecResult
 @DisabledIf('isZts')
 class Apache2FpmTests implements CommonTests {
     static boolean zts = variant.contains('zts')
+
     @Container
     @FailOnUnmatchedTraces
     public static final AppSecContainer CONTAINER =
