@@ -20,7 +20,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 #Laravel 8x
 RUN cd /var/www/html/ && php -d memory_limit=-1 /usr/bin/composer install --no-dev && \
     cp .env.example .env && php artisan key:generate && \
-    touch /tmp/database.sqlite && chown www-data.www-data /tmp/database.sqlite && \
-    php artisan migrate && php artisan db:seed
+    touch /tmp/database.sqlite && php artisan migrate && php artisan db:seed && \
+    chown www-data.www-data /tmp/database.sqlite
 
 RUN a2enmod rewrite
