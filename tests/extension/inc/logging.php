@@ -17,6 +17,23 @@ function match_log() {
 	echo "None of " . var_export(func_get_args(), true) . " have matched\n";
 	echo "Log contents were:\n", log_contents();
 }
+function not_in_log() {
+	$regexes = func_get_args();
+	$found = false;
+	foreach ($regexes as $r) {
+		$message_in_log = preg_match($r, log_contents()) === 1;
+		if ($message_in_log) {
+			$found = true;
+			break;
+		}
+	}
+	if (!$found) {
+	    echo "None of " . var_export(func_get_args(), true) . " have matched\n";
+	} else {
+	    echo "found message in log\n";
+	    echo "Log contents were:\n", log_contents();
+	}
+}
 function truncate_log() {
 	$f = fopen(get_filename(), 'c');
 	ftruncate($f, 0);
