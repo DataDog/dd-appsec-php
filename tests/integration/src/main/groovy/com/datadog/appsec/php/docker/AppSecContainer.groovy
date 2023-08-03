@@ -100,9 +100,6 @@ class AppSecContainer<SELF extends AppSecContainer<SELF>> extends GenericContain
         if (doWithConn) {
             doWithConn.call(conn)
         }
-        if (conn.getRequestMethod() != 'POST' && conn.doOutput) {
-            conn.outputStream.close()
-        }
         (conn.errorStream ?: conn.inputStream).close()
 
         Object trace = nextCapturedTrace()
