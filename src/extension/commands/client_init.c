@@ -103,10 +103,13 @@ static dd_result _pack_command(
 
     // Service details
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
-    mpack_start_map(w, 5);
+    mpack_start_map(w, 6);
 
     dd_mpack_write_lstr(w, "service");
     dd_mpack_write_nullable_cstr(w, ZSTR_VAL(get_DD_SERVICE()));
+
+    dd_mpack_write_lstr(w, "extra_service");
+    dd_mpack_write_nullable_cstr(w, ZSTR_VAL(get_global_DD_EXTRA_SERVICE()));
 
     dd_mpack_write_lstr(w, "env");
     dd_mpack_write_nullable_cstr(w, ZSTR_VAL(get_DD_ENV()));
