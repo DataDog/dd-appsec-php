@@ -109,7 +109,9 @@ static dd_result _pack_command(
     dd_mpack_write_nullable_cstr(w, ZSTR_VAL(get_DD_SERVICE()));
 
     dd_mpack_write_lstr(w, "extra_service");
-    dd_mpack_write_nullable_cstr(w, ZSTR_VAL(get_global_DD_EXTRA_SERVICE()));
+    zval extra_services;
+    ZVAL_ARR(&extra_services, get_global_DD_EXTRA_SERVICE());
+    dd_mpack_write_zval(w, &extra_services);
 
     dd_mpack_write_lstr(w, "env");
     dd_mpack_write_nullable_cstr(w, ZSTR_VAL(get_DD_ENV()));
