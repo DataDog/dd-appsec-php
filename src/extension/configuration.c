@@ -116,7 +116,6 @@ static bool _parse_list(
                 zval val;
                 ZVAL_STR(&val, val_zstr);
                 zend_hash_next_index_insert_new(Z_ARRVAL(tmp), &val);
-                //                zend_string_release(val_zstr);
             } else {
                 ++data;
             }

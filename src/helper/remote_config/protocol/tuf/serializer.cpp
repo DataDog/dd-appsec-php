@@ -30,7 +30,7 @@ void serialize_client_tracer(rapidjson::Document::AllocatorType &alloc,
 
     rapidjson::Value extra_services_array(rapidjson::kArrayType);
 
-    for (auto service_name : client_tracer.extra_services) {
+    for (auto const &service_name : client_tracer.extra_services) {
         rapidjson::Value service(rapidjson::kStringType);
         service.SetString(service_name.c_str(), service_name.length(), alloc);
         extra_services_array.PushBack(service, alloc);
