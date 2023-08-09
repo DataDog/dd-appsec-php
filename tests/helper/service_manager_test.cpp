@@ -43,6 +43,12 @@ TEST(ServiceManagerTest, LoadRulesOK)
         engine_settings, {}, meta, metrics, {});
     EXPECT_EQ(manager.get_cache().size(), 1);
 
+    // Even with different extra services, it should get the same
+    auto service3 = manager.create_service(
+        {"service", {"some", "services"}, "env", "", "", ""}, engine_settings,
+        {}, meta, metrics, {});
+    EXPECT_EQ(manager.get_cache().size(), 1);
+
     // destroying the services should expire the cache ptr
     auto cache_it = manager.get_cache().begin();
     ASSERT_NE(cache_it, manager.get_cache().end());
@@ -52,17 +58,19 @@ TEST(ServiceManagerTest, LoadRulesOK)
     service.reset();
     ASSERT_FALSE(weak_ptr.expired());
     service2.reset();
+    ASSERT_FALSE(weak_ptr.expired());
+    service3.reset();
     // the last one should be kept by the manager
     ASSERT_FALSE(weak_ptr.expired());
 
     // loading another service should cleanup the cache
-    auto service3 = manager.create_service(
+    auto service4 = manager.create_service(
         {"service2", {}, "env"}, engine_settings, {}, meta, metrics, {});
     ASSERT_TRUE(weak_ptr.expired());
     EXPECT_EQ(manager.get_cache().size(), 1);
 
     // another service identifier should result in another service
-    auto service4 = manager.create_service({"service", {}, "env", "", "", ""},
+    auto service5 = manager.create_service({"service", {}, "env", "", "", ""},
         engine_settings, {}, meta, metrics, {});
     EXPECT_EQ(manager.get_cache().size(), 2);
 }
