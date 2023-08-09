@@ -109,7 +109,8 @@ int targets_version = 123;
 remote_config::protocol::client get_client()
 {
     remote_config::protocol::client_tracer client_tracer = {"some runtime id",
-        "some tracer version", "some service", "some env", "some app version"};
+        "some tracer version", "some service", {"extra01", "extra02"},
+        "some env", "some app version"};
 
     std::vector<remote_config::protocol::config_state> config_states;
 
