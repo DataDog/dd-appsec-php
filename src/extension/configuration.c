@@ -99,7 +99,8 @@ static bool _parse_list(
 
     char *data = (char *)value.ptr;
     if (data && *data) { // non-empty
-        const char *val_start, *val_end;
+        const char *val_start;
+        const char *val_end;
         do {
             if (*data != ',' && *data != ' ' && *data != '\t' &&
                 *data != '\n') {
