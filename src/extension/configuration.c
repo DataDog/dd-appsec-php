@@ -111,10 +111,8 @@ static bool _parse_list(
                     }
                 }
                 size_t val_len = val_end - val_start + 1;
-                zend_string *val_zstr =
-                    zend_string_init(val_start, val_len, persistent);
                 zval val;
-                ZVAL_STR(&val, val_zstr);
+                ZVAL_NEW_STR(&val, zend_string_init(val_start, val_len, persistent));
                 zend_hash_next_index_insert_new(Z_ARRVAL(tmp), &val);
             } else {
                 ++data;
