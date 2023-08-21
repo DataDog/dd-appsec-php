@@ -442,11 +442,21 @@ static PHP_MINFO_FUNCTION(ddappsec)
 __thread void *unspecnull TSRMLS_CACHE = NULL;
 #endif
 
+static bool _check_opcache_preload(void)
+{
+    // Opcache preload overrides these functions, some or all of which should
+    // be set for all other supported SAPIs
+    return sapi_module.activate == NULL &&
+        sapi_module.deactivate == NULL &&
+        sapi_module.register_server_variables == NULL &&
+        sapi_module.getenv == NULL;
+}
+
 static void _check_enabled()
 {
     if (!get_global_DD_APPSEC_TESTING() &&
         (!dd_trace_enabled() || strcmp(sapi_module.name, "cli") == 0 ||
-            sapi_module.phpinfo_as_text)) {
+        _check_opcache_preload() || sapi_module.phpinfo_as_text)) {
         DDAPPSEC_G(enabled_by_configuration) = DISABLED;
     } else if (!dd_is_config_using_default(DDAPPSEC_CONFIG_DD_APPSEC_ENABLED)) {
         DDAPPSEC_G(enabled_by_configuration) =
