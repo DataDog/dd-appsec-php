@@ -559,3 +559,19 @@
    fun:_ZN3re24Prog9SearchDFAERKNS_11StringPieceES3_NS0_6AnchorENS0_9MatchKindEPS1_PbPNS_10SparseSetTIvEE
    ...
 }
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:_ZNK3re210SparseSetTIvE8containsEi
+   fun:_ZN3re210SparseSetTIvE14InsertInternalEbi
+   fun:_ZN3re210SparseSetTIvE10insert_newEi
+   fun:_ZN3re23DFA5Workq4markEv
+   fun:_ZN3re23DFA10AddToQueueEPNS0_5WorkqEij
+   fun:_ZN3re23DFA14RunWorkqOnByteEPNS0_5WorkqES2_ijPb
+   fun:_ZN3re23DFA14RunStateOnByteEPNS0_5StateEi
+   fun:_ZN3re23DFA22RunStateOnByteUnlockedEPNS0_5StateEi
+   fun:_ZN3re23DFA17InlinedSearchLoopILb1ELb1ELb1EEEbPNS0_12SearchParamsE
+   fun:_ZN3re23DFA9SearchTTTEPNS0_12SearchParamsE
+   fun:_ZN3re23DFA14FastSearchLoopEPNS0_12SearchParamsE
+   fun:_ZN3re23DFA6SearchERKNS_11StringPieceES3_bbbPbPPKcPNS_10SparseSetTIvEE
+}
