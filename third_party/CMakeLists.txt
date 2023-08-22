@@ -60,10 +60,20 @@ if(DD_APPSEC_BUILD_EXTENSION)
         message(FATAL_ERROR "Error executing ${PHP_CONFIG} --includes: ${PHP_CONFIG_INCLUDES_ERR}")
     endif()
 
+    execute_process(
+        COMMAND ${PHP_CONFIG} --ldflags
+        RESULT_VARIABLE PHP_LIB_RESULT
+        OUTPUT_VARIABLE PHP_LIB
+        ERROR_VARIABLE PHP_LIB_ERR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    add_subdirectory(ddtrace/tea/)
+
     set(ZAI_MODULES json env config)
     add_library(zai_zend_abstract_interface INTERFACE)
     target_include_directories(zai_zend_abstract_interface INTERFACE ${ZAI_INCLUDES})
     add_subdirectory(ddtrace/zend_abstract_interface/zai_string)
+    add_subdirectory(ddtrace/zend_abstract_interface/zai_assert)
     foreach(module json env config)
         set(module_name "zai_${module}")
         add_subdirectory(ddtrace/zend_abstract_interface/${module})

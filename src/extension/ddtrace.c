@@ -32,6 +32,8 @@ static int _ddtrace_rshutdown_testing(SHUTDOWN_FUNC_ARGS);
 static void _register_testing_objects(void);
 static zval *nullable _root_span_get_prop(zend_string *propname);
 
+static zval *(*nullable _ddtrace_root_span_get_meta)();
+static zval *(*nullable _ddtrace_root_span_get_metrics)();
 static void (*nullable _ddtrace_close_all_spans_and_flush)();
 
 static void dd_trace_load_symbols(void)
@@ -52,6 +54,21 @@ static void dd_trace_load_symbols(void)
         // NOLINTNEXTLINE(concurrency-mt-unsafe)
         mlog(dd_log_error,
             "Failed to load ddtrace_close_all_spans_and_flush: %s", dlerror());
+    }
+
+    _ddtrace_root_span_get_meta = dlsym(handle, "ddtrace_root_span_get_meta");
+    if (_ddtrace_root_span_get_meta == NULL && !testing) {
+        // NOLINTNEXTLINE(concurrency-mt-unsafe)
+        mlog(dd_log_error, "Failed to load ddtrace_root_span_get_meta: %s",
+            dlerror());
+    }
+
+    _ddtrace_root_span_get_metrics =
+        dlsym(handle, "ddtrace_root_span_get_metrics");
+    if (_ddtrace_root_span_get_metrics == NULL && !testing) {
+        // NOLINTNEXTLINE(concurrency-mt-unsafe)
+        mlog(dd_log_error, "Failed to load ddtrace_root_span_get_metrics: %s",
+            dlerror());
     }
 
     dlclose(handle);
@@ -213,21 +230,20 @@ void dd_trace_close_all_spans_and_flush()
 
 zval *nullable dd_trace_root_span_get_meta()
 {
-    if (_span_meta == NULL) {
-        // In case the span is not available in RINIT, let's keep trying
-        _span_meta = _root_span_get_prop(_meta_propname);
+    if (_ddtrace_root_span_get_meta == NULL) {
+        return NULL;
     }
-    return _span_meta;
+
+    return _ddtrace_root_span_get_meta();
 }
 
 zval *nullable dd_trace_root_span_get_metrics()
 {
-    if (_span_metrics == NULL) {
-        // In case the span is not available in RINIT, let's keep trying
-        _span_metrics = _root_span_get_prop(_metrics_propname);
+    if (_ddtrace_root_span_get_metrics == NULL) {
+        return NULL;
     }
 
-    return _span_metrics;
+    return _ddtrace_root_span_get_metrics();
 }
 
 static zval *nullable _root_span_get_prop(zend_string *propname)
