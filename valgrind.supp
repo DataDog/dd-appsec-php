@@ -137,3 +137,19 @@
    fun:zai_interceptor_compile_file
    ...
 }
+{
+   <leak from tracer>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:dd_initialize_request
+   fun:zm_activate_ddtrace
+}
+{
+   <local ubuntu install leak>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:php_load_extension
+   ...
+}

@@ -30,7 +30,6 @@ static THREAD_LOCAL_ON_ZTS zval *_span_metrics;
 static zend_module_entry *_find_ddtrace_module(void);
 static int _ddtrace_rshutdown_testing(SHUTDOWN_FUNC_ARGS);
 static void _register_testing_objects(void);
-/*static zval *nullable _root_span_get_prop(zend_string *propname);*/
 
 static zval *(*nullable _ddtrace_root_span_get_meta)();
 static zval *(*nullable _ddtrace_root_span_get_metrics)();
@@ -245,77 +244,6 @@ zval *nullable dd_trace_root_span_get_metrics()
 
     return _ddtrace_root_span_get_metrics();
 }
-
-/*static zval *nullable _root_span_get_prop(zend_string *propname)*/
-/*{*/
-    /*zval retval;*/
-    /*zend_fcall_info fci = {*/
-        /*.size = sizeof(fci),*/
-        /*.retval = &retval,*/
-    /*};*/
-    /*static THREAD_LOCAL_ON_ZTS zend_fcall_info_cache fci_cache;*/
-
-    /*ZVAL_STR(&fci.function_name, _ddtrace_root_span_fname);*/
-
-    /*int res = zend_call_function(&fci, &fci_cache);*/
-
-    /*// PHP 8.2 silently fails, so we need to check if there's an exception*/
-    /*// after the function call and suppress it.*/
-    /*zend_object *exc = EG(exception);*/
-    /*if (res != SUCCESS || exc) {*/
-        /*mlog(get_global_DD_APPSEC_TESTING() ? dd_log_debug : dd_log_warning,*/
-            /*"Call to \\ddtrace\\root_span failed");*/
-        /*if (exc) {*/
-            /*mlog(dd_log_debug, "Ignoring raised exception");*/
-            /*zval zv;*/
-            /*ZVAL_OBJ(&zv, exc);*/
-            /*zval_ptr_dtor(&zv);*/
-            /*EG(exception) = NULL;*/
-        /*}*/
-        /*return NULL;*/
-    /*}*/
-    /*if (Z_TYPE(retval) != IS_OBJECT) {*/
-        /*mlog(dd_log_warning, "Expecting an object from \\ddtrace\\root_span");*/
-        /*goto error;*/
-    /*}*/
-
-    /*__auto_type handlers = Z_OBJ_HT(retval);*/
-    /*if (!handlers->get_property_ptr_ptr) {*/
-        /*mlog(dd_log_warning, "Object type has no get_property_ptr_ptr handler");*/
-        /*goto error;*/
-    /*}*/
-/*#if PHP_MAJOR_VERSION >= 8*/
-    /*zval *prop_val = handlers->get_property_ptr_ptr(*/
-        /*Z_OBJ(retval), propname, BP_VAR_IS, NULL);*/
-/*#else*/
-    /*zval prop;*/
-    /*ZVAL_STR(&prop, propname);*/
-    /*zval *prop_val =*/
-        /*handlers->get_property_ptr_ptr(&retval, &prop, BP_VAR_IS, NULL);*/
-/*#endif*/
-
-    /*if (UNEXPECTED(!prop_val || prop_val == &EG(uninitialized_zval) ||*/
-                   /*prop_val == &EG(error_zval))) {*/
-        /*mlog(dd_log_warning, "No property '%s' found on span",*/
-            /*ZSTR_VAL(propname));*/
-        /*goto error;*/
-    /*}*/
-    /*ZVAL_DEREF(prop_val);*/
-    /*if (Z_TYPE_P(prop_val) != IS_ARRAY) {*/
-        /*mlog(dd_log_warning, "The property '%s' on span is no array",*/
-            /*ZSTR_VAL(propname));*/
-        /*goto error;*/
-    /*}*/
-
-    /*SEPARATE_ARRAY(prop_val);*/
-
-    /*zval_ptr_dtor(&retval);*/
-    /*return prop_val;*/
-
-/*error:*/
-    /*zval_ptr_dtor(&retval);*/
-    /*return NULL;*/
-/*}*/
 
 static PHP_FUNCTION(datadog_appsec_testing_ddtrace_rshutdown)
 {
