@@ -11,7 +11,7 @@ ADD cmake /project/cmake/
 ADD third_party /project/third_party/
 ADD tests /project/tests/
 
-RUN apt-get install -y libxml2-dev libnsl-dev zip
+RUN apt-get update && apt-get install -y libxml2-dev libnsl-dev zip
 
 RUN mkdir -p /ext_build &&                            \
 	cd /ext_build &&                                  \
