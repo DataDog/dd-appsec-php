@@ -16,7 +16,6 @@ RUN curl -Lf -o /tmp/dd-library.tar.gz https://output.circle-artifacts.com/outpu
     curl -Lf -o /tmp/dd-library-php-setup.php https://raw.githubusercontent.com/DataDog/dd-appsec-php/installer/dd-library-php-setup.php && \
     PHP_INI_SCAN_DIR=/etc/php/ php /tmp/dd-library-php-setup.php --php-bin all --no-appsec --tracer-file /tmp/dd-library.tar.gz
 
-
 RUN rm -rf /var/www/html
 ADD --chown=www-data:www-data examples/webroot/ /var/www/html/
 
