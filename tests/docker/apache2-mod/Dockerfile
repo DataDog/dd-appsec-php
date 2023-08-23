@@ -9,8 +9,12 @@ RUN apt-get update && apt-get install -y \
 	&& rm -rf /var/lib/apt/lists/*
 
 ARG TRACER_VERSION
-RUN curl -Lf -o /tmp/dd-library-php-setup.php https://raw.githubusercontent.com/DataDog/dd-appsec-php/installer/dd-library-php-setup.php && \
-    PHP_INI_SCAN_DIR=/etc/php/ php /tmp/dd-library-php-setup.php --no-appsec --tracer-version $TRACER_VERSION --php-bin all
+#RUN curl -Lf -o /tmp/dd-library-php-setup.php https://raw.githubusercontent.com/DataDog/dd-appsec-php/installer/dd-library-php-setup.php && \
+    #PHP_INI_SCAN_DIR=/etc/php/ php /tmp/dd-library-php-setup.php --no-appsec --tracer-version $TRACER_VERSION --php-bin all
+
+RUN curl -Lf -o /tmp/dd-library.tar.gz https://output.circle-artifacts.com/output/job/4ce860e2-3102-41d8-b183-a1bdf0d03154/artifacts/0/datadog-php-tracer-0.90.0+ea4fc1d6469ad4fef04db5caa8a6bc2573b1a3e0.x86_64.tar.gz && \
+    curl -Lf -o /tmp/dd-library-php-setup.php https://raw.githubusercontent.com/DataDog/dd-appsec-php/installer/dd-library-php-setup.php && \
+    PHP_INI_SCAN_DIR=/etc/php/ php /tmp/dd-library-php-setup.php --php-bin all --no-appsec --tracer-file /tmp/dd-library.tar.gz
 
 #RUN curl -Lf -o /tmp/ddtrace.tar.gz https://github.com/DataDog/dd-trace-php/archive/$TRACER_VERSION.tar.gz && \
 #	mkdir /tmp/ddtrace-build/ && cd /tmp/ddtrace-build && \
