@@ -60,13 +60,7 @@ if(DD_APPSEC_BUILD_EXTENSION)
         message(FATAL_ERROR "Error executing ${PHP_CONFIG} --includes: ${PHP_CONFIG_INCLUDES_ERR}")
     endif()
 
-    execute_process(
-        COMMAND ${PHP_CONFIG} --ldflags
-        RESULT_VARIABLE PHP_LIB_RESULT
-        OUTPUT_VARIABLE PHP_LIB
-        ERROR_VARIABLE PHP_LIB_ERR
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
+    set(PHP_LIB "")
     add_subdirectory(ddtrace/tea/)
 
     set(ZAI_MODULES json env config)
