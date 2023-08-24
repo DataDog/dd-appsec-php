@@ -163,7 +163,9 @@ struct request_init {
         std::unordered_map<std::string, std::string> parameters;
         std::vector<std::string> triggers;
 
-        MSGPACK_DEFINE(verdict, parameters, triggers);
+        bool force_keep;
+
+        MSGPACK_DEFINE(verdict, parameters, triggers, force_keep);
     };
 };
 
@@ -196,6 +198,7 @@ struct request_exec {
         std::string verdict;
         std::unordered_map<std::string, std::string> parameters;
         std::vector<std::string> triggers;
+        bool force_keep;
 
         MSGPACK_DEFINE(verdict, parameters, triggers);
     };
@@ -275,7 +278,10 @@ struct request_shutdown {
         std::map<std::string_view, std::string> meta;
         std::map<std::string_view, double> metrics;
 
-        MSGPACK_DEFINE(verdict, parameters, triggers, meta, metrics);
+        bool force_keep;
+
+        MSGPACK_DEFINE(
+            verdict, parameters, triggers, meta, metrics, force_keep);
     };
 };
 

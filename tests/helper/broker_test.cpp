@@ -120,7 +120,7 @@ TEST(BrokerTest, SendRequestInit)
     packer.pack_array(1);             // Array of messages
     packer.pack_array(2);             // First message
     pack_str(packer, "request_init"); // Type
-    packer.pack_array(3);
+    packer.pack_array(4);
     pack_str(packer, "block");
     packer.pack_map(2);
     pack_str(packer, "type");
@@ -130,6 +130,7 @@ TEST(BrokerTest, SendRequestInit)
     packer.pack_array(2);
     pack_str(packer, "one");
     pack_str(packer, "two");
+    packer.pack_true(); // Force_keep
 
     const auto &expected_data = ss.str();
 
@@ -144,6 +145,7 @@ TEST(BrokerTest, SendRequestInit)
     response->verdict = "block";
     response->triggers = {"one", "two"};
     response->parameters = {{"status_code", "403"}, {"type", "auto"}};
+    response->force_keep = true;
 
     std::vector<std::shared_ptr<network::base_response>> messages;
     messages.push_back(response);
@@ -164,7 +166,7 @@ TEST(BrokerTest, SendRequestShutdown)
     packer.pack_array(1);                 // Array of messages
     packer.pack_array(2);                 // First message
     pack_str(packer, "request_shutdown"); // Type
-    packer.pack_array(5);
+    packer.pack_array(6);
     pack_str(packer, "block");
     packer.pack_map(2);
     pack_str(packer, "type");
@@ -176,6 +178,7 @@ TEST(BrokerTest, SendRequestShutdown)
     pack_str(packer, "two");
     packer.pack_map(0);
     packer.pack_map(0);
+    packer.pack_true(); // Force keep
     const auto &expected_data = ss.str();
 
     network::header_t h;
@@ -189,6 +192,7 @@ TEST(BrokerTest, SendRequestShutdown)
     response->verdict = "block";
     response->triggers = {"one", "two"};
     response->parameters = {{"status_code", "403"}, {"type", "auto"}};
+    response->force_keep = true;
 
     std::vector<std::shared_ptr<network::base_response>> messages;
     messages.push_back(response);
