@@ -933,6 +933,8 @@ static PHP_FUNCTION(datadog_appsec_track_user_signup_event)
     // appsec.events.users.login.success.track = true
     _add_custom_event_keyval(
         meta_ht, _dd_signup_event, _track_zstr, _true_zstr, true, override);
+
+    dd_tags_set_sampling_priority(DD_SAMPLING_PRIORITY_USER_KEEP);
 }
 
 static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
