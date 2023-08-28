@@ -368,13 +368,6 @@ void dd_tags_add_tags()
     if (!_add_all_ancillary_tags()) {
         return;
     }
-
-    // metric _sampling_priority_v1
-    if (metrics_zv) {
-        _set_sampling_priority(metrics_zv, DD_SAMPLING_PRIORITY_USER_KEEP);
-        mlog(dd_log_debug, "Added/updated metric %s",
-            DD_METRIC_SAMPLING_PRIORITY);
-    }
 }
 
 void dd_tags_add_blocked() { _blocked = true; }
