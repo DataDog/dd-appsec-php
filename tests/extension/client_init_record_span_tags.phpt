@@ -101,9 +101,9 @@ metrics:
 Array
 (
     [%s] => %d
-    [_sampling_priority_v1] => 2
     [metric_1] => 2
     [metric_2] => 10
     [_dd.appsec.enabled] => 1
+    [_sampling_priority_v1] => 2
     [php.compilation.total_time_ms] => %f
 )

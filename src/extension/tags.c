@@ -123,7 +123,7 @@ static void _add_basic_ancillary_tags(void);
 static bool _add_all_ancillary_tags(void);
 void _set_runtime_family(void);
 static bool _set_appsec_enabled(zval *metrics_zv);
-static void _set_sampling_priority(zval *metrics_zv);
+static void _set_sampling_priority(zval *metrics_zv, long priority);
 static void _register_functions(void);
 static void _register_test_functions(void);
 
@@ -371,7 +371,7 @@ void dd_tags_add_tags()
 
     // metric _sampling_priority_v1
     if (metrics_zv) {
-        _set_sampling_priority(metrics_zv);
+        _set_sampling_priority(metrics_zv, DD_SAMPLING_PRIORITY_USER_KEEP);
         mlog(dd_log_debug, "Added/updated metric %s",
             DD_METRIC_SAMPLING_PRIORITY);
     }
@@ -386,11 +386,11 @@ void dd_tags_rshutdown_testing()
     dd_tags_rshutdown();
 }
 
-void dd_tags_set_sampling_priority()
+void dd_tags_set_sampling_priority(long priority)
 {
     zval *metrics_zv = dd_trace_root_span_get_metrics();
     if (metrics_zv) {
-        _set_sampling_priority(metrics_zv);
+        _set_sampling_priority(metrics_zv, priority);
     }
 }
 
@@ -1017,7 +1017,7 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_success_event)
     _add_custom_event_metadata(
         meta_ht, _dd_login_success_event, metadata, override);
 
-    dd_tags_set_sampling_priority();
+    dd_tags_set_sampling_priority(DD_SAMPLING_PRIORITY_USER_KEEP);
 }
 
 static PHP_FUNCTION(datadog_appsec_track_user_login_failure_event)
@@ -1095,7 +1095,7 @@ static PHP_FUNCTION(datadog_appsec_track_user_login_failure_event)
     _add_custom_event_metadata(
         meta_ht, _dd_login_failure_event, metadata, override);
 
-    dd_tags_set_sampling_priority();
+    dd_tags_set_sampling_priority(DD_SAMPLING_PRIORITY_USER_KEEP);
 }
 
 static PHP_FUNCTION(datadog_appsec_track_custom_event)
@@ -1145,7 +1145,7 @@ static PHP_FUNCTION(datadog_appsec_track_custom_event)
 
     smart_str_free(&event_str);
 
-    dd_tags_set_sampling_priority();
+    dd_tags_set_sampling_priority(DD_SAMPLING_PRIORITY_USER_KEEP);
 }
 
 static bool _set_appsec_enabled(zval *metrics_zv)
@@ -1188,10 +1188,10 @@ bool dd_parse_automated_user_events_tracking(
     return result;
 }
 
-static void _set_sampling_priority(zval *metrics_zv)
+static void _set_sampling_priority(zval *metrics_zv, long priority)
 {
     zval zv;
-    ZVAL_LONG(&zv, DD_SAMPLING_PRIORITY_USER_KEEP);
+    ZVAL_LONG(&zv, priority);
     zend_hash_update(
         Z_ARRVAL_P(metrics_zv), _dd_metric_sampling_prio_zstr, &zv);
 }

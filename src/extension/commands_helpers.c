@@ -451,6 +451,11 @@ dd_result dd_command_proc_resp_verd_span_data(
         dd_command_process_metrics(metrics);
     }
 
+    if (mpack_node_array_length(root) == 6) {
+        mpack_node_t force_keep = mpack_node_array_at(root, 5);
+        UNUSED(force_keep);
+    }
+
     return res;
 }
 
