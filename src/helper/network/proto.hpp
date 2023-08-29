@@ -198,9 +198,14 @@ struct request_exec {
         std::string verdict;
         std::unordered_map<std::string, std::string> parameters;
         std::vector<std::string> triggers;
+
+        std::map<std::string_view, std::string> meta;
+        std::map<std::string_view, double> metrics;
+
         bool force_keep;
 
-        MSGPACK_DEFINE(verdict, parameters, triggers);
+        MSGPACK_DEFINE(
+            verdict, parameters, triggers, meta, metrics, force_keep);
     };
 };
 

@@ -317,6 +317,7 @@ bool client::handle_command(network::request_exec::request &command)
             }
 
             response->triggers = std::move(res->events);
+            response->force_keep = res->force_keep;
 
             DD_STDLOG(DD_STDLOG_ATTACK_DETECTED);
         } else {

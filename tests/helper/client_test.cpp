@@ -1936,4 +1936,210 @@ TEST(ClientTest, StatusGetsComputedOnError)
     }
 }
 
+TEST(ClientTest, RequestShutdownLimiter)
+{
+    auto smanager = std::make_shared<service_manager>();
+    auto broker = new mock::broker();
+
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
+
+    { // Allow only one call/second so if we do two, the second is not allowed
+        network::client_init::request msg = get_default_client_init_msg();
+        msg.engine_settings.trace_rate_limit = 1;
+        send_client_init(broker, c, std::move(msg));
+    }
+
+    // First request Init no events
+    {
+        network::request_init::request msg;
+        msg.data = parameter::map();
+        msg.data.add("server.request.headers.no_cookies",
+            parameter::string("Arachni"sv));
+
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_init::response *>(res.get());
+        EXPECT_EQ(msg_res->triggers.size(), 0);
+    }
+
+    // First request shutdown allowed
+    {
+        network::request_shutdown::request msg;
+        msg.data = parameter::map();
+        msg.data.add("server.response.code", parameter::string("1991"sv));
+
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_shutdown::response *>(res.get());
+        EXPECT_STREQ(msg_res->verdict.c_str(), "record");
+        EXPECT_TRUE(msg_res->force_keep);
+    }
+
+    // Second request init no events
+    {
+        network::request_init::request msg;
+        msg.data = parameter::map();
+        msg.data.add("server.request.headers.no_cookies",
+            parameter::string("Arachni"sv));
+
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_init::response *>(res.get());
+        EXPECT_EQ(msg_res->triggers.size(), 0);
+        EXPECT_FALSE(msg_res->force_keep);
+    }
+
+    // Second request shutdown not allowed
+    {
+        network::request_shutdown::request msg;
+        msg.data = parameter::map();
+        msg.data.add("server.response.code", parameter::string("1991"sv));
+
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_shutdown::response *>(res.get());
+        EXPECT_STREQ(msg_res->verdict.c_str(), "record");
+        EXPECT_FALSE(msg_res->force_keep);
+    }
+}
+
+TEST(ClientTest, RequestExecLimiter)
+{
+    auto smanager = std::make_shared<service_manager>();
+    auto broker = new mock::broker();
+
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
+
+    { // Allow only one call/second so if we do two, the second is not allowed
+        network::client_init::request msg = get_default_client_init_msg();
+        msg.engine_settings.trace_rate_limit = 1;
+        send_client_init(broker, c, std::move(msg));
+    }
+
+    // First request Init no events
+    {
+        network::request_init::request msg;
+        msg.data = parameter::map();
+        msg.data.add("server.request.headers.no_cookies",
+            parameter::string("Arachni"sv));
+
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_init::response *>(res.get());
+        EXPECT_EQ(msg_res->triggers.size(), 0);
+    }
+
+    // First request exec allowed
+    {
+        network::request_exec::request msg;
+        msg.data = parameter::map();
+        msg.data.add("http.client_ip", parameter::string("192.168.1.1"sv));
+
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_exec::response *>(res.get());
+        EXPECT_EQ(msg_res->triggers.size(), 1);
+        EXPECT_TRUE(msg_res->force_keep);
+    }
+
+    // Second request init no events
+    {
+        network::request_init::request msg;
+        msg.data = parameter::map();
+        msg.data.add("server.request.headers.no_cookies",
+            parameter::string("Arachni"sv));
+
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_init::response *>(res.get());
+        EXPECT_EQ(msg_res->triggers.size(), 0);
+        EXPECT_FALSE(msg_res->force_keep);
+    }
+
+    // Second request exec not allowed
+    {
+        network::request_exec::request msg;
+        msg.data = parameter::map();
+        msg.data.add("http.client_ip", parameter::string("192.168.1.1"sv));
+
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_exec::response *>(res.get());
+        EXPECT_EQ(msg_res->triggers.size(), 1);
+        EXPECT_FALSE(msg_res->force_keep);
+    }
+}
+
 } // namespace dds
