@@ -451,9 +451,13 @@ dd_result dd_command_proc_resp_verd_span_data(
         dd_command_process_metrics(metrics);
     }
 
+    // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
     if (mpack_node_array_length(root) == 6) {
         mpack_node_t force_keep = mpack_node_array_at(root, 5);
-        UNUSED(force_keep);
+        if (mpack_node_type(force_keep) == mpack_type_bool &&
+            mpack_node_bool(force_keep)) {
+            dd_tags_set_sampling_priority();
+        }
     }
 
     return res;
@@ -488,7 +492,11 @@ static void _set_appsec_span_data(mpack_node_t node)
 
 bool dd_command_process_meta(mpack_node_t root)
 {
+    if (mpack_node_type(root) != mpack_type_map) {
+        return false;
+    }
     size_t count = mpack_node_map_count(root);
+
     for (size_t i = 0; i < count; i++) {
         mpack_node_t key = mpack_node_map_key_at(root, i);
         mpack_node_t value = mpack_node_map_value_at(root, i);
@@ -525,6 +533,10 @@ bool dd_command_process_metrics(mpack_node_t root)
 {
     zval *metrics_zv = dd_trace_root_span_get_metrics();
     if (metrics_zv == NULL) {
+        return false;
+    }
+
+    if (mpack_node_type(root) != mpack_type_map) {
         return false;
     }
 
