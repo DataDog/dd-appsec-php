@@ -453,6 +453,7 @@ dd_result dd_command_proc_resp_verd_span_data(
 
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
     if (mpack_node_array_length(root) == 6) {
+        // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
         mpack_node_t force_keep = mpack_node_array_at(root, 5);
         if (mpack_node_type(force_keep) == mpack_type_bool &&
             mpack_node_bool(force_keep)) {
