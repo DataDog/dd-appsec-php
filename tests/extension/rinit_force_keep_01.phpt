@@ -27,6 +27,6 @@ root_span_get_metrics():
 Array
 (
     [%s] => %d
-    [_sampling_priority_v1] => 2
     [_dd.appsec.enabled] => 1
+    [_sampling_priority_v1] => 2
 )
