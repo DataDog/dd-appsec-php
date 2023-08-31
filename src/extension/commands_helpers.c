@@ -453,7 +453,7 @@ dd_result dd_command_proc_resp_verd_span_data(
     if (mpack_node_array_length(root) >= 6) {
         mpack_node_t meta = mpack_node_array_at(root, 4);
         dd_command_process_meta(meta);
-
+        // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
         mpack_node_t metrics = mpack_node_array_at(root, 5);
         dd_command_process_metrics(metrics);
     }
