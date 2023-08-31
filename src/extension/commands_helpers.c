@@ -488,10 +488,10 @@ static void _set_appsec_span_data(mpack_node_t node)
     }
 }
 
-bool dd_command_process_meta(mpack_node_t root)
+void dd_command_process_meta(mpack_node_t root)
 {
     if (mpack_node_type(root) != mpack_type_map) {
-        return false;
+        return;
     }
     size_t count = mpack_node_map_count(root);
 
@@ -501,11 +501,11 @@ bool dd_command_process_meta(mpack_node_t root)
 
         if (mpack_node_type(key) != mpack_type_str) {
             mlog(dd_log_warning, "Failed to add tags: invalid type for key");
-            return false;
+            return;
         }
         if (mpack_node_type(value) != mpack_type_str) {
             mlog(dd_log_warning, "Failed to add tags: invalid type for value");
-            return false;
+            return;
         }
 
         const char *key_str = mpack_node_str(key);
@@ -520,11 +520,9 @@ bool dd_command_process_meta(mpack_node_t root)
         if (!res) {
             mlog(dd_log_warning, "Failed to add tag %.*s", (int)key_len,
                 key_str);
-            return false;
+            return;
         }
     }
-
-    return true;
 }
 
 bool dd_command_process_metrics(mpack_node_t root)
