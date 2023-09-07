@@ -29,6 +29,8 @@ ADD tests/docker/fpm-common/www.conf /etc/php-fpm.d/
 
 RUN mkdir -p /var/log/apache2 /run/apache2
 
+RUN chmod a+rx /root
+
 ENV DD_TRACE_ENABLED=true
 ENV DD_TRACE_GENERATE_ROOT_SPAN=true
 

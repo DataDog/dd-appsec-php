@@ -40,6 +40,8 @@ RUN if echo $VARIANT | grep -q zts; \
 RUN if ! { echo $VARIANT | grep -q zts; }; then a2dismod mpm_event; a2enmod mpm_prefork; fi
 RUN a2enmod php
 
+RUN chmod a+rx /root
+
 ENV DD_TRACE_ENABLED=true
 ENV DD_TRACE_GENERATE_ROOT_SPAN=true
 

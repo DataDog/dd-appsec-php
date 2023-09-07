@@ -33,6 +33,8 @@ RUN a2enmod proxy_fcgi
 RUN a2dissite 000-default
 RUN a2ensite php-site
 
+RUN chmod a+rx /root
+
 ENV DD_TRACE_ENABLED=true
 ENV DD_TRACE_GENERATE_ROOT_SPAN=true
 
