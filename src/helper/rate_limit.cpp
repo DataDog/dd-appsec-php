@@ -7,12 +7,14 @@
 #include "rate_limit.hpp"
 
 #include <chrono>
+#include <iostream>
 #include <limits>
 #include <tuple>
 
 using std::chrono::duration_cast;
 using std::chrono::microseconds;
-using std::chrono::milliseconds;
+
+using std::chrono::minutes;
 using std::chrono::seconds;
 using std::chrono::system_clock;
 
@@ -27,8 +29,10 @@ auto get_time()
 }
 } // namespace
 
-rate_limiter::rate_limiter(unsigned max_per_second)
-    : max_per_second_(max_per_second)
+rate_limiter::rate_limiter(uint32_t max_per_second, milliseconds heartbeat_rate)
+    : max_per_second_(max_per_second),
+      heartbeat_rate_(duration_cast<milliseconds>(heartbeat_rate).count()),
+      last_heartbeat_(0)
 {}
 
 bool rate_limiter::allow()
@@ -41,25 +45,44 @@ bool rate_limiter::allow()
 
     std::lock_guard<std::mutex> const lock(mtx_);
 
-    if (now_s != index_) {
-        if (index_ == now_s - 1) {
-            precounter_ = counter_;
+    if (now_s != index_s_) {
+        if (index_s_ == now_s - 1) {
+            precounter_s_ = counter_s_;
         } else {
-            precounter_ = 0;
+            precounter_s_ = 0;
         }
-        counter_ = 0;
-        index_ = now_s;
+        counter_s_ = 0;
+        index_s_ = now_s;
     }
 
     constexpr uint64_t mil = 1000;
     uint32_t const count =
-        (precounter_ * (mil - (now_ms % mil))) / mil + counter_;
+        (precounter_s_ * (mil - (now_ms % mil))) / mil + counter_s_;
 
     if (count >= max_per_second_) {
         return false;
     }
 
-    counter_++;
+    counter_s_++;
+    last_heartbeat_ = now_ms;
+
+    return true;
+}
+bool rate_limiter::heartbeat()
+{
+    if (heartbeat_rate_ == 0) {
+        return false;
+    }
+
+    auto [now_ms, _] = get_time();
+
+    std::lock_guard<std::mutex> const lock(mtx_);
+
+    if (now_ms - last_heartbeat_ < heartbeat_rate_) {
+        return false;
+    }
+
+    last_heartbeat_ = now_ms;
 
     return true;
 }

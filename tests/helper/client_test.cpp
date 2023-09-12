@@ -58,6 +58,7 @@ network::client_init::request get_default_client_init_msg()
     msg.runtime_version = "1.0";
     msg.client_version = "2.0";
     msg.engine_settings.rules_file = fn;
+    msg.engine_settings.heartbeat_rate = 0;
     msg.engine_settings.waf_timeout_us = 1000000;
 
     return msg;
@@ -89,7 +90,7 @@ void request_init(mock::broker *broker, client &c)
 
     EXPECT_TRUE(c.run_request());
     auto msg_res = dynamic_cast<network::request_init::response *>(res.get());
-    EXPECT_STREQ(msg_res->verdict.c_str(), "ok");
+    EXPECT_STREQ("ok", msg_res->verdict.c_str());
     EXPECT_EQ(msg_res->triggers.size(), 0);
 }
 
@@ -1570,7 +1571,7 @@ TEST(ClientTest, RequestExecWithoutAttack)
         EXPECT_TRUE(c.run_request());
         auto msg_res =
             dynamic_cast<network::request_exec::response *>(res.get());
-        EXPECT_STREQ(msg_res->verdict.c_str(), "ok");
+        EXPECT_STREQ("ok", msg_res->verdict.c_str());
         EXPECT_EQ(msg_res->parameters.size(), 0);
         EXPECT_EQ(msg_res->triggers.size(), 0);
     }
@@ -2139,6 +2140,257 @@ TEST(ClientTest, RequestExecLimiter)
             dynamic_cast<network::request_exec::response *>(res.get());
         EXPECT_EQ(msg_res->triggers.size(), 1);
         EXPECT_FALSE(msg_res->force_keep);
+    }
+}
+
+TEST(ClientTest, HeartBeatsRequestInit)
+{
+    auto smanager = std::make_shared<service_manager>();
+    auto broker = new mock::broker();
+    milliseconds heartbeat_rate = 100ms;
+
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
+
+    { // Allow only one call/second so if we do two, the second is not allowed
+        network::client_init::request msg = get_default_client_init_msg();
+        msg.engine_settings.heartbeat_rate = heartbeat_rate.count();
+        send_client_init(broker, c, std::move(msg));
+    }
+
+    {
+        network::request_init::request msg;
+        msg.data = parameter::map();
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_init::response *>(res.get());
+        EXPECT_STREQ("heartbeat", msg_res->verdict.c_str());
+        EXPECT_TRUE(msg_res->force_keep);
+    }
+    {
+        network::request_init::request msg;
+        msg.data = parameter::map();
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_init::response *>(res.get());
+        EXPECT_STREQ("ok", msg_res->verdict.c_str());
+    }
+
+    std::this_thread::sleep_for(heartbeat_rate);
+    {
+        network::request_init::request msg;
+        msg.data = parameter::map();
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_init::response *>(res.get());
+        EXPECT_STREQ("heartbeat", msg_res->verdict.c_str());
+        EXPECT_TRUE(msg_res->force_keep);
+    }
+}
+
+TEST(ClientTest, HeartBeatsRequestShutdown)
+{
+    auto smanager = std::make_shared<service_manager>();
+    auto broker = new mock::broker();
+    milliseconds heartbeat_rate = 100ms;
+
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
+
+    { // Allow only one call/second so if we do two, the second is not allowed
+        network::client_init::request msg = get_default_client_init_msg();
+        msg.engine_settings.heartbeat_rate = heartbeat_rate.count();
+        send_client_init(broker, c, std::move(msg));
+    }
+
+    { // Request init
+        network::request_init::request msg;
+        msg.data = parameter::map();
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_init::response *>(res.get());
+        EXPECT_STREQ("heartbeat", msg_res->verdict.c_str());
+        EXPECT_TRUE(msg_res->force_keep);
+    }
+    {
+        network::request_shutdown::request msg;
+        msg.data = parameter::map();
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_shutdown::response *>(res.get());
+        EXPECT_STREQ("ok", msg_res->verdict.c_str());
+        EXPECT_FALSE(msg_res->force_keep);
+    }
+
+    { // Request init
+        network::request_init::request msg;
+        msg.data = parameter::map();
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_init::response *>(res.get());
+        EXPECT_STREQ("ok", msg_res->verdict.c_str());
+        EXPECT_FALSE(msg_res->force_keep);
+    }
+    std::this_thread::sleep_for(heartbeat_rate);
+    {
+        network::request_shutdown::request msg;
+        msg.data = parameter::map();
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_shutdown::response *>(res.get());
+        EXPECT_STREQ("heartbeat", msg_res->verdict.c_str());
+        EXPECT_TRUE(msg_res->force_keep);
+    }
+}
+
+TEST(ClientTest, HeartBeatsRequestExec)
+{
+    auto smanager = std::make_shared<service_manager>();
+    auto broker = new mock::broker();
+    milliseconds heartbeat_rate = 100ms;
+
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
+
+    { // Allow only one call/second so if we do two, the second is not allowed
+        network::client_init::request msg = get_default_client_init_msg();
+        msg.engine_settings.heartbeat_rate = heartbeat_rate.count();
+        send_client_init(broker, c, std::move(msg));
+    }
+
+    { // Request init
+        network::request_init::request msg;
+        msg.data = parameter::map();
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_init::response *>(res.get());
+        EXPECT_STREQ("heartbeat", msg_res->verdict.c_str());
+        EXPECT_TRUE(msg_res->force_keep);
+    }
+    {
+        network::request_exec::request msg;
+        msg.data = parameter::map();
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_exec::response *>(res.get());
+        EXPECT_STREQ("ok", msg_res->verdict.c_str());
+        EXPECT_FALSE(msg_res->force_keep);
+    }
+
+    { // Request init
+        network::request_init::request msg;
+        msg.data = parameter::map();
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_init::response *>(res.get());
+        EXPECT_STREQ("ok", msg_res->verdict.c_str());
+        EXPECT_FALSE(msg_res->force_keep);
+    }
+    std::this_thread::sleep_for(heartbeat_rate);
+    {
+        network::request_exec::request msg;
+        msg.data = parameter::map();
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_exec::response *>(res.get());
+        EXPECT_STREQ("heartbeat", msg_res->verdict.c_str());
+        EXPECT_TRUE(msg_res->force_keep);
     }
 }
 

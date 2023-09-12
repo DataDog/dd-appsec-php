@@ -241,6 +241,10 @@ bool client::handle_command(network::request_init::request &command)
                 response->verdict = network::verdict::redirect;
                 response->parameters = std::move(res->parameters);
                 break;
+            case engine::action_type::hearbeat:
+                response->verdict = network::verdict::heartbeat;
+                response->parameters = {};
+                break;
             case engine::action_type::record:
             default:
                 response->verdict = network::verdict::record;
@@ -308,6 +312,10 @@ bool client::handle_command(network::request_exec::request &command)
             case engine::action_type::redirect:
                 response->verdict = network::verdict::redirect;
                 response->parameters = std::move(res->parameters);
+                break;
+            case engine::action_type::hearbeat:
+                response->verdict = network::verdict::heartbeat;
+                response->parameters = {};
                 break;
             case engine::action_type::record:
             default:
@@ -435,6 +443,10 @@ bool client::handle_command(network::request_shutdown::request &command)
             case engine::action_type::redirect:
                 response->verdict = network::verdict::redirect;
                 response->parameters = std::move(res->parameters);
+                break;
+            case engine::action_type::hearbeat:
+                response->verdict = network::verdict::heartbeat;
+                response->parameters = {};
                 break;
             case engine::action_type::record:
             default:

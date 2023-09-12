@@ -95,6 +95,12 @@ std::optional<engine::result> engine::context::publish(parameter &&param)
     }
 
     if (event_actions.empty() && event_data.empty()) {
+        if (limiter_.heartbeat()) {
+            dds::engine::result res{action_type::hearbeat, {}, {}};
+            res.force_keep = true;
+            return res;
+        }
+
         return std::nullopt;
     }
 
@@ -239,8 +245,8 @@ engine::ptr engine::from_settings(const dds::engine_settings &eng_settings,
     auto ruleset = engine_ruleset::from_path(rules_path);
     auto actions =
         parse_actions(ruleset.get_document(), engine::default_actions);
-    std::shared_ptr engine_ptr{
-        engine::create(eng_settings.trace_rate_limit, std::move(actions))};
+    std::shared_ptr engine_ptr{engine::create(eng_settings.trace_rate_limit,
+        milliseconds(eng_settings.heartbeat_rate), std::move(actions))};
 
     try {
         SPDLOG_DEBUG("Will load WAF rules from {}", rules_path);

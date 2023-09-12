@@ -6,8 +6,10 @@
 #include "common.hpp"
 #include "json_helper.hpp"
 #include <engine.hpp>
+#include <iostream>
 #include <rapidjson/document.h>
 #include <subscriber/waf.hpp>
+#include <thread>
 
 const std::string waf_rule =
     R"({"version":"2.1","rules":[{"id":"1","name":"rule1","tags":{"type":"flow1","category":"category1"},"conditions":[{"operator":"match_regex","parameters":{"inputs":[{"address":"arg1","key_path":[]}],"regex":"^string.*"}},{"operator":"match_regex","parameters":{"inputs":[{"address":"arg2","key_path":[]}],"regex":".*"}}]}]})";
@@ -246,7 +248,7 @@ TEST(EngineTest, StatefulSubscriptor)
 
 TEST(EngineTest, CustomActions)
 {
-    auto e{engine::create(engine_settings::default_trace_rate_limit,
+    auto e{engine::create(engine_settings::default_trace_rate_limit, 0s,
         {{"redirect",
             {engine::action_type::redirect, {{"url", "datadoghq.com"}}}}})};
 
@@ -984,7 +986,7 @@ TEST(EngineTest, RateLimiterForceKeep)
 {
     // Rate limit 0 allows all calls
     int rate_limit = 0;
-    auto e{engine::create(rate_limit,
+    auto e{engine::create(rate_limit, 0s,
         {{"redirect",
             {engine::action_type::redirect, {{"url", "datadoghq.com"}}}}})};
 
@@ -1007,7 +1009,7 @@ TEST(EngineTest, RateLimiterDoNotForceKeep)
 {
     // Lets set max 1 per second and do two calls
     int rate_limit = 1;
-    auto e{engine::create(rate_limit,
+    auto e{engine::create(rate_limit, 0s,
         {{"redirect",
             {engine::action_type::redirect, {{"url", "datadoghq.com"}}}}})};
 
@@ -1027,6 +1029,29 @@ TEST(EngineTest, RateLimiterDoNotForceKeep)
     p2.add("a", parameter::string("value"sv));
     res = e->get_context().publish(std::move(p2));
     EXPECT_FALSE(res->force_keep);
+}
+
+TEST(EngineTest, WhenNoEventsItGeneratesHeartbeatsGetGenerateOnItsRate)
+{
+    int rate_limit = 1;
+    milliseconds heartbeat_rate = 100ms;
+    auto e{engine::create(rate_limit, heartbeat_rate)};
+
+    auto res = e->get_context().publish(parameter::map());
+    EXPECT_TRUE(res->force_keep);
+    EXPECT_EQ(engine::action_type::hearbeat, res->type);
+
+    res = e->get_context().publish(parameter::map());
+    EXPECT_FALSE(res.has_value());
+
+    std::this_thread::sleep_for(heartbeat_rate);
+
+    res = e->get_context().publish(parameter::map());
+    EXPECT_TRUE(res->force_keep);
+    EXPECT_EQ(engine::action_type::hearbeat, res->type);
+
+    res = e->get_context().publish(parameter::map());
+    EXPECT_FALSE(res.has_value());
 }
 
 } // namespace dds

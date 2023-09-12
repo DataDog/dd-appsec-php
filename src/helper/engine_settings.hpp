@@ -21,10 +21,12 @@ namespace dds {
 struct engine_settings {
     static constexpr int default_waf_timeout_us = 10000;
     static constexpr int default_trace_rate_limit = 100;
+    static constexpr int default_heartbeat_rate = 60000;
 
     std::string rules_file;
     std::uint64_t waf_timeout_us = default_waf_timeout_us;
     std::uint32_t trace_rate_limit = default_trace_rate_limit;
+    std::uint32_t heartbeat_rate = default_heartbeat_rate;
     std::string obfuscator_key_regex;
     std::string obfuscator_value_regex;
 
@@ -40,13 +42,14 @@ struct engine_settings {
     }
 
     MSGPACK_DEFINE_MAP(rules_file, waf_timeout_us, trace_rate_limit,
-        obfuscator_key_regex, obfuscator_value_regex);
+        heartbeat_rate, obfuscator_key_regex, obfuscator_value_regex);
 
     bool operator==(const engine_settings &oth) const noexcept
     {
         return rules_file == oth.rules_file &&
                waf_timeout_us == oth.waf_timeout_us &&
                trace_rate_limit == oth.trace_rate_limit &&
+               heartbeat_rate == oth.heartbeat_rate &&
                obfuscator_key_regex == oth.obfuscator_key_regex &&
                obfuscator_value_regex == oth.obfuscator_value_regex;
     }
@@ -56,6 +59,7 @@ struct engine_settings {
         return os << "{rules_file=" << c.rules_file
                   << ", waf_timeout_us=" << c.waf_timeout_us
                   << ", trace_rate_limit=" << c.trace_rate_limit
+                  << ", heartbeat_rate=" << c.heartbeat_rate
                   << ", obfuscator_key_regex=" << c.obfuscator_key_regex
                   << ", obfuscator_value_regex=" << c.obfuscator_value_regex
                   << "}";
@@ -65,7 +69,8 @@ struct engine_settings {
         std::size_t operator()(const engine_settings &s) const noexcept
         {
             return hash(s.rules_file, s.waf_timeout_us, s.trace_rate_limit,
-                s.obfuscator_key_regex, s.obfuscator_value_regex);
+                s.heartbeat_rate, s.obfuscator_key_regex,
+                s.obfuscator_value_regex);
         }
     };
 };

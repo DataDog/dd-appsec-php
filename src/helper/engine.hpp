@@ -37,7 +37,12 @@ public:
     using subscription_map =
         std::map<std::string_view, std::vector<subscriber::ptr>>;
 
-    enum class action_type : uint8_t { record = 1, redirect = 2, block = 3 };
+    enum class action_type : uint8_t {
+        record = 1,
+        redirect = 2,
+        block = 3,
+        hearbeat = 4
+    };
 
     struct action {
         action_type type;
@@ -99,10 +104,10 @@ public:
 
     static auto create(
         uint32_t trace_rate_limit = engine_settings::default_trace_rate_limit,
-        action_map actions = default_actions)
+        milliseconds heartbeat = 0s, action_map actions = default_actions)
     {
         return std::shared_ptr<engine>(
-            new engine(trace_rate_limit, std::move(actions)));
+            new engine(trace_rate_limit, heartbeat, std::move(actions)));
     }
 
     context get_context() { return context{*this}; }
@@ -124,8 +129,9 @@ public:
         const T &doc, const action_map &default_actions);
 
 protected:
-    explicit engine(uint32_t trace_rate_limit, action_map &&actions = {})
-        : limiter_(trace_rate_limit),
+    explicit engine(uint32_t trace_rate_limit, milliseconds heartbeat,
+        action_map &&actions = {})
+        : limiter_(trace_rate_limit, heartbeat),
           common_(new shared_state{{}, std::move(actions)})
     {}
 
