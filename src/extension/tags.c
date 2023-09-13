@@ -24,6 +24,7 @@
 #endif
 
 #define DD_TAG_DATA "_dd.appsec.json"
+#define DD_TAG_DM "_dd.p.dm"
 #define DD_TAG_EVENT "appsec.event"
 #define DD_TAG_BLOCKED "appsec.blocked"
 #define DD_TAG_RUNTIME_FAMILY "_dd.runtime_family"
@@ -71,6 +72,7 @@ static zend_string *_mode_extended_cstr;
 static THREAD_LOCAL_ON_ZTS zend_string *_mode_cstr;
 
 static zend_string *_dd_tag_data_zstr;
+static zend_string *_dd_tag_dm_zstr;
 static zend_string *_dd_tag_event_zstr;
 static zend_string *_dd_tag_blocked_zstr;
 static zend_string *_dd_tag_http_method_zstr;
@@ -116,6 +118,7 @@ static THREAD_LOCAL_ON_ZTS zend_llist _appsec_json_frags;
 static THREAD_LOCAL_ON_ZTS zend_string *nullable _event_user_id;
 static THREAD_LOCAL_ON_ZTS bool _blocked;
 static THREAD_LOCAL_ON_ZTS bool _force_keep;
+static THREAD_LOCAL_ON_ZTS bool _add_asm_dm;
 
 static void _init_relevant_headers(void);
 static zend_string *_concat_json_fragments(void);
@@ -127,11 +130,14 @@ static bool _set_appsec_enabled(zval *metrics_zv);
 static void _set_sampling_priority(zval *metrics_zv);
 static void _register_functions(void);
 static void _register_test_functions(void);
+static void _set_asm_dd(zval *metrics_zv);
 
 void dd_tags_startup()
 {
     _dd_tag_data_zstr =
         zend_string_init_interned(LSTRARG(DD_TAG_DATA), 1 /* permanent */);
+    _dd_tag_dm_zstr =
+        zend_string_init_interned(LSTRARG(DD_TAG_DM), 1 /* permanent */);
     _dd_tag_event_zstr =
         zend_string_init_interned(LSTRARG(DD_TAG_EVENT), 1 /* permanent */);
     _dd_tag_blocked_zstr =
@@ -302,6 +308,7 @@ void dd_tags_rinit()
     _event_user_id = NULL;
     _blocked = false;
     _force_keep = false;
+    _add_asm_dm = false;
 }
 
 void dd_tags_add_appsec_json_frag(zend_string *nonnull zstr)
@@ -340,12 +347,14 @@ void dd_tags_add_tags()
     _set_runtime_family();
 
     // metric _sampling_priority_v1
-    if (metrics_zv && _force_keep) {
-        _set_sampling_priority(metrics_zv);
-        mlog(dd_log_debug, "Added/updated metric %s",
-            DD_METRIC_SAMPLING_PRIORITY);
+    if (metrics_zv) {
+        _set_asm_dd(metrics_zv);
+        if (_force_keep) {
+            _set_sampling_priority(metrics_zv);
+            mlog(dd_log_debug, "Added/updated metric %s",
+                DD_METRIC_SAMPLING_PRIORITY);
+        }
     }
-
     if (zend_llist_count(&_appsec_json_frags) == 0) {
         _add_basic_ancillary_tags();
         return;
@@ -380,6 +389,15 @@ void dd_tags_add_tags()
 }
 
 void dd_tags_add_blocked() { _blocked = true; }
+
+void dd_tags_add_heartbeat()
+{
+    if (get_DD_APM_TRACING_ENABLED()) {
+        return;
+    }
+
+    _add_asm_dm = true;
+}
 
 void dd_tags_rshutdown_testing()
 {
@@ -1192,6 +1210,17 @@ static void _set_sampling_priority(zval *metrics_zv)
     ZVAL_LONG(&zv, DD_SAMPLING_PRIORITY_USER_KEEP);
     zend_hash_update(
         Z_ARRVAL_P(metrics_zv), _dd_metric_sampling_prio_zstr, &zv);
+}
+
+static void _set_asm_dd(zval *metrics_zv)
+{
+    if (!_add_asm_dm) {
+        return;
+    }
+    zend_string *asm_dm = zend_string_init(LSTRARG("-5"), 0); //-5 is DM for ASM
+    zval tag_dm_zv;
+    ZVAL_STR(&tag_dm_zv, asm_dm);
+    zend_hash_update(Z_ARRVAL_P(metrics_zv), _dd_tag_dm_zstr, &tag_dm_zv);
 }
 
 static PHP_FUNCTION(datadog_appsec_testing_add_all_ancillary_tags)

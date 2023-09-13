@@ -60,6 +60,7 @@ extern bool runtime_config_first_init;
     CONFIG(STRING, DD_TRACE_AGENT_URL, "")                                                                                            \
     CONFIG(BOOL, DD_TRACE_ENABLED, "true")                                                                                            \
     CONFIG(CUSTOM(STRING), DD_APPSEC_AUTOMATED_USER_EVENTS_TRACKING, "safe", .parser = dd_parse_automated_user_events_tracking)       \
+    CONFIG(BOOL, DD_APM_TRACING_ENABLED, "true")                                                                                      \
     CONFIG(STRING, DD_APPSEC_HTTP_BLOCKED_TEMPLATE_HTML, "")                                                                          \
     CONFIG(STRING, DD_APPSEC_HTTP_BLOCKED_TEMPLATE_JSON, "")
 // clang-format on

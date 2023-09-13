@@ -18,6 +18,7 @@ void dd_tags_rinit(void);
 void dd_tags_rshutdown(void);
 void dd_tags_add_tags(void);
 void dd_tags_add_blocked(void);
+void dd_tags_add_heartbeat(void);
 void dd_tags_rshutdown_testing(void);
 
 void dd_tags_set_sampling_priority();

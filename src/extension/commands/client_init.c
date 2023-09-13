@@ -131,7 +131,7 @@ static dd_result _pack_command(
 
     // Engine settings
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
-    mpack_start_map(w, 5);
+    mpack_start_map(w, 6);
     {
         dd_mpack_write_lstr(w, "rules_file");
         const char *rules_file = ZSTR_VAL(get_global_DD_APPSEC_RULES());
@@ -149,6 +149,15 @@ static dd_result _pack_command(
 
     dd_mpack_write_lstr(w, "trace_rate_limit");
     mpack_write(w, get_global_DD_APPSEC_TRACE_RATE_LIMIT());
+
+    //This will only be taken into account if set by ENV or ini file
+    dd_mpack_write_lstr(w, "heartbeat_rate");
+    uint32_t heartbeat_rate = 0;
+    if (!get_DD_APM_TRACING_ENABLED()) {
+        // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
+        heartbeat_rate = 60000; // One minute
+    }
+    mpack_write(w, heartbeat_rate);
 
     dd_mpack_write_lstr(w, "obfuscator_key_regex");
     dd_mpack_write_nullable_cstr(
