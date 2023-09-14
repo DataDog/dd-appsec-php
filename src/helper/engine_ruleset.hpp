@@ -25,13 +25,15 @@ public:
         return doc_[key.data()];
     }
 
-    static engine_ruleset from_path(std::string_view path);
+    static engine_ruleset from_path(std::string_view path, bool add_default_processors);
 
     // Used only for testing
     void copy(rapidjson::Document &new_doc)
     {
         new_doc.CopyFrom(doc_, new_doc.GetAllocator(), true);
     }
+
+    void add_default_processors();
 
 protected:
     rapidjson::Document doc_;

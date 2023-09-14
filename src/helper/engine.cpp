@@ -236,7 +236,8 @@ engine::ptr engine::from_settings(const dds::engine_settings &eng_settings,
 
 {
     auto &&rules_path = eng_settings.rules_file_or_default();
-    auto ruleset = engine_ruleset::from_path(rules_path);
+    auto default_rule_file = eng_settings.default_rules_file() == rules_path;
+    auto ruleset = engine_ruleset::from_path(rules_path, default_rule_file);
     auto actions =
         parse_actions(ruleset.get_document(), engine::default_actions);
     std::shared_ptr engine_ptr{
