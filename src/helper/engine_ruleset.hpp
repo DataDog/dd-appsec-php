@@ -25,7 +25,7 @@ public:
         return doc_[key.data()];
     }
 
-    static engine_ruleset from_path(std::string_view path, bool add_default_processors);
+    static engine_ruleset from_path(std::string_view path);
 
     // Used only for testing
     void copy(rapidjson::Document &new_doc)

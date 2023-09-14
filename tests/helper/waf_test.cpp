@@ -42,7 +42,7 @@ TEST(WafTest, InitWithInvalidRules)
 {
     engine_settings cs;
     cs.rules_file = create_sample_rules_invalid();
-    auto ruleset = engine_ruleset::from_path(cs.rules_file, false);
+    auto ruleset = engine_ruleset::from_path(cs.rules_file);
     std::map<std::string_view, std::string> meta;
     std::map<std::string_view, double> metrics;
 
@@ -69,19 +69,10 @@ TEST(WafTest, InitWithInvalidRules)
 
 TEST(WafTest, DefaultProcessors)
 {
-    {
-        engine_settings cs;
-        cs.rules_file = create_sample_rules_ok();
-        auto ruleset = engine_ruleset::from_path(cs.rules_file, false);
-        EXPECT_FALSE(ruleset.get_document().HasMember("processors"));
-    }
-
-    {
-        engine_settings cs;
-        cs.rules_file = create_sample_rules_ok();
-        auto ruleset = engine_ruleset::from_path(cs.rules_file, true);
-        EXPECT_TRUE(ruleset.get_document().HasMember("processors"));
-    }
+    engine_settings cs;
+    cs.rules_file = create_sample_rules_ok();
+    auto ruleset = engine_ruleset::from_path(cs.rules_file);
+    EXPECT_TRUE(ruleset.get_document().HasMember("processors"));
 }
 
 TEST(WafTest, RunWithInvalidParam)
@@ -204,7 +195,7 @@ TEST(WafTest, ValidRunMonitorObfuscatedFromSettings)
     engine_settings cs;
     cs.rules_file = create_sample_rules_ok();
     cs.obfuscator_key_regex = "password";
-    auto ruleset = engine_ruleset::from_path(cs.rules_file, false);
+    auto ruleset = engine_ruleset::from_path(cs.rules_file);
 
     subscriber::ptr wi{
         waf::instance::from_settings(cs, ruleset, meta, metrics)};

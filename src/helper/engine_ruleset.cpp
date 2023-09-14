@@ -25,24 +25,7 @@ engine_ruleset::engine_ruleset(std::string_view ruleset)
 void engine_ruleset::add_default_processors()
 {
     std::string processors_str =
-        "{\"processors\": [{\"id\": \"processor-001\", \"generator\": "
-        "\"extract_schema\", \"conditions\": [{\"operator\": \"equals\", "
-        "\"parameters\": {\"inputs\": [{\"address\": "
-        "\"waf.context.processor\", \"key_path\": [\"extract-schema\"] } ], "
-        "\"type\": \"boolean\", \"value\": true } } ], \"parameters\": "
-        "{\"mappings\": [{\"inputs\": [{\"address\": \"server.request.body\"} "
-        "], \"output\": \"_dd.appsec.s.req.body\"}, {\"inputs\": "
-        "[{\"address\": \"server.request.headers.no_cookies\"} ], \"output\": "
-        "\"_dd.appsec.s.req.headers\"}, {\"inputs\": [{\"address\": "
-        "\"server.request.query\"} ], \"output\": \"_dd.appsec.s.req.query\"}, "
-        "{\"inputs\": [{\"address\": \"server.request.path_params\"} ], "
-        "\"output\": \"_dd.appsec.s.req.params\"}, {\"inputs\": [{\"address\": "
-        "\"server.request.cookies\"} ], \"output\": "
-        "\"_dd.appsec.s.req.cookies\"}, {\"inputs\": [{\"address\": "
-        "\"server.response.headers.no_cookies\"} ], \"output\": "
-        "\"_dd.appsec.s.res.headers\"}, {\"inputs\": [{\"address\": "
-        "\"server.response.body\"} ], \"output\": \"_dd.appsec.s.res.body\"} ] "
-        "}, \"evaluate\": false, \"output\": true } ] }";
+        R"({"processors": [{"id": "processor-001", "generator": "extract_schema", "conditions": [{"operator": "equals", "parameters": {"inputs": [{"address": "waf.context.processor", "key_path": ["extract-schema"] } ], "type": "boolean", "value": true } } ], "parameters": {"mappings": [{"inputs": [{"address": "server.request.body"} ], "output": "_dd.appsec.s.req.body"}, {"inputs": [{"address": "server.request.headers.no_cookies"} ], "output": "_dd.appsec.s.req.headers"}, {"inputs": [{"address": "server.request.query"} ], "output": "_dd.appsec.s.req.query"}, {"inputs": [{"address": "server.request.path_params"} ], "output": "_dd.appsec.s.req.params"}, {"inputs": [{"address": "server.request.cookies"} ], "output": "_dd.appsec.s.req.cookies"}, {"inputs": [{"address": "server.response.headers.no_cookies"} ], "output": "_dd.appsec.s.res.headers"}, {"inputs": [{"address": "server.response.body"} ], "output": "_dd.appsec.s.res.body"} ] }, "evaluate": false, "output": true } ] })";
     rapidjson::Document::AllocatorType &alloc = doc_.GetAllocator();
     rapidjson::Document processors_doc;
     rapidjson::ParseResult const processors =
@@ -57,15 +40,11 @@ void engine_ruleset::add_default_processors()
     doc_.AddMember("processors", parsed_processors->value, alloc);
 }
 
-engine_ruleset engine_ruleset::from_path(
-    std::string_view path, bool add_default_processors)
+engine_ruleset engine_ruleset::from_path(std::string_view path)
 {
     auto ruleset = read_file(path);
     auto engine = engine_ruleset{ruleset};
-
-    if (add_default_processors) {
-        engine.add_default_processors();
-    }
+    engine.add_default_processors();
 
     return engine;
 }

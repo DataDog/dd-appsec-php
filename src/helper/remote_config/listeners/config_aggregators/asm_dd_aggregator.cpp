@@ -28,9 +28,9 @@ void dds::remote_config::asm_dd_aggregator::remove(const config & /*config*/)
         return;
     }
 
-    auto ruleset = engine_ruleset::from_path(fallback_rules_file_, true);
+    auto ruleset = engine_ruleset::from_path(fallback_rules_file_);
 
-    rapidjson::Document doc;
+    rapidjson::Document doc(&ruleset_.GetAllocator());
     doc.CopyFrom(ruleset.get_document(), doc.GetAllocator());
 
     ruleset_ = std::move(doc);
