@@ -27,7 +27,7 @@ void engine_ruleset::add_default_processors()
     std::string processors_str =
         R"({"processors": [{"id": "processor-001", "generator": "extract_schema", "conditions": [{"operator": "equals", "parameters": {"inputs": [{"address": "waf.context.processor", "key_path": ["extract-schema"] } ], "type": "boolean", "value": true } } ], "parameters": {"mappings": [{"inputs": [{"address": "server.request.body"} ], "output": "_dd.appsec.s.req.body"}, {"inputs": [{"address": "server.request.headers.no_cookies"} ], "output": "_dd.appsec.s.req.headers"}, {"inputs": [{"address": "server.request.query"} ], "output": "_dd.appsec.s.req.query"}, {"inputs": [{"address": "server.request.path_params"} ], "output": "_dd.appsec.s.req.params"}, {"inputs": [{"address": "server.request.cookies"} ], "output": "_dd.appsec.s.req.cookies"}, {"inputs": [{"address": "server.response.headers.no_cookies"} ], "output": "_dd.appsec.s.res.headers"}, {"inputs": [{"address": "server.response.body"} ], "output": "_dd.appsec.s.res.body"} ] }, "evaluate": false, "output": true } ] })";
     rapidjson::Document::AllocatorType &alloc = doc_.GetAllocator();
-    rapidjson::Document processors_doc;
+    rapidjson::Document processors_doc(&alloc);
     rapidjson::ParseResult const processors =
         processors_doc.Parse(processors_str.data());
     if ((processors == nullptr) || !processors_doc.IsObject()) {
