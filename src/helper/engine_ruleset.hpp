@@ -33,7 +33,7 @@ public:
         new_doc.CopyFrom(doc_, new_doc.GetAllocator(), true);
     }
 
-    void add_default_processors();
+    void add_default_processors_and_scanners();
 
 protected:
     rapidjson::Document doc_;
