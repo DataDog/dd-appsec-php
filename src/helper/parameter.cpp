@@ -101,7 +101,7 @@ parameter parameter::float64(float value) noexcept
     return parameter{obj};
 }
 
-parameter parameter::nil() noexcept
+parameter parameter::null() noexcept
 {
     ddwaf_object obj;
     ddwaf_object_null(&obj);

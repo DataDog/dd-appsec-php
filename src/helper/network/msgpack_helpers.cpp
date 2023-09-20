@@ -51,7 +51,7 @@ dds::parameter msgpack_to_param(const msgpack::object &o, unsigned depth = 0)
     case msgpack::type::NEGATIVE_INTEGER:
         return dds::parameter::int64(o.as<int64_t>());
     case msgpack::type::NIL:
-        return dds::parameter::nil();
+        return dds::parameter::null();
     default:
         break;
     }
