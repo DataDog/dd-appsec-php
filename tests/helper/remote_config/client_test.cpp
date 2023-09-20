@@ -440,6 +440,7 @@ TEST_F(RemoteConfigClient, ItCallsToApiOnPoll)
 
     dds::test_client api_client(
         id, std::move(api), std::move(sid), std::move(settings), listeners_);
+    api_client.register_runtime_id(runtime_id);
 
     EXPECT_TRUE(api_client.poll());
     EXPECT_EQ(sort_arrays(generate_request_serialized(false, false)),
@@ -669,6 +670,7 @@ TEST_F(RemoteConfigClient, ItGeneratesClientStateAndCacheFromResponse)
         service, extra_services, env, tracer_version, app_version, runtime_id};
     dds::test_client api_client(
         id, std::move(api), std::move(sid), std::move(settings), listeners_);
+    api_client.register_runtime_id(runtime_id);
 
     EXPECT_TRUE(api_client.poll());
     EXPECT_TRUE(api_client.poll());
@@ -917,6 +919,7 @@ TEST_F(RemoteConfigClient, FilesThatAreInCacheAreUsedWhenNotInTargetFiles)
         service, extra_services, env, tracer_version, app_version, runtime_id};
     dds::test_client api_client(
         id, std::move(api), std::move(sid), std::move(settings), listeners_);
+    api_client.register_runtime_id(runtime_id);
 
     EXPECT_TRUE(api_client.poll());
     EXPECT_TRUE(api_client.poll());

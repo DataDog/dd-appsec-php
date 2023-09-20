@@ -97,19 +97,6 @@ TEST_F(ClientHandlerTest, RuntimeIdIsNotGeneratedIfProvided)
                                  .runtime_id.c_str());
 }
 
-TEST_F(ClientHandlerTest, RuntimeIdIsGeneratedWhenNotProvided)
-{
-    id.runtime_id.clear();
-
-    EXPECT_TRUE(id.runtime_id.empty());
-    auto client_handler = remote_config::client_handler::from_settings(
-        dds::service_identifier(id), settings, service_config, rc_settings,
-        engine, false);
-    EXPECT_FALSE(client_handler->get_client()
-                     ->get_service_identifier()
-                     .runtime_id.empty());
-}
-
 TEST_F(ClientHandlerTest, AsmFeatureProductIsAddeWhenDynamicEnablement)
 {
     auto dynamic_enablement = true;

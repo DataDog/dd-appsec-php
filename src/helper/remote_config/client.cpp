@@ -75,8 +75,9 @@ client::ptr client::from_settings(service_identifier &&sid,
         }
     }
 
-    const protocol::client_tracer ct{sid_.runtime_id, sid_.tracer_version,
-        sid_.service, sid_.extra_services, sid_.env, sid_.app_version};
+    const protocol::client_tracer ct{std::string{runtime_id_},
+        sid_.tracer_version, sid_.service, sid_.extra_services, sid_.env,
+        sid_.app_version};
 
     const protocol::client_state cs{targets_version_, config_states,
         !last_poll_error_.empty(), last_poll_error_, opaque_backend_state_};
@@ -215,6 +216,12 @@ bool client::poll()
 {
     if (api_ == nullptr) {
         return false;
+    }
+
+    // Update the runtime ID if it has changed
+    auto id = ids_.get();
+    if (id != runtime_id_) {
+        runtime_id_ = id;
     }
 
     auto request = generate_request();

@@ -25,6 +25,32 @@
 
 namespace dds::remote_config {
 
+class runtime_id_pool {
+public:
+    runtime_id_pool() = default;
+
+    void add(std::string id)
+    {
+        std::lock_guard<std::mutex> lock{mtx_};
+        ids_.emplace(std::move(id));
+        current_ = *ids_.begin();
+    }
+
+    void remove(const std::string &id)
+    {
+        std::lock_guard<std::mutex> lock{mtx_};
+        ids_.erase(id);
+        current_ = *ids_.begin();
+    }
+
+    std::string_view get() { return current_; }
+
+protected:
+    std::mutex mtx_;
+    std::unordered_set<std::string> ids_;
+    std::string_view current_;
+};
+
 struct config_path {
     static config_path from_path(const std::string &path);
 
@@ -42,7 +68,7 @@ public:
     virtual ~client() = default;
 
     client(const client &) = delete;
-    client(client &&) = default;
+    client(client &&) = delete;
     client &operator=(const client &) = delete;
     client &operator=(client &&) = delete;
 
@@ -63,6 +89,9 @@ public:
         return sid_;
     }
 
+    void register_runtime_id(const std::string &id) { ids_.add(id); }
+    void unregister_runtime_id(const std::string &id) { ids_.remove(id); }
+
 protected:
     [[nodiscard]] protocol::get_configs_request generate_request() const;
     bool process_response(const protocol::get_configs_response &response);
@@ -70,6 +99,8 @@ protected:
     std::unique_ptr<http_api> api_;
 
     std::string id_;
+    runtime_id_pool ids_;
+    std::string runtime_id_;
     const service_identifier sid_;
     const remote_config::settings settings_;
 
