@@ -45,7 +45,7 @@ dds::parameter msgpack_to_param(const msgpack::object &o, unsigned depth = 0)
     case msgpack::type::BOOLEAN:
         return dds::parameter::boolean(o.as<bool>());
     case msgpack::type::FLOAT64:
-        return dds::parameter::float64(o.as<double>());
+        return dds::parameter::float64(o.as<float>());
     case msgpack::type::POSITIVE_INTEGER:
         return dds::parameter::uint64(o.as<uint64_t>());
     case msgpack::type::NEGATIVE_INTEGER:
