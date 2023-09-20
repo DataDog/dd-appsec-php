@@ -74,6 +74,7 @@ static void dd_trace_load_symbols(void)
 
     _ddtrace_runtime_id = dlsym(handle, "ddtrace_runtime_id");
     if (_ddtrace_runtime_id == NULL) {
+        // NOLINTNEXTLINE(concurrency-mt-unsafe)
         mlog(dd_log_debug, "Failed to load ddtrace_runtime_id: %s", dlerror());
     }
 
@@ -352,9 +353,9 @@ static PHP_FUNCTION(datadog_appsec_testing_get_formatted_runtime_id) // NOLINT
 
     zend_string *id = dd_trace_get_formatted_runtime_id(false);
     if (id != NULL) {
-        RETURN_STRINGL(ZSTR_VAL(id), ZSTR_LEN(id));
-        zend_string_free(id);
+        RETURN_STR(id);
     }
+    RETURN_EMPTY_STRING();
 }
 
 // clang-format off
