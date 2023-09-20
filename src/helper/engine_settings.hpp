@@ -30,7 +30,7 @@ struct schema_extraction_settings {
 struct engine_settings {
     static constexpr int default_waf_timeout_us = 10000;
     static constexpr int default_trace_rate_limit = 100;
-    //
+
     std::string rules_file;
     std::uint64_t waf_timeout_us = default_waf_timeout_us;
     std::uint32_t trace_rate_limit = default_trace_rate_limit;
