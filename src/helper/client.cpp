@@ -519,7 +519,9 @@ void client::run(worker::queue_consumer &q)
 
     while (q.running() && run_request()) {}
 
-    service_->unregister_runtime_id(runtime_id_);
+    if (service_) {
+        service_->unregister_runtime_id(runtime_id_);
+    }
 
     SPDLOG_DEBUG("Finished handling client");
 }
