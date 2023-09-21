@@ -34,20 +34,22 @@ public:
     service(service &&) = delete;
     service &operator=(service &&) = delete;
 
+    virtual ~service() = default;
+
     static service::ptr from_settings(service_identifier &&id,
         const dds::engine_settings &eng_settings,
         const remote_config::settings &rc_settings,
         std::map<std::string_view, std::string> &meta,
         std::map<std::string_view, double> &metrics, bool dynamic_enablement);
 
-    void register_runtime_id(const std::string &id)
+    virtual void register_runtime_id(const std::string &id)
     {
         if (client_handler_) {
             client_handler_->register_runtime_id(id);
         }
     }
 
-    void unregister_runtime_id(const std::string &id)
+    virtual void unregister_runtime_id(const std::string &id)
     {
         if (client_handler_) {
             client_handler_->unregister_runtime_id(id);

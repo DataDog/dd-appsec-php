@@ -158,7 +158,7 @@ bool client::handle_command(const network::client_init::request &command)
     client_enabled_conf = command.enabled_configuration;
     if (service_id.runtime_id.empty()) {
         service_id.runtime_id = generate_random_uuid();
-    } 
+    }
     runtime_id_ = service_id.runtime_id;
 
     try {

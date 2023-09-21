@@ -64,8 +64,11 @@ public:
         return sid_;
     }
 
-    void register_runtime_id(const std::string &id) { ids_.add(id); }
-    void unregister_runtime_id(const std::string &id) { ids_.remove(id); }
+    virtual void register_runtime_id(const std::string &id) { ids_.add(id); }
+    virtual void unregister_runtime_id(const std::string &id)
+    {
+        ids_.remove(id);
+    }
 
 protected:
     [[nodiscard]] protocol::get_configs_request generate_request() const;
