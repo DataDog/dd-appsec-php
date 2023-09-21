@@ -157,10 +157,9 @@ bool client::handle_command(const network::client_init::request &command)
 
     client_enabled_conf = command.enabled_configuration;
     if (service_id.runtime_id.empty()) {
-        runtime_id_ = generate_random_uuid();
-    } else {
-        runtime_id_ = service_id.runtime_id;
-    }
+        service_id.runtime_id = generate_random_uuid();
+    } 
+    runtime_id_ = service_id.runtime_id;
 
     try {
         service_ = service_manager_->create_service(std::move(service_id),
@@ -508,7 +507,7 @@ bool client::run_request()
 
 void client::run(worker::queue_consumer &q)
 {
-    defer on_exit{[this]() {
+    const defer on_exit{[this]() {
         if (this->service_) {
             this->service_->unregister_runtime_id(this->runtime_id_);
         }
