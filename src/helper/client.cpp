@@ -508,6 +508,12 @@ bool client::run_request()
 
 void client::run(worker::queue_consumer &q)
 {
+    defer on_exit{[this]() {
+        if (this->service_) {
+            this->service_->unregister_runtime_id(this->runtime_id_);
+        }
+    }};
+
     if (q.running()) {
         if (!run_client_init()) {
             SPDLOG_DEBUG("Finished handling client (client_init failed)");
@@ -518,10 +524,6 @@ void client::run(worker::queue_consumer &q)
     }
 
     while (q.running() && run_request()) {}
-
-    if (service_) {
-        service_->unregister_runtime_id(runtime_id_);
-    }
 
     SPDLOG_DEBUG("Finished handling client");
 }

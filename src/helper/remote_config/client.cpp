@@ -32,8 +32,8 @@ client::client(std::unique_ptr<http_api> &&arg_api, service_identifier &&sid,
     remote_config::settings settings,
     std::vector<listener_base::shared_ptr> listeners)
     : api_(std::move(arg_api)), id_(dds::generate_random_uuid()),
-      sid_(std::move(sid)), settings_(std::move(settings)),
-      listeners_(std::move(listeners))
+      ids_(sid.runtime_id), sid_(std::move(sid)),
+      settings_(std::move(settings)), listeners_(std::move(listeners))
 {
     for (auto const &listener : listeners_) {
         const auto &supported_products = listener->get_supported_products();
@@ -75,9 +75,8 @@ client::ptr client::from_settings(service_identifier &&sid,
         }
     }
 
-    const protocol::client_tracer ct{std::string{runtime_id_},
-        sid_.tracer_version, sid_.service, sid_.extra_services, sid_.env,
-        sid_.app_version};
+    const protocol::client_tracer ct{std::move(ids_.get()), sid_.tracer_version,
+        sid_.service, sid_.extra_services, sid_.env, sid_.app_version};
 
     const protocol::client_state cs{targets_version_, config_states,
         !last_poll_error_.empty(), last_poll_error_, opaque_backend_state_};
@@ -216,12 +215,6 @@ bool client::poll()
 {
     if (api_ == nullptr) {
         return false;
-    }
-
-    // Update the runtime ID if it has changed
-    auto id = ids_.get();
-    if (id != runtime_id_) {
-        runtime_id_ = id;
     }
 
     auto request = generate_request();
