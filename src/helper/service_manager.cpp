@@ -27,7 +27,7 @@ std::shared_ptr<service> service_manager::create_service(
 
     SPDLOG_DEBUG("Creating a service for {}::{}", id.service, id.env);
 
-    auto service_ptr = service::from_settings(std::move(id), settings,
+    auto service_ptr = service::from_settings(service_identifier(id), settings,
         rc_settings, meta, metrics, dynamic_enablement);
     cache_.emplace(id, std::move(service_ptr));
     last_service_ = service_ptr;
