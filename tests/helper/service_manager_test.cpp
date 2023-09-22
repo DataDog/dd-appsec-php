@@ -119,11 +119,12 @@ TEST(ServiceManagerTest, UniqueServices)
     dds::engine_settings engine_settings;
     engine_settings.rules_file = fn;
 
-    auto service1 = manager.create_service({"service", {}, "env", "1.0", "2.0", "runtime ID 0"},
-        engine_settings, {}, meta, metrics, {});
-    auto service2 = manager.create_service({"service", {}, "env", "1.1", "3.0", "runtime ID 1"},
-        engine_settings, {}, meta, metrics, {});
-
+    auto service1 = manager.create_service(
+        {"service", {}, "env", "1.0", "2.0", "runtime ID 0"}, engine_settings,
+        {}, meta, metrics, {});
+    auto service2 = manager.create_service(
+        {"service", {}, "env", "1.1", "3.0", "runtime ID 1"}, engine_settings,
+        {}, meta, metrics, {});
 
     EXPECT_EQ(service1.get(), service2.get());
 }
