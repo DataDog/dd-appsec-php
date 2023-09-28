@@ -4,7 +4,7 @@
 
 #### Fixes
 - ([#305](https://github.com/DataDog/dd-appsec-php/pull/305)) Improve tracer state detection
-- ([dd-trace-php/#2277](https://github.com/DataDog/dd-trace-php/pull/2277) Fix getting fpm php\_values in appsec and profiler
+- ([dd-trace-php/#2277](https://github.com/DataDog/dd-trace-php/pull/2277)) Fix getting fpm php\_values in appsec and profiler
 
 ### v0.14.0
 
