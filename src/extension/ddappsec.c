@@ -438,7 +438,6 @@ __thread void *unspecnull TSRMLS_CACHE = NULL;
 
 static void _check_enabled()
 {
-    mlog(dd_log_error, "STATE OF DDTRACE %s", get_DD_TRACE_ENABLED() ? "true" : "false");
     if (!get_global_DD_APPSEC_TESTING() &&
         (!dd_trace_enabled() || strcmp(sapi_module.name, "cli") == 0 ||
             (sapi_module.phpinfo_as_text != 0))) {
