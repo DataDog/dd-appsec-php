@@ -10,6 +10,7 @@
 #include "engine_settings.hpp"
 #include "parameter.hpp"
 #include "rate_limit.hpp"
+#include "sampler.hpp"
 #include "subscriber/base.hpp"
 #include <map>
 #include <memory>
@@ -33,6 +34,12 @@ namespace dds {
  **/
 class engine {
 public:
+    enum class request_stage {
+        init,
+        exec,
+        shutdown,
+    };
+
     using ptr = std::shared_ptr<engine>;
     using subscription_map =
         std::map<std::string_view, std::vector<subscriber::ptr>>;
@@ -67,7 +74,7 @@ public:
     public:
         explicit context(engine &engine)
             : common_(std::atomic_load(&engine.common_)),
-              limiter_(engine.limiter_)
+              limiter_(engine.limiter_), sampler_(engine.sampler_)
         {}
         context(const context &) = delete;
         context &operator=(const context &) = delete;
@@ -75,16 +82,20 @@ public:
         context &operator=(context &&) = delete;
         ~context() = default;
 
-        std::optional<result> publish(parameter &&param);
+        std::optional<result> publish(
+            parameter &&param, request_stage stage = request_stage::init);
         // NOLINTNEXTLINE(google-runtime-references)
         void get_meta_and_metrics(std::map<std::string_view, std::string> &meta,
             std::map<std::string_view, double> &metrics);
+
+        sampler &get_sampler() { return sampler_; };
 
     protected:
         std::vector<parameter> prev_published_params_;
         std::map<subscriber::ptr, subscriber::listener::ptr> listeners_;
         std::shared_ptr<shared_state> common_;
         rate_limiter &limiter_;
+        sampler &sampler_;
     };
 
     engine(const engine &) = delete;
@@ -99,7 +110,10 @@ public:
 
     static auto create(
         uint32_t trace_rate_limit = engine_settings::default_trace_rate_limit,
-        action_map actions = default_actions)
+        action_map actions = default_actions,
+        bool schema_extraction_enabled =
+            schema_extraction_settings::default_enabled,
+        double sample_rate = schema_extraction_settings::default_sample_rate)
     {
         return std::shared_ptr<engine>(
             new engine(trace_rate_limit, std::move(actions)));
@@ -124,15 +138,20 @@ public:
         const T &doc, const action_map &default_actions);
 
 protected:
-    explicit engine(uint32_t trace_rate_limit, action_map &&actions = {})
+    explicit engine(uint32_t trace_rate_limit, action_map &&actions = {},
+        bool schema_extraction_enabled =
+            schema_extraction_settings::default_enabled,
+        double sample_rate = schema_extraction_settings::default_sample_rate)
         : limiter_(trace_rate_limit),
-          common_(new shared_state{{}, std::move(actions)})
+          common_(new shared_state{{}, std::move(actions)}),
+          sampler_(schema_extraction_enabled, sample_rate)
     {}
 
     static const action_map default_actions;
 
     std::shared_ptr<shared_state> common_;
     rate_limiter limiter_;
+    sampler sampler_;
 };
 
 } // namespace dds

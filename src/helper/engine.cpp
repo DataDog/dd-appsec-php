@@ -58,11 +58,23 @@ void engine::update(engine_ruleset &ruleset,
     std::atomic_store(&common_, new_common);
 }
 
-std::optional<engine::result> engine::context::publish(parameter &&param)
+std::optional<engine::result> engine::context::publish(
+    parameter &&param, request_stage stage)
 {
     // Once the parameter reaches this function, it is guaranteed to be
     // owned by the engine.
     prev_published_params_.push_back(std::move(param));
+
+    std::optional<sampler::scope> opt_scope;
+    if (stage == request_stage::shutdown) {
+        opt_scope = sampler_.get();
+        if (opt_scope.has_value()) {
+            parameter &root = prev_published_params_.back();
+            parameter context_processor = parameter::map();
+            context_processor.add("extract-schema", parameter::boolean(true));
+            root.add("waf.context.processor", std::move(context_processor));
+        }
+    }
 
     parameter_view data(prev_published_params_.back());
     if (!data.is_map()) {
@@ -239,8 +251,9 @@ engine::ptr engine::from_settings(const dds::engine_settings &eng_settings,
     auto ruleset = engine_ruleset::from_path(rules_path);
     auto actions =
         parse_actions(ruleset.get_document(), engine::default_actions);
-    std::shared_ptr engine_ptr{
-        engine::create(eng_settings.trace_rate_limit, std::move(actions))};
+    std::shared_ptr engine_ptr{engine::create(eng_settings.trace_rate_limit,
+        std::move(actions), eng_settings.schema_extraction.enabled,
+        eng_settings.schema_extraction.sample_rate)};
 
     try {
         SPDLOG_DEBUG("Will load WAF rules from {}", rules_path);

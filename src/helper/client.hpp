@@ -18,30 +18,6 @@
 
 namespace dds {
 
-class sampler {
-public:
-    bool selected()
-    {
-        bool selected = false;
-        std::lock_guard<std::mutex> const lock(mtx_);
-        if (request % 10 == 0) {
-            request = 0;
-            selected = true;
-        }
-        if (request == 100) {
-            request = 0;
-        } else {
-            request++;
-        }
-
-        return selected;
-    }
-
-protected:
-    std::mutex mtx_;
-    int request= {0};
-};
-
 class client {
 public:
     client(std::shared_ptr<service_manager> service_manager,
@@ -94,7 +70,6 @@ protected:
     std::optional<bool> client_enabled_conf;
     bool request_enabled_ = {false};
     std::string runtime_id_;
-    sampler sampler_;
 };
 
 } // namespace dds

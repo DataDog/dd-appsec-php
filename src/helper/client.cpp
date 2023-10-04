@@ -238,7 +238,8 @@ bool client::handle_command(network::request_init::request &command)
 
     auto response = std::make_shared<network::request_init::response>();
     try {
-        auto res = context_->publish(std::move(command.data));
+        auto res = context_->publish(
+            std::move(command.data), engine::request_stage::init);
         if (res) {
             switch (res->type) {
             case engine::action_type::block:
@@ -306,7 +307,8 @@ bool client::handle_command(network::request_exec::request &command)
 
     auto response = std::make_shared<network::request_exec::response>();
     try {
-        auto res = context_->publish(std::move(command.data));
+        auto res = context_->publish(
+            std::move(command.data), engine::request_stage::exec);
         if (res) {
             switch (res->type) {
             case engine::action_type::block:
@@ -431,15 +433,10 @@ bool client::handle_command(network::request_shutdown::request &command)
     // Free the context at the end of request shutdown
     auto free_ctx = defer([this]() { this->context_.reset(); });
 
-    if (sampler_.selected()) {
-        parameter context_processor = parameter::map();
-        context_processor.add("extract-schema", parameter::boolean(true));
-        command.data.add("waf.context.processor", std::move(context_processor));
-    }
-
     auto response = std::make_shared<network::request_shutdown::response>();
     try {
-        auto res = context_->publish(std::move(command.data));
+        auto res = context_->publish(
+            std::move(command.data), engine::request_stage::shutdown);
         if (res) {
             switch (res->type) {
             case engine::action_type::block:
