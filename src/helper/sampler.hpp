@@ -5,6 +5,7 @@
 // (https://www.datadoghq.com/). Copyright 2022 Datadog, Inc.
 
 #include <iostream>
+#include <mutex>
 
 #pragma once
 

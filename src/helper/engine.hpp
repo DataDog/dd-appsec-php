@@ -115,8 +115,8 @@ public:
             schema_extraction_settings::default_enabled,
         double sample_rate = schema_extraction_settings::default_sample_rate)
     {
-        return std::shared_ptr<engine>(
-            new engine(trace_rate_limit, std::move(actions)));
+        return std::shared_ptr<engine>(new engine(trace_rate_limit,
+            std::move(actions), schema_extraction_enabled, sample_rate));
     }
 
     context get_context() { return context{*this}; }

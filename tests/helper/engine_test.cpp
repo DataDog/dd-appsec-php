@@ -1029,4 +1029,34 @@ TEST(EngineTest, RateLimiterDoNotForceKeep)
     EXPECT_FALSE(res->force_keep);
 }
 
+MATCHER(ContainsSchemaExtraction, "")
+{
+    parameter_view data = arg;
+    return data[1].key() == "waf.context.processor" &&
+           data[1][0].key() == "extract-schema" && data[1][0].boolean == true;
+}
+
+TEST(EngineTest, ItAddsSchemaExtraction)
+{
+    auto e{engine::create(engine_settings::default_trace_rate_limit,
+        {{"redirect",
+            {engine::action_type::redirect, {{"url", "datadoghq.com"}}}}},
+        true, 1)};
+
+    mock::listener::ptr listener = mock::listener::ptr(new mock::listener());
+    EXPECT_CALL(*listener, call(ContainsSchemaExtraction()))
+        .WillRepeatedly(Return(subscriber::event{{}, {"redirect"}}));
+
+    mock::subscriber::ptr sub = mock::subscriber::ptr(new mock::subscriber());
+    EXPECT_CALL(*sub, get_listener()).WillRepeatedly(Return(listener));
+    e->subscribe(sub);
+
+    auto ctx = e->get_context();
+
+    parameter p = parameter::map();
+    p.add("a", parameter::string("value"sv));
+    auto res = ctx.publish(std::move(p), engine::request_stage::shutdown);
+    EXPECT_TRUE(res);
+}
+
 } // namespace dds
