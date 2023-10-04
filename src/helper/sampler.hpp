@@ -4,6 +4,8 @@
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2022 Datadog, Inc.
 
+#include <iostream>
+
 #pragma once
 
 namespace dds {
@@ -57,7 +59,7 @@ public:
             return std::nullopt;
         }
         const std::lock_guard<std::mutex> lock_guard(mtx_);
-        if (++request_ == 100) {
+        if (request_++ == 100) {
             reset_tokens();
             request_ = 0;
         }
@@ -72,7 +74,7 @@ protected:
     static constexpr double default_sample_rate = 0.1; // 10% of requests
     void reset_tokens() { tokens_available_ = tokens_per_hundred_; }
     unsigned request_{0};
-    std::atomic<bool> concurrent_;
+    std::atomic<bool> concurrent_{false};
     std::mutex mtx_;
     const bool enabled_;
     unsigned tokens_per_hundred_;
