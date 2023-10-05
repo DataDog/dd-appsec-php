@@ -34,37 +34,30 @@ int run_sample(dds::sampler &sampler)
     return picked;
 }
 
-TEST(SamplerTest, DisabledDoesNotPickAny)
-{
-    sampler s(false, 1);
-
-    EXPECT_EQ(0, run_sample(s));
-}
-
 TEST(SamplerTest, ItPicksAllWhenRateIs1)
 {
-    sampler s(true, 1);
+    sampler s(1);
 
     EXPECT_EQ(100, run_sample(s));
 }
 
 TEST(SamplerTest, ItPicksNoneWhenRateIs0)
 {
-    sampler s(true, 0);
+    sampler s(0);
 
     EXPECT_EQ(0, run_sample(s));
 }
 
 TEST(SamplerTest, ItPicksHalfWhenPortionGiven)
 {
-    sampler s(true, 0.5);
+    sampler s(0.5);
 
     EXPECT_EQ(50, run_sample(s));
 }
 
 TEST(SamplerTest, ItResetTokensAfter100Calls)
 {
-    sampler s(true, 1);
+    sampler s(1);
 
     picked = 0;
     count_picked(s, 100);

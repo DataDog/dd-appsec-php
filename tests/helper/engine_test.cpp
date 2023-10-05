@@ -1041,7 +1041,7 @@ TEST(EngineTest, ItAddsSchemaExtraction)
     auto e{engine::create(engine_settings::default_trace_rate_limit,
         {{"redirect",
             {engine::action_type::redirect, {{"url", "datadoghq.com"}}}}},
-        true, 1)};
+        {true, 1})};
 
     mock::listener::ptr listener = mock::listener::ptr(new mock::listener());
     EXPECT_CALL(*listener, call(ContainsSchemaExtraction()))

@@ -19,7 +19,7 @@ struct schema_extraction_settings {
     static constexpr double default_enabled = false;
 
     bool enabled = default_enabled;
-    double sample_rate = default_enabled;
+    double sample_rate = default_sample_rate;
 
     MSGPACK_DEFINE_MAP(enabled, sample_rate);
 };

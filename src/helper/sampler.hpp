@@ -4,15 +4,18 @@
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2022 Datadog, Inc.
 
+#pragma once
+
+#include <atomic>
+#include <cmath>
 #include <iostream>
 #include <mutex>
-
-#pragma once
+#include <optional>
 
 namespace dds {
 class sampler {
 public:
-    sampler(bool enabled, double sample_rate) : enabled_(enabled)
+    sampler(double sample_rate)
     {
         if (sample_rate < 0 || sample_rate > 1) {
             sample_rate = default_sample_rate;
@@ -56,9 +59,6 @@ public:
 
     std::optional<scope> get()
     {
-        if (!enabled_) {
-            return std::nullopt;
-        }
         const std::lock_guard<std::mutex> lock_guard(mtx_);
         if (request_++ == 100) {
             reset_tokens();
@@ -77,7 +77,6 @@ protected:
     unsigned request_{0};
     std::atomic<bool> concurrent_{false};
     std::mutex mtx_;
-    const bool enabled_;
     unsigned tokens_per_hundred_;
     unsigned tokens_available_;
 };

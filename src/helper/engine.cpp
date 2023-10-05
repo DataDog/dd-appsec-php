@@ -66,7 +66,7 @@ std::optional<engine::result> engine::context::publish(
     prev_published_params_.push_back(std::move(param));
 
     std::optional<sampler::scope> opt_scope;
-    if (stage == request_stage::shutdown) {
+    if (schema_extraction_enabled_ && stage == request_stage::shutdown) {
         opt_scope = sampler_.get();
         if (opt_scope.has_value()) {
             parameter &root = prev_published_params_.back();
@@ -252,8 +252,7 @@ engine::ptr engine::from_settings(const dds::engine_settings &eng_settings,
     auto actions =
         parse_actions(ruleset.get_document(), engine::default_actions);
     std::shared_ptr engine_ptr{engine::create(eng_settings.trace_rate_limit,
-        std::move(actions), eng_settings.schema_extraction.enabled,
-        eng_settings.schema_extraction.sample_rate)};
+        std::move(actions), eng_settings.schema_extraction)};
 
     try {
         SPDLOG_DEBUG("Will load WAF rules from {}", rules_path);
