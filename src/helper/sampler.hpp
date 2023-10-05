@@ -17,23 +17,32 @@ class sampler {
 public:
     sampler(double sample_rate)
     {
-        if (sample_rate < 0 || sample_rate > 1) {
+        // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
+
+        if (sample_rate < 0 || sample_rate > 1 ||
+            (sample_rate > 0 && sample_rate < 0.0001)) {
             sample_rate = default_sample_rate;
         }
+        double tmp = sample_rate;
+        do {
+            tmp = tmp * 10;
+            group_size_ = group_size_ * 10;
+            // NOLINTEND(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
+        } while (sample_rate > 0 && tmp < 1);
 
-        tokens_per_hundred_ = (unsigned)round(sample_rate * 100);
+        tokens_per_group_ = (unsigned)round(sample_rate * group_size_);
         reset_tokens();
     }
     class scope {
     public:
-        scope(std::atomic<bool> &concurrent) : concurrent_(&concurrent)
+        explicit scope(std::atomic<bool> &concurrent) : concurrent_(&concurrent)
         {
             *concurrent_ = true;
         }
 
         scope(const scope &) = delete;
         scope &operator=(const scope &) = delete;
-        scope(scope &&oth)
+        scope(scope &&oth) noexcept
         {
             concurrent_ = oth.concurrent_;
             oth.concurrent_ = nullptr;
@@ -60,9 +69,9 @@ public:
     std::optional<scope> get()
     {
         const std::lock_guard<std::mutex> lock_guard(mtx_);
-        if (request_++ == 100) {
+        if (request_++ == group_size_) {
             reset_tokens();
-            request_ = 0;
+            request_ = 1;
         }
         if (tokens_available_ > 0 && !concurrent_) {
             tokens_available_--;
@@ -73,11 +82,12 @@ public:
 
 protected:
     static constexpr double default_sample_rate = 0.1; // 10% of requests
-    void reset_tokens() { tokens_available_ = tokens_per_hundred_; }
+    void reset_tokens() { tokens_available_ = tokens_per_group_; }
     unsigned request_{0};
     std::atomic<bool> concurrent_{false};
     std::mutex mtx_;
-    unsigned tokens_per_hundred_;
+    unsigned tokens_per_group_;
+    unsigned group_size_{1};
     unsigned tokens_available_;
 };
 } // namespace dds

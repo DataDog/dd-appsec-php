@@ -124,7 +124,7 @@ public:
     explicit operator bool() const
     {
         if (!is_boolean()) {
-            throw bad_cast("parameter not an bool");
+            throw bad_cast("parameter not a bool");
         }
         return boolean;
     }
