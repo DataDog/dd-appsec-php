@@ -75,7 +75,7 @@ std::optional<engine::result> engine::context::publish(parameter &&param)
 
     std::vector<std::string> event_data;
     std::unordered_set<std::string> event_actions;
-    std::map<std::string_view, std::string> schemas;
+    std::map<std::string, std::string> schemas;
 
     for (auto &sub : common_->subscribers) {
         auto it = listeners_.find(sub);
