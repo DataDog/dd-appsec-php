@@ -103,7 +103,52 @@ std::string create_sample_rules_ok()
         }
       ]
     }
-  ]
+  ],
+  "processors": [
+    {
+      "id": "processor-001",
+      "generator": "extract_schema",
+      "conditions": [
+        {
+          "operator": "equals",
+          "parameters": {
+            "inputs": [
+              {
+                "address": "waf.context.processor",
+                "key_path": [
+                  "extract-schema"
+                ]
+              }
+            ],
+            "type": "boolean",
+            "value": true
+          }
+        }
+      ],
+      "parameters": {
+        "mappings": [
+          {
+            "inputs": [
+              {
+                "address": "server.request.headers.no_cookies"
+              }
+            ],
+            "output": "_dd.appsec.s.req.headers.no_cookies"
+          }
+        ],
+        "scanners": [
+          {
+            "tags": {
+              "category": "pii"
+            }
+          }
+        ]
+      },
+      "evaluate": false,
+      "output": true
+    }
+  ],
+  "scanners": []
 })";
 
     char tmpl[] = "/tmp/test_ddappsec_XXXXXX";
