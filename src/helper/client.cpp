@@ -466,7 +466,12 @@ bool client::handle_command(network::request_shutdown::request &command)
 
             response->triggers = std::move(res->events);
             response->force_keep = res->force_keep;
-            response->schemas.merge(res->schemas);
+
+            std::map<std::string_view, std::string> schemas;
+            for (auto &schema : res->schemas) {
+                schemas.emplace(schema.first, schema.second);
+            }
+            response->schemas = std::move(schemas);
 
             DD_STDLOG(DD_STDLOG_ATTACK_DETECTED);
         } else {
