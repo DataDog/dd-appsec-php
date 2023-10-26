@@ -280,7 +280,7 @@ struct request_shutdown {
 
         std::map<std::string_view, std::string> meta;
         std::map<std::string_view, double> metrics;
-        std::map<std::string, std::string> schemas;
+        std::map<std::string_view, std::string> schemas;
 
         MSGPACK_DEFINE(
             verdict, parameters, triggers, force_keep, meta, metrics, schemas);

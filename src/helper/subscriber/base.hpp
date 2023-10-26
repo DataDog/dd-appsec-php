@@ -21,7 +21,7 @@ public:
     struct event {
         std::vector<std::string> data;
         std::unordered_set<std::string> actions;
-        std::map<std::string, std::string> schemas;
+        std::map<std::string_view, std::string> schemas;
     };
 
     class listener {
