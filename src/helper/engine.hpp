@@ -50,7 +50,7 @@ public:
         action_type type;
         std::unordered_map<std::string, std::string> parameters;
         std::vector<std::string> events;
-        std::map<std::string, std::string> schemas;
+        std::map<std::string_view, std::string> schemas;
         bool force_keep;
     };
 
