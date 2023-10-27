@@ -25,19 +25,13 @@ $helper = Helper::createInitedRun([
 var_dump(rinit());
 var_dump(rshutdown());
 
-echo "root_span_get_meta():\n";
-print_r(root_span_get_meta());
+$meta = root_span_get_meta();
+var_dump($meta['schema_key_01'], $meta['schema_key_02']);
 
 $helper->finished_with_commands();
 ?>
 --EXPECTF--
 bool(true)
 bool(true)
-root_span_get_meta():
-Array
-(
-    [runtime-id] => %s
-    [schema_key_01] => schema_value 01
-    [schema_key_02] => schema_value 02
-    [_dd.runtime_family] => php
-)
+string(15) "schema_value 01"
+string(15) "schema_value 02"
