@@ -67,7 +67,7 @@ std::optional<engine::result> engine::context::publish(
 
     std::optional<sampler::scope> opt_scope;
     if (schema_extraction_enabled_ && stage == request_stage::shutdown) {
-        opt_scope = sampler_.get();
+        opt_scope = schema_sampler_.get();
         if (opt_scope.has_value()) {
             parameter &root = prev_published_params_.back();
             parameter context_processor = parameter::map();

@@ -99,7 +99,7 @@ TEST(SamplerTest, ItWorksWithDifferentMagnitudes)
     {
         sampler s(0.003);
         picked = 0;
-        count_picked(s, 1000);
+        count_picked(s, 999);
 
         EXPECT_EQ(3, picked);
     }
@@ -120,9 +120,9 @@ TEST(SamplerTest, ItWorksWithDifferentMagnitudes)
     {
         sampler s(0.123);
         picked = 0;
-        count_picked(s, 10);
+        count_picked(s, 9);
 
-        EXPECT_EQ(1, picked);
+        EXPECT_EQ(2, picked);
     }
 }
 
@@ -133,21 +133,21 @@ TEST(SamplerTest, TestInvalidSampleRatesDefaultToTenPercent)
         picked = 0;
         count_picked(s, 10);
 
-        EXPECT_EQ(1, picked);
+        EXPECT_EQ(10, picked);
     }
     {
         sampler s(-1);
         picked = 0;
         count_picked(s, 10);
 
-        EXPECT_EQ(1, picked);
+        EXPECT_EQ(0, picked);
     }
     { // Below limit goes to default 10 percent
         sampler s(0.000001);
         picked = 0;
         count_picked(s, 1000000);
 
-        EXPECT_EQ(100000, picked);
+        EXPECT_EQ(100, picked);
     }
 }
 

@@ -18,19 +18,18 @@ public:
     sampler(double sample_rate)
     {
         // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
-
-        if (sample_rate < 0 || sample_rate > 1 ||
-            (sample_rate > 0 && sample_rate < 0.0001)) {
-            sample_rate = default_sample_rate;
+        if (sample_rate <= 0) {
+            sample_rate = 0;
+        } else if (sample_rate > 1) {
+            sample_rate = 1;
+        } else if (sample_rate < 0.0001) {
+            sample_rate = 0.0001;
         }
-        double tmp = sample_rate;
-        do {
-            tmp = tmp * 10;
-            group_size_ = group_size_ * 10;
-            // NOLINTEND(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
-        } while (sample_rate > 0 && tmp < 1);
 
-        tokens_per_group_ = (unsigned)round(sample_rate * group_size_);
+        group_size_ = static_cast<unsigned>(round(1 / sample_rate));
+        tokens_per_group_ =
+            static_cast<unsigned>(round(sample_rate * group_size_));
+
         reset_tokens();
     }
     class scope {
@@ -69,6 +68,11 @@ public:
     std::optional<scope> get()
     {
         const std::lock_guard<std::mutex> lock_guard(mtx_);
+
+        if (group_size_ == 1 && !concurrent_) {
+            return {scope{concurrent_}};
+        }
+
         if (request_++ == group_size_) {
             reset_tokens();
             request_ = 1;
