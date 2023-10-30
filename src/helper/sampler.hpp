@@ -13,6 +13,7 @@
 #include <optional>
 
 namespace dds {
+static const double min_rate = 0.0001;
 class sampler {
 public:
     sampler(double sample_rate)
@@ -22,8 +23,8 @@ public:
             sample_rate = 0;
         } else if (sample_rate > 1) {
             sample_rate = 1;
-        } else if (sample_rate < 0.0001) {
-            sample_rate = 0.0001;
+        } else if (sample_rate < min_rate) {
+            sample_rate = min_rate;
         }
 
         group_size_ = static_cast<unsigned>(round(1 / sample_rate));
@@ -70,8 +71,11 @@ public:
     {
         const std::lock_guard<std::mutex> lock_guard(mtx_);
 
-        if (group_size_ == 1 && !concurrent_) {
-            return {scope{concurrent_}};
+        if (group_size_ == 1) {
+            if (!concurrent_) {
+                return {scope{concurrent_}};
+            }
+            return std::nullopt;
         }
 
         if (request_++ == group_size_) {
@@ -86,7 +90,6 @@ public:
     }
 
 protected:
-    static constexpr double default_sample_rate = 0.1; // 10% of requests
     void reset_tokens() { tokens_available_ = tokens_per_group_; }
     unsigned request_{0};
     std::atomic<bool> concurrent_{false};
