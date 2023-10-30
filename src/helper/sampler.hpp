@@ -8,6 +8,7 @@
 
 #include <atomic>
 #include <cmath>
+#include <cstdint>
 #include <iostream>
 #include <mutex>
 #include <optional>
