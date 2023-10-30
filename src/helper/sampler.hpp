@@ -27,6 +27,7 @@ public:
         }
 
         group_size_ = static_cast<unsigned>(round(1 / sample_rate));
+        // NOLINTEND(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
         tokens_per_group_ =
             static_cast<unsigned>(round(sample_rate * group_size_));
 
