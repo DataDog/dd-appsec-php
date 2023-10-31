@@ -65,17 +65,6 @@ std::optional<engine::result> engine::context::publish(
     // owned by the engine.
     prev_published_params_.push_back(std::move(param));
 
-    std::optional<sampler::scope> opt_scope;
-    if (schema_extraction_enabled_ && stage == request_stage::shutdown) {
-        opt_scope = schema_sampler_.get();
-        if (opt_scope.has_value()) {
-            parameter &root = prev_published_params_.back();
-            parameter context_processor = parameter::map();
-            context_processor.add("extract-schema", parameter::boolean(true));
-            root.add("waf.context.processor", std::move(context_processor));
-        }
-    }
-
     parameter_view data(prev_published_params_.back());
     if (!data.is_map()) {
         throw invalid_object(".", "not a map");

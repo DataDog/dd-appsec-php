@@ -435,6 +435,13 @@ bool client::handle_command(network::request_shutdown::request &command)
 
     auto response = std::make_shared<network::request_shutdown::response>();
     try {
+        if (context_->schema_extraction_sampled()) {
+            parameter context_processor = parameter::map();
+            context_processor.add("extract-schema", parameter::boolean(true));
+            command.data.add(
+                "waf.context.processor", std::move(context_processor));
+        }
+
         auto res = context_->publish(
             std::move(command.data), engine::request_stage::shutdown);
         if (res) {

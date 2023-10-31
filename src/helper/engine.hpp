@@ -89,6 +89,7 @@ public:
         // NOLINTNEXTLINE(google-runtime-references)
         void get_meta_and_metrics(std::map<std::string_view, std::string> &meta,
             std::map<std::string_view, double> &metrics);
+        auto schema_extraction_sampled() { return schema_extraction_enabled_ && schema_sampler_.get(); }
 
     protected:
         std::vector<parameter> prev_published_params_;
