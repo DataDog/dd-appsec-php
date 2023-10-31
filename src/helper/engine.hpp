@@ -34,12 +34,6 @@ namespace dds {
  **/
 class engine {
 public:
-    enum class request_stage {
-        init,
-        exec,
-        shutdown,
-    };
-
     using ptr = std::shared_ptr<engine>;
     using subscription_map =
         std::map<std::string_view, std::vector<subscriber::ptr>>;
@@ -84,12 +78,14 @@ public:
         context &operator=(context &&) = delete;
         ~context() = default;
 
-        std::optional<result> publish(
-            parameter &&param, request_stage stage = request_stage::init);
+        std::optional<result> publish(parameter &&param);
         // NOLINTNEXTLINE(google-runtime-references)
         void get_meta_and_metrics(std::map<std::string_view, std::string> &meta,
             std::map<std::string_view, double> &metrics);
-        auto schema_extraction_sampled() { return schema_extraction_enabled_ && schema_sampler_.get(); }
+        auto schema_extraction_sampled()
+        {
+            return schema_extraction_enabled_ && schema_sampler_.get();
+        }
 
     protected:
         std::vector<parameter> prev_published_params_;

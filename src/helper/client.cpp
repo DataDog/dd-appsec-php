@@ -238,8 +238,7 @@ bool client::handle_command(network::request_init::request &command)
 
     auto response = std::make_shared<network::request_init::response>();
     try {
-        auto res = context_->publish(
-            std::move(command.data), engine::request_stage::init);
+        auto res = context_->publish(std::move(command.data));
         if (res) {
             switch (res->type) {
             case engine::action_type::block:
@@ -307,8 +306,7 @@ bool client::handle_command(network::request_exec::request &command)
 
     auto response = std::make_shared<network::request_exec::response>();
     try {
-        auto res = context_->publish(
-            std::move(command.data), engine::request_stage::exec);
+        auto res = context_->publish(std::move(command.data));
         if (res) {
             switch (res->type) {
             case engine::action_type::block:
@@ -442,8 +440,7 @@ bool client::handle_command(network::request_shutdown::request &command)
                 "waf.context.processor", std::move(context_processor));
         }
 
-        auto res = context_->publish(
-            std::move(command.data), engine::request_stage::shutdown);
+        auto res = context_->publish(std::move(command.data));
         if (res) {
             switch (res->type) {
             case engine::action_type::block:
