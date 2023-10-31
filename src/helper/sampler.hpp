@@ -17,23 +17,17 @@ namespace dds {
 static const double min_rate = 0.0001;
 class sampler {
 public:
-    sampler(double sample_rate)
+    sampler(double sample_rate) : sample_rate_(sample_rate)
     {
         // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
-        if (sample_rate <= 0) {
-            sample_rate = 0;
-        } else if (sample_rate > 1) {
-            sample_rate = 1;
-        } else if (sample_rate < min_rate) {
-            sample_rate = min_rate;
+        if (sample_rate_ <= 0) {
+            sample_rate_ = 0;
+        } else if (sample_rate_ > 1) {
+            sample_rate_ = 1;
+        } else if (sample_rate_ < min_rate) {
+            sample_rate_ = min_rate;
         }
-
-        group_size_ = static_cast<unsigned>(round(1 / sample_rate));
         // NOLINTEND(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
-        tokens_per_group_ =
-            static_cast<unsigned>(round(sample_rate * group_size_));
-
-        reset_tokens();
     }
     class scope {
     public:
@@ -72,31 +66,26 @@ public:
     {
         const std::lock_guard<std::mutex> lock_guard(mtx_);
 
-        if (group_size_ == 1) {
-            if (!concurrent_) {
-                return {scope{concurrent_}};
-            }
-            return std::nullopt;
+        std::optional<scope> result = std::nullopt;
+
+        if (!concurrent_ && floor(request_ * sample_rate_) !=
+                                floor((request_ + 1) * sample_rate_)) {
+            result = {scope{concurrent_}};
         }
 
-        if (request_++ == group_size_) {
-            reset_tokens();
+        if (request_ < UINT_MAX) {
+            request_++;
+        } else {
             request_ = 1;
         }
-        if (tokens_available_ > 0 && !concurrent_) {
-            tokens_available_--;
-            return {scope{concurrent_}};
-        }
-        return std::nullopt;
+
+        return result;
     }
 
 protected:
-    void reset_tokens() { tokens_available_ = tokens_per_group_; }
-    unsigned request_{0};
+    unsigned request_{1};
+    double sample_rate_;
     std::atomic<bool> concurrent_{false};
     std::mutex mtx_;
-    unsigned tokens_per_group_;
-    unsigned group_size_{1};
-    unsigned tokens_available_;
 };
 } // namespace dds

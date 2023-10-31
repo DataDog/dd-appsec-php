@@ -9,6 +9,17 @@
 
 namespace dds {
 
+namespace mock {
+
+class sampler : public dds::sampler {
+public:
+    sampler(double sample_rate) : dds::sampler(sample_rate) {}
+    void set_request(unsigned int i) { request_ = i; }
+    auto get_request() { return request_; }
+};
+
+} // namespace mock
+
 std::atomic<int> picked = 0;
 
 void count_picked(dds::sampler &sampler, int iterations)
@@ -99,7 +110,7 @@ TEST(SamplerTest, ItWorksWithDifferentMagnitudes)
     {
         sampler s(0.003);
         picked = 0;
-        count_picked(s, 999);
+        count_picked(s, 1000);
 
         EXPECT_EQ(3, picked);
     }
@@ -120,9 +131,16 @@ TEST(SamplerTest, ItWorksWithDifferentMagnitudes)
     {
         sampler s(0.123);
         picked = 0;
-        count_picked(s, 9);
+        count_picked(s, 1000);
 
-        EXPECT_EQ(2, picked);
+        EXPECT_EQ(123, picked);
+    }
+    {
+        sampler s(0.6);
+        picked = 0;
+        count_picked(s, 10);
+
+        EXPECT_EQ(6, picked);
     }
 }
 
@@ -174,6 +192,14 @@ TEST(SamplerTest, TestLimits)
 
         EXPECT_EQ(1, picked);
     }
+}
+
+TEST(SamplerTest, TestOverflow)
+{
+    mock::sampler s(0);
+    s.set_request(UINT_MAX);
+    s.get();
+    EXPECT_EQ(1, s.get_request());
 }
 
 TEST(ScopeTest, TestConcurrent)
