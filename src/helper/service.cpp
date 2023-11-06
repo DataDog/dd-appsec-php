@@ -10,9 +10,12 @@ namespace dds {
 
 service::service(std::shared_ptr<engine> engine,
     std::shared_ptr<service_config> service_config,
-    dds::remote_config::client_handler::ptr &&client_handler)
+    dds::remote_config::client_handler::ptr &&client_handler,
+    schema_extraction_settings schema_extraction_settings)
     : engine_(std::move(engine)), service_config_(std::move(service_config)),
-      client_handler_(std::move(client_handler))
+      client_handler_(std::move(client_handler)),
+      schema_extraction_enabled_(schema_extraction_settings.enabled),
+      schema_sampler_(schema_extraction_settings.sample_rate)
 {
     // The engine should always be valid
     if (!engine_) {

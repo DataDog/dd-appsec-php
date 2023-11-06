@@ -239,8 +239,8 @@ engine::ptr engine::from_settings(const dds::engine_settings &eng_settings,
     auto ruleset = engine_ruleset::from_path(rules_path);
     auto actions =
         parse_actions(ruleset.get_document(), engine::default_actions);
-    std::shared_ptr engine_ptr{engine::create(eng_settings.trace_rate_limit,
-        std::move(actions), eng_settings.schema_extraction)};
+    std::shared_ptr engine_ptr{
+        engine::create(eng_settings.trace_rate_limit, std::move(actions))};
 
     try {
         SPDLOG_DEBUG("Will load WAF rules from {}", rules_path);

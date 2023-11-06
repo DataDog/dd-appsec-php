@@ -433,7 +433,8 @@ bool client::handle_command(network::request_shutdown::request &command)
 
     auto response = std::make_shared<network::request_shutdown::response>();
     try {
-        if (context_->schema_extraction_sampled()) {
+        auto scope = service_->schema_extraction_sampled();
+        if (scope) {
             parameter context_processor = parameter::map();
             context_processor.add("extract-schema", parameter::boolean(true));
             command.data.add(
