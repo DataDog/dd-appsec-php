@@ -436,7 +436,8 @@ bool client::handle_command(network::request_shutdown::request &command)
         auto scope = service_->schema_extraction_sampled();
         if (scope) {
             parameter context_processor = parameter::map();
-            context_processor.add("extract-schema", parameter::boolean(true));
+            context_processor.add(
+                "extract-schema", parameter::as_boolean(true));
             command.data.add(
                 "waf.context.processor", std::move(context_processor));
         }
