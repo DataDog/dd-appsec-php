@@ -8,6 +8,7 @@
 #include "engine.hpp"
 #include "exception.hpp"
 #include "remote_config/client_handler.hpp"
+#include "sampler.hpp"
 #include "service_config.hpp"
 #include "service_identifier.hpp"
 #include "std_logging.hpp"
@@ -71,9 +72,10 @@ public:
 
     std::optional<sampler::scope> schema_extraction_sampled()
     {
-        if (schema_extraction_enabled_) {
+        if (!schema_extraction_enabled_) {
             return std::nullopt;
         }
+
         return schema_sampler_.get();
     }
 

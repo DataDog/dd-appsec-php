@@ -41,7 +41,7 @@ service::ptr service::from_settings(service_identifier &&id,
         std::move(id), eng_settings, service_config, rc_settings, engine_ptr,
         dynamic_enablement);
 
-    return std::make_shared<service>(
-        engine_ptr, std::move(service_config), std::move(client_handler));
+    return std::make_shared<service>(engine_ptr, std::move(service_config),
+        std::move(client_handler), eng_settings.schema_extraction);
 }
 } // namespace dds

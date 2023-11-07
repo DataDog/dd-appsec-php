@@ -10,7 +10,6 @@
 #include "engine_settings.hpp"
 #include "parameter.hpp"
 #include "rate_limit.hpp"
-#include "sampler.hpp"
 #include "subscriber/base.hpp"
 #include <map>
 #include <memory>
@@ -131,6 +130,7 @@ protected:
     {}
 
     static const action_map default_actions;
+
     std::shared_ptr<shared_state> common_;
     rate_limiter limiter_;
 };
