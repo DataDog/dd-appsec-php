@@ -34,8 +34,8 @@
 #include "php_helpers.h"
 #include "php_objects.h"
 #include "request_abort.h"
-#include "src/extension/commands/config_sync.h"
-#include "src/extension/user_tracking.h"
+#include "commands/config_sync.h"
+#include "user_tracking.h"
 #include "string_helpers.h"
 #include "tags.h"
 
