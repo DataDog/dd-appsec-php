@@ -70,7 +70,10 @@ public:
         return service_config_;
     }
 
-    std::shared_ptr<sampler> get_schema_sampler() { return schema_sampler_; }
+    [[nodiscard]] std::shared_ptr<sampler> get_schema_sampler()
+    {
+        return schema_sampler_;
+    }
 
 protected:
     std::shared_ptr<engine> engine_{};
