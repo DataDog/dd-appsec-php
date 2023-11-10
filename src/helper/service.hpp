@@ -28,7 +28,7 @@ public:
     service(std::shared_ptr<engine> engine,
         std::shared_ptr<service_config> service_config,
         dds::remote_config::client_handler::ptr &&client_handler,
-        schema_extraction_settings schema_extraction_settings = {});
+        const schema_extraction_settings &schema_extraction_settings = {});
 
     service(const service &) = delete;
     service &operator=(const service &) = delete;
@@ -70,21 +70,13 @@ public:
         return service_config_;
     }
 
-    std::optional<sampler::scope> schema_extraction_sampled()
-    {
-        if (!schema_extraction_enabled_) {
-            return std::nullopt;
-        }
-
-        return schema_sampler_.get();
-    }
+    std::shared_ptr<sampler> get_schema_sampler() { return schema_sampler_; }
 
 protected:
     std::shared_ptr<engine> engine_{};
     std::shared_ptr<service_config> service_config_{};
     dds::remote_config::client_handler::ptr client_handler_{};
-    sampler schema_sampler_;
-    bool schema_extraction_enabled_;
+    std::shared_ptr<sampler> schema_sampler_;
 };
 
 } // namespace dds

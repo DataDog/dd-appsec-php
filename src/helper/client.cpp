@@ -433,13 +433,17 @@ bool client::handle_command(network::request_shutdown::request &command)
 
     auto response = std::make_shared<network::request_shutdown::response>();
     try {
-        auto scope = service_->schema_extraction_sampled();
-        if (scope) {
-            parameter context_processor = parameter::map();
-            context_processor.add(
-                "extract-schema", parameter::as_boolean(true));
-            command.data.add(
-                "waf.context.processor", std::move(context_processor));
+        auto sampler = service_->get_schema_sampler();
+        std::optional<sampler::scope> scope;
+        if (sampler) {
+            scope = sampler->get();
+            if (scope.has_value()) {
+                parameter context_processor = parameter::map();
+                context_processor.add(
+                    "extract-schema", parameter::as_boolean(true));
+                command.data.add(
+                    "waf.context.processor", std::move(context_processor));
+            }
         }
 
         auto res = context_->publish(std::move(command.data));
