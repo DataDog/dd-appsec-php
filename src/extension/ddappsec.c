@@ -14,6 +14,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <zlib.h>
 
 #include <pthread.h>
 #include <stdatomic.h>
@@ -239,6 +240,56 @@ static void _rinit_once()
     dd_request_abort_rinit_once();
 }
 
+static voidpf php_zlib_alloc(voidpf opaque, uInt items, uInt size)
+{
+    return (voidpf)safe_emalloc(items, size, 0);
+}
+
+static void php_zlib_free(voidpf opaque, voidpf address)
+{
+    efree((void*)address);
+}
+
+#define PHP_ZLIB_BUFFER_SIZE_GUESS(in_len)                                     \
+    (((size_t)((double)in_len * (double)1.015)) + 10 + 8 + 4 + 1)
+static zend_string *php_zlib_encode(
+    const char *in_buf, size_t in_len)
+{
+    int status;
+    z_stream Z;
+    zend_string *out;
+    zend_long level = -1;
+    zend_long encoding = -0xf;
+
+    memset(&Z, 0, sizeof(z_stream));
+    Z.zalloc = php_zlib_alloc;
+    Z.zfree = php_zlib_free;
+
+    if (Z_OK == (status = deflateInit2(&Z, level, Z_DEFLATED, encoding, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY))) {
+        out = zend_string_alloc(PHP_ZLIB_BUFFER_SIZE_GUESS(in_len), 0);
+
+        Z.next_in = (Bytef *) in_buf;
+        Z.next_out = (Bytef *) ZSTR_VAL(out);
+        Z.avail_in = in_len;
+        Z.avail_out = ZSTR_LEN(out);
+
+        status = deflate(&Z, Z_FINISH);
+        deflateEnd(&Z);
+
+        if (Z_STREAM_END == status) {
+            /* size buffer down to actual length */
+            out = zend_string_truncate(out, Z.total_out, 0);
+            ZSTR_VAL(out)[ZSTR_LEN(out)] = '\0';
+            return out;
+        } else {
+            zend_string_free(out);
+        }
+    }
+
+    php_error_docref(NULL, E_WARNING, "%s", zError(status));
+    return NULL;
+}
+
 static PHP_RINIT_FUNCTION(ddappsec)
 {
     // Safety precaution
@@ -256,6 +307,11 @@ static PHP_RINIT_FUNCTION(ddappsec)
 
     dd_trace_rinit();
     dd_ip_extraction_rinit();
+
+
+    zend_string* zipped = php_zlib_encode(LSTRARG("Alex"));
+    php_printf("The encoded is #%s#\n", ZSTR_VAL(zipped));
+
 
     if (UNEXPECTED(get_global_DD_APPSEC_TESTING())) {
         if (get_global_DD_APPSEC_TESTING_ABORT_RINIT()) {
