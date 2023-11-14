@@ -28,7 +28,7 @@ public:
     MOCK_METHOD(std::shared_ptr<dds::service>, create_service,
         (dds::service_identifier && id, const dds::engine_settings &settings,
             const dds::remote_config::settings &rc_settings,
-            (std::map<std::string_view, std::string> & meta),
+            (std::map<std::string, std::string> & meta),
             (std::map<std::string_view, double> & metrics),
             bool dynamic_enablement),
         (override));
@@ -62,6 +62,18 @@ void send_client_init(
     c.run_client_init();
 }
 
+int count_schemas(const std::map<std::string, std::string> &meta)
+{
+    int schemas = 0;
+    for (const auto &[key, value] : meta) {
+        if (key.rfind("_dd.appsec.s", 0) == 0) {
+            schemas++;
+        }
+    }
+
+    return schemas;
+}
+
 network::client_init::request get_default_client_init_msg()
 {
     auto fn = create_sample_rules_ok();
@@ -72,7 +84,7 @@ network::client_init::request get_default_client_init_msg()
     msg.client_version = "2.0";
     msg.engine_settings.rules_file = fn;
     msg.engine_settings.waf_timeout_us = 1000000;
-    msg.engine_settings.schema_extraction.enabled = true;
+    msg.engine_settings.schema_extraction.enabled = false;
     msg.engine_settings.schema_extraction.sample_rate = 1;
 
     return msg;
@@ -141,8 +153,10 @@ TEST(ClientTest, ClientInit)
 
     EXPECT_STREQ(msg_res->status.c_str(), "ok");
     EXPECT_EQ(msg_res->meta.size(), 2);
-    EXPECT_STREQ(msg_res->meta[tag::waf_version].c_str(), "1.14.0");
-    EXPECT_STREQ(msg_res->meta[tag::event_rules_errors].c_str(), "{}");
+    EXPECT_STREQ(
+        msg_res->meta[std::string(tag::waf_version)].c_str(), "1.14.0");
+    EXPECT_STREQ(
+        msg_res->meta[std::string(tag::event_rules_errors)].c_str(), "{}");
 
     EXPECT_EQ(msg_res->metrics.size(), 2);
     // For small enough integers this comparison should work, otherwise replace
@@ -261,10 +275,11 @@ TEST(ClientTest, ClientInitInvalidRules)
 
     EXPECT_STREQ(msg_res->status.c_str(), "ok");
     EXPECT_EQ(msg_res->meta.size(), 2);
-    EXPECT_STREQ(msg_res->meta[tag::waf_version].c_str(), "1.14.0");
+    EXPECT_STREQ(
+        msg_res->meta[std::string(tag::waf_version)].c_str(), "1.14.0");
 
     rapidjson::Document doc;
-    doc.Parse(msg_res->meta[tag::event_rules_errors]);
+    doc.Parse(msg_res->meta[std::string(tag::event_rules_errors)]);
     EXPECT_FALSE(doc.HasParseError());
     EXPECT_TRUE(doc.IsObject());
     EXPECT_TRUE(doc.HasMember("missing key 'type'"));
@@ -757,7 +772,9 @@ TEST(ClientTest, RequestShutdown)
         EXPECT_EQ(msg_res->metrics.size(), 1);
         EXPECT_GT(msg_res->metrics[tag::waf_duration], 0.0);
         EXPECT_EQ(msg_res->meta.size(), 1);
-        EXPECT_STREQ(msg_res->meta[tag::event_rules_version].c_str(), "1.2.3");
+        EXPECT_STREQ(
+            msg_res->meta[std::string(tag::event_rules_version)].c_str(),
+            "1.2.3");
     }
 }
 
@@ -798,7 +815,9 @@ TEST(ClientTest, RequestShutdownBlock)
         EXPECT_EQ(msg_res->metrics.size(), 1);
         EXPECT_GT(msg_res->metrics[tag::waf_duration], 0.0);
         EXPECT_EQ(msg_res->meta.size(), 1);
-        EXPECT_STREQ(msg_res->meta[tag::event_rules_version].c_str(), "1.2.3");
+        EXPECT_STREQ(
+            msg_res->meta[std::string(tag::event_rules_version)].c_str(),
+            "1.2.3");
     }
 }
 
@@ -2243,7 +2262,12 @@ TEST(ClientTest, SchemasAreAddedOnRequestShutdownWhenEnabled)
     auto smanager = std::make_shared<service_manager>();
     auto broker = new mock::broker();
     client c(smanager, std::unique_ptr<mock::broker>(broker));
-    set_extension_configuration_to(broker, c, EXTENSION_CONFIGURATION_ENABLED);
+
+    network::client_init::request msg = get_default_client_init_msg();
+    msg.enabled_configuration = EXTENSION_CONFIGURATION_ENABLED;
+    msg.engine_settings.schema_extraction.enabled = true;
+
+    send_client_init(broker, c, std::move(msg));
     request_init(broker, c);
 
     // Request Shutdown
@@ -2265,12 +2289,14 @@ TEST(ClientTest, SchemasAreAddedOnRequestShutdownWhenEnabled)
         EXPECT_TRUE(c.run_request());
         auto msg_res =
             dynamic_cast<network::request_shutdown::response *>(res.get());
-        EXPECT_FALSE(msg_res->schemas.empty());
+        EXPECT_FALSE(msg_res->meta.empty());
+        EXPECT_EQ(count_schemas(msg_res->meta), 1);
         EXPECT_STREQ(
-            msg_res->schemas["_dd.appsec.s.req.headers.no_cookies"].c_str(),
+            msg_res->meta["_dd.appsec.s.req.headers.no_cookies"].c_str(),
             "[8]");
     }
 }
+
 TEST(ClientTest, SchemasAreNotAddedOnRequestShutdownWhenDisabled)
 {
     auto smanager = std::make_shared<service_manager>();
@@ -2305,7 +2331,7 @@ TEST(ClientTest, SchemasAreNotAddedOnRequestShutdownWhenDisabled)
         EXPECT_TRUE(c.run_request());
         auto msg_res =
             dynamic_cast<network::request_shutdown::response *>(res.get());
-        EXPECT_TRUE(msg_res->schemas.empty());
+        EXPECT_EQ(count_schemas(msg_res->meta), 0);
     }
 }
 

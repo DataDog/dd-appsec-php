@@ -43,17 +43,17 @@ TEST(WafTest, InitWithInvalidRules)
     engine_settings cs;
     cs.rules_file = create_sample_rules_invalid();
     auto ruleset = engine_ruleset::from_path(cs.rules_file);
-    std::map<std::string_view, std::string> meta;
+    std::map<std::string, std::string> meta;
     std::map<std::string_view, double> metrics;
 
     subscriber::ptr wi{
         waf::instance::from_settings(cs, ruleset, meta, metrics)};
 
     EXPECT_EQ(meta.size(), 2);
-    EXPECT_STREQ(meta[tag::waf_version].c_str(), "1.14.0");
+    EXPECT_STREQ(meta[std::string(tag::waf_version)].c_str(), "1.14.0");
 
     rapidjson::Document doc;
-    doc.Parse(meta[tag::event_rules_errors]);
+    doc.Parse(meta[std::string(tag::event_rules_errors)]);
     EXPECT_FALSE(doc.HasParseError());
     EXPECT_TRUE(doc.IsObject());
     EXPECT_TRUE(doc.HasMember("missing key 'type'"));
@@ -78,7 +78,7 @@ TEST(WafTest, DefaultProcessorsAndScanners)
 
 TEST(WafTest, RunWithInvalidParam)
 {
-    std::map<std::string_view, std::string> meta;
+    std::map<std::string, std::string> meta;
     std::map<std::string_view, double> metrics;
 
     subscriber::ptr wi{waf::instance::from_string(waf_rule, meta, metrics)};
@@ -89,7 +89,7 @@ TEST(WafTest, RunWithInvalidParam)
 
 TEST(WafTest, RunWithTimeout)
 {
-    std::map<std::string_view, std::string> meta;
+    std::map<std::string, std::string> meta;
     std::map<std::string_view, double> metrics;
 
     subscriber::ptr wi(waf::instance::from_string(waf_rule, meta, metrics, 0));
@@ -105,7 +105,7 @@ TEST(WafTest, RunWithTimeout)
 
 TEST(WafTest, ValidRunGood)
 {
-    std::map<std::string_view, std::string> meta;
+    std::map<std::string, std::string> meta;
     std::map<std::string_view, double> metrics;
 
     subscriber::ptr wi{waf::instance::from_string(waf_rule, meta, metrics)};
@@ -119,13 +119,13 @@ TEST(WafTest, ValidRunGood)
     EXPECT_TRUE(!res);
 
     ctx->get_meta_and_metrics(meta, metrics);
-    EXPECT_STREQ(meta[tag::event_rules_version].c_str(), "1.2.3");
+    EXPECT_STREQ(meta[std::string(tag::event_rules_version)].c_str(), "1.2.3");
     EXPECT_GT(metrics[tag::waf_duration], 0.0);
 }
 
 TEST(WafTest, ValidRunMonitor)
 {
-    std::map<std::string_view, std::string> meta;
+    std::map<std::string, std::string> meta;
     std::map<std::string_view, double> metrics;
 
     subscriber::ptr wi{waf::instance::from_string(waf_rule, meta, metrics)};
@@ -148,13 +148,13 @@ TEST(WafTest, ValidRunMonitor)
 
     EXPECT_TRUE(res->actions.empty());
     ctx->get_meta_and_metrics(meta, metrics);
-    EXPECT_STREQ(meta[tag::event_rules_version].c_str(), "1.2.3");
+    EXPECT_STREQ(meta[std::string(tag::event_rules_version)].c_str(), "1.2.3");
     EXPECT_GT(metrics[tag::waf_duration], 0.0);
 }
 
 TEST(WafTest, ValidRunMonitorObfuscated)
 {
-    std::map<std::string_view, std::string> meta;
+    std::map<std::string, std::string> meta;
     std::map<std::string_view, double> metrics;
 
     subscriber::ptr wi{waf::instance::from_string(waf_rule, meta, metrics,
@@ -184,13 +184,13 @@ TEST(WafTest, ValidRunMonitorObfuscated)
     EXPECT_TRUE(res->actions.empty());
 
     ctx->get_meta_and_metrics(meta, metrics);
-    EXPECT_STREQ(meta[tag::event_rules_version].c_str(), "1.2.3");
+    EXPECT_STREQ(meta[std::string(tag::event_rules_version)].c_str(), "1.2.3");
     EXPECT_GT(metrics[tag::waf_duration], 0.0);
 }
 
 TEST(WafTest, ValidRunMonitorObfuscatedFromSettings)
 {
-    std::map<std::string_view, std::string> meta;
+    std::map<std::string, std::string> meta;
     std::map<std::string_view, double> metrics;
 
     engine_settings cs;
@@ -223,13 +223,13 @@ TEST(WafTest, ValidRunMonitorObfuscatedFromSettings)
         "<Redacted>");
 
     ctx->get_meta_and_metrics(meta, metrics);
-    EXPECT_STREQ(meta[tag::event_rules_version].c_str(), "1.2.3");
+    EXPECT_STREQ(meta[std::string(tag::event_rules_version)].c_str(), "1.2.3");
     EXPECT_GT(metrics[tag::waf_duration], 0.0);
 }
 
 TEST(WafTest, UpdateRuleData)
 {
-    std::map<std::string_view, std::string> meta;
+    std::map<std::string, std::string> meta;
     std::map<std::string_view, double> metrics;
 
     subscriber::ptr wi{
@@ -288,7 +288,7 @@ TEST(WafTest, UpdateRuleData)
 
 TEST(WafTest, UpdateInvalid)
 {
-    std::map<std::string_view, std::string> meta;
+    std::map<std::string, std::string> meta;
     std::map<std::string_view, double> metrics;
 
     subscriber::ptr wi{
@@ -392,7 +392,7 @@ TEST(WafTest, Logging)
 
 TEST(WafTest, SchemasAreAdded)
 {
-    std::map<std::string_view, std::string> meta;
+    std::map<std::string, std::string> meta;
     std::map<std::string_view, double> metrics;
 
     subscriber::ptr wi{waf::instance::from_string(waf_rule, meta, metrics)};

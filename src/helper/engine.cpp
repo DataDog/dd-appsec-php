@@ -26,7 +26,7 @@ void engine::subscribe(const subscriber::ptr &sub)
 }
 
 void engine::update(engine_ruleset &ruleset,
-    std::map<std::string_view, std::string> &meta,
+    std::map<std::string, std::string> &meta,
     std::map<std::string_view, double> &metrics)
 {
     auto new_actions =
@@ -122,7 +122,7 @@ std::optional<engine::result> engine::context::publish(parameter &&param)
 }
 
 void engine::context::get_meta_and_metrics(
-    std::map<std::string_view, std::string> &meta,
+    std::map<std::string, std::string> &meta,
     std::map<std::string_view, double> &metrics)
 {
     for (const auto &[subscriber, listener] : listeners_) {
@@ -234,7 +234,7 @@ engine::action_map engine::parse_actions(
 }
 
 engine::ptr engine::from_settings(const dds::engine_settings &eng_settings,
-    std::map<std::string_view, std::string> &meta,
+    std::map<std::string, std::string> &meta,
     std::map<std::string_view, double> &metrics)
 
 {

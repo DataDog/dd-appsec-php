@@ -20,6 +20,10 @@ namespace dds {
 
 class client {
 public:
+    // It was measured that schemas with values over 260 are better to be
+    // zipped and base64. Less than that, the performance improvement is
+    // insignificant
+    static constexpr int max_plain_schema_allowed = 260;
     client(std::shared_ptr<service_manager> service_manager,
         network::base_broker::ptr &&broker)
         : service_manager_(std::move(service_manager)),

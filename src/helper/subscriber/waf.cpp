@@ -105,7 +105,7 @@ void log_cb(DDWAF_LOG_LEVEL level, const char *function, const char *file,
 }
 
 void extract_tags_and_metrics(parameter_view diagnostics, std::string &version,
-    std::map<std::string_view, std::string> &meta,
+    std::map<std::string, std::string> &meta,
     std::map<std::string_view, double> &metrics)
 {
     try {
@@ -129,11 +129,12 @@ void extract_tags_and_metrics(parameter_view diagnostics, std::string &version,
 
             it = rules.find("errors");
             if (it != rules.end()) {
-                meta[tag::event_rules_errors] = parameter_to_json(it->second);
+                meta[std::string(tag::event_rules_errors)] =
+                    parameter_to_json(it->second);
             }
         }
 
-        meta[tag::waf_version] = ddwaf_get_version();
+        meta[std::string(tag::waf_version)] = ddwaf_get_version();
 
         auto version_it = info.find("ruleset_version");
         if (version_it != info.end()) {
@@ -230,15 +231,14 @@ std::optional<subscriber::event> instance::listener::call(
 }
 
 void instance::listener::get_meta_and_metrics(
-    std::map<std::string_view, std::string> &meta,
+    std::map<std::string, std::string> &meta,
     std::map<std::string_view, double> &metrics)
 {
-    meta[tag::event_rules_version] = ruleset_version_;
+    meta[std::string(tag::event_rules_version)] = ruleset_version_;
     metrics[tag::waf_duration] = total_runtime_;
 }
 
-instance::instance(parameter &rule,
-    std::map<std::string_view, std::string> &meta,
+instance::instance(parameter &rule, std::map<std::string, std::string> &meta,
     std::map<std::string_view, double> &metrics, std::uint64_t waf_timeout_us,
     std::string_view key_regex, std::string_view value_regex)
     : waf_timeout_{waf_timeout_us}
@@ -251,7 +251,7 @@ instance::instance(parameter &rule,
 
     extract_tags_and_metrics(
         parameter_view{diagnostics}, ruleset_version_, meta, metrics);
-    meta[tag::waf_version] = ddwaf_get_version();
+    meta[std::string(tag::waf_version)] = ddwaf_get_version();
 
     ddwaf_object_free(&diagnostics);
 
@@ -315,7 +315,7 @@ instance::instance(
 }
 
 subscriber::ptr instance::update(parameter &rule,
-    std::map<std::string_view, std::string> &meta,
+    std::map<std::string, std::string> &meta,
     std::map<std::string_view, double> &metrics)
 {
     ddwaf_object diagnostics;
@@ -324,7 +324,7 @@ subscriber::ptr instance::update(parameter &rule,
     std::string version;
     extract_tags_and_metrics(
         parameter_view{diagnostics}, version, meta, metrics);
-    meta[tag::waf_version] = ddwaf_get_version();
+    meta[std::string(tag::waf_version)] = ddwaf_get_version();
     if (version.empty()) {
         version = ruleset_version_;
     }
@@ -340,8 +340,7 @@ subscriber::ptr instance::update(parameter &rule,
 }
 
 instance::ptr instance::from_settings(const engine_settings &settings,
-    const engine_ruleset &ruleset,
-    std::map<std::string_view, std::string> &meta,
+    const engine_ruleset &ruleset, std::map<std::string, std::string> &meta,
     std::map<std::string_view, double> &metrics)
 {
     dds::parameter param = json_to_parameter(ruleset.get_document());
@@ -351,7 +350,7 @@ instance::ptr instance::from_settings(const engine_settings &settings,
 }
 
 instance::ptr instance::from_string(std::string_view rule,
-    std::map<std::string_view, std::string> &meta,
+    std::map<std::string, std::string> &meta,
     std::map<std::string_view, double> &metrics, std::uint64_t waf_timeout_us,
     std::string_view key_regex, std::string_view value_regex)
 {

@@ -41,7 +41,7 @@ public:
     static service::ptr from_settings(service_identifier &&id,
         const dds::engine_settings &eng_settings,
         const remote_config::settings &rc_settings,
-        std::map<std::string_view, std::string> &meta,
+        std::map<std::string, std::string> &meta,
         std::map<std::string_view, double> &metrics, bool dynamic_enablement);
 
     virtual void register_runtime_id(const std::string &id)
