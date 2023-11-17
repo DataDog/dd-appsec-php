@@ -5,7 +5,7 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 
 #include "compression.hpp"
-#include <iostream>
+#include <cstdint>
 #include <string>
 #include <zlib.h>
 
