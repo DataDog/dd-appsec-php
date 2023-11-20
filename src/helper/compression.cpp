@@ -38,10 +38,10 @@ std::optional<std::string> compress(const std::string &text)
                     Z_DEFAULT_STRATEGY)) {
         ret_string.resize(COMPRESSED_SIZE_ESTIMATION(text.length()), '\0');
 
-        // NOLINTNEXTLINE
-        strm.next_in = reinterpret_cast<const uint8_t *>(&text[0]);
-        // NOLINTNEXTLINE
+        // NOLINTBEGIN
+        strm.next_in = reinterpret_cast<decltype(strm.next_in)>(&text[0]);
         strm.next_out = reinterpret_cast<uint8_t *>(&ret_string[0]);
+        // NOLINTEND
         strm.avail_in = text.length();
         strm.avail_out = ret_string.capacity();
 
@@ -75,8 +75,9 @@ std::optional<std::string> uncompress(const std::string &compressed)
         return std::nullopt;
     }
 
-    // NOLINTNEXTLINE
-    strm.next_in = reinterpret_cast<const uint8_t *>(&compressed[0]);
+    // NOLINTBEGIN
+    strm.next_in = reinterpret_cast<decltype(strm.next_in)>(&compressed[0]);
+    // NOLINTEND
     strm.avail_in = compressed.length();
     std::string output;
     int status = Z_OK;
