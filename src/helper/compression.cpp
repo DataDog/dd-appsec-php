@@ -38,8 +38,10 @@ std::optional<std::string> compress(const std::string &text)
                     Z_DEFAULT_STRATEGY)) {
         ret_string.resize(COMPRESSED_SIZE_ESTIMATION(text.length()), '\0');
 
-        strm.next_in = reinterpret_cast<const uint8_t *>(&text.data()[0]);
-        strm.next_out = reinterpret_cast<uint8_t *>(&ret_string.data()[0]);
+        // NOLINTNEXTLINE
+        strm.next_in = reinterpret_cast<const uint8_t *>(&text[0]);
+        // NOLINTNEXTLINE
+        strm.next_out = reinterpret_cast<uint8_t *>(&ret_string[0]);
         strm.avail_in = text.length();
         strm.avail_out = ret_string.capacity();
 
@@ -73,7 +75,8 @@ std::optional<std::string> uncompress(const std::string &compressed)
         return std::nullopt;
     }
 
-    strm.next_in = reinterpret_cast<const uint8_t *>(&compressed.data()[0]);
+    // NOLINTNEXTLINE
+    strm.next_in = reinterpret_cast<const uint8_t *>(&compressed[0]);
     strm.avail_in = compressed.length();
     std::string output;
     int status = Z_OK;
@@ -83,7 +86,8 @@ std::optional<std::string> uncompress(const std::string &compressed)
     while ((Z_BUF_ERROR == status || (Z_OK == status && strm.avail_in > 0)) &&
            ++round < max_round_decompression) {
         strm.avail_out = free = capacity - used;
-        strm.next_out = reinterpret_cast<uint8_t *>(&output.data()[0]) + used;
+        // NOLINTNEXTLINE
+        strm.next_out = reinterpret_cast<uint8_t *>(&output[0]) + used;
         status = inflate(&strm, Z_NO_FLUSH);
         used += free - strm.avail_out;
         capacity += (capacity >> 3) + 1;
