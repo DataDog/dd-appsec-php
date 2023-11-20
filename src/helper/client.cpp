@@ -5,11 +5,11 @@
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #include "client.hpp"
 #include "base64.h"
+#include "compression.hpp"
 #include "exception.hpp"
 #include "network/broker.hpp"
 #include "network/proto.hpp"
 #include "std_logging.hpp"
-#include "compression.hpp"
 #include <chrono>
 #include <spdlog/spdlog.h>
 #include <stdexcept>
@@ -474,10 +474,10 @@ bool client::handle_command(network::request_shutdown::request &command)
                 if (value.length() > max_plain_schema_allowed) {
                     auto encoded = compress(v);
                     if (encoded) {
-                        v = base64_encode(encoded.value(), false);
+                        v = base64_encode(std::move(encoded.value()), false);
                     }
                 }
-                response->meta.emplace(key, v);
+                response->meta.emplace(std::move(key), std::move(v));
             }
 
             DD_STDLOG(DD_STDLOG_ATTACK_DETECTED);

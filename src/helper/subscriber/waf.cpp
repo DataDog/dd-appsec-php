@@ -42,7 +42,7 @@ dds::subscriber::event format_waf_result(ddwaf_result &res)
         const parameter_view schemas{res.derivatives};
         for (const auto &schema : schemas) {
             output.schemas.emplace(
-                schema.key(), std::move(parameter_to_json(schema)));
+                std::move(schema.key()), std::move(parameter_to_json(schema)));
         }
     } catch (const std::exception &e) {
         SPDLOG_ERROR("failed to parse WAF output: {}", e.what());
