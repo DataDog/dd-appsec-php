@@ -7,6 +7,7 @@
 #include <client.hpp>
 #include <network/broker.hpp>
 #include <rapidjson/document.h>
+#include <regex>
 #include <tags.hpp>
 
 namespace dds {
@@ -105,6 +106,7 @@ void request_init(mock::broker *broker, client &c)
     msg.data = parameter::map();
     msg.data.add(
         "server.request.headers.no_cookies", parameter::string("Arachni"sv));
+    msg.data.add("server.request.body", parameter::string("asdfds"sv));
 
     network::request req(std::move(msg));
 
@@ -2290,7 +2292,7 @@ TEST(ClientTest, SchemasAreAddedOnRequestShutdownWhenEnabled)
         auto msg_res =
             dynamic_cast<network::request_shutdown::response *>(res.get());
         EXPECT_FALSE(msg_res->meta.empty());
-        EXPECT_EQ(count_schemas(msg_res->meta), 1);
+        EXPECT_GT(count_schemas(msg_res->meta), 0);
         EXPECT_STREQ(
             msg_res->meta["_dd.appsec.s.req.headers.no_cookies"].c_str(),
             "[8]");
@@ -2332,6 +2334,57 @@ TEST(ClientTest, SchemasAreNotAddedOnRequestShutdownWhenDisabled)
         auto msg_res =
             dynamic_cast<network::request_shutdown::response *>(res.get());
         EXPECT_EQ(count_schemas(msg_res->meta), 0);
+    }
+}
+
+TEST(ClientTest, SchemasOverTheLimitAreCompressed)
+{
+    auto smanager = std::make_shared<service_manager>();
+    auto broker = new mock::broker();
+    client c(smanager, std::unique_ptr<mock::broker>(broker));
+
+    network::client_init::request msg = get_default_client_init_msg();
+    msg.enabled_configuration = EXTENSION_CONFIGURATION_ENABLED;
+    msg.engine_settings.schema_extraction.enabled = true;
+
+    send_client_init(broker, c, std::move(msg));
+    request_init(broker, c);
+
+    // Request Shutdown
+    {
+        network::request_shutdown::request msg;
+        msg.data = parameter::map();
+        msg.data.add("server.request.headers.no_cookies",
+            parameter::string("acunetix-product"sv));
+
+        // Lets play generously to ensure we go over the limit
+        auto body = parameter::map();
+        for (int i = 0; i < client::max_plain_schema_allowed; i++) {
+            body.add(std::to_string(i), parameter::int64(i));
+        }
+        msg.data.add("server.request.body", std::move(body));
+
+        network::request req(std::move(msg));
+
+        std::shared_ptr<network::base_response> res;
+        EXPECT_CALL(*broker, recv(_)).WillOnce(Return(req));
+        EXPECT_CALL(*broker,
+            send(
+                testing::An<const std::shared_ptr<network::base_response> &>()))
+            .WillOnce(DoAll(testing::SaveArg<0>(&res), Return(true)));
+
+        EXPECT_TRUE(c.run_request());
+        auto msg_res =
+            dynamic_cast<network::request_shutdown::response *>(res.get());
+        EXPECT_FALSE(msg_res->meta.empty());
+
+        std::regex base64_re(
+            "^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?");
+        EXPECT_TRUE(std::regex_match(
+            msg_res->meta["_dd.appsec.s.req.body"].c_str(), base64_re));
+        EXPECT_FALSE(std::regex_match(
+            msg_res->meta["_dd.appsec.s.req.headers.no_cookies"].c_str(),
+            base64_re));
     }
 }
 

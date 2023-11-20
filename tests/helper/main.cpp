@@ -134,7 +134,15 @@ std::string create_sample_rules_ok()
               }
             ],
             "output": "_dd.appsec.s.req.headers.no_cookies"
-          }
+          },
+          {
+           "inputs": [
+             {
+               "address": "server.request.body"
+             }
+           ],
+           "output": "_dd.appsec.s.req.body"
+         }
         ],
         "scanners": [
           {
