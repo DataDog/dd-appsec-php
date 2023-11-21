@@ -38,10 +38,10 @@ std::optional<std::string> compress(const std::string &text)
                     Z_DEFAULT_STRATEGY)) {
         ret_string.resize(COMPRESSED_SIZE_ESTIMATION(text.length()), '\0');
 
-        // NOLINTBEGIN
-        strm.next_in = reinterpret_cast<decltype(strm.next_in)>(&text[0]);
-        strm.next_out = reinterpret_cast<uint8_t *>(&ret_string[0]);
-        // NOLINTEND
+        // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+        strm.next_in = reinterpret_cast<const Bytef *>(text.data());
+        strm.next_out = reinterpret_cast<Bytef *>(ret_string.data());
+        // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
         strm.avail_in = text.length();
         strm.avail_out = ret_string.capacity();
 
@@ -75,9 +75,8 @@ std::optional<std::string> uncompress(const std::string &compressed)
         return std::nullopt;
     }
 
-    // NOLINTBEGIN
-    strm.next_in = reinterpret_cast<decltype(strm.next_in)>(&compressed[0]);
-    // NOLINTEND
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    strm.next_in = reinterpret_cast<const Bytef *>(compressed.data());
     strm.avail_in = compressed.length();
     std::string output;
     int status = Z_OK;
@@ -87,8 +86,8 @@ std::optional<std::string> uncompress(const std::string &compressed)
     while ((Z_BUF_ERROR == status || (Z_OK == status && strm.avail_in > 0)) &&
            ++round < max_round_decompression) {
         strm.avail_out = free = capacity - used;
-        // NOLINTNEXTLINE
-        strm.next_out = reinterpret_cast<uint8_t *>(&output[0]) + used;
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        strm.next_out = reinterpret_cast<uint8_t *>(output.data()) + used;
         status = inflate(&strm, Z_NO_FLUSH);
         used += free - strm.avail_out;
         capacity += (capacity >> 3) + 1;
