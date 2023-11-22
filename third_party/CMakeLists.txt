@@ -103,7 +103,7 @@ FetchContent_Declare(
     GIT_TAG eb3220622e73a4889eee355ffa37972b3cac3df5)
 FetchContent_MakeAvailable(spdlog)
 
-set(ZLIB_VERSION v1.2.13)
+set(ZLIB_VERSION v1.3)
 FetchContent_Declare(
         zlib
         GIT_REPOSITORY https://github.com/madler/zlib.git
