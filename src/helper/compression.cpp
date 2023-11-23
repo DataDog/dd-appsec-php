@@ -16,7 +16,7 @@ constexpr int64_t encoding = -0xf;
 constexpr int max_round_decompression = 100;
 // Taken from PHP approach
 // https://heap.space/xref/PHP-7.3/ext/zlib/php_zlib.h?r=8d3f8ca1#36
-static size_t estimate_compressed_size(size_t in_len)
+size_t estimate_compressed_size(size_t in_len)
 {
     // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
     return (((size_t)((double)in_len * (double)1.015)) + 10 + 8 + 4 + 1);
