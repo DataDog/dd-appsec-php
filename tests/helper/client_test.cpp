@@ -4,7 +4,10 @@
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 #include "common.hpp"
+#include <base64.h>
 #include <client.hpp>
+#include <compression.hpp>
+#include <json_helper.hpp>
 #include <network/broker.hpp>
 #include <rapidjson/document.h>
 #include <regex>
@@ -2357,10 +2360,19 @@ TEST(ClientTest, SchemasOverTheLimitAreCompressed)
         msg.data.add("server.request.headers.no_cookies",
             parameter::string("acunetix-product"sv));
 
-        // Lets play generously to ensure we go over the limit
         auto body = parameter::map();
-        for (int i = 0; i < client::max_plain_schema_allowed; i++) {
+        auto expected_schemas = parameter::map();
+        int body_length = 0;
+        int i = 0;
+        // Lets generate a body which goes over max_plain_schema_allowed limit
+        while (body_length < client::max_plain_schema_allowed) {
             body.add(std::to_string(i), parameter::int64(i));
+            auto schema = parameter::array();
+            schema.add(parameter::int64(4));
+            expected_schemas.add(std::to_string(i), std::move(schema));
+            body_length =
+                parameter_to_json(parameter_view(expected_schemas)).length();
+            i++;
         }
         msg.data.add("server.request.body", std::move(body));
 
@@ -2378,13 +2390,15 @@ TEST(ClientTest, SchemasOverTheLimitAreCompressed)
             dynamic_cast<network::request_shutdown::response *>(res.get());
         EXPECT_FALSE(msg_res->meta.empty());
 
-        std::regex base64_re(
-            "^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?");
-        EXPECT_TRUE(std::regex_match(
-            msg_res->meta["_dd.appsec.s.req.body"].c_str(), base64_re));
         EXPECT_FALSE(std::regex_match(
             msg_res->meta["_dd.appsec.s.req.headers.no_cookies"].c_str(),
-            base64_re));
+            std::regex("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/"
+                       "]{2}==)?")));
+        rapidjson::Document d;
+        std::string body_sent = uncompress(
+            base64_decode(msg_res->meta["_dd.appsec.s.req.body"], false))
+                                    ->c_str();
+        EXPECT_FALSE(d.Parse(body_sent).HasParseError());
     }
 }
 
