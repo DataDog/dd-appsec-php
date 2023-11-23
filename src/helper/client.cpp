@@ -434,7 +434,7 @@ bool client::handle_command(network::request_shutdown::request &command)
     auto free_ctx = defer([this]() { this->context_.reset(); });
 
     auto response = std::make_shared<network::request_shutdown::response>();
-    std::optional<engine::result> res;
+
     try {
         auto sampler = service_->get_schema_sampler();
         std::optional<sampler::scope> scope;
@@ -449,7 +449,7 @@ bool client::handle_command(network::request_shutdown::request &command)
             }
         }
 
-        res = context_->publish(std::move(command.data));
+        auto res = context_->publish(std::move(command.data));
         if (res) {
             switch (res->type) {
             case engine::action_type::block:
@@ -470,14 +470,14 @@ bool client::handle_command(network::request_shutdown::request &command)
             response->triggers = std::move(res->events);
             response->force_keep = res->force_keep;
             for (const auto &[key, value] : res->schemas) {
-                std::string v = value;
+                std::string schema = value;
                 if (value.length() > max_plain_schema_allowed) {
-                    auto encoded = compress(v);
+                    auto encoded = compress(schema);
                     if (encoded) {
-                        v = base64_encode(encoded.value(), false);
+                        schema = base64_encode(encoded.value(), false);
                     }
                 }
-                response->meta.emplace(key, std::move(v));
+                response->meta.emplace(key, std::move(schema));
             }
 
             DD_STDLOG(DD_STDLOG_ATTACK_DETECTED);
