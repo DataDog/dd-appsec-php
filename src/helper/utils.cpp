@@ -7,11 +7,9 @@
 #include "utils.hpp"
 #include <fstream>
 #include <ios>
-#include <iostream>
 #include <rapidjson/error/en.h>
 #include <string>
 #include <string_view>
-#include <zlib.h>
 
 namespace dds {
 std::string read_file(std::string_view filename)
